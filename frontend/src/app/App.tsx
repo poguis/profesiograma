@@ -12,7 +12,15 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Inicio /> },
       { path: 'no-autorizado', element: <NoAutorizado /> },
-      // Aquí se agregará "proyectos" (src/features/proyectos).
+      // Carga diferida: el código de proyectos (DataGrid, DatePicker, TabList…) va en chunks aparte.
+      {
+        path: 'proyectos',
+        lazy: async () => ({ Component: (await import('../features/proyectos/pages/ListadoProyectos')).ListadoProyectos }),
+      },
+      {
+        path: 'proyectos/:id',
+        lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),
+      },
       { path: '*', element: <NoEncontrado /> },
     ],
   },

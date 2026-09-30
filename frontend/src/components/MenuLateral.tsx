@@ -1,4 +1,4 @@
-import { Badge, makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
+import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
 import { Briefcase24Regular, Home24Regular } from '@fluentui/react-icons'
 import { NavLink } from 'react-router'
 
@@ -15,7 +15,6 @@ const useEstilos = makeStyles({
   },
   enlace: { ':hover': { backgroundColor: tokens.colorNeutralBackground2Hover } },
   activo: { backgroundColor: tokens.colorNeutralBackground1Selected, fontWeight: tokens.fontWeightSemibold },
-  deshabilitado: { color: tokens.colorNeutralForegroundDisabled, cursor: 'not-allowed' },
 })
 
 export function MenuLateral() {
@@ -34,14 +33,13 @@ export function MenuLateral() {
         </NavLink>
       </li>
       <li>
-        {/* Se habilita cuando exista src/features/proyectos. */}
-        <span className={mergeClasses(estilos.item, estilos.deshabilitado)} aria-disabled="true">
+        <NavLink
+          to="/proyectos"
+          className={({ isActive }) => mergeClasses(estilos.item, estilos.enlace, isActive && estilos.activo)}
+        >
           <Briefcase24Regular aria-hidden />
           Proyectos
-          <Badge appearance="tint" color="informative" size="small">
-            Próximamente
-          </Badge>
-        </span>
+        </NavLink>
       </li>
     </ul>
   )

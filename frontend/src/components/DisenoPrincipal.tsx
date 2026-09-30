@@ -1,11 +1,17 @@
 import { Text, makeStyles, tokens } from '@fluentui/react-components'
 import { Person24Regular } from '@fluentui/react-icons'
+import { Suspense, lazy } from 'react'
 import { Outlet } from 'react-router'
 import { ErrorApi } from '../api/errores'
-import { devAuthActivo } from '../auth'
-import { SelectorUsuarioDev } from '../auth/SelectorUsuarioDev'
 import { useUsuarioActual } from '../auth/useUsuarioActual'
 import { MenuLateral } from './MenuLateral'
+
+// Solo en desarrollo. Condición literal (equivale a devAuthActivo de auth/modo.ts): Vite la resuelve a `false`
+// en el build y el import dinámico se elimina antes de generar chunks (el selector no se emite en producción).
+const SelectorUsuarioDev =
+  import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'dev'
+  ? lazy(() => import('../auth/SelectorUsuarioDev').then((m) => ({ default: m.SelectorUsuarioDev })))
+  : null
 
 const useEstilos = makeStyles({
   raiz: {
@@ -47,7 +53,11 @@ export function DisenoPrincipal() {
         </Text>
         <div className={estilos.derecha}>
           <UsuarioBarra />
-          {devAuthActivo && <SelectorUsuarioDev />}
+          {SelectorUsuarioDev && (
+            <Suspense fallback={null}>
+              <SelectorUsuarioDev />
+            </Suspense>
+          )}
         </div>
       </header>
       <nav className={estilos.lateral} aria-label="Menú principal">

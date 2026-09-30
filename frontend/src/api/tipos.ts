@@ -15,6 +15,14 @@ export interface ValidationProblemDetails extends ProblemDetails {
   errors: Record<string, string[]>
 }
 
+/** Página de un listado de la API. `total` = registros que cumplen el filtro. */
+export interface PaginaResultado<T> {
+  items: T[]
+  pagina: number
+  tamano: number
+  total: number
+}
+
 /** GET /api/usuarios/me */
 export interface UsuarioActualDto {
   id: number

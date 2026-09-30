@@ -25,7 +25,8 @@ de desarrollo). El navegador ve un solo origen, así que la API no necesita CORS
   (`profesiograma.devUsuario`) y el cliente HTTP envía el encabezado `X-Dev-User`. Al cambiar el usuario se vacía
   la caché de React Query y se vuelven a pedir los datos.
 - **Producción:** `import.meta.env.DEV` es `false` en `vite build`, así que **`X-Dev-User` nunca se envía** y el
-  código de DevAuth no llega al bundle.
+  código de DevAuth no llega al bundle. Los `import()` de DevAuth usan la condición literal
+  `import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'dev'` para que Vite no genere sus chunks.
 - **Fase 7 (Entra ID):** la identidad está aislada en `src/auth/`. `obtenerEncabezadosAutenticacion()`
   (`src/auth/index.ts`) pasará a devolver `Authorization: Bearer <token>` con MSAL (`@azure/msal-react`),
   sin cambiar pantallas ni `src/api/clienteHttp.ts`.
@@ -35,9 +36,12 @@ de desarrollo). El navegador ve un solo origen, así que la API no necesita CORS
 src/
   app/         App (rutas), Proveedores (Fluent + React Query), queryClient
   api/         clienteHttp (fetch "/api" + errores tipados), errores (ErrorApi), tipos (DTOs)
-  auth/        devAuth, index (encabezados de identidad), useUsuarioActual, SelectorUsuarioDev
-  components/  DisenoPrincipal (barra + menú + contenido), MenuLateral, EstadoError
-  features/    módulos funcionales (próximo: proyectos/)
+  auth/        modo (devAuthActivo), index (encabezados de identidad), devAuth y SelectorUsuarioDev (solo dev,
+               import dinámico), useUsuarioActual
+  components/  DisenoPrincipal (barra + menú + contenido), MenuLateral, EstadoError, Paginacion,
+               SelectorFecha (DatePicker de Fluent en español, dd/MM/yyyy)
+  features/
+    proyectos/ Control de proyectos: listado con filtros en la URL y detalle de solo lectura (rutas con carga diferida)
   pages/       Inicio, NoAutorizado (403), NoEncontrado (404)
   utils/       formato (fechas dd/MM/yyyy, es-EC)
 ```
