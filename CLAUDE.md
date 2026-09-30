@@ -40,6 +40,11 @@ Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `d
 ## Compilar (desde backend/)
 dotnet build Profesiograma.slnx
 
+- La API suele estar corriendo (la ejecuta el usuario) y bloquea bin\Debug.
+  Para verificar compilación usa: dotnet build Profesiograma.slnx -c Release
+  Para comandos EF agrega: --configuration Release
+  Nunca detengas la API; si se requiere Debug, pide al usuario que la detenga.
+
 - User-secrets: `App.Api.csproj` tiene `UserSecretsId = profesiograma-api-4d2f7c1e`. No cambiarlo ni regenerarlo:
   la cadena de conexión está asociada a ese Id. Verificar solo la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
 
