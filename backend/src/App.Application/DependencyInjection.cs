@@ -1,0 +1,16 @@
+using App.Application.Proyectos;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace App.Application;
+
+public static class DependencyInjection
+{
+    /// <summary>Servicios de aplicación (reglas de consulta y validación). Los contratos se implementan en Infrastructure.</summary>
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<ProyectoConsultaServicio>();
+        return services;
+    }
+}

@@ -1,4 +1,5 @@
 using App.Application.Catalogos;
+using App.Application.Proyectos;
 using App.Application.Seguridad;
 using App.Infrastructure.Consultas;
 using App.Infrastructure.Persistencia.Auditoria;
@@ -35,6 +36,7 @@ public static class PersistenciaServiceCollectionExtensions
         });
 
         services.AddScoped<ICatalogoConsultas, CatalogoConsultas>();
+        services.AddScoped<IProyectoConsultas, ProyectoConsultas>();
         services.AddScoped<IUsuarioProvisionamiento, UsuarioProvisionamiento>();
         services.AddScoped<DatosPruebaSembrador>();
 

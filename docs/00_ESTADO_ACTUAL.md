@@ -96,7 +96,17 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 4. Plantilla Excel y Office Script del reporte de cronograma.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 6. [Fase 5] El acceso a proyectos se decidirá por App Role `Gestor` o por `UsuarioDepartamento` (Fase 1 indica `UsuarioDepartamento`).
-7. [Fase 7] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`; al activar Entra ID marcar `/api/health/db` como `AllowAnonymous`.
+7. [Fase 7] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.)
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push.
 10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
+11. Leer la zona horaria de negocio desde `Parametro.ZONA_HORARIA` en lugar de la constante `"SA Pacific Standard Time"` (`ProyectoConsultaServicio` y `DatosPruebaSembrador`). Origen: TAREA-07 (C3).
+
+## 8. Módulo Proyectos: avance
+
+| Tarea | Alcance | Estado |
+|---|---|---|
+| TAREA-07 (2026-09-30) | Consulta (solo lectura): `GET /api/proyectos` (listado paginado con filtros estado, grupo, texto, desde/hasta por solapamiento, pagina, tamano ≤ 100) y `GET /api/proyectos/{id}` (cabecera, erp, departamento, horario, almuerzo, propietario, personal sin datos sensibles, etapas, actividad vigente). Política `Gestor`; visibilidad R1 (Admin todos; resto solo propios) decidida en `ProyectoConsultaServicio`; 404 para no visibles. Listado sobre `vwProyectoResumen` con `SqlQuery` (sin cambios de modelo). | ✅ 13/13 pruebas OK (ver `docs/tareas/TAREA-07-reporte.md`) |
+| Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
+
+Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).

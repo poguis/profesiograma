@@ -31,3 +31,62 @@ X-Dev-User: anonimo
 ### 8. Usuario no configurado → 401
 GET {{base}}/api/catalogos
 X-Dev-User: inexistente
+
+### ---------------------------------------------------------------------------
+### TAREA-07 — Proyectos (listado y detalle, solo lectura)
+### Fechas relativas con la fecha local del equipo (Ecuador). Ids según datos de prueba:
+### ajustar @idPry0001 / @idPry0003 si difieren (ver P1).
+@idPry0001 = 1
+@idPry0003 = 3
+
+### P1. Admin: todos → 200, total 3
+GET {{base}}/api/proyectos
+X-Dev-User: admin
+
+### P2. Gestor: solo propios → 200, total 2 (PRY-DEV-0001, PRY-DEV-0002)
+GET {{base}}/api/proyectos
+X-Dev-User: gestor
+
+### P3. Gestor + estado → 200, total 1 (PRY-DEV-0001)
+GET {{base}}/api/proyectos?estado=ACTIVO
+X-Dev-User: gestor
+
+### P4. Admin + texto → 200, total 1
+GET {{base}}/api/proyectos?texto=0002
+X-Dev-User: admin
+
+### P5. Admin + rango (solapamiento) → 200, total 1 (PRY-DEV-0003)
+GET {{base}}/api/proyectos?desde={{$localDatetime "yyyy-MM-dd" -40 d}}&hasta={{$localDatetime "yyyy-MM-dd" -35 d}}
+X-Dev-User: admin
+
+### P6. Gestor + mismo rango → 200, total 0
+GET {{base}}/api/proyectos?desde={{$localDatetime "yyyy-MM-dd" -40 d}}&hasta={{$localDatetime "yyyy-MM-dd" -35 d}}
+X-Dev-User: gestor
+
+### P7. Admin + paginación → 200, 1 item, total 3
+GET {{base}}/api/proyectos?tamano=1&pagina=2
+X-Dev-User: admin
+
+### P8. Tamaño fuera de rango → 400 (ValidationProblem)
+GET {{base}}/api/proyectos?tamano=500
+X-Dev-User: admin
+
+### P9. desde > hasta → 400 (ValidationProblem)
+GET {{base}}/api/proyectos?desde={{$localDatetime "yyyy-MM-dd"}}&hasta={{$localDatetime "yyyy-MM-dd" -10 d}}
+X-Dev-User: admin
+
+### P10. Admin: detalle PRY-DEV-0001 → 200 (personal 3, etapas, actividad vigente)
+GET {{base}}/api/proyectos/{{idPry0001}}
+X-Dev-User: admin
+
+### P11. Gestor: detalle de proyecto ajeno (PRY-DEV-0003) → 404
+GET {{base}}/api/proyectos/{{idPry0003}}
+X-Dev-User: gestor
+
+### P12. Admin: inexistente → 404
+GET {{base}}/api/proyectos/999999
+X-Dev-User: admin
+
+### P13. Sin identidad → 401
+GET {{base}}/api/proyectos
+X-Dev-User: anonimo
