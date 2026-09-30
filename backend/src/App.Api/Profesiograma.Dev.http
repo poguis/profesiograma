@@ -1,0 +1,33 @@
+### Pruebas locales Paso 2 (DevAuth). Ejecutar con la API corriendo (perfil https).
+@base = https://localhost:7180
+
+### 1. Salud de BD (sin encabezado = usuario por defecto "admin")
+GET {{base}}/api/health/db
+
+### 2. Usuario actual como ADMIN → 200, roles ["Admin"]
+GET {{base}}/api/usuarios/me
+X-Dev-User: admin
+
+### 3. Usuario actual como GESTOR → 200, roles ["Gestor"]
+GET {{base}}/api/usuarios/me
+X-Dev-User: gestor
+
+### 4. Catálogos como GESTOR → 200
+GET {{base}}/api/catalogos
+X-Dev-User: gestor
+
+### 5. Parámetros como ADMIN → 200 (9 parámetros)
+GET {{base}}/api/admin/parametros
+X-Dev-User: admin
+
+### 6. Parámetros como GESTOR → 403
+GET {{base}}/api/admin/parametros
+X-Dev-User: gestor
+
+### 7. Sin identidad → 401
+GET {{base}}/api/catalogos
+X-Dev-User: anonimo
+
+### 8. Usuario no configurado → 401
+GET {{base}}/api/catalogos
+X-Dev-User: inexistente

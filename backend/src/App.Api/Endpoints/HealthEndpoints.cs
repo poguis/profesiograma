@@ -27,7 +27,8 @@ public static class HealthEndpoints
                     detail: $"Error {ex.Number}: {ex.Message}",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
             }
-        });
+        })
+        .AllowAnonymous(); // Diagnóstico: no debe depender de dbo.Usuario (ver UsuarioActualMiddleware).
 
         return app;
     }

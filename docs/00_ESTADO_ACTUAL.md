@@ -50,23 +50,24 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 
-## 5. Paso 2 — EF Core, DevAuth y datos de prueba (entregado como paquete; PENDIENTE de integración: TAREA-02 a TAREA-05)
+## 5. Paso 2 — EF Core, DevAuth y datos de prueba (código integrado y compilando; migraciones pendientes: TAREA-03)
 
-> Estado real al 2026-09-30: el repositorio contiene **solo el Paso 1**. El código del Paso 2 **no está integrado** y **no hay migraciones aún**.
-> Respaldo del paquete: `D:\temp\paso2_respaldo\` (`src/` con 61 archivos + `sql/verificacion_paso2.sql`), creado en la TAREA-01 porque no existía `D:\temp\PROFESIOGRAMA_ENTREGA\`.
-> El paquete no incluye los `.csproj` ni las migraciones: los paquetes NuGet (EF Core, Microsoft.Identity.Web) y las migraciones `Inicial`/`Vistas` deben generarse durante la integración.
-> La tabla siguiente describe el **contenido previsto** del Paso 2.
+> Estado al 2026-09-30 (TAREA-02): el código del Paso 2 está integrado en `backend/src` y `dotnet build` termina con 0 advertencias y 0 errores. **Aún no hay migraciones** (TAREA-03). La API no se ha ejecutado contra la base.
+> Paquetes: EF Core SqlServer 10.0.12 (Infrastructure), EF Core Design 10.0.12 y Microsoft.Identity.Web 4.15.0 (Api). Se subieron Microsoft.Data.SqlClient a 6.1.6 y Microsoft.Extensions.*.Abstractions a 10.0.12 (exigidos por EF 10.0.12).
+> Integración: `AddInfrastructure` llama a `AddPersistencia`. `Program.cs` agrega la seguridad, los endpoints y el sembrador. `/` y `/api/health/db` son `AllowAnonymous`.
+> Ajustes al paquete: el sembrador se omite si no hay migraciones en el ensamblado. Hay además una guarda explícita en `UsuarioActualMiddleware` (ver `docs/tareas/TAREA-02-reporte.md`).
+> Respaldo del paquete original: `D:\temp\paso2_respaldo\` (solo lectura).
 
 | Componente | Detalle |
 |---|---|
 | Entidades | 22 POCO en `App.Domain` (base `EntidadAuditable`, catálogos con `Id` byte, `CatalogoIds`). |
 | Persistencia | `ProfesiogramaDbContext` + 16 configuraciones Fluent API en `App.Infrastructure/Persistencia/Configuraciones`. Nombres PK_/FK_/UQ_/UX_/IX_/CK_/DF_ iguales al script. `UseCompatibilityLevel(150)`. |
-| Migraciones | `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`). Carpeta `Persistencia/Migraciones`. |
+| Migraciones | [PENDIENTE: TAREA-03] `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`). Carpeta `Persistencia/Migraciones`. |
 | Auditoría | `AuditoriaInterceptor`: CreadoPorId/FechaCreacion (Added, respeta valores asignados → Fase 3), ModificadoPorId/FechaModificacion (Modified), UTC truncado a segundos; sin usuario → SISTEMA (Id 1). |
 | Seguridad | `Autenticacion:Modo` = `DevAuth` (solo Development; en otro entorno la API no arranca) o `EntraId` (Microsoft.Identity.Web, sección `AzureAd` [PENDIENTE App Registration]). FallbackPolicy autenticado; políticas `Politica.Admin` y `Politica.Gestor`. Encabezado `X-Dev-User: admin/gestor/anonimo`. `UsuarioActualMiddleware` provisiona `dbo.Usuario` por oid → email (caché 10 min). |
-| Endpoints | `GET /api/usuarios/me` (autenticado), `GET /api/catalogos` (Gestor), `GET /api/admin/parametros` (Admin). |
+| Endpoints | `GET /api/health/db` (anónimo, solo Development), `GET /api/usuarios/me` (autenticado), `GET /api/catalogos` (Gestor), `GET /api/admin/parametros` (Admin). |
 | Datos de prueba | `DatosPruebaSembrador` idempotente (Development + `DatosPrueba:SembrarAlIniciar=true`): 2 usuarios, compañía 9001, 8 empleados DEV001–DEV008, 3 proyectos PRY-DEV-0001..0003, 5 personal, 244 días, 5 etapas, 3 actividades, 4 novedades NOV-DEV-*, 10 días de novedad. |
-| Verificación | `sql/dev/verificacion_paso2.sql` (22 tablas, 2 vistas, 21 CHECK / 72 FK / 47 DEFAULT, conteos). |
+| Verificación | `backend/sql/dev/verificacion_paso2.sql` (22 tablas, 2 vistas, 21 CHECK / 72 FK / 47 DEFAULT, conteos). |
 
 Diferencias aceptadas frente a `FASE_2_modelo_profesiograma.sql`:
 - `UQ_*` se implementan como índices únicos con el mismo nombre (no constraints), salvo `UQ_ProyectoPersonal_Clave` (clave alterna requerida por la FK compuesta desde `ProyectoAsignacionDia`; consecuencia: `ProyectoId`/`EmpleadoId` de `ProyectoPersonal` son inmutables en EF).

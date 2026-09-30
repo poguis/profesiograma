@@ -1,5 +1,6 @@
 using App.Application.Diagnostics;
 using App.Infrastructure.Diagnostics;
+using App.Infrastructure.Persistencia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +18,7 @@ public static class DependencyInjection
                 $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. Configúrela con user-secrets (ver README).");
 
         services.AddSingleton<IDatabaseDiagnostics>(_ => new SqlDatabaseDiagnostics(connectionString));
+        services.AddPersistencia(connectionString);   // [PASO 2] EF Core + auditoría + consultas + sembrador
         return services;
     }
 }
