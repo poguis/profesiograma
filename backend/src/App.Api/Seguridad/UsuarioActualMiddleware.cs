@@ -11,18 +11,15 @@ public sealed class UsuarioActualMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext contexto, UsuarioActual usuarioActual, IUsuarioProvisionamiento provisionamiento)
     {
-        var principal = contexto.User;
-        var autenticado = principal.Identity?.IsAuthenticated == true;
-
-        // Endpoint anónimo (p. ej. /api/health/db) sin usuario autenticado: no se consulta dbo.Usuario.
-        // Si el usuario sí está autenticado, se aprovisiona normalmente.
-        if (!autenticado && contexto.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
+        // Endpoints anónimos no consultan dbo.Usuario; no deben escribir datos (auditoría usaría SISTEMA).
+        if (contexto.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
         {
             await next(contexto);
             return;
         }
 
-        if (autenticado)
+        var principal = contexto.User;
+        if (principal.Identity?.IsAuthenticated == true)
         {
             var email = principal.ObtenerEmail();
             if (string.IsNullOrWhiteSpace(email))

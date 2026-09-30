@@ -44,5 +44,6 @@ dotnet build Profesiograma.slnx
   la cadena de conexión está asociada a ese Id. Verificar solo la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
 
 ## Comandos EF (ejecutar desde backend/)
+La primera vez en un equipo: `dotnet tool restore` (desde backend/).
 dotnet ef migrations add <Nombre> --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext --output-dir Persistencia/Migraciones
 dotnet ef database update --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext

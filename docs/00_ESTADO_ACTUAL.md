@@ -50,19 +50,20 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 
-## 5. Paso 2 — EF Core, DevAuth y datos de prueba (código integrado y compilando; migraciones pendientes: TAREA-03)
+## 5. Paso 2 — EF Core, DevAuth y datos de prueba (migraciones generadas, pendiente de aplicar: TAREA-04)
 
-> Estado al 2026-09-30 (TAREA-02): el código del Paso 2 está integrado en `backend/src` y `dotnet build` termina con 0 advertencias y 0 errores. **Aún no hay migraciones** (TAREA-03). La API no se ha ejecutado contra la base.
-> Paquetes: EF Core SqlServer 10.0.12 (Infrastructure), EF Core Design 10.0.12 y Microsoft.Identity.Web 4.15.0 (Api). Se subieron Microsoft.Data.SqlClient a 6.1.6 y Microsoft.Extensions.*.Abstractions a 10.0.12 (exigidos por EF 10.0.12).
-> Integración: `AddInfrastructure` llama a `AddPersistencia`. `Program.cs` agrega la seguridad, los endpoints y el sembrador. `/` y `/api/health/db` son `AllowAnonymous`.
-> Ajustes al paquete: el sembrador se omite si no hay migraciones en el ensamblado. Hay además una guarda explícita en `UsuarioActualMiddleware` (ver `docs/tareas/TAREA-02-reporte.md`).
+> Estado al 2026-09-30 (TAREA-03): código integrado y compilando (0 advertencias / 0 errores). Migraciones `20260930161754_Inicial` y `20260930161822_Vistas` generadas en `App.Infrastructure/Persistencia/Migraciones`, **sin aplicar a la base**. Script idempotente revisado: `backend/sql/ef/001_inicial_vistas.sql` (22 tablas, 21 CHECK / 72 FK / 47 DF_, 53 filas de semillas, 2 vistas; 0 diferencias reales con `docs/fases/FASE_2_modelo_profesiograma.sql` fuera de las aceptadas).
+> Herramienta EF local: `backend/.config/dotnet-tools.json` (dotnet-ef 10.0.12). La primera vez: `dotnet tool restore`.
+> Paquetes: EF Core SqlServer 10.0.12 (Infrastructure), EF Core Design 10.0.12 y Microsoft.Identity.Web 4.15.0 (Api). Microsoft.Data.SqlClient 6.1.6 y Microsoft.Extensions.*.Abstractions 10.0.12.
+> Integración: `AddInfrastructure` llama a `AddPersistencia`. `Program.cs` agrega la seguridad, los endpoints y el sembrador. `/` y `/api/health/db` son `AllowAnonymous`, y `UsuarioActualMiddleware` no aprovisiona en endpoints anónimos.
+> Ajustes al paquete: el sembrador se omite si no hay migraciones en el ensamblado. La migración `Vistas` envuelve las vistas en `EXEC(N'…')` para que el script idempotente sea válido (ver `docs/tareas/TAREA-03-reporte.md`).
 > Respaldo del paquete original: `D:\temp\paso2_respaldo\` (solo lectura).
 
 | Componente | Detalle |
 |---|---|
 | Entidades | 22 POCO en `App.Domain` (base `EntidadAuditable`, catálogos con `Id` byte, `CatalogoIds`). |
 | Persistencia | `ProfesiogramaDbContext` + 16 configuraciones Fluent API en `App.Infrastructure/Persistencia/Configuraciones`. Nombres PK_/FK_/UQ_/UX_/IX_/CK_/DF_ iguales al script. `UseCompatibilityLevel(150)`. |
-| Migraciones | [PENDIENTE: TAREA-03] `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`). Carpeta `Persistencia/Migraciones`. |
+| Migraciones | Generadas en la TAREA-03, pendientes de aplicar (TAREA-04): `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`, envueltas en `EXEC`). Carpeta `Persistencia/Migraciones`. |
 | Auditoría | `AuditoriaInterceptor`: CreadoPorId/FechaCreacion (Added, respeta valores asignados → Fase 3), ModificadoPorId/FechaModificacion (Modified), UTC truncado a segundos; sin usuario → SISTEMA (Id 1). |
 | Seguridad | `Autenticacion:Modo` = `DevAuth` (solo Development; en otro entorno la API no arranca) o `EntraId` (Microsoft.Identity.Web, sección `AzureAd` [PENDIENTE App Registration]). FallbackPolicy autenticado; políticas `Politica.Admin` y `Politica.Gestor`. Encabezado `X-Dev-User: admin/gestor/anonimo`. `UsuarioActualMiddleware` provisiona `dbo.Usuario` por oid → email (caché 10 min). |
 | Endpoints | `GET /api/health/db` (anónimo, solo Development), `GET /api/usuarios/me` (autenticado), `GET /api/catalogos` (Gestor), `GET /api/admin/parametros` (Admin). |
@@ -94,3 +95,4 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 7. [Fase 7] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`; al activar Entra ID marcar `/api/health/db` como `AllowAnonymous`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push.
+10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
