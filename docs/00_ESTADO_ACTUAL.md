@@ -45,12 +45,16 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | User-secrets | `UserSecretsId = profesiograma-api-4d2f7c1e` en `App.Api.csproj`; conservarlo para no perder la cadena de conexión |
 | Implementado | `GET /api/health/db` (diagnóstico de conexión) con `IDatabaseDiagnostics` (Application) y `SqlDatabaseDiagnostics` (Infrastructure, Microsoft.Data.SqlClient) |
 | Servidor SQL | `NIQUEL\SSDEV` — SQL Server 2019 Enterprise RTM (15.0.2190.7), compartido con ~42 bases de otros sistemas |
-| Base | `PROFESIOGRAMA_DEV`, collation `Modern_Spanish_CI_AS`, compatibilidad 150 (vacía) |
+| Base | `PROFESIOGRAMA_DEV`, collation `Modern_Spanish_CI_AS`, compatibilidad 150 (esquema creado por migraciones EF en la TAREA-04; sin datos de prueba aún) |
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 
-## 5. Paso 2 — EF Core, DevAuth y datos de prueba (migraciones generadas, pendiente de aplicar: TAREA-04)
+## 5. Paso 2 — EF Core, DevAuth y datos de prueba (Paso 2 verificado: API ejecutándose con DevAuth y datos de prueba)
+
+> Estado al 2026-09-30 (TAREA-05): API en ejecución (Development, DevAuth) sobre `PROFESIOGRAMA_DEV`. Las 9 pruebas HTTP pasan: health anónimo 200; `/api/usuarios/me` admin/gestor/por defecto 200; catálogos 200 con los conteos esperados; parámetros 200 (9) para admin y 403 para gestor; 401 para `anonimo` e `inexistente` (ver `docs/tareas/TAREA-05-reporte.md`). Pendiente: ejecutar `backend/sql/dev/verificacion_paso2.sql` en SSMS.
+
+> Estado al 2026-09-30 (TAREA-04): `dotnet ef database update` aplicó `20260930161754_Inicial` y `20260930161822_Vistas` en `NIQUEL\SSDEV` / `PROFESIOGRAMA_DEV` sin errores; `migrations list` las muestra aplicadas. La API aún no se ha ejecutado y los datos de prueba no se han sembrado (ver `docs/tareas/TAREA-04-reporte.md`).
 
 > Estado al 2026-09-30 (TAREA-03): código integrado y compilando (0 advertencias / 0 errores). Migraciones `20260930161754_Inicial` y `20260930161822_Vistas` generadas en `App.Infrastructure/Persistencia/Migraciones`, **sin aplicar a la base**. Script idempotente revisado: `backend/sql/ef/001_inicial_vistas.sql` (22 tablas, 21 CHECK / 72 FK / 47 DF_, 53 filas de semillas, 2 vistas; 0 diferencias reales con `docs/fases/FASE_2_modelo_profesiograma.sql` fuera de las aceptadas).
 > Herramienta EF local: `backend/.config/dotnet-tools.json` (dotnet-ef 10.0.12). La primera vez: `dotnet tool restore`.
@@ -63,7 +67,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 |---|---|
 | Entidades | 22 POCO en `App.Domain` (base `EntidadAuditable`, catálogos con `Id` byte, `CatalogoIds`). |
 | Persistencia | `ProfesiogramaDbContext` + 16 configuraciones Fluent API en `App.Infrastructure/Persistencia/Configuraciones`. Nombres PK_/FK_/UQ_/UX_/IX_/CK_/DF_ iguales al script. `UseCompatibilityLevel(150)`. |
-| Migraciones | Generadas en la TAREA-03, pendientes de aplicar (TAREA-04): `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`, envueltas en `EXEC`). Carpeta `Persistencia/Migraciones`. |
+| Migraciones | Generadas en la TAREA-03 y aplicadas en PROFESIOGRAMA_DEV en la TAREA-04: `Inicial` (22 tablas + semillas `HasData`, fecha fija 2026-09-29 UTC) y `Vistas` (`vwProyectoResumen`, `vwNovedadDiaVigente` vía `VistasSql.*_V1`, envueltas en `EXEC`). Carpeta `Persistencia/Migraciones`. |
 | Auditoría | `AuditoriaInterceptor`: CreadoPorId/FechaCreacion (Added, respeta valores asignados → Fase 3), ModificadoPorId/FechaModificacion (Modified), UTC truncado a segundos; sin usuario → SISTEMA (Id 1). |
 | Seguridad | `Autenticacion:Modo` = `DevAuth` (solo Development; en otro entorno la API no arranca) o `EntraId` (Microsoft.Identity.Web, sección `AzureAd` [PENDIENTE App Registration]). FallbackPolicy autenticado; políticas `Politica.Admin` y `Politica.Gestor`. Encabezado `X-Dev-User: admin/gestor/anonimo`. `UsuarioActualMiddleware` provisiona `dbo.Usuario` por oid → email (caché 10 min). |
 | Endpoints | `GET /api/health/db` (anónimo, solo Development), `GET /api/usuarios/me` (autenticado), `GET /api/catalogos` (Gestor), `GET /api/admin/parametros` (Admin). |
