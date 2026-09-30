@@ -90,3 +90,54 @@ X-Dev-User: admin
 ### P13. Sin identidad → 401
 GET {{base}}/api/proyectos
 X-Dev-User: anonimo
+
+### ---------------------------------------------------------------------------
+### TAREA-11 — Catálogos del ERP (Development: ServiciosExternos:Modo = Simulado) y empleados
+
+### E1. Compañías → incluye 9001
+GET {{base}}/api/erp/companias
+X-Dev-User: gestor
+
+### E2. Proyectos ERP de 9001 → solo el Activo (DEV-ERP-001)
+GET {{base}}/api/erp/companias/9001/proyectos
+X-Dev-User: gestor
+
+### E3. Actividades de DEV-ERP-001 → DEV.01
+GET {{base}}/api/erp/companias/9001/proyectos/DEV-ERP-001/actividades
+X-Dev-User: gestor
+
+### E4. Dimensiones de 9001 → 2
+GET {{base}}/api/erp/companias/9001/dimensiones
+X-Dev-User: gestor
+
+### E5. Horarios → solo activos (2)
+GET {{base}}/api/erp/horarios
+X-Dev-User: gestor
+
+### E6. Compañía inexistente → 404 "Compañía no encontrada."
+GET {{base}}/api/erp/companias/1234/proyectos
+X-Dev-User: gestor
+
+### E6b. Proyecto ERP inactivo o inexistente → 404 "Proyecto ERP no encontrado o no está activo."
+GET {{base}}/api/erp/companias/9001/proyectos/DEV-ERP-002/actividades
+X-Dev-User: gestor
+
+### E7. Empleados (soloMisDepartamentos por defecto) → 8 (DEV001–DEV008)
+GET {{base}}/api/empleados
+X-Dev-User: gestor
+
+### E8. Empleados con texto → 1 (DEV003)
+GET {{base}}/api/empleados?texto=DEV003
+X-Dev-User: gestor
+
+### E8b. Toda la estructura (soloMisDepartamentos=false)
+GET {{base}}/api/empleados?soloMisDepartamentos=false
+X-Dev-User: gestor
+
+### E10. Sin identidad → 401
+GET {{base}}/api/empleados
+X-Dev-User: anonimo
+
+### E11. Tamaño fuera de rango → 400
+GET {{base}}/api/empleados?tamano=500
+X-Dev-User: gestor

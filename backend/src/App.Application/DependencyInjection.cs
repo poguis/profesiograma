@@ -1,3 +1,5 @@
+using App.Application.Empleados;
+using App.Application.Erp;
 using App.Application.Proyectos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -11,6 +13,8 @@ public static class DependencyInjection
     {
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<ProyectoConsultaServicio>();
+        services.AddScoped<EmpleadoConsultaServicio>();
+        services.AddScoped<CatalogoErpConsultaServicio>();
         return services;
     }
 }

@@ -6,6 +6,8 @@
     <Project Path="src/App.Api/App.Api.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/App.Application.Tests/App.Application.Tests.csproj" />
     <Project Path="tests/App.Domain.Tests/App.Domain.Tests.csproj" />
+    <Project Path="tests/App.Infrastructure.Tests/App.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

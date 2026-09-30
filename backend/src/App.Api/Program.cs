@@ -7,7 +7,8 @@ using App.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.IsDevelopment());
+builder.Services.AddExceptionHandler<ErpNoDisponibleExceptionHandler>(); // ERP caído → 503
 builder.Services.AddProblemDetails();
 builder.AddSeguridadProfesiograma();             // DevAuth / Entra ID + políticas Admin/Gestor
 
@@ -22,6 +23,8 @@ app.MapHealthEndpoints();                        // se mantiene /api/health/db
 app.MapUsuarioEndpoints();
 app.MapCatalogoEndpoints();
 app.MapProyectoEndpoints();
+app.MapErpEndpoints();
+app.MapEmpleadoEndpoints();
 
 await app.SembrarDatosPruebaAsync();             // solo Development + DatosPrueba:SembrarAlIniciar
 

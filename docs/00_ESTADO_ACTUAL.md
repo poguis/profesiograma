@@ -48,6 +48,8 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Base | `PROFESIOGRAMA_DEV`, collation `Modern_Spanish_CI_AS`, compatibilidad 150 (esquema creado por migraciones EF en la TAREA-04; sin datos de prueba aún) |
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
+| ERP | `ServiciosExternos:Modo`: `Simulado` en Development, `Http` en el resto (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación) |
+| Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 | Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
 
@@ -102,6 +104,8 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push.
 10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
 11. Leer la zona horaria de negocio desde `Parametro.ZONA_HORARIA` en lugar de la constante `"SA Pacific Standard Time"` (`ProyectoConsultaServicio` y `DatosPruebaSembrador`). Origen: TAREA-07 (C3).
+12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
+13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR]. Modo `Http` pendiente de probar de extremo a extremo en un entorno de QA.
 
 ## 8. Módulo Proyectos: avance
 
@@ -109,6 +113,7 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 |---|---|---|
 | TAREA-07 (2026-09-30) | Consulta (solo lectura): `GET /api/proyectos` (listado paginado con filtros estado, grupo, texto, desde/hasta por solapamiento, pagina, tamano ≤ 100) y `GET /api/proyectos/{id}` (cabecera, erp, departamento, horario, almuerzo, propietario, personal sin datos sensibles, etapas, actividad vigente). Política `Gestor`; visibilidad R1 (Admin todos; resto solo propios) decidida en `ProyectoConsultaServicio`; 404 para no visibles. Listado sobre `vwProyectoResumen` con `SqlQuery` (sin cambios de modelo). | ✅ 13/13 pruebas OK (ver `docs/tareas/TAREA-07-reporte.md`) |
 | TAREA-10 (2026-09-30) | Motor de cronograma y cruces internos en `App.Domain/Proyectos/Cronograma` (FASE_5 §5–§6, decisiones P3/P4 y D1–D6): `MotorCronograma.Generar` (tramos, días base, días finales con descansos automáticos deduplicados, cruces) y `CruceDetector`. Lógica pura, sin NuGet. Pruebas `backend/tests/App.Domain.Tests` (xUnit v3 4.0.1 sobre Microsoft Testing Platform, activado en `backend/global.json`): E1–E10 + B1–B7. | ✅ build 0/0; `dotnet test --solution Profesiograma.slnx -c Release` 25/25 (ver `docs/tareas/TAREA-10-reporte.md`) |
+| TAREA-11 (2026-09-30) | Catálogos del ERP: `ICatalogoErp` (Application) con modos `Http` (APIs reales `backstack.sedemi.com` :7048/:7055, caché 10/5 min, error → 503 "Servicio ERP no disponible") y `Simulado` (solo Development; fuera de Development la API no arranca). Endpoints `/api/erp/companias`, `/companias/{id}/proyectos` (solo "Activo"), `/dimensiones`, `/proyectos/{id}/actividades`, `/api/erp/horarios` (solo "A"); 404 para compañía/proyecto inexistente. `GET /api/empleados` (activos, sin datos sensibles, `soloMisDepartamentos` por nombre vía `UsuarioDepartamento`). `LectorParametros` compartido. Nuevos proyectos de prueba `App.Application.Tests` y `App.Infrastructure.Tests`. | ✅ build 0/0; tests 123/123; E1–E11 + P8/P9 OK (ver `docs/tareas/TAREA-11-reporte.md`) |
 | Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
 
 Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).
