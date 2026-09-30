@@ -32,7 +32,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 - Fechas de negocio en `DATE`; auditoría en UTC; zona de negocio Ecuador (UTC-5).
 - Correo: Microsoft Graph. Reporte Excel: ClosedXML en .NET. Servicios PDF externos se mantienen.
 - Archivos a futuro: SharePoint (vía Graph), no file server.
-- Frontend: React + Vite [PENDIENTE confirmar: el usuario mencionó "next 25"].
+- Frontend: React + Vite (decidido 2026-09-30). UI Fluent UI React v9, TanStack Query, React Router (TAREA-08).
 
 ## 4. Entorno de desarrollo (verificado)
 
@@ -49,6 +49,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
+| Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
 
 ## 5. Paso 2 — EF Core, DevAuth y datos de prueba (Paso 2 verificado: API ejecutándose con DevAuth y datos de prueba)
 
@@ -92,7 +93,7 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
 2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz).
-3. Confirmar frontend React + Vite vs Next.js.
+3. **Resuelto:** Frontend: React + Vite (decidido 2026-09-30).
 4. Plantilla Excel y Office Script del reporte de cronograma.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 6. [Fase 5] El acceso a proyectos se decidirá por App Role `Gestor` o por `UsuarioDepartamento` (Fase 1 indica `UsuarioDepartamento`).
@@ -110,3 +111,10 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 | Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
 
 Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).
+
+## 9. Frontend: avance
+
+| Tarea | Alcance | Estado |
+|---|---|---|
+| TAREA-08 (2026-09-30) | Base del frontend en `frontend/`: layout (barra superior con usuario actual y selector DevAuth, menú lateral Inicio / Proyectos "Próximamente"), rutas (Inicio, 403, 404), cliente HTTP con errores tipados (ProblemDetails/ValidationProblem, 400/401/403/404/5xx/red), DevAuth aislado en `src/auth/` (X-Dev-User solo con `import.meta.env.DEV` y `VITE_AUTH_MODE=dev`), Inicio con `GET /api/usuarios/me` (incluye estado "No autenticado" para 401). | ✅ `npm run build` y `npm run lint` sin errores; pendiente prueba visual del usuario con `npm run dev` (ver `docs/tareas/TAREA-08-reporte.md`) |
+| Pendiente | Pantallas de proyectos (`src/features/proyectos`), MSAL (Fase 7). | — |

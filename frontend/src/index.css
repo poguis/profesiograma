@@ -1,0 +1,7 @@
+/* Estilos globales mínimos: el resto lo aporta Fluent UI (FluentProvider + makeStyles). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}

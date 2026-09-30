@@ -48,6 +48,16 @@ dotnet build Profesiograma.slnx
 - User-secrets: `App.Api.csproj` tiene `UserSecretsId = profesiograma-api-4d2f7c1e`. No cambiarlo ni regenerarlo:
   la cadena de conexión está asociada a ese Id. Verificar solo la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
 
+## Frontend (desde frontend/)
+npm install
+npm run dev        (lo ejecuta el usuario; no ejecutarlo)
+npm run build      (tsc -b + vite build: verificación de tipos y compilación)
+npm run lint       (oxlint)
+
+- X-Dev-User solo existe en desarrollo: se envía únicamente si import.meta.env.DEV y VITE_AUTH_MODE=dev.
+  Nunca debe enviarse en producción. La identidad se obtiene solo en src/auth/ (Fase 7: MSAL).
+- Las llamadas usan "/api" (proxy de Vite → https://localhost:7180). No configurar CORS en la API.
+
 ## Comandos EF (ejecutar desde backend/)
 La primera vez en un equipo: `dotnet tool restore` (desde backend/).
 dotnet ef migrations add <Nombre> --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext --output-dir Persistencia/Migraciones
