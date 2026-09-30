@@ -1,0 +1,3197 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  ControlPerfiles:
+    Properties:
+      Fill: '=RGBA(255, 255, 255, 1) '
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =UpdateContext(
+            {
+                varJsonTexto: LookUp(
+                    PERFIL_USUARIO, 
+                    EKON = "DATOS"
+                ).DATOS_EXAMENES_MEDICOS
+            }
+        );
+
+        ClearCollect(
+            colTarifarioExamenes,
+            Table(ParseJSON(varJsonTexto))
+        );
+
+        ClearCollect(
+            colExamenesSeleccionados,
+            {
+                Categoria: "",
+                Nombre: "",
+                Precio: 0,
+                Padre: ""
+            }
+        );
+        Clear(colExamenesSeleccionados);
+
+        UpdateContext({varFilaEditandoID: ""});
+        UpdateContext({varPestañaActiva: "LABORATORIO (SANGRE)"})
+    Children:
+      - Container1_2:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_10:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingRight: =6
+                Children:
+                  - Icon1_11:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(PantallaPrincipal)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_11:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="PERFIL DEL PERSONAL"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - Container12_32:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.1
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingLeft: =50
+                  PaddingRight: =50
+                  X: =40
+                  Y: =40
+                Children:
+                  - Text16:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        FillPortions: =1.5
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =Parent.Height * 0.5
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        Text: |-
+                          ="TOTAL DE PERSONAS: " & Gallery5.AllItemsCount
+                  - Icon9_1:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        Color: =RGBA(15, 108, 189, 1)
+                        DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                        DisabledColor: =RGBA(255, 0, 0, 1)
+                        DisabledFill: =RGBA(0, 0, 0, 0)
+                        FillPortions: =0.2
+                        FocusedBorderThickness: =4
+                        Height: =Parent.Height * 0.5
+                        HoverBorderColor: =RGBA(0, 0, 0, 0)
+                        HoverColor: =RGBA(255, 0, 0, 1)
+                        HoverFill: =RGBA(0, 0, 0, 0)
+                        Icon: =Icon.Health
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                        OnSelect: |-
+                          =// Cargamos el tarifario completo, sin depender de ningún perfil de persona
+                          UpdateContext(
+                              {
+                                  varJsonTexto: LookUp(
+                                      PERFIL_USUARIO,
+                                      EKON = "DATOS"
+                                  ).DATOS_EXAMENES_MEDICOS
+                              }
+                          );
+
+                          ClearCollect(
+                              colTarifarioExamenes,
+                              Table(ParseJSON(varJsonTexto))
+                          );
+
+                          // La galería arranca vacía hasta que el usuario elija proveedor y zona
+                          Clear(colExamenesDisponibles);
+
+                          UpdateContext({varMostrarPopUp: true});
+
+                          Reset(cmbProveedor_3);
+                          Reset(cmbZona_1);
+                        PressedBorderColor: =RGBA(0, 0, 0, 0)
+                        PressedColor: =Self.Color
+                        PressedFill: =RGBA(0, 0, 0, 0)
+                        Width: =40
+                  - Icon11:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        Color: =RGBA(0, 120, 212, 1)
+                        DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                        DisabledColor: =RGBA(225, 223, 221, 1)
+                        DisabledFill: =RGBA(0, 0, 0, 0)
+                        FillPortions: =0.2
+                        FocusedBorderThickness: =4
+                        Height: =Parent.Height * 0.5
+                        HoverBorderColor: =RGBA(0, 0, 0, 0)
+                        HoverColor: =RGBA(255, 0, 0, 1)
+                        HoverFill: =RGBA(0, 0, 0, 0)
+                        Icon: =Icon.Laptop
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                        OnSelect: |-
+                          =// 1. Buscamos el registro en la lista PERFIL_USUARIO donde EKON = "DATOS"
+                          UpdateContext({
+                              varRegistroPerfil: LookUp(
+                                  PERFIL_USUARIO,
+                                  EKON = "DATOS"
+                              )
+                          });
+
+                          // 2. Extraemos el texto del JSON guardado en DATOS_EQUIPOS_TECNOLOGICOS
+                          UpdateContext({
+                              varJSONTextoCatalogo: varRegistroPerfil.DATOS_EQUIPOS_TECNOLOGICOS
+                          });
+
+                          // 3. Parseamos el JSON y armamos la colección jerárquica colCatalogoCompleto
+                          If(
+                              !IsBlank(varJSONTextoCatalogo),
+                              With(
+                                  { ParsedJSON: ParseJSON(varJSONTextoCatalogo) },
+                                  ClearCollect(
+                                      colCatalogoCompleto,
+                                      ForAll(
+                                          Table(ParsedJSON.Categorias),
+                                          {
+                                              OrdenCategoria: Value(ThisRecord.Value.OrdenCategoria),
+                                              Categoria: Text(ThisRecord.Value.Categoria),
+                                              Equipos: ForAll(
+                                                  Table(ThisRecord.Value.Equipos),
+                                                  {
+                                                      OrdenEquipo: Value(ThisRecord.Value.OrdenEquipo),
+                                                      Equipo: Text(ThisRecord.Value.Equipo),
+                                                      OpcionesNivel: ForAll(
+                                                          Table(ThisRecord.Value.OpcionesNivel),
+                                                          {
+                                                              ID: Value(ThisRecord.Value.ID),
+                                                              Nivel: Text(ThisRecord.Value.Nivel),
+                                                              Descripcion: Text(ThisRecord.Value.Descripcion),
+                                                              Costo: Value(ThisRecord.Value.Costo)
+                                                          }
+                                                      )
+                                                  }
+                                              )
+                                          }
+                                      )
+                                  );
+
+                                  // 4. Aplanamos en colOpcionesEquiposPlana para un fácil manejo en Galerías y Dropdowns
+                                  ClearCollect(
+                                      colOpcionesEquiposPlana,
+                                      Ungroup(
+                                          ForAll(
+                                              colCatalogoCompleto As Cat,
+                                              Ungroup(
+                                                  ForAll(
+                                                      Cat.Equipos As Eq,
+                                                      ForAll(
+                                                          Eq.OpcionesNivel As Opc,
+                                                          {
+                                                              OrdenCategoria: Cat.OrdenCategoria,
+                                                              Categoria: Cat.Categoria,
+                                                              OrdenEquipo: Eq.OrdenEquipo,
+                                                              Equipo: Eq.Equipo,
+                                                              ID: Opc.ID,
+                                                              Nivel: Opc.Nivel,
+                                                              Descripcion: Opc.Descripcion,
+                                                              Costo: Opc.Costo
+                                                          }
+                                                      )
+                                                  ),
+                                                  Value
+                                              )
+                                          ),
+                                          Value
+                                      )
+                                  )
+                              )
+                          );
+
+                          UpdateContext({varEditarEquipos: true});
+                        PressedBorderColor: =RGBA(0, 0, 0, 0)
+                        PressedColor: =RGBA(16, 110, 190, 1)
+                        PressedFill: =RGBA(0, 0, 0, 0)
+                        Width: =40
+                  - Button1_9:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Appearance: =ButtonAppearance.Transparent
+                        FillPortions: =0.2
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height * 0.5
+                        Icon: ="ArrowSync"
+                        IconStyle: =IconStyle.Filled
+                        Layout: =ButtonLayout.IconAfter
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |+
+                          =Refresh(PERFIL_USUARIO);
+
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =20
+                        Text: =
+                        Width: =60
+                  - Button1_7:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Appearance: =ButtonAppearance.Transparent
+                        FillPortions: =0.2
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height * 0.5
+                        Icon: ="Delete"
+                        IconStyle: =IconStyle.Filled
+                        Layout: =ButtonLayout.IconAfter
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                        OnSelect: |
+                          =Reset(txtFiltroCedula);
+                          Reset(txtFiltroEKON);
+                          Reset(txtFiltroNombre_2);
+
+                          // Ocultar filtros SOLO si están visibles
+                          If(
+                              varMenuEkon,
+                              UpdateContext({varMenuEkon: false})
+                          );
+
+                          If(
+                              varMenuCedula,
+                              UpdateContext({varMenuCedula: false})
+                          );
+
+                          If(
+                              varMenuNombre,
+                              UpdateContext({varMenuNombre: false})
+                          );
+
+
+                          Notify("Filtros eliminados", NotificationType.Information);
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =20
+                        Text: =
+                        Width: =60
+                  - tlt_nombresColaborador_38:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =Parent.Height * 0.5
+                        LayoutMinWidth: =0
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="EMPRESA:"
+                        Width: =80
+                  - cmbEmpresa:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        AllowExternalSelectedItems: =false
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =0.5
+                        DefaultSelectedItems: =//colPersonaSeleccionadaNov
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =""
+                        Height: =Parent.Height * 0.5
+                        InputTextPlaceholder: ="Empresa"
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Sort(
+                              Distinct(
+                                  'ESTRUCTURA GENERAL',
+                                  Empresa
+                              ),
+                              Value,
+                              SortOrder.Ascending
+                          )
+                        LayoutMinWidth: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        SelectMultiple: =false
+                        Size: =13
+                        Width: =200
+                  - tlt_nombresColaborador_39:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =Parent.Height * 0.5
+                        LayoutMinWidth: =0
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="UNIDAD:"
+                        Width: =80
+                  - cmbUnidad:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        AllowExternalSelectedItems: =false
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =0.5
+                        DefaultSelectedItems: =//colPersonaSeleccionadaNov
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =""
+                        Height: =Parent.Height * 0.5
+                        InputTextPlaceholder: ="Unidad"
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Sort(
+                              Distinct(
+                                  Filter(
+                                      'ESTRUCTURA GENERAL',
+                                      IsBlank(cmbEmpresa.Selected.Value) 
+                                      || Empresa = cmbEmpresa.Selected.Value
+                                  ),
+                                  'Unidad Gestión'
+                              ),
+                              Value,
+                              SortOrder.Ascending
+                          )
+                        LayoutMinWidth: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        SelectMultiple: =false
+                        Size: =13
+                        Width: =200
+                  - tlt_nombresColaborador_32:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =Parent.Height * 0.5
+                        LayoutMinWidth: =0
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="PERSONA:"
+                        Width: =80
+                  - cmbPersonaNov_1:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        AllowExternalSelectedItems: =false
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =0.5
+                        DefaultSelectedItems: =colPersonaSeleccionadaNov
+                        Fill: =RGBA(255, 255, 255, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =""
+                        Height: =Parent.Height * 0.5
+                        InputTextPlaceholder: ="Buscar Principal"
+                        ItemDisplayText: =ThisItem.'Nombre Apellido'
+                        Items: |-
+                          =/*
+                          SortByColumns(
+                              Search(
+                                  Filter(
+                                      'ESTRUCTURA GENERAL';
+                                      Upper(Trim(Estado)) = "A"
+                                  );
+                                  cmbPersonaNov_1.SearchText;
+                                  'Nombre Apellido'
+                              );
+                              "field_2";
+                              SortOrder.Ascending
+                          )
+                          */
+                          SortByColumns(
+                              Search(
+                                  Filter(
+                                      'ESTRUCTURA GENERAL',
+                                      Upper(Trim(Estado)) = "A" &&
+                                      (
+                                          IsBlank(cmbUnidad.Selected.Value) ||
+                                          'Unidad Gestión' = cmbUnidad.Selected.Value
+                                      )
+                                  ),
+                                  cmbPersonaNov_1.SearchText,
+                                  'Nombre Apellido'
+                              ),
+                              "field_2",
+                              SortOrder.Ascending
+                          )
+                        LayoutMinWidth: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        SelectMultiple: =false
+                        Size: =13
+                        Width: =200
+                  - Button1_1:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height * 0.5
+                        Icon: ="ArrowCircleRight"
+                        IconStyle: =IconStyle.Filled
+                        Layout: =ButtonLayout.IconAfter
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                        OnSelect: |-
+                          =Navigate(
+                              RegistroPerfiles, 
+                              ScreenTransition.Fade, 
+                              { 
+                                  ctxPersonaSeleccionada: cmbPersonaNov_1.Selected
+                              }
+                          );
+
+                          ClearCollect(
+                              colCIUO,
+                              Table(
+                                  ParseJSON(
+                                      ConsultarProyecto.Run(
+                                          "",
+                                          "",
+                                          "CIUO"
+                                      ).respuestajson
+                                  )
+                              )
+                          );
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =15
+                        Text: ="REPORTE"
+                        Width: =120
+            - contCronogramaMensual_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Height: =Parent.Height - 100
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutOverflowX: =LayoutOverflow.Scroll
+                  LayoutOverflowY: =LayoutOverflow.Scroll
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: |-
+                    =//Parent.Width - 40
+                    Parent.Width
+                  X: =20
+                  Y: =120
+                Children:
+                  - Container35:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        Fill: =RGBA(214, 221, 224, 1)
+                        FillPortions: =0
+                        Height: =50
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                      Children:
+                        - Container3_4:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              FillPortions: =If(txtFiltroEKON.Visible,1,0.4)
+                              Height: =Parent.Height
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - TextCanvas11_13:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    AlignInContainer: =AlignInContainer.Center
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(0, 0, 0, 1)
+                                    Fill: =RGBA(214, 221, 224, 1)
+                                    FillPortions: |-
+                                      =If(
+                                          varMenuEkon,
+                                          1,
+                                          2
+                                      )
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =Parent.Height
+                                    LayoutMaxWidth: =80
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =80
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Size: =13
+                                    Text: ="EKON"
+                                    Width: =Parent.Width
+                                    X: =40
+                                    Y: =40
+                              - Container11_4:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =5
+                                    LayoutJustifyContent: =LayoutJustifyContent.End
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =16
+                                    Width: =Parent.Width
+                                  Children:
+                                    - txtFiltroEKON:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderThickness: =1
+                                          Color: |-
+                                            =//RGBA(214; 221; 224; 1)
+                                            Color.Black
+                                          Default: =""
+                                          FocusedBorderColor: =Color.Black
+                                          FocusedBorderThickness: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height * 0.8
+                                          HintText: ="Buscar Ekon"
+                                          HoverBorderColor: =Color.Black
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          LayoutMinWidth: =0
+                                          LineHeight: =1
+                                          OnSelect: =
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =15
+                                          RadiusBottomRight: =15
+                                          RadiusTopLeft: =15
+                                          RadiusTopRight: =15
+                                          Size: =11
+                                          Visible: =varMenuEkon
+                                          Width: =Parent.Width * 0.75
+                                          X: =79
+                                          Y: =141
+                                    - IconFilterEkon_5:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 18, 107, 1)
+                                          Color: |
+                                            =//RGBA(0; 18; 107; 1)
+                                            If(
+                                                Len(txtFiltroEKON.Text) > 0,
+                                                Color.Red,      // Se pone ROJO si hay texto escrito (filtro activo)
+                                                RGBA(0, 18, 107, 1)     // Se queda NEGRO si está limpio
+                                            )
+                                          Height: =Parent.Height
+                                          Icon: =Icon.Filter
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =0
+                                          OnSelect: |-
+                                            =UpdateContext({varMenuEkon: !varMenuEkon});
+                                          Width: |-
+                                            =If(
+                                                varMenuEkon,
+                                                Parent.Width * 0.16,
+                                                Parent.Width * 0.3
+                                            )
+                                          X: =40
+                                          Y: =40
+                        - Container3_12:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              FillPortions: =If(txtFiltroCedula.Visible,1,0.5)
+                              Height: =Parent.Height
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - TextCanvas11_27:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(0, 0, 0, 1)
+                                    Fill: =RGBA(214, 221, 224, 1)
+                                    FillPortions: |-
+                                      =If(
+                                          varMenuCedula,
+                                          1,
+                                          2
+                                      )
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =60
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =0
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Size: =13
+                                    Text: ="CEDULA"
+                                    Width: =Parent.Width
+                                    X: =40
+                                    Y: =40
+                              - Container11_5:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =5
+                                    LayoutJustifyContent: =LayoutJustifyContent.End
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =16
+                                    Width: =Parent.Width
+                                  Children:
+                                    - txtFiltroCedula:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderThickness: =1
+                                          Color: |-
+                                            =//RGBA(214; 221; 224; 1)
+                                            Color.Black
+                                          Default: =""
+                                          FocusedBorderColor: =Color.Black
+                                          FocusedBorderThickness: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height * 0.8
+                                          HintText: ="Buscar Cédula"
+                                          HoverBorderColor: =Color.Black
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          LineHeight: =1
+                                          OnSelect: =
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =11
+                                          Visible: =varMenuCedula
+                                          Width: =Parent.Width * 0.6
+                                          X: =165
+                                          Y: =141
+                                    - IconFilterEkon_6:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          BorderColor: =RGBA(0, 18, 107, 1)
+                                          Color: |
+                                            =//RGBA(0; 18; 107; 1)
+                                            If(
+                                                Len(txtFiltroCedula.Text) > 0,
+                                                Color.Red,      // Se pone ROJO si hay texto escrito (filtro activo)
+                                                RGBA(0, 18, 107, 1)     // Se queda NEGRO si está limpio
+                                            )
+                                          Height: =Parent.Height
+                                          Icon: =Icon.Filter
+                                          LayoutMinHeight: =0
+                                          OnSelect: |-
+                                            =UpdateContext({varMenuCedula: !varMenuCedula});
+                                          Width: |-
+                                            =If(
+                                                varMenuCedula,
+                                                Parent.Width * 0.123,
+                                                Parent.Width * 0.2625
+                                            )
+                                          X: =40
+                                          Y: =40
+                        - Container3_13:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              Height: =Parent.Height
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - TextCanvas11_28:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(0, 0, 0, 1)
+                                    Fill: =RGBA(214, 221, 224, 1)
+                                    FillPortions: |-
+                                      =If(
+                                          varMenuNombre,
+                                          1,
+                                          2
+                                      )
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =60
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =0
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    RadiusBottomLeft: =0
+                                    RadiusBottomRight: =0
+                                    RadiusTopLeft: =0
+                                    RadiusTopRight: =0
+                                    Size: =13
+                                    Text: ="NOMBRE COMPLETO"
+                                    Width: =Parent.Width
+                                    X: =40
+                                    Y: =40
+                              - Container11_6:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =5
+                                    LayoutJustifyContent: =LayoutJustifyContent.End
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =16
+                                    Width: =Parent.Width
+                                  Children:
+                                    - txtFiltroNombre_2:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderThickness: =1
+                                          Color: |-
+                                            =//RGBA(214; 221; 224; 1)
+                                            Color.Black
+                                          Default: =""
+                                          FocusedBorderColor: =Color.Black
+                                          FocusedBorderThickness: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height * 0.8
+                                          HintText: ="Buscar Nombre"
+                                          HoverBorderColor: =Color.Black
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          LineHeight: =1
+                                          OnSelect: =
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =11
+                                          Visible: =varMenuNombre
+                                          Width: =Parent.Width * 0.8
+                                          X: =303
+                                          Y: =141
+                                    - IconFilterEkon_7:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.End
+                                          BorderColor: =RGBA(0, 18, 107, 1)
+                                          Color: |
+                                            =//RGBA(0; 18; 107; 1)
+                                            If(
+                                                Len(txtFiltroNombre_2.Text) > 0,
+                                                Color.Red,      // Se pone ROJO si hay texto escrito (filtro activo)
+                                                RGBA(0, 18, 107, 1)     // Se queda NEGRO si está limpio
+                                            )
+                                          Height: =Parent.Height
+                                          Icon: =Icon.Filter
+                                          LayoutMinHeight: =0
+                                          OnSelect: |-
+                                            =UpdateContext({varMenuNombre: !varMenuNombre});
+                                          Width: |-
+                                            =If(
+                                                varMenuNombre,
+                                                Parent.Width * 0.09,
+                                                Parent.Width * 0.105
+                                            )
+                                          X: =40
+                                          Y: =40
+                        - Text16_3:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="EDUCACIÓN"
+                        - Text16_4:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="CERTIFICADO"
+                        - Text16_5:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="EXPERIENCIA LABORAL"
+                        - Text16_6:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="EXAMENES MÉDICOS"
+                        - Text16_7:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="VACUNAS"
+                        - Text16_8:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.98
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="ACCIONES"
+                  - Gallery5:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        BorderColor: =RGBA(245, 245, 245, 1)
+                        Items: |-
+                          =Filter(
+                                            PERFIL_USUARIO,
+                                            EKON <> "DATOS",
+                                            IsBlank(txtFiltroEKON.Text) || txtFiltroEKON.Text in Text(EKON),
+                                            IsBlank(txtFiltroCedula.Text) || txtFiltroCedula.Text in Text(ParseJSON(DatosGenerales).Cedula),
+                                            IsBlank(txtFiltroNombre_2.Text) || txtFiltroNombre_2.Text in Text(ParseJSON(DatosGenerales).NombreCompleto)
+                                        )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        TemplatePadding: =0
+                        TemplateSize: =45
+                      Children:
+                        - Container36:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              Height: =Parent.TemplateHeight
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              Width: =Parent.Width
+                            Children:
+                              - Text13:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =0.4
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =ThisItem.EKON
+                              - Text13_1:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =0.5
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =Text(ParseJSON(ThisItem.DatosGenerales).Cedula)
+                              - Text13_2:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: =Text(ParseJSON(ThisItem.DatosGenerales).NombreCompleto)
+                              - Text13_3:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: |-
+                                      =With(
+                                          { 
+                                              conteoEdu: CountRows(
+                                                  Filter(
+                                                      Table(ParseJSON(ThisItem.EducacionJSON)), 
+                                                      !IsBlank(Value.TituloObtenido) && Text(Value.TituloObtenido) <> ""
+                                                  )
+                                              ) 
+                                          },
+                                          conteoEdu & " Registro" & If(conteoEdu <> 1, "s", "")
+                                      )
+                              - Text13_4:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: |-
+                                      =With(
+                                          { 
+                                              conteoCert: CountRows(
+                                                  Filter(
+                                                      Table(ParseJSON(ThisItem.CertificadosJSON)), 
+                                                      !IsBlank(Value.NombreCertificado) && Text(Value.NombreCertificado) <> ""
+                                                  )
+                                              ) 
+                                          },
+                                          conteoCert & " Registro" & If(conteoCert <> 1, "s", "")
+                                      )
+                              - Text13_5:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: |-
+                                      =With(
+                                          { 
+                                              conteoExp: CountRows(
+                                                  Filter(
+                                                      Table(ParseJSON(ThisItem.ExperienciaJSON)), 
+                                                      !IsBlank(Value.NombreEmpresa) && Text(Value.NombreEmpresa) <> ""
+                                                  )
+                                              ) 
+                                          },
+                                          conteoExp & " Registro" & If(conteoExp <> 1, "s", "")
+                                      )
+                              - Text13_6:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                              - Text13_7:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                              - Container37:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =10
+                                    LayoutJustifyContent: =LayoutJustifyContent.Center
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - Button3:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Appearance: =ButtonAppearance.Transparent
+                                          DisplayMode: |-
+                                            =If(
+                                                varMostrarQR,
+                                                DisplayMode.Disabled,
+                                                DisplayMode.Edit
+                                            )
+                                          Icon: ="Edit"
+                                          IconStyle: =IconStyle.Filled
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: |-
+                                            =Navigate(
+                                                RegistroPerfiles, 
+                                                ScreenTransition.Fade, 
+                                                { 
+                                                    ctxPersonaSeleccionada: LookUp('ESTRUCTURA GENERAL', 'Código Ekon' = ThisItem.EKON)
+                                                }
+                                            )
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Text: =
+                                          Width: =50
+                                    - Button3_1:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Appearance: =ButtonAppearance.Transparent
+                                          DisplayMode: |-
+                                            =If(
+                                                varMostrarQR,
+                                                DisplayMode.Disabled,
+                                                DisplayMode.Edit
+                                            )
+                                          Icon: ="Person"
+                                          IconStyle: =IconStyle.Filled
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: |-
+                                            =UpdateContext({
+                                                varMostrarHTML: true,  
+                                                varSelectedRecord: ThisItem,
+                                                varSeccionPopUp: 1
+                                            })
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Text: =
+                                          Width: =50
+                                    - Button3_8:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Appearance: =ButtonAppearance.Transparent
+                                          Color: |-
+                                            =
+                                            If(
+                                                IsBlank(ThisItem.URL_PASAPORTE) &&
+                                                IsBlank(ThisItem.URL_CARNET_VACUNAS),
+                                                Color.Gray,
+                                                Color.Green
+                                            )
+                                          DisplayMode: |+
+                                            =If(
+                                                IsBlank(ThisItem.URL_PASAPORTE) && 
+                                                IsBlank(ThisItem.URL_CARNET_VACUNAS),
+                                                DisplayMode.Disabled,
+                                                DisplayMode.Edit
+                                            )
+                                          Icon: ="DocumentPdf"
+                                          IconStyle: =IconStyle.Filled
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: |-
+                                            =/*
+                                            UpdateContext({
+                                                varMostrarQR: true;  
+                                                varRegistroSeleccionado: ThisItem
+                                                })
+                                            */
+
+
+                                            Refresh(PERFIL_USUARIO);
+
+                                            UpdateContext(
+                                                {
+                                                    varRegistroSeleccionado:
+                                                        LookUp(
+                                                            PERFIL_USUARIO,
+                                                            ID = ThisItem.ID
+                                                        ),
+                                                    varCacheQR: Text(
+                                                        Now(),
+                                                        "yyyymmddhhmmss"
+                                                    ),
+                                                    varMostrarQR: true
+                                                }
+                                            );
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Text: =
+                                          Width: =50
+      - Rectangle3_1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledFill: =RGBA(161, 159, 157, 1)
+            Fill: =RGBA(0, 0, 0, 0.4)
+            FocusedBorderThickness: =4
+            Height: =Parent.Height
+            HoverFill: =RGBA(0, 0, 0, 0.4)
+            OnSelect: |-
+              =UpdateContext({varMostrarHTML:false});
+              UpdateContext({varFilaEditandoID: ""})
+            PressedFill: =RGBA(0, 0, 0, 0.4)
+            Visible: =varMostrarHTML
+            Width: =Parent.Width
+      - Container43:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =Min(Parent.Height * 0.8, 750)
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            PaddingBottom: =8
+            PaddingTop: =8
+            RadiusBottomLeft: =20
+            RadiusBottomRight: =20
+            RadiusTopLeft: =20
+            RadiusTopRight: =20
+            Visible: =varMostrarHTML
+            Width: =Min(Parent.Width * 0.8, 700)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - Container44:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.1
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingBottom: =8
+                  PaddingTop: =8
+                Children:
+                  - tlt_nombresColaborador_37:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: =Text(ParseJSON(varSelectedRecord.DatosGenerales).NombreCompleto)
+                        Width: =80
+                  - Button14:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Appearance: =ButtonAppearance.Transparent
+                        Height: =Parent.Height
+                        Icon: ="DismissCircle"
+                        IconStyle: =IconStyle.Filled
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =UpdateContext({
+                              varMostrarPopUp: false,
+                              varSelectedRecord: Blank()
+                          })
+                        Text: =
+                        Width: =60
+            - HtmlText1:
+                Control: HtmlViewer@2.1.0
+                Properties:
+                  DisabledBorderColor: =RGBA(161, 159, 157, 1)
+                  FillPortions: =1.5
+                  Font: =Font.'Segoe UI'
+                  HtmlText: "=\r\nSwitch(\r\n    varSeccionPopUp,\r\n\r\n    /* ===================================================\r\n       SECCIÓN 1: DATOS GENERALES Y CONTACTO\r\n       =================================================== */\r\n    1,\r\n    With(\r\n        {gData: ParseJSON(varSelectedRecord.DatosGenerales)},\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px; color: #111827;'>\",\r\n                \"<div style='border-left: 4px sol'id #092162; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #092162; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F464 Ficha de Colaborador</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Información general y corporativa</span>\",\r\n                \"</div>\",\r\n\r\n                \"<div style='background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>\",\r\n                    \"<div style='font-size: 11px; text-transform: uppercase; color: #D13438; font-weight: 700; margin-bottom: 4px;'>Nombre Completo</div>\",\r\n                    \"<div style='font-size: 18px; font-weight: 700; color: #111827;'>\", Coalesce(Text(gData.NombreCompleto), \"N/A\"), \"</div>\",\r\n                    \"<div style='margin-top: 12px; display: grid; grid-template-columns: 50% 50%; gap: 10px;'>\",\r\n                        \"<div><span style='color: #6B7280; font-size: 12px;'>Cédula:</span> <br><b style='font-size: 14px;'>\", Coalesce(Text(gData.Cedula), \"N/A\"), \"</b></div>\",\r\n                        \"<div><span style='color: #6B7280; font-size: 12px;'>Código EKON:</span> <br><b style='font-size: 14px; color: #092162;'>#\", Coalesce(Text(varSelectedRecord.EKON), Coalesce(Text(gData.Ekon), \"N/A\")), \"</b></div>\",\r\n                    \"</div>\",\r\n                \"</div>\",\r\n\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-bottom: 12px;'>\U0001F4BC Posición Corporativa</h4>\",\r\n                \"<table style='width: 100%; font-size: 13px; line-height: 1.6;'>\",\r\n                    \"<tr><td style='color: #6B7280; width: 40%;'>Compañía:</td><td style='font-weight: 600;'>\", Coalesce(Text(gData.Compania), \"N/A\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Área:</td><td style='font-weight: 600;'>\", Coalesce(Text(gData.Area), \"N/A\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Departamento:</td><td style='font-weight: 600;'>\", Coalesce(Text(gData.Departamento), \"N/A\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Cargo:</td><td style='font-weight: 600; color: #092162;'>\", Coalesce(Text(gData.Cargo), \"N/A\"), \"</td></tr>\",\r\n                \"</table>\",\r\n\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-top: 16px; margin-bottom: 12px;'>\U0001F4DE Contacto y Seguros</h4>\",\r\n                \"<table style='width: 100%; font-size: 13px; line-height: 1.6;'>\",\r\n                    \"<tr><td style='color: #6B7280; width: 40%;'>Celular:</td><td style='font-weight: 600;'>\U0001F4F1 \", Coalesce(Text(gData.NumeroCelular), \"N/A\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Contacto Emergencia:</td><td style='font-weight: 600;'>\", Coalesce(Text(gData.Contacto), \"N/A\"), \" (\", Coalesce(Text(gData.Parentesco), \"\"), \") - \", Coalesce(Text(gData.NumeroContacto), \"\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Licencia Conducir:</td><td style='font-weight: 600;'>\", If(Coalesce(Boolean(gData.TieneLicencia), false), Concatenate(Text(gData.Licencia), \" (Caduca: \", Text(gData.FechaCadLic), \")\"), \"NO TIENE\"), \"</td></tr>\",\r\n                    \"<tr><td style='color: #6B7280;'>Seguro Privado:</td><td style='font-weight: 600;'>\", If(Coalesce(Boolean(gData.Seguro), false), Text(gData.SeguroPrivado), \"NO APLICA\"), \"</td></tr>\",\r\n                \"</table>\",\r\n            \"</div>\"\r\n        )\r\n    ),\r\n\r\n    /* ===================================================\r\n       SECCIÓN 2: EDUCACIÓN Y CALIFICACIONES\r\n       =================================================== */\r\n    2,\r\n    With(\r\n        {\r\n            eduData: Table(ParseJSON(varSelectedRecord.EducacionJSON)),\r\n            caliData: Table(ParseJSON(varSelectedRecord.CalificacionJSON))\r\n        },\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px;'>\",\r\n                \"<div style='border-left: 4px solid #092162; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #092162; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F393 Formación Académica</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Títulos y calificaciones profesionales</span>\",\r\n                \"</div>\",\r\n                \r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-bottom: 12px;'>Historial Educativo</h4>\",\r\n                Concat(\r\n                    eduData,\r\n                    Concatenate(\r\n                        \"<div style='background: #FFFFFF; border: 1px solid #E5E7EB; border-left: 4px solid \", If(Text(ThisRecord.Value.Estado) = \"Culminado\", \"#10B981\", \"#F59E0B\"), \"; border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>\",\r\n                            \"<div style='display: flex; justify-content: space-between; align-items: start;'>\",\r\n                                \"<div style='font-weight: 700; font-size: 14px; color: #111827;'>\", Coalesce(Text(ThisRecord.Value.TituloObtenido), \"N/A\"), \"</div>\",\r\n                                \"<div style='background: \", If(Text(ThisRecord.Value.Estado) = \"Culminado\", \"#D1FAE5; color: #065F46;\", \"#FEF3C7; color: #92400E;\"), \" font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;'>\", Coalesce(Text(ThisRecord.Value.Estado), \"N/A\"), \"</div>\",\r\n                            \"</div>\",\r\n                            \"<div style='font-size: 12px; color: #4B5563; margin-top: 4px;'><b>Institución:</b> \", Coalesce(Text(ThisRecord.Value.Institucion), \"N/A\"), \"</div>\",\r\n                            \"<div style='font-size: 12px; color: #4B5563;'><b>Nivel:</b> \", Coalesce(Text(ThisRecord.Value.NivelEstudio), \"N/A\"), \"</div>\",\r\n                            \"<div style='font-size: 11px; color: #9CA3AF; margin-top: 6px;'>Período: \", Coalesce(Text(ThisRecord.Value.FechaInicio), \"\"), \" - \", Coalesce(Text(ThisRecord.Value.FechaFin), \"\"), \"</div>\",\r\n                        \"</div>\"\r\n                    )\r\n                ),\r\n\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-top: 20px; margin-bottom: 12px;'>⭐ Calificaciones Especiales</h4>\",\r\n                If(CountRows(caliData) > 0,\r\n                    Concat(\r\n                        caliData,\r\n                        Concatenate(\r\n                            \"<div style='background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; margin-bottom: 8px;'>\",\r\n                                \"<div style='font-weight: 700; font-size: 13px; color: #092162;'>\", Coalesce(Text(ThisRecord.Value.NombreCalificacion), \"N/A\"), \"</div>\",\r\n                                \"<div style='font-size: 12px; color: #6B7280; display: flex; justify-content: space-between; margin-top: 4px;'>\",\r\n                                    \"<span><b>Emisor:</b> \", Coalesce(Text(ThisRecord.Value.AutoraEmisoraCali), \"N/A\"), \"</span>\",\r\n                                    \"<span><b>Vence:</b> \", Coalesce(Text(ThisRecord.Value.FechaVencimiento), \"N/A\"), \"</span>\",\r\n                                \"</div>\",\r\n                            \"</div>\"\r\n                        )\r\n                    ),\r\n                    \"<div style='font-size: 12px; color: #9CA3AF; font-style: italic;'>No registra calificaciones especiales.</div>\"\r\n                ),\r\n            \"</div>\"\r\n        )\r\n    ),\r\n\r\n    /* ===================================================\r\n       SECCIÓN 3: EXPERIENCIA LABORAL\r\n       =================================================== */\r\n    3,\r\n    With(\r\n        {expData: Table(ParseJSON(varSelectedRecord.ExperienciaJSON))},\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px;'>\",\r\n                \"<div style='border-left: 4px solid #092162; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #092162; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F4BC Experiencia Laboral</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Trayectoria en proyectos corporativos</span>\",\r\n                \"</div>\",\r\n                Concat(\r\n                    expData As Exp,\r\n                    With(\r\n                        {actData: Table(Exp.Value.ListaActividades)},\r\n                        Concatenate(\r\n                            \"<div style='background: #FFFFFF; border: 1px solid #E5E7EB; padding: 16px; margin-bottom: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;'>\",\r\n                                \"<div style='position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: #092162; border-radius: 8px 0 0 8px;'></div>\",\r\n                                \"<div style='display:flex; justify-content:space-between; align-items:flex-start;'>\",\r\n                                    \"<div>\",\r\n                                        \"<div style='font-weight: 800; font-size: 15px; color: #111827;'>\", Coalesce(Text(Exp.Value.Cargo), \"Cargo\"), \"</div>\",\r\n                                        \"<div style='font-size: 13px; color: #D13438; font-weight: 600; margin-top: 2px;'>\", Coalesce(Text(Exp.Value.NombreEmpresa), \"Empresa\"), \"</div>\",\r\n                                    \"</div>\",\r\n                                    \"<div style='background:#F3F4F6; color:#4B5563; font-size:10px; font-weight:700; padding:4px 8px; border-radius:4px; border: 1px solid #E5E7EB;'>Contratista: \", Coalesce(Text(Exp.Value.Contratista), \"N/A\"), \"</div>\",\r\n                                \"</div>\",\r\n\r\n                                \"<div style='display: flex; gap: 15px; margin-top: 12px; font-size: 12px; color: #4B5563; background: #F9FAFB; padding: 8px; border-radius: 4px;'>\",\r\n                                    \"<div>\U0001F5D3️ <b>Inicio:</b> \", Coalesce(Text(Exp.Value.FechaInicioExp), \"N/A\"), \"</div>\",\r\n                                    \"<div>\U0001F3C1 <b>Fin:</b> \", Coalesce(Text(Exp.Value.FechaFinExp), \"N/A\"), \"</div>\",\r\n                                    \"<div>\U0001F4B0 <b>Monto:</b> $\", Coalesce(Text(Exp.Value.Monto), \"0\"), \"</div>\",\r\n                                \"</div>\",\r\n\r\n                                \"<div style='font-size: 13px; color: #374151; margin-top: 12px;'>\",\r\n                                    \"<b>Proyecto:</b> \", Coalesce(Text(Exp.Value.Proyecto), \"N/A\"),\r\n                                \"</div>\",\r\n\r\n                                If(\r\n                                    CountRows(actData) > 0,\r\n                                    Concatenate(\r\n                                        \"<div style='margin-top: 12px; border-top: 1px dashed #E5E7EB; padding-top: 8px;'>\",\r\n                                            \"<div style='font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 6px;'>Actividades Clave</div>\",\r\n                                            \"<ul style='margin:0; padding-left: 20px; color: #4B5563; font-size: 12px;'>\",\r\n                                                Concat(\r\n                                                    actData As Act,\r\n                                                    Concatenate(\"<li style='padding: 2px 0;'>\", Coalesce(Text(Act.Value.Actividad), \"N/A\"), \"</li>\")\r\n                                                ),\r\n                                            \"</ul>\",\r\n                                        \"</div>\"\r\n                                    ),\r\n                                    \"\"\r\n                                ),\r\n                            \"</div>\"\r\n                        )\r\n                    )\r\n                ),\r\n            \"</div>\"\r\n        )\r\n    ),\r\n\r\n    /* ===================================================\r\n       SECCIÓN 4: CERTIFICACIONES\r\n       =================================================== */\r\n    4,\r\n    With(\r\n        {certData: Table(ParseJSON(varSelectedRecord.CertificadosJSON))},\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px;'>\",\r\n                \"<div style='border-left: 4px solid #092162; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #092162; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F4DC Certificaciones</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Licencias y cursos aprobados</span>\",\r\n                \"</div>\",\r\n                \"<table style='width: 100%; border-collapse: collapse; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;'>\",\r\n                    \"<tr style='background-color: #092162; color: #FFFFFF; font-size: 12px;'>\",\r\n                        \"<th style='padding: 12px 10px; text-align: left;'>Certificado</th>\",\r\n                        \"<th style='padding: 12px 10px; text-align: left;'>Emisor</th>\",\r\n                        \"<th style='padding: 12px 10px; text-align: center;'>Vencimiento</th>\",\r\n                    \"</tr>\",\r\n                    Concat(\r\n                        certData,\r\n                        Concatenate(\r\n                            \"<tr style='border-bottom: 1px solid #E5E7EB; background-color: #FFFFFF;'>\",\r\n                                \"<td style='padding: 12px 10px; font-weight: 700; color: #111827;'>\", Coalesce(Text(ThisRecord.Value.NombreCertificado), \"N/A\"), \"</td>\",\r\n                                \"<td style='padding: 12px 10px; color: #4B5563;'>\", Coalesce(Text(ThisRecord.Value.AutoraEmisora), \"N/A\"), \"</td>\",\r\n                                \"<td style='padding: 12px 10px; text-align: center;'>\", \r\n                                    \"<span style='background: #FEE2E2; color: #B91C1C; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;'>\", Coalesce(Text(ThisRecord.Value.FechaVencimiento), \"N/A\"), \"</span>\",\r\n                                \"</td>\",\r\n                            \"</tr>\"\r\n                        )\r\n                    ),\r\n                \"</table>\",\r\n            \"</div>\"\r\n        )\r\n    ),\r\n\r\n    /* ===================================================\r\n       SECCIÓN 5: SALUD (EXÁMENES Y VACUNAS)\r\n       =================================================== */\r\n    5,\r\n    With(\r\n        {\r\n            vacData: Table(ParseJSON(varSelectedRecord.VacunasJSON)),\r\n            exaData: ParseJSON(varSelectedRecord.EXAMENES_MEDICOS)\r\n        },\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px;'>\",\r\n                \"<div style='border-left: 4px solid #D13438; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #D13438; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F3E5 Ficha Médica y Salud</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Exámenes ocupacionales y esquema de vacunación</span>\",\r\n                \"</div>\",\r\n\r\n                /* Tarjeta Examen Médico */\r\n                \"<div style='background: #FFFFFF; border: 1px solid #E5E7EB; border-top: 4px solid #10B981; border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>\",\r\n                    \"<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;'>\",\r\n                        \"<h4 style='margin:0; font-size: 15px; color:#111827;'>\U0001FA7A Último Examen Ocupacional</h4>\",\r\n                        \"<span style='background: \", If(Text(exaData.Aptitud)=\"APTO\", \"#D1FAE5; color: #065F46;\", \"#FEE2E2; color: #B91C1C;\"), \" font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 12px;'>\", Coalesce(Text(exaData.Aptitud), \"N/A\"), \"</span>\",\r\n                    \"</div>\",\r\n                    \"<table style='width: 100%; font-size: 12px; color: #4B5563; line-height: 1.8;'>\",\r\n                        \"<tr><td style='width: 50%;'><b>Fecha:</b> \", Coalesce(Text(exaData.FechaExa), \"N/A\"), \" (Vence: \", Coalesce(Text(exaData.FechaExaCad), \"N/A\"), \")</td>\",\r\n                        \"<td><b>Médico:</b> \", Coalesce(Text(exaData.NombreMedico), \"N/A\"), \"</td></tr>\",\r\n                        \"<tr><td><b>Lugar:</b> \", Coalesce(Text(exaData.Lugar), \"N/A\"), \"</td>\",\r\n                        \"<td><b>Tipo de Sangre:</b> <b style='color:#D13438'>\", Coalesce(Text(exaData.Sangre), \"N/A\"), \"</b></td></tr>\",\r\n                        \"<tr><td colspan='2' style='padding-top: 8px;'><b>Restricciones:</b> \", Coalesce(Text(exaData.Restricciones), \"Ninguna\"), \"</td></tr>\",\r\n                        \"<tr><td colspan='2'><b>Alergias:</b> \", Coalesce(Text(exaData.Alergias), \"Ninguna\"), \"</td></tr>\",\r\n                    \"</table>\",\r\n                \"</div>\",\r\n\r\n                /* Esquema Vacunas */\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-bottom: 12px;'>\U0001F489 Esquema de Vacunación</h4>\",\r\n                Concat(\r\n                    vacData As Vac,\r\n                    With(\r\n                        {dosisData: Table(Vac.Value.ListaActividades)},\r\n                        Concatenate(\r\n                            \"<div style='background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px; margin-bottom: 12px;'>\",\r\n                                \"<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;'>\",\r\n                                    \"<div style='font-weight: 700; font-size: 14px; color: #092162;'>\", Coalesce(Text(Vac.Value.NombreVacuna), \"N/A\"), \"</div>\",\r\n                                    If(Coalesce(Text(Vac.Value.TipoVacuna), \"\") <> \"\",\r\n                                        Concatenate(\"<span style='background:#E0E7FF; color:#3730A3; font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px;'>\", Text(Vac.Value.TipoVacuna), \"</span>\"),\r\n                                        \"\"\r\n                                    ),\r\n                                \"</div>\",\r\n                                \"<div style='font-size: 11px; color: #6B7280; margin-bottom: 8px;'>1ra Dosis: <b>\", Coalesce(Text(Vac.Value.FechaPrimeraDosis), \"Pendiente\"), \"</b></div>\",\r\n\r\n                                If(CountRows(dosisData) > 0,\r\n                                    Concatenate(\r\n                                        \"<table style='width: 100%; border-collapse: collapse; font-size: 11px; background: #FFFFFF; border: 1px solid #F3F4F6;'>\",\r\n                                            \"<tr style='background-color: #F3F4F6;'>\",\r\n                                                \"<th style='padding: 4px 6px; text-align: left; color: #4B5563;'>Dosis</th>\",\r\n                                                \"<th style='padding: 4px 6px; text-align: left; color: #4B5563;'>Tentativa</th>\",\r\n                                                \"<th style='padding: 4px 6px; text-align: left; color: #4B5563;'>Aplicada</th>\",\r\n                                            \"</tr>\",\r\n                                            Concat(\r\n                                                dosisData As Dosis,\r\n                                                With(\r\n                                                    {esApli: Coalesce(Text(Dosis.Value.FechaReal), \"\") <> \"\"},\r\n                                                    Concatenate(\r\n                                                        \"<tr style='border-bottom: 1px solid #F3F4F6;'>\",\r\n                                                            \"<td style='padding: 4px 6px; font-weight: 600; color: #111827;'>\", Coalesce(Text(Dosis.Value.NumeroDosis), \"N/A\"), \"</td>\",\r\n                                                            \"<td style='padding: 4px 6px; color: #6B7280;'>\", Coalesce(Text(Dosis.Value.FechaTentativa), \"-\"), \"</td>\",\r\n                                                            \"<td style='padding: 4px 6px; font-weight: 700;'>\",\r\n                                                                If(esApli,\r\n                                                                    Concatenate(\"<span style='color:#10B981;'>✔ \", Text(Dosis.Value.FechaReal), \"</span>\"),\r\n                                                                    \"<span style='color:#F59E0B;'>Pendiente</span>\"\r\n                                                                ),\r\n                                                            \"</td>\",\r\n                                                        \"</tr>\"\r\n                                                    )\r\n                                                )\r\n                                            ),\r\n                                        \"</table>\"\r\n                                    ),\r\n                                    \"<div style='font-size: 11px; color: #9CA3AF; font-style: italic;'>Sin refuerzos registrados</div>\"\r\n                                ),\r\n                            \"</div>\"\r\n                        )\r\n                    )\r\n                ),\r\n            \"</div>\"\r\n        )\r\n    ),\r\n\r\n    /* ===================================================\r\n       SECCIÓN 6: RECONOCIMIENTOS Y DESEMPEÑO\r\n       =================================================== */\r\n    6,\r\n    With(\r\n        {\r\n            empData: Table(ParseJSON(varSelectedRecord.EmpleadoMes)),\r\n            pracData: Table(ParseJSON(varSelectedRecord.BuenasPracticas))\r\n        },\r\n        Concatenate(\r\n            \"<div style='font-family: Segoe UI, sans-serif; padding: 16px;'>\",\r\n                \"<div style='border-left: 4px solid #092162; padding-left: 12px; margin-bottom: 20px;'>\",\r\n                    \"<h3 style='color: #092162; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;'>\U0001F3C6 Desempeño y Reconocimientos</h3>\",\r\n                    \"<span style='color: #6B7280; font-size: 13px;'>Historial de empleado del mes y buenas prácticas</span>\",\r\n                \"</div>\",\r\n\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-bottom: 12px;'>⭐ Empleado del Mes</h4>\",\r\n                If(CountRows(empData) > 0,\r\n                    Concatenate(\r\n                        \"<div style='display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px;'>\",\r\n                        Concat(\r\n                            empData,\r\n                            Concatenate(\r\n                                \"<div style='background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 6px; padding: 10px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>\",\r\n                                    \"<div style='font-size: 20px; margin-bottom: 4px;'>\U0001F396️</div>\",\r\n                                    \"<div style='font-weight: 800; font-size: 12px; color: #92400E;'>\", Coalesce(Text(ThisRecord.Value.Mes), \"\"), \" \", Coalesce(Text(ThisRecord.Value.Anio), \"\"), \"</div>\",\r\n                                    \"<div style='font-size: 10px; color: #B45309; margin-top: 4px;'>\", Coalesce(Text(ThisRecord.Value.Actividad), \"\"), \"</div>\",\r\n                                \"</div>\"\r\n                            )\r\n                        ),\r\n                        \"</div>\"\r\n                    ),\r\n                    \"<div style='font-size: 12px; color: #9CA3AF; font-style: italic; margin-bottom: 24px;'>No registra reconocimientos de empleado del mes.</div>\"\r\n                ),\r\n\r\n                \"<h4 style='font-size: 14px; color: #374151; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; margin-bottom: 12px;'>\U0001F4A1 Buenas Prácticas Reportadas</h4>\",\r\n                If(CountRows(pracData) > 0,\r\n                    Concatenate(\r\n                        \"<table style='width: 100%; border-collapse: collapse; font-size: 12px;'>\",\r\n                        Concat(\r\n                            pracData,\r\n                            Concatenate(\r\n                                \"<tr style='border-bottom: 1px solid #E5E7EB;'>\",\r\n                                    \"<td style='padding: 8px 4px; width: 30%; color: #4B5563; font-weight: 600;'>\U0001F4C5 \", Coalesce(Text(ThisRecord.Value.Mes), \"\"), \" \", Coalesce(Text(ThisRecord.Value.Anio), \"\"), \"</td>\",\r\n                                    \"<td style='padding: 8px 4px; color: #111827;'>\", Coalesce(Text(ThisRecord.Value.Actividad), \"\"), \"</td>\",\r\n                                \"</tr>\"\r\n                            )\r\n                        ),\r\n                        \"</table>\"\r\n                    ),\r\n                    \"<div style='font-size: 12px; color: #9CA3AF; font-style: italic;'>No registra buenas prácticas.</div>\"\r\n                ),\r\n            \"</div>\"\r\n        )\r\n    )\r\n)"
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  Width: =Parent.Width
+            - Container46:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.15
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =15
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                Children:
+                  - Button12_1:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Appearance: =ButtonAppearance.Outline
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =1
+                        Color: =RGBA(0, 0, 0, 1)
+                        DisplayMode: =If(varSeccionPopUp > 1, DisplayMode.Edit, DisplayMode.Disabled)
+                        Layout: =ButtonLayout.TextOnly
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =UpdateContext({varSeccionPopUp: varSeccionPopUp - 1})
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Anterior"
+                  - Button12_2:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        DisplayMode: =If(varSeccionPopUp < 6, DisplayMode.Edit, DisplayMode.Disabled)
+                        Layout: =ButtonLayout.TextOnly
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =UpdateContext({varSeccionPopUp: varSeccionPopUp + 1})
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Siguiente"
+      - Overlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledFill: =RGBA(161, 159, 157, 1)
+            Fill: =RGBA(0, 0, 0, 0.5)
+            FocusedBorderThickness: =4
+            Height: =Parent.Height
+            HoverFill: =
+            OnSelect: |+
+              =UpdateContext({varFilaEditandoID:""});
+              UpdateContext({varMostrarPopUp: false, varSelectedRecord: Blank()})
+            PressedFill: =
+            Visible: =varMostrarPopUp
+            Width: =Parent.Width
+      - Container15_1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =600
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            PaddingBottom: =8
+            PaddingLeft: =8
+            PaddingRight: =8
+            PaddingTop: =8
+            RadiusBottomLeft: =20
+            RadiusBottomRight: =20
+            RadiusTopLeft: =20
+            RadiusTopRight: =20
+            Visible: =varMostrarPopUp
+            Width: =1200
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - Container16_10:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Height: =Parent.Height
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =20
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  PaddingBottom: =1
+                  PaddingLeft: =1
+                  PaddingRight: =1
+                  PaddingTop: =1
+                  Width: =Parent.Width * 0.992
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container10_20:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Center
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =45
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMinHeight: =0
+                        LayoutOverflowY: =LayoutOverflow.Scroll
+                        Width: |-
+                          =//500
+                          Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Text4_55:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.8
+                              LayoutMinWidth: =0
+                              OnSelect: =
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="PROVEEDOR"
+                              Visible: =false
+                              Width: =Parent.Width/6
+                              X: =40
+                              Y: =40
+                        - cmbProveedor_2:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              DefaultSelectedItems: |+
+                                =/*If(
+                                    !IsBlank(ctxDatosExamenMedicos.Lugar) && Text(ctxDatosExamenMedicos.Lugar) <> "N/A";
+                                    Table({Value: Text(ctxDatosExamenMedicos.Lugar)})
+                                )
+                                */
+
+
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Selecciona el Proveedor"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: |
+                                =Distinct(colTarifarioExamenes, Text(Value.datosGenerales.proveedor))
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnChange: |-
+                                =UpdateContext(
+                                    {
+                                        ctxProveedorSeleccionado: LookUp(
+                                            colTarifarioExamenes, 
+                                            Text(Value.datosGenerales.proveedor) = Self.Selected.Value
+                                        ).Value
+                                    }
+                                );
+
+                                ClearCollect(
+                                    colExamenesDisponibles,
+                                    ForAll(
+                                        Table(ctxProveedorSeleccionado.examenes),
+                                        {
+                                            ID: Text(Value.Categoria) & "|" & Text(Value.Nombre),
+                                            Categoria: Text(Value.Categoria),
+                                            Nombre: Text(Value.Nombre),
+                                            Precio: If(IsBlank(Value.Precio), 0, Value(Text(Value.Precio))),
+                                            Padre: If(IsBlank(Value.Padre), Blank(), Text(Value.Padre))
+                                        }
+                                    )
+                                );
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Size: =15
+                              Visible: =false
+                              Width: =Parent.Width/4
+                        - Text4_84:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.8
+                              LayoutMinWidth: =0
+                              OnSelect: =
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="CIUDAD"
+                              Visible: =false
+                              Width: =Parent.Width/6
+                              X: =40
+                              Y: =40
+                        - cmbLocacion:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              DefaultSelectedItems: |+
+                                =/*If(
+                                    !IsBlank(ctxDatosExamenMedicos.Lugar) && Text(ctxDatosExamenMedicos.Lugar) <> "N/A";
+                                    Table({Value: Text(ctxDatosExamenMedicos.Lugar)})
+                                )
+                                */
+
+
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Selecciona la locación"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =["Ciudad 1", "Ciudad 2"]
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Size: =15
+                              Visible: =false
+                              Width: =Parent.Width/4
+                        - Text4_85:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.8
+                              LayoutMinWidth: =0
+                              OnSelect: =
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="PROVEEDOR"
+                              Width: =Parent.Width/7
+                              X: =40
+                              Y: =40
+                        - cmbProveedor_3:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Selecciona el Proveedor"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =Distinct(colTarifarioExamenes, Text(Value.datosGenerales.proveedor))
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnChange: |-
+                                =Reset(cmbZona_1);
+                                Clear(colExamenesDisponibles);
+                                Clear(colExamenesSeleccionados);
+                                UpdateContext({varFilaEditandoID:""});
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Size: =15
+                        - Text4_86:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.8
+                              LayoutMinWidth: =0
+                              OnSelect: =
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="SECTOR"
+                              Width: =Parent.Width/7
+                              X: =40
+                              Y: =40
+                        - cmbZona_1:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              DisplayMode: =If(varFilaEditandoID = "",DisplayMode.Edit,DisplayMode.View)
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Selecciona el Proveedor"
+                              ItemDisplayText: =ThisItem.Value
+                              Items: |-
+                                =Distinct(
+                                    Filter(
+                                        colTarifarioExamenes,
+                                        Value.datosGenerales.proveedor = cmbProveedor_3.Selected.Value
+                                    ),
+                                    Text(Value.datosGenerales.areaDeTrabajo)
+                                )
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnChange: |-
+                                =UpdateContext(
+                                    {
+                                        ctxProveedorSeleccionado: LookUp(
+                                            colTarifarioExamenes,
+                                            Text(Value.datosGenerales.proveedor) = cmbProveedor_3.Selected.Value
+                                            And Text(Value.datosGenerales.areaDeTrabajo) = Self.Selected.Value
+                                        ).Value
+                                    }
+                                );
+
+                                ClearCollect(
+                                    colExamenesDisponibles,
+                                    ForAll(
+                                        Table(ctxProveedorSeleccionado.examenes),
+                                        {
+                                            ID: Text(Value.Categoria) & "|" & Text(Value.Nombre),
+                                            Categoria: Text(Value.Categoria),
+                                            Nombre: Text(Value.Nombre),
+                                            Precio: If(IsBlank(Value.Precio), 0, Value(Text(Value.Precio))),
+                                            Padre: If(IsBlank(Value.Padre), Blank(), Text(Value.Padre))
+                                        }
+                                    )
+                                );
+
+                                Clear(colExamenesSeleccionados);
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Size: =15
+                  - Container10_23:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(245, 245, 245, 1)
+                        FillPortions: =0.2
+                        Height: =45
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =10
+                        LayoutMinHeight: =0
+                        LayoutOverflowY: =LayoutOverflow.Scroll
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - SANGRE_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (SANGRE)", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (SANGRE)", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                    Color.White
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "LABORATORIO (SANGRE)"});
+
+                                UpdateContext({varPestaña: "SANGRE"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="LABORATORIO (SANGRE)"
+                        - ORINA_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (ORINA)", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (ORINA)", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    Color.White
+                                    //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "LABORATORIO (ORINA)"});
+
+
+                                UpdateContext({varPestaña: "ORINA"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="LABORATORIO (ORINA)"
+                        - IMAGEN_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "IMAGEN", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    //Color.Green;
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                    //Color.White
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "IMAGEN", 
+                                    //RGBA(255; 255; 255; 1); // Letra blanca si está seleccionado
+                                    Color.Black,
+                                    //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                    Color.White
+
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              IconStyle: =IconStyle.Filled
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "IMAGEN"});
+
+                                UpdateContext({varPestaña: "IMAGEN"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="IMAGEN"
+                        - ESPECIALES_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "EXAMENES ESPECIALES", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "EXAMENES ESPECIALES", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    Color.White
+                                        //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "EXAMENES ESPECIALES"});
+
+                                UpdateContext({varPestaña: "ESPECIALES"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="EXAMENES ESPECIALES"
+                        - PSICOLOGICAS_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIONES PSICOLOGICAS", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIONES PSICOLOGICAS", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                    Color.White
+
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VALORACIONES PSICOLOGICAS"});
+
+                                UpdateContext({varPestaña: "SANGRE"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="VALORACIONES PSICOLOGICAS"
+                        - AD_4:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                        Color.White
+                                //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VALORACIÓN AD"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="VALORACIÓN AD"
+                        - VACUNAS_2:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VACUNAS", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                        Color.White
+                                //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VACUNAS"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="VALORACIÓN VACUNAS"
+                        - VACUNAS_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "PRUEBA DE DROGAS", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "PRUEBA DE DROGAS", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                        Color.White
+                                //RGBA(0; 0; 0; 1) // Letra negra si no lo está
+                                )
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "PRUEBA DE DROGAS"})
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Size: =14
+                              Text: ="DROGAS"
+                  - Gallery6_2:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Center
+                        BorderColor: =RGBA(245, 245, 245, 1)
+                        Items: =Filter(colExamenesDisponibles, Categoria = varPestañaActiva)
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        TemplatePadding: =0
+                        TemplateSize: =40
+                        Width: '=Parent.Width  '
+                      Children:
+                        - Container41_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              PaddingBottom: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              PaddingTop: =8
+                              Width: =Parent.Width
+                            Children:
+                              - Text15_2:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =35
+                                    LayoutMinWidth: =0
+                                    PaddingLeft: =If(IsBlank(ThisItem.Padre), 8, 40)
+                                    Text: =ThisItem.Nombre
+                                    Width: =500
+                                    X: =40
+                                    Y: =40
+                              - TextInput6_1:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Align: =Align.Center
+                                    Default: =Text(ThisItem.Precio, "0.00")
+                                    DisplayMode: =If(ThisItem.ID = varFilaEditandoID, DisplayMode.Edit, DisplayMode.View)
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnChange: "=/*\nPatch(\n    colExamenesDisponibles;\n    LookUp(colExamenesDisponibles; ID = ThisItem.ID);\n    { \n        Precio: If(\n            IsBlank(TextInput6_1.Text); \n            Blank(); \n            Value(Substitute(Trim(TextInput6_1.Text); \",\"; \".\"); \"en-US\")\n        ) \n    }\n);;\nUpdateContext({varFilaEditandoID: \"\"})\n*/\n\n// 1. Calculamos el nuevo precio ingresado\nWith(\n    {\n        nuevoPrecio: If(\n            IsBlank(Self.Text),\n            0,\n            Value(Substitute(Trim(Self.Text), \",\", \".\"), \"en-US\")\n        )\n    },\n    \n    // 2. Actualizamos el registro actual (el hijo que acabas de editar)\n    Patch(\n        colExamenesDisponibles,\n        LookUp(colExamenesDisponibles, ID = ThisItem.ID),\n        { Precio: nuevoPrecio }\n    );\n\n    // 3. Si este registro es un hijo (tiene Padre), disparamos la actualización al Padre\n    If(\n        !IsBlank(ThisItem.Padre),\n        With(\n            {\n                // Sumamos los precios actualizados de todos los hermanos\n                sumaHijos: Sum(\n                    Filter(colExamenesDisponibles, Padre = ThisItem.Padre), \n                    Precio\n                )\n            },\n            // Parcheamos al Padre con la nueva sumatoria\n            Patch(\n                colExamenesDisponibles,\n                LookUp(colExamenesDisponibles, Nombre = ThisItem.Padre),\n                { Precio: sumaHijos }\n            )\n        )\n    )\n);\n\n// 4. Salimos del modo edición\nUpdateContext({varFilaEditandoID: \"\"});"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Visible: =ThisItem.ID = varFilaEditandoID
+                              - Text19_5:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    Text: ="$ " & Text(ThisItem.Precio, "0.00")
+                                    Visible: =ThisItem.ID <> varFilaEditandoID
+                              - Text19_6:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    Text: =ThisItem.Padre
+                              - Toggle1_2:
+                                  Control: ModernToggle@1.0.1
+                                  Properties:
+                                    FillPortions: =1
+                                    FontWeight: =""
+                                    Label: =ThisItem.Nombre & If(ThisItem.Precio > 0, " - $" & Text(ThisItem.Precio, "#,##0.00"), "")
+                                    LabelPosition: ="After"
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    OnCheck: =
+                                    OnUncheck: =
+                                    Visible: =false
+                        - Button13:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              Appearance: =ButtonAppearance.Transparent
+                              DisplayMode: |-
+                                =If(
+                                    IsBlank(cmbProveedor_3.Selected),
+                                    DisplayMode.Disabled,
+                                    DisplayMode.Edit
+                                )
+                              Height: =40
+                              Icon: ="Edit"
+                              IconStyle: =IconStyle.Filled
+                              OnSelect: |-
+                                =UpdateContext({varFilaEditandoID: ThisItem.ID});
+                                //Reset(TextInput6)
+                              Text: =
+                              Visible: |-
+                                =// Si la búsqueda da Blank, significa que no tiene hijos, por lo tanto SÍ se puede editar.
+                                IsBlank(LookUp(colExamenesDisponibles, Padre = ThisItem.Nombre)) And ThisItem.ID <> varFilaEditandoID
+                              Width: =60
+                              X: =1090
+            - Container42_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0
+                  Height: =40
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                Children:
+                  - Button3_2:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        Appearance: =ButtonAppearance.Secondary
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        Icon: ="DismissCircle"
+                        IconStyle: =IconStyle.Filled
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =UpdateContext({varMostrarPopUp:false});
+                          UpdateContext({varFilaEditandoID: ""})
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Cancelar"
+                        Width: =150
+                  - Button3_3:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        Icon: ="Save"
+                        IconStyle: =IconStyle.Filled
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =// 1. Reconstruimos TODO el tarifario
+                          //    Solo reemplazamos el bloque del PROVEEDOR + ZONA que se está editando
+
+                          ClearCollect(
+                              colTarifarioActualizado,
+                              ForAll(
+                                  colTarifarioExamenes As Prov,
+
+                                  If(
+                                      Text(Prov.Value.datosGenerales.proveedor) = Text(cmbProveedor_3.Selected.Value)
+                                      &&
+                                      Text(Prov.Value.datosGenerales.areaDeTrabajo) = Text(cmbZona_1.Selected.Value),
+
+                                      // =====================================================
+                                      // PROVEEDOR + ZONA ACTUAL
+                                      // Reemplazamos únicamente sus exámenes
+                                      // =====================================================
+                                      {
+                                          datosGenerales: {
+                                              proveedor: Text(Prov.Value.datosGenerales.proveedor),
+                                              areaDeTrabajo: Text(Prov.Value.datosGenerales.areaDeTrabajo)
+                                          },
+
+                                          examenes: colExamenesDisponibles
+                                      },
+
+                                      // =====================================================
+                                      // RESTO DE PROVEEDORES / ZONAS
+                                      // Los dejamos exactamente como estaban
+                                      // =====================================================
+                                      {
+                                          datosGenerales: {
+                                              proveedor: Text(Prov.Value.datosGenerales.proveedor),
+
+                                              areaDeTrabajo:
+                                                  If(
+                                                      IsBlank(Prov.Value.datosGenerales.areaDeTrabajo),
+                                                      Blank(),
+                                                      Text(Prov.Value.datosGenerales.areaDeTrabajo)
+                                                  )
+                                          },
+
+                                          examenes:
+                                              ForAll(
+                                                  Table(Prov.Value.examenes) As Ex,
+                                                  {
+                                                      Categoria: Text(Ex.Value.Categoria),
+
+                                                      Nombre: Text(Ex.Value.Nombre),
+
+                                                      Precio:
+                                                          If(
+                                                              IsBlank(Ex.Value.Precio),
+                                                              Blank(),
+                                                              Value(Text(Ex.Value.Precio))
+                                                          ),
+
+                                                      Padre:
+                                                          If(
+                                                              IsBlank(Ex.Value.Padre),
+                                                              Blank(),
+                                                              Text(Ex.Value.Padre)
+                                                          )
+                                                  }
+                                              )
+                                      }
+                                  )
+                              )
+                          );
+
+
+                          // 2. Convertimos nuevamente toda la colección a JSON
+
+                          UpdateContext(
+                              {
+                                  varJSONFinal:
+                                      JSON(
+                                          colTarifarioActualizado,
+                                          JSONFormat.IgnoreUnsupportedTypes
+                                      )
+                              }
+                          );
+
+
+                          // 3. Guardamos el JSON completo en el registro DATOS
+
+                          Patch(
+                              PERFIL_USUARIO,
+                              LookUp(
+                                  PERFIL_USUARIO,
+                                  EKON = "DATOS"
+                              ),
+                              {
+                                  DATOS_EXAMENES_MEDICOS: varJSONFinal
+                              }
+                          );
+
+
+                          // 4. Actualizamos la fuente
+
+                          Refresh(PERFIL_USUARIO);
+
+
+                          // 5. Mensaje de confirmación
+
+                          Notify(
+                              "Tarifario actualizado con éxito",
+                              NotificationType.Success
+                          );
+
+
+                          // 6. Cerramos el popup y limpiamos la selección
+
+                          UpdateContext(
+                              {
+                                  varMostrarPopUp: false,
+                                  varSelectedRecord: Blank()
+                              }
+                          );
+
+                          Select(Button1_9);
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Guardar Cambios"
+                        Width: =175
+      - Overlay_1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledFill: =RGBA(161, 159, 157, 1)
+            Fill: =RGBA(0, 0, 0, 0.5)
+            FocusedBorderThickness: =4
+            Height: =Parent.Height
+            HoverFill: =
+            OnSelect: |-
+              =UpdateContext({varEditarEquipos: false})
+            PressedFill: =
+            Visible: =varEditarEquipos
+            Width: =Parent.Width
+      - containerPopUpEquipos:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =473
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            PaddingBottom: =8
+            PaddingLeft: =8
+            PaddingRight: =8
+            PaddingTop: =8
+            Visible: =varEditarEquipos
+            Width: =1166
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - Container16_11:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  Height: =Parent.Height
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =20
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  PaddingBottom: =1
+                  PaddingLeft: =1
+                  PaddingRight: =1
+                  PaddingTop: =1
+                  Width: =Parent.Width * 0.992
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container10_25:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =45
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        LayoutMinHeight: =0
+                        LayoutOverflowY: =LayoutOverflow.Scroll
+                        Width: |
+                          =500
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Text4_59:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.8
+                              LayoutMinWidth: =0
+                              OnSelect: =
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="EQUIPO"
+                              Width: =Parent.Width/7
+                              X: =40
+                              Y: =40
+                        - cmbEquipo:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              DefaultSelectedItems: |+
+                                =/*If(
+                                    !IsBlank(ctxDatosExamenMedicos.Lugar) && Text(ctxDatosExamenMedicos.Lugar) <> "N/A";
+                                    Table({Value: Text(ctxDatosExamenMedicos.Lugar)})
+                                )
+                                */
+
+
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Selecciona el Proveedor"
+                              ItemDisplayText: =ThisItem.Categoria
+                              Items: |-
+                                =// Devuelve directamente la lista limpia de categorías:
+                                colCatalogoCompleto.Categoria
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnChange: |-
+                                =/*
+                                UpdateContext(
+                                    {
+                                        ctxProveedorSeleccionado: LookUp(
+                                            colTarifarioExamenes; 
+                                            Text(Value.datosGenerales.proveedor) = Self.Selected.Value
+                                        ).Value
+                                    }
+                                );;
+
+                                ClearCollect(
+                                    colExamenesDisponibles;
+                                    ForAll(
+                                        Table(ctxProveedorSeleccionado.examenes);
+                                        {
+                                            ID: Text(Value.Categoria) & "|" & Text(Value.Nombre);
+                                            Categoria: Text(Value.Categoria);
+                                            Nombre: Text(Value.Nombre);
+                                            Precio: If(IsBlank(Value.Precio); 0; Value(Text(Value.Precio)));
+                                            Padre: If(IsBlank(Value.Padre); Blank(); Text(Value.Padre))
+                                        }
+                                    )
+                                );;
+
+                                */
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Size: =15
+                  - Container10_26:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(214, 221, 224, 1)
+                        FillPortions: =0.2
+                        Height: =45
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =20
+                        LayoutMinHeight: =0
+                        LayoutOverflowY: =LayoutOverflow.Scroll
+                        Visible: =false
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+                      Children:
+                        - SANGRE_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (SANGRE)", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (SANGRE)", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "LABORATORIO (SANGRE)"});
+
+                                UpdateContext({varPestaña: "SANGRE"})
+                              Size: =16
+                              Text: ="LABORATORIO (SANGRE)"
+                        - ORINA_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (ORINA)", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "LABORATORIO (ORINA)", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "LABORATORIO (ORINA)"});
+
+
+                                UpdateContext({varPestaña: "ORINA"})
+                              Size: =16
+                              Text: ="LABORATORIO (ORINA)"
+                        - IMAGEN_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "IMAGEN", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "IMAGEN", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "IMAGEN"});
+
+                                UpdateContext({varPestaña: "IMAGEN"})
+                              Size: =16
+                              Text: ="IMAGEN"
+                        - ESPECIALES_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "EXAMENES ESPECIALES", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "EXAMENES ESPECIALES", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "EXAMENES ESPECIALES"});
+
+                                UpdateContext({varPestaña: "ESPECIALES"})
+                              Size: =16
+                              Text: ="EXAMENES ESPECIALES"
+                        - PSICOLOGICAS_3:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIONES PSICOLOGICAS", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIONES PSICOLOGICAS", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VALORACIONES PSICOLOGICAS"});
+
+                                UpdateContext({varPestaña: "SANGRE"})
+                              Size: =16
+                              Text: ="VALORACIONES PSICOLOGICAS"
+                        - AD_6:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VALORACIÓN AD"})
+                              Size: =16
+                              Text: ="VALORACIÓN AD"
+                        - AD_7:
+                            Control: ModernButton@1.0.0
+                            Properties:
+                              BasePaletteColor: |-
+                                =If(
+                                    varPestañaActiva = "VACUNAS", 
+                                    RGBA(56, 96, 178, 1), // Color azul si está seleccionado (tu color)
+                                    RGBA(214, 221, 224, 1) // Color gris claro si no lo está
+                                )
+                              Color: |-
+                                =If(
+                                    varPestañaActiva = "VALORACIÓN AD", 
+                                    RGBA(255, 255, 255, 1), // Letra blanca si está seleccionado
+                                    RGBA(0, 0, 0, 1) // Letra negra si no lo está
+                                )
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =40
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: |-
+                                =UpdateContext({varPestañaActiva: "VACUNAS"})
+                              Size: =16
+                              Text: ="VALORACIÓN AD"
+                  - Gallery6_3:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Center
+                        BorderColor: =RGBA(245, 245, 245, 1)
+                        Items: |-
+                          =Filter(
+                              colOpcionesEquiposPlana,
+                              Categoria = cmbEquipo.Selected.Categoria
+                          )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        TemplatePadding: =0
+                        TemplateSize: =40
+                        Width: '=Parent.Width  '
+                      Children:
+                        - Container41_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              PaddingBottom: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              PaddingTop: =8
+                              Width: =Parent.Width
+                            Children:
+                              - Text15_3:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =35
+                                    LayoutMinWidth: =0
+                                    Text: =ThisItem.Equipo
+                                    Width: =500
+                                    X: =40
+                                    Y: =40
+                              - Text19_7:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    Text: =ThisItem.Nivel
+                                    Visible: =ThisItem.ID <> varFilaEditandoID
+                              - TextInput7:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Default: =Text(ThisItem.Costo, "0.00")
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnChange: |-
+                                      =Patch(
+                                          colOpcionesEquiposPlana,
+                                          LookUp(colOpcionesEquiposPlana, ID = ThisItem.ID),
+                                          { 
+                                              Costo: If(
+                                                  IsBlank(TextInput7.Text), 
+                                                  Blank(), 
+                                                  Value(Substitute(Trim(TextInput7.Text), ",", "."), "en-US")
+                                              ) 
+                                          }
+                                      );
+                                      UpdateContext({varFilaSeleccionada: Blank()})
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Visible: =varFilaSeleccionada = ThisItem.ID
+                              - Text19_8:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Text: ="$ "&ThisItem.Costo
+                                    Visible: =ThisItem.ID <> varFilaSeleccionada
+                              - Icon10_2:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 0, 0, 0)
+                                    Color: =RGBA(255, 0, 0, 1)
+                                    DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                    DisabledColor: =RGBA(255, 0, 0, 1)
+                                    DisabledFill: =RGBA(0, 0, 0, 0)
+                                    FocusedBorderThickness: =4
+                                    Height: =20
+                                    HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                    HoverColor: =RGBA(255, 0, 0, 1)
+                                    HoverFill: =RGBA(0, 0, 0, 0)
+                                    Icon: =Icon.Edit
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |
+                                      =UpdateContext({varFilaSeleccionada: ThisItem.ID});
+                                    PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                    PressedColor: =Self.Color
+                                    PressedFill: =RGBA(0, 0, 0, 0)
+                                    Visible: |-
+                                      =//Toggle1_2.Checked
+                                      true
+                                    Width: =40
+            - Container42_2:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0
+                  Height: =40
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                Children:
+                  - Button3_4:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        Appearance: =ButtonAppearance.Secondary
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =UpdateContext({varMostrarPopUp:false});
+                          UpdateContext({varFilaEditandoID: ""})
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Cancelar"
+                        Width: =150
+                  - Button3_5:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =// 1. Reconstruimos la estructura jerárquica cruzando con los costos modificados de colOpcionesEquiposPlana
+                          UpdateContext({
+                              varObjetoEquiposActualizado: {
+                                  Version: "1.0",
+                                  DescripcionCatalogo: "Catálogo completo de equipos, niveles permitidos y estructura de costos por categoría",
+                                  Categorias: ForAll(
+                                      colCatalogoCompleto As Cat,
+                                      {
+                                          OrdenCategoria: Cat.OrdenCategoria,
+                                          Categoria: Cat.Categoria,
+                                          Equipos: ForAll(
+                                              Cat.Equipos As Eq,
+                                              {
+                                                  OrdenEquipo: Eq.OrdenEquipo,
+                                                  Equipo: Eq.Equipo,
+                                                  NivelesPermitidos: ForAll(
+                                                      Eq.OpcionesNivel As OpcNivel,
+                                                      OpcNivel.Nivel
+                                                  ),
+                                                  OpcionesNivel: ForAll(
+                                                      Eq.OpcionesNivel As Opc,
+                                                      With(
+                                                          {
+                                                              itemModificado: LookUp(
+                                                                  colOpcionesEquiposPlana, 
+                                                                  ID = Opc.ID
+                                                              )
+                                                          },
+                                                          {
+                                                              ID: Opc.ID,
+                                                              Nivel: Opc.Nivel,
+                                                              Descripcion: Opc.Descripcion,
+                                                              Costo: If(
+                                                                  !IsBlank(itemModificado.Costo),
+                                                                  itemModificado.Costo,
+                                                                  Opc.Costo
+                                                              )
+                                                          }
+                                                      )
+                                                  )
+                                              }
+                                          )
+                                      }
+                                  )
+                              }
+                          });
+
+                          // 2. Serializamos el objeto resultante a formato JSON
+                          UpdateContext({
+                              varJSONTextoCatalogoActualizado: JSON(
+                                  varObjetoEquiposActualizado, 
+                                  JSONFormat.IgnoreUnsupportedTypes
+                              )
+                          });
+
+                          // 3. Guardamos en el registro de la tabla PERFIL_USUARIO
+                          Patch(
+                              PERFIL_USUARIO,
+                              LookUp(PERFIL_USUARIO, EKON = "DATOS"),
+                              { 
+                                  DATOS_EQUIPOS_TECNOLOGICOS: varJSONTextoCatalogoActualizado 
+                              }
+                          );
+
+                          // 4. Cerramos el modo edición y notificamos
+                          UpdateContext({
+                              varEditarEquipos: false,
+                              varFilaSeleccionada: Blank()
+                          });
+
+                          Notify("Catálogo de equipos tecnológicos actualizado con éxito", NotificationType.Success)
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Text: ="Guardar Cambios"
+                        Width: =150
+      - showQR:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.ExtraBold
+            Height: =500
+            RadiusBottomLeft: =20
+            RadiusBottomRight: =20
+            RadiusTopLeft: =20
+            RadiusTopRight: =20
+            Visible: =varMostrarQR
+            Width: =1000
+            X: =(Parent.Width-Self.Width)/2
+            Y: =(Parent.Height-Self.Height)/2
+          Children:
+            - Rectangle6:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  DisabledFill: =RGBA(161, 159, 157, 1)
+                  Fill: =RGBA(255, 255, 255, 1)
+                  FocusedBorderThickness: =4
+                  Height: =Parent.Height
+                  HoverFill: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(255, 255, 255, 1)
+                  Width: =Parent.Width
+                  Y: =
+            - qr_Vacunas:
+                Control: Image@2.2.3
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledFill: =RGBA(0, 0, 0, 0)
+                  FocusedBorderThickness: =4
+                  Height: =300
+                  HoverBorderColor: =RGBA(0, 0, 0, 0)
+                  HoverFill: =RGBA(0, 0, 0, 0)
+                  Image: |-
+                    =
+                    If(
+                        !IsBlank(varRegistroSeleccionado.URL_QR_CARNET),
+                        If(
+                            Find("?", varRegistroSeleccionado.URL_QR_CARNET) > 0,
+                            varRegistroSeleccionado.URL_QR_CARNET & "&download=1",
+                            varRegistroSeleccionado.URL_QR_CARNET & "?download=1"
+                        ),
+                        Blank()
+                    )
+
+                    /*
+                    If(
+                        !IsBlank(varRegistroSeleccionado.URL_QR_CARNET);
+                        If(
+                            Find("?"; varRegistroSeleccionado.URL_QR_CARNET) > 0;
+                            varRegistroSeleccionado.URL_QR_CARNET & "&download=1&t=" & varCacheQR;
+                            varRegistroSeleccionado.URL_QR_CARNET & "?download=1&t=" & varCacheQR
+                        );
+                        Blank()
+                    )
+                    */
+                  PressedBorderColor: =RGBA(0, 0, 0, 0)
+                  PressedFill: =RGBA(0, 0, 0, 0)
+                  Width: =400
+                  X: =((Parent.Width-Self.Width)/2)+200
+                  Y: =(Parent.Height-Self.Height)/2
+            - qr_Pasaporte:
+                Control: Image@2.2.3
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledFill: =RGBA(0, 0, 0, 0)
+                  FocusedBorderThickness: =4
+                  Height: =300
+                  HoverBorderColor: =RGBA(0, 0, 0, 0)
+                  HoverFill: =RGBA(0, 0, 0, 0)
+                  Image: |-
+                    =/*
+                    If(
+                        !IsBlank(varRegistroSeleccionado.URL_PASAPORTE);
+                        "https://quickchart.io/qr?text=" &
+                        EncodeUrl(varRegistroSeleccionado.URL_PASAPORTE) &
+                        "&size=400&margin=2&ecLevel=H";
+                        Blank()
+                    ) 
+                    */
+
+
+
+
+                    If(
+                        !IsBlank(varRegistroSeleccionado.URL_QR),
+                        If(
+                            Find("?", varRegistroSeleccionado.URL_QR) > 0,
+                            varRegistroSeleccionado.URL_QR & "&download=1",
+                            varRegistroSeleccionado.URL_QR & "?download=1"
+                        ),
+                        Blank()
+                    )
+
+
+
+
+
+
+                    /*
+                    If(
+                        !IsBlank(varRegistroSeleccionado.URL_QR);
+                        If(
+                            Find("?"; varRegistroSeleccionado.URL_QR) > 0;
+                            varRegistroSeleccionado.URL_QR & "&download=1&t=" & varCacheQR;
+                            varRegistroSeleccionado.URL_QR & "?download=1&t=" & varCacheQR
+                        );
+                        Blank()
+                    )
+                    */
+                  PressedBorderColor: =RGBA(0, 0, 0, 0)
+                  PressedFill: =RGBA(0, 0, 0, 0)
+                  Width: =400
+                  X: =((Parent.Width-Self.Width)/2)-200
+                  Y: =(Parent.Height-Self.Height)/2
+            - Button15:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Transparent
+                  Height: =40
+                  Icon: ="DismissCircle"
+                  IconStyle: =IconStyle.Filled
+                  OnSelect: |-
+                    =UpdateContext({varMostrarQR: false})
+                  Size: =20
+                  Text: =
+                  Width: =70
+                  X: =900
+                  Y: =10
+            - btn_Pasaporte:
+                Control: ModernButton@1.0.0
+                Properties:
+                  BasePaletteColor: =RGBA(156, 220, 79, 1)
+                  Font: =Font.'Open Sans Condensed'
+                  Height: =40
+                  Icon: ="DocumentPdf"
+                  IconStyle: =IconStyle.Filled
+                  OnSelect: |-
+                    =If(
+                        !IsBlank(varRegistroSeleccionado.URL_PASAPORTE),
+                        Launch(varRegistroSeleccionado.URL_PASAPORTE),
+                        Notify(
+                            "Este colaborador todavía no tiene un pasaporte generado",
+                            NotificationType.Warning
+                        )
+                    );
+                  RadiusBottomLeft: =20
+                  RadiusBottomRight: =20
+                  RadiusTopLeft: =20
+                  RadiusTopRight: =20
+                  Size: =15
+                  Text: ="Abrir Pasaporte PDF"
+                  Width: =250
+                  X: =((Parent.Width-Self.Width)/2)-200
+                  Y: =430
+            - Text21:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Font: =Font.'Open Sans Condensed'
+                  FontWeight: =FontWeight.Bold
+                  PaddingBottom: =
+                  PaddingLeft: =
+                  PaddingRight: =
+                  PaddingTop: =
+                  Text: =Text(ParseJSON(varRegistroSeleccionado.DatosGenerales).NombreCompleto) & "       " & varRegistroSeleccionado.EKON
+                  Width: =300
+                  X: =(Parent.Width-Self.Width)/2
+                  Y: =30
+            - btn_Vacunas:
+                Control: ModernButton@1.0.0
+                Properties:
+                  BasePaletteColor: =RGBA(156, 220, 79, 1)
+                  Font: =Font.'Open Sans Condensed'
+                  Height: =40
+                  Icon: ="DocumentPdf"
+                  IconStyle: =IconStyle.Filled
+                  OnSelect: |-
+                    =If(
+                        !IsBlank(varRegistroSeleccionado.URL_CARNET_VACUNAS),
+                        Launch(varRegistroSeleccionado.URL_CARNET_VACUNAS),
+                        Notify(
+                            "Este colaborador todavía no tiene un carnet de vacunas generado",
+                            NotificationType.Warning
+                        )
+                    );
+                  RadiusBottomLeft: =20
+                  RadiusBottomRight: =20
+                  RadiusTopLeft: =20
+                  RadiusTopRight: =20
+                  Size: =15
+                  Text: ="Abrir Carnet Vacunas PDF"
+                  Width: =250
+                  X: =((Parent.Width-Self.Width)/2)+200
+                  Y: =430
+            - Text21_1:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Font: =Font.'Open Sans Condensed'
+                  FontWeight: =FontWeight.Bold
+                  PaddingBottom: =
+                  PaddingLeft: =
+                  PaddingRight: =
+                  PaddingTop: =
+                  Text: ="PASAPORTE DE SEGURIDAD"
+                  Width: =300
+                  X: =((Parent.Width-Self.Width)/2)-200
+                  Y: =70
+            - Text21_2:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Font: =Font.'Open Sans Condensed'
+                  FontWeight: =FontWeight.Bold
+                  PaddingBottom: =
+                  PaddingLeft: =
+                  PaddingRight: =
+                  PaddingTop: =
+                  Text: ="CARNET DE VACUNAS"
+                  Width: =300
+                  X: =((Parent.Width-Self.Width)/2)+200
+                  Y: =70

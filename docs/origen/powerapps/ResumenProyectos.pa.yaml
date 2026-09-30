@@ -1,0 +1,1551 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  ResumenProyectos:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+    Children:
+      - Contenedor General_4:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Height: =767
+            LayoutDirection: =LayoutDirection.Vertical
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - HeaderContainer3_8:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                Children:
+                  - Icon3_5:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderColor: =Color.Black
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        HoverBorderColor: =Color.Black
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(PantallaPrincipal)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                        Width: =50
+                  - Header2_9:
+                      Control: Header@0.0.44
+                      Properties:
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        OnSelectLogo: =
+                        Style: ='Header.Style'.Primary
+                        Title: ="CONTROL PROYECTOS"
+                        TitleFontSize: =18
+                        Width: =Parent.Width-40
+            - Filtros_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =50
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =50
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =80
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  X: =40
+                  Y: =40
+                Children:
+                  - ContenedorA_3:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Center
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =5
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        LayoutMinHeight: =80
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Width: =100
+                      Children:
+                        - Refrescar_4:
+                            Control: Classic/Icon@2.5.0
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Color: =RGBA(234, 10, 41, 1)
+                              Height: =40
+                              Icon: =Icon.Sync
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              OnSelect: |-
+                                =// 1. Avisamos visualmente (opcional pero recomendado)
+                                Notify("Actualizando datos, por favor espere...", NotificationType.Information, 1500);
+
+                                // 2. Refrescamos la conexión real con SharePoint
+                                Refresh('SIG PROYECTOS');
+
+
+                                // 4. Notificación final
+                                Notify("Datos actualizados correctamente.", NotificationType.Success)
+                              PaddingBottom: =10
+                              PaddingLeft: =10
+                              PaddingRight: =10
+                              PaddingTop: =10
+                              TabIndex: =0
+                              Tooltip: ="Actualizar datos"
+                              Width: =40
+                        - Refrescar_5:
+                            Control: Classic/Icon@2.5.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Color: =RGBA(234, 10, 41, 1)
+                              Height: =40
+                              Icon: =Icon.Undo
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              OnSelect: |
+                                =Reset(filtroListas);
+                                Reset(fechaInicio);
+                                Reset(fechaFin);
+                                Notify("Filtros eliminados", NotificationType.Information);
+                              PaddingBottom: =10
+                              PaddingLeft: =4
+                              PaddingRight: =4
+                              PaddingTop: =10
+                              TabIndex: =0
+                              Tooltip: ="Deshacer filtros"
+                              Width: =40
+                              X: =40
+                              Y: =40
+                  - ContenedorB_5:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Center
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =10
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        LayoutMinHeight: =90
+                        Visible: |
+                          =true
+                        Width: =1000
+                      Children:
+                        - TextCanvas12_6:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              BorderColor: =RGBA(0, 0, 0, 1)
+                              BorderRadius: =5
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Font: =Font.'Open Sans Condensed'
+                              FontColor: =RGBA(0, 0, 0, 1)
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              Text: |+
+                                ="ESTADO"
+
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: "=\r\ntrue\r\n//User().Email in [\"sig3@sedemi.com\"] "
+                              Weight: ='TextCanvas.Weight'.Bold
+                              Width: =80
+                        - filtroListas:
+                            Control: ComboBox@0.0.51
+                            Properties:
+                              BorderRadius: =20
+                              Font: =Font.'Open Sans Condensed'
+                              FontSize: =15
+                              InputTextPlaceholder: ="Filtar por estado"
+                              Items: |-
+                                =Table(
+                                    {Nombre: "Todos"},
+                                    {Nombre: "ACTIVO"},
+                                    {Nombre: "SUSPENDIDO"},
+                                    {Nombre: "INACTIVO"},
+                                    {Nombre: "TERMINADO"}
+                                )
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              Visible: |-
+                                =
+                                true
+                                //User().Email in ["sig3@sedemi.com"]
+                              Width: =150
+                            Children:
+                              - Nombre1:
+                                  Control: ComboBoxDataField@1.5.0
+                                  Variant: textualColumn
+                                  IsLocked: true
+                                  Properties:
+                                    FieldDisplayName: ="Nombre"
+                                    FieldName: ="Nombre"
+                                    FieldType: ="s"
+                                    Order: =1
+                        - TextCanvas12_7:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              BorderColor: =RGBA(0, 0, 0, 1)
+                              BorderRadius: =5
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Font: =Font.'Open Sans Condensed'
+                              FontColor: =RGBA(0, 0, 0, 1)
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              Text: ="FECHA INICIO"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: "=\r\ntrue\r\n//User().Email in [\"sig3@sedemi.com\"] "
+                              Weight: ='TextCanvas.Weight'.Bold
+                              Width: =100
+                        - fechaInicio:
+                            Control: DatePicker@0.0.46
+                            Properties:
+                              BorderRadius: =20
+                              Font: =Font.'Open Sans Condensed'
+                              Format: ='DatePickerCanvas.Format'.Short
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Placeholder: ="Seleccionar una fecha"
+                              SelectedDate: =//Min(colPermisosMedicos; FechaDesde_Virtual)
+                              StartDate: =//Min(colPermisosMedicos; FechaDesde_Virtual)
+                              Width: =175
+                              X: =40
+                              Y: =40
+                        - TextCanvas12_8:
+                            Control: Text@0.0.51
+                            Properties:
+                              Align: ='TextCanvas.Align'.Center
+                              BorderColor: =RGBA(0, 0, 0, 1)
+                              BorderRadius: =5
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Font: =Font.'Open Sans Condensed'
+                              FontColor: =RGBA(0, 0, 0, 1)
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              Text: ="FECHA FIN"
+                              VerticalAlign: =VerticalAlign.Middle
+                              Visible: "=\r\ntrue\r\n//User().Email in [\"sig3@sedemi.com\"] "
+                              Weight: ='TextCanvas.Weight'.Bold
+                              Width: =100
+                        - fechaFin:
+                            Control: DatePicker@0.0.46
+                            Properties:
+                              BorderRadius: =20
+                              Font: =Font.'Open Sans Condensed'
+                              Format: ='DatePickerCanvas.Format'.Short
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              SelectedDate: =Today()
+                              StartDate: =//Min(colPermisosMedicos; FechaDesde_Virtual)
+                              Width: =150
+                              X: =40
+                              Y: =40
+            - Encabezados Tabla_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(214, 221, 224, 1)
+                  FillPortions: =0
+                  Height: =50
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                Children:
+                  - TextCanvas11_14:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Text: ="PROYECTO"
+                        Width: =130
+                  - TextCanvas11_35:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderRadius: =0
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(0, 0, 0, 1)
+                        Height: =Parent.Height
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Text: ="RESPONSABLE"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Visible: |
+                          =true
+                        Weight: ='TextCanvas.Weight'.Bold
+                        Width: =150
+                  - TextCanvas11_36:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="BACK"
+                  - TextCanvas11_37:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="FECHA INICIO"
+                        Width: =100
+                  - TextCanvas11_39:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="FECHA FIN"
+                        Width: =100
+                  - TextCanvas11_42:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =10
+                        PaddingRight: =10
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="HORARIO"
+                        Visible: |
+                          =true
+                        Width: =170
+                  - TextCanvas11_38:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="ESTADO"
+                        Width: =110
+                  - TextCanvas11_41:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderRadius: =0
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(0, 0, 0, 1)
+                        Height: =Parent.Height
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =10
+                        PaddingRight: =10
+                        Size: =13
+                        Text: ="-"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Visible: |
+                          =true
+                        Weight: ='TextCanvas.Weight'.Bold
+                        Width: =65
+                  - TextCanvas11_44:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderRadius: =0
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Fill: =RGBA(245, 245, 245, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(0, 0, 0, 1)
+                        Height: =Parent.Height
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =10
+                        PaddingRight: =10
+                        Text: ="ACCIONES"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Visible: |
+                          =true
+                        Weight: ='TextCanvas.Weight'.Bold
+                        Width: =240
+            - Container13_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                Children:
+                  - galeria:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderStyle: =BorderStyle.None
+                        FillPortions: =0
+                        Height: =540
+                        Items: "=/*\r\nWith(\r\n    {\r\n        estadoSel: Coalesce(filtroListas.Selected.Nombre; \"Todos\");\r\n        fIni: fechaInicio.SelectedDate;\r\n        fFin: fechaFin.SelectedDate\r\n    };\r\n    SortByColumns(\r\n        Filter(\r\n            'SIG PROYECTOS';\r\n\r\n            // 0) OCULTAR REGISTROS VACÍOS / BASURA\r\n            Título <> \"666\";\r\n            \r\n            // 1) FILTRO ESTADO\r\n            If(\r\n                estadoSel = \"Todos\";\r\n                true;\r\n                ESTADO.Value = estadoSel\r\n            );\r\n            \r\n            // 2) FILTRO FECHA INICIO (si está en blanco no filtra)\r\n            If(\r\n                IsBlank(fIni);\r\n                true;\r\n                Creado >= DateValue(fIni)\r\n            );\r\n            \r\n            // 3) FILTRO FECHA FIN (si está en blanco no filtra)\r\n            If(\r\n                IsBlank(fFin);\r\n                true;\r\n                Creado < DateAdd(DateValue(fFin); 1; TimeUnit.Days)\r\n            );\r\n\r\n            // 4) FILTRO DE SEGURIDAD: SI ES ADMIN VE TODO, SI NO, SOLO SUS REGISTROS\r\n            If(\r\n                varEsSuperAdmin;\r\n                true;\r\n                Text(ParseJSON(INF_GENERAL).InfoRegistro.Correo) = varUsuarioActual.Email\r\n            )\r\n        );\r\n        \"Created\";\r\n        SortOrder.Descending\r\n    )\r\n)\r\n*/\r\n\r\n\r\nWith(\r\n    {\r\n        estadoSel: Coalesce(filtroListas.Selected.Nombre, \"Todos\"),\r\n        fIni: fechaInicio.SelectedDate,\r\n        fFin: fechaFin.SelectedDate,\r\n        correoActual: Lower(Trim(varUsuarioActual.Email))\r\n    },\r\n    SortByColumns(\r\n        If(\r\n            varEsSuperAdmin,\r\n            Filter(\r\n                'SIG PROYECTOS',\r\n                StartsWith(Título, \"PRY-\"),\r\n                If(estadoSel = \"Todos\", true, ESTADO.Value = estadoSel),\r\n                If(IsBlank(fIni), true, Creado >= fIni),\r\n                If(IsBlank(fFin), true, Creado < DateAdd(fFin, 1, TimeUnit.Days))\r\n            ),\r\n            Filter(\r\n                'SIG PROYECTOS',\r\n                StartsWith(Título, \"PRY-\"),\r\n                CORREO_CREADOR = correoActual,\r\n                If(estadoSel = \"Todos\", true, ESTADO.Value = estadoSel),\r\n                If(IsBlank(fIni), true, Creado >= fIni),\r\n                If(IsBlank(fFin), true, Creado < DateAdd(fFin, 1, TimeUnit.Days))\r\n            )\r\n        ),\r\n        \"Created\",\r\n        SortOrder.Descending\r\n    )\r\n)"
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        TabIndex: =0
+                        TemplateFill: |
+                          =//If(Mod(ThisItem.ID; 2) = 0; Color.White; RGBA(245;245;245;100))
+                        TemplatePadding: =0
+                        TemplateSize: =60
+                        Width: |
+                          =Parent.Width
+                        Y: =193
+                      Children:
+                        - lbl_Caso:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =14
+                              Text: =ThisItem.NOMBRE_PROYECTO
+                              Width: =130
+                        - Rectangle1_1:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              BorderColor: =RGBA(0, 18, 107, 1)
+                              Fill: =RGBA(0, 0, 0, 1)
+                              Height: =1
+                              OnSelect: =Select(Parent)
+                              Width: =Parent.Width
+                              Y: =59
+                        - Container2_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              Height: =60
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =3
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              Width: =250
+                              X: =1005
+                            Children:
+                              - confPRY:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(0, 18, 107, 1)
+                                    Height: =50
+                                    Icon: =Icon.OpenInNewWindow
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |-
+                                      =/*
+                                      Set(varProyectoSeleccionado; ThisItem);;
+                                      Set(varModoProyecto; "EDITAR");;
+
+                                      Set(varFechaCorteEdicion; Today());;
+                                      Set(varRequiereRegenerar; false);;
+
+                                      Set(varInfoProyectoJson; ParseJSON(ThisItem.INF_GENERAL));;
+                                      Set(varAsigProyectoJson; ParseJSON(ThisItem.ASIGNACIONES));;
+
+                                      // ---------------------------
+                                      // DATOS GENERALES DEL PROYECTO
+                                      // ---------------------------
+                                      Set(gblCompaniaProyecto; Text(varInfoProyectoJson.InfoProyecto.Compania.Nombre));;
+                                      Set(gblCompanyIdProyecto; Value(varInfoProyectoJson.InfoProyecto.Compania.CompanyId));;
+                                      Set(gblCompaniaRucProyecto; Text(varInfoProyectoJson.InfoProyecto.Compania.Ruc));;
+
+                                      Set(gblGrupoProyecto; Text(varInfoProyectoJson.InfoProyecto.Grupo));;
+
+                                      Set(gblNombreProyecto; Text(varInfoProyectoJson.InfoProyecto.Proyecto.Nombre));;
+                                      Set(gblProjectIdProyecto; Text(varInfoProyectoJson.InfoProyecto.Proyecto.ProjectId));;
+                                      Set(gblEstadoApiProyecto; Text(varInfoProyectoJson.InfoProyecto.Proyecto.Estado));;
+
+                                      Set(gblDimensionProyecto; Text(varInfoProyectoJson.InfoProyecto.Dimension.Descripcion));;
+                                      Set(gblUegpIdProyecto; Text(varInfoProyectoJson.InfoProyecto.Dimension.UegpId));;
+
+                                      Set(gblActividadProyecto; Text(varInfoProyectoJson.InfoProyecto.Actividad.Descripcion));;
+                                      Set(gblActivityIdProyecto; Text(varInfoProyectoJson.InfoProyecto.Actividad.ActivityId));;
+                                      Set(gblActivityTypeProyecto; Text(varInfoProyectoJson.InfoProyecto.Actividad.Tipo));;
+
+                                      Set(varActivityIdEdit; gblActivityIdProyecto);;
+                                      Set(varActivityNameEdit; gblActividadProyecto);;
+                                      Set(varActivityTypeEdit; gblActivityTypeProyecto);;
+
+                                      Set(gblCodigoHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Codigo));;
+                                      Set(gblDescripcionHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Descripcion));;
+                                      Set(gblEntradaHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Entrada));;
+                                      Set(gblSalidaHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Salida));;
+                                      Set(gblHorasHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Horas));;
+                                      Set(gblHorasTrabHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.HorasTrabajadas));;
+                                      Set(gblTipoHorario; Text(varInfoProyectoJson.InfoProyecto.Horario.Tipo));;
+                                      Set(gblSalidaAlmuerzo; Text(varInfoProyectoJson.InfoProyecto.Horario.SalidaAlmuerzo));;
+                                      Set(gblRegresoAlmuerzo; Text(varInfoProyectoJson.InfoProyecto.Horario.RegresoAlmuezo));;
+
+
+                                      //Agregado
+                                      Set(varActividadCambiadaVista; false);;
+
+                                      Set(gblFechaInicioProyecto; DateValue(Left(Text(varInfoProyectoJson.Planificacion.FechaInicio); 10)));;
+                                      Set(gblFechaFinProyecto; DateValue(Left(Text(varInfoProyectoJson.Planificacion.FechaFin); 10)));;
+
+                                      Set(gblEstadoProyecto; Text(ThisItem.ESTADO.Value));;
+
+
+                                      //Control de estados del proyecto
+                                      Set(varEstadoOriginalProyecto; gblEstadoProyecto);;
+                                      Set(varEstadoNuevoProyecto; gblEstadoProyecto);;
+                                      Set(varEstadoCambiado; false);;
+                                      Set(varTipoMovimientoEstado; "SIN_CAMBIO");;
+                                      Set(varFechaMovimientoEstado; Blank());;
+                                      Set(varEstadoRegenerado; false);;
+
+
+
+                                      // ---------------------------
+                                      // PRINCIPALES
+                                      Clear(colPrincipalesHistoricos);;
+                                      Clear(colPrincipalesProyecto);;
+
+                                      ForAll(
+                                          Table(varInfoProyectoJson.Responsables.Principales) As p;
+                                          Collect(
+                                              colPrincipalesHistoricos;
+                                              {
+                                                  PrincipalId: Value(p.Value.PrincipalId);
+                                                  EsPrincipalInicial: Boolean(p.Value.EsPrincipalInicial);
+                                                  EsNuevo: false;
+                                                  Nombre: Text(p.Value.Nombre);
+                                                  Cedula: Text(p.Value.Cedula);
+                                                  Ekon: Text(p.Value.Ekon);
+                                                  Correo: Lower(Trim(Text(p.Value.Correo)));
+                                                  Cargo: Text(p.Value.Cargo);
+                                                  FechaInicio: DateValue(Left(Text(p.Value.FechaInicio); 10));
+                                                  FechaFin: DateValue(Left(Text(p.Value.FechaFin); 10));
+                                                  JornadaCodigo: Text(p.Value.JornadaCodigo);
+                                                  JornadaDescripcion: Text(p.Value.JornadaDescripcion);
+                                                  DiasTrabajo: Value(p.Value.DiasTrabajo);
+                                                  DiasDescanso: Value(p.Value.DiasDescanso)
+                                              }
+                                          )
+                                      );;
+
+                                      ClearCollect(
+                                          colPrincipalesProyecto;
+                                          Filter(
+                                              colPrincipalesHistoricos;
+                                              FechaFin >= varFechaCorteEdicion
+                                          )
+                                      );;
+
+                                      // ---------------------------
+                                      // BACKS
+                                      // ---------------------------
+                                      Clear(colBacksHistoricos);;
+                                      Clear(colBacksProyecto);;
+
+                                      ForAll(
+                                          Table(varInfoProyectoJson.Responsables.Backs) As b;
+                                          Collect(
+                                              colBacksHistoricos;
+                                              {
+                                                  BackId: Value(b.Value.BackId);
+                                                  EsNuevo: false;
+                                                  PrincipalIdRelacionado: If(
+                                                      IsBlank(Text(b.Value.PrincipalIdRelacionado));
+                                                      Blank();
+                                                      Value(b.Value.PrincipalIdRelacionado)
+                                                  );
+                                                  Nombre: Text(b.Value.Nombre);
+                                                  Cedula: Text(b.Value.Cedula);
+                                                  Ekon: Text(b.Value.Ekon);
+                                                  Correo: Lower(Trim(Text(b.Value.Correo)));
+                                                  Cargo: Text(b.Value.Cargo);
+                                                  FechaInicio: DateValue(Left(Text(b.Value.FechaInicio); 10));
+                                                  FechaFin: DateValue(Left(Text(b.Value.FechaFin); 10));
+                                                  Observacion: Text(b.Value.Observacion);
+
+                                                  // AGREGAR ESTO PARA RECUPERAR LOS DATOS DEL JSON:
+                                                  TipoRegistro: Coalesce(Text(b.Value.TipoRegistro); "Jornada");
+                                                  DiasDescanso: Coalesce(Value(b.Value.DiasDescanso); 0)
+                                              }
+                                          )
+                                      );;
+
+                                      ClearCollect(
+                                          colBacksProyecto;
+                                          Filter(
+                                              colBacksHistoricos;
+                                              //FechaFin >= varFechaCorteEdicion
+
+                                              DateAdd(FechaFin; DiasDescanso; TimeUnit.Days) >= varFechaCorteEdicion
+                                          )
+                                      );;
+
+                                      // ---------------------------
+                                      // ASIGNACIONES / BLOQUES
+                                      // ---------------------------
+                                      Clear(colAsignacionesPreview);;
+                                      Clear(colAsignacionesDiario);;
+
+                                      ForAll(
+                                          Table(varAsigProyectoJson.Bloques) As b;
+                                          Collect(
+                                              colAsignacionesPreview;
+                                              {
+                                                  Bloque: Value(b.Value.Bloque);
+                                                  Rol: Text(b.Value.Rol);
+                                                  TipoAsignacion: Text(b.Value.TipoAsignacion);
+
+                                                  PrincipalId: If(
+                                                      IsBlank(Text(b.Value.PrincipalId));
+                                                      Blank();
+                                                      Value(b.Value.PrincipalId)
+                                                  );
+
+                                                  BackId: If(
+                                                      IsBlank(Text(b.Value.BackId));
+                                                      Blank();
+                                                      Value(b.Value.BackId)
+                                                  );
+
+                                                  ResponsableNombre: Text(b.Value.ResponsableNombre);
+                                                  ResponsableCedula: Text(b.Value.ResponsableCedula);
+                                                  ResponsableEkon: Text(b.Value.ResponsableEkon);
+                                                  ResponsableCorreo: Lower(Trim(Text(b.Value.ResponsableCorreo)));
+                                                  ResponsableCargo: Text(b.Value.ResponsableCargo);
+
+                                                  FechaInicio: DateValue(Left(Text(b.Value.FechaInicio); 10));
+                                                  FechaFin: DateValue(Left(Text(b.Value.FechaFin); 10));
+
+                                                  DiasAsignados: Value(b.Value.DiasAsignados)
+                                              }
+                                          )
+                                      );;
+
+                                      ForAll(
+                                          Table(varAsigProyectoJson.DetalleDiario) As d;
+                                          Collect(
+                                              colAsignacionesDiario;
+                                              {
+                                                  Fecha: DateValue(Left(Text(d.Value.Fecha); 10));
+                                                  FechaClave: Text(d.Value.FechaClave);
+
+                                                  Bloque: Value(d.Value.Bloque);
+                                                  Rol: Text(d.Value.Rol);
+                                                  TipoAsignacion: Text(d.Value.TipoAsignacion);
+
+                                                  PrincipalId: If(
+                                                      IsBlank(Text(d.Value.PrincipalId));
+                                                      Blank();
+                                                      Value(d.Value.PrincipalId)
+                                                  );
+
+                                                  BackId: If(
+                                                      IsBlank(Text(d.Value.BackId));
+                                                      Blank();
+                                                      Value(d.Value.BackId)
+                                                  );
+
+                                                  ResponsableNombre: Text(d.Value.ResponsableNombre);
+                                                  ResponsableCedula: Text(d.Value.ResponsableCedula);
+                                                  ResponsableEkon: Text(d.Value.ResponsableEkon);
+                                                  ResponsableCorreo: Lower(Trim(Text(d.Value.ResponsableCorreo)));
+                                                  ResponsableCargo: Text(d.Value.ResponsableCargo)
+                                              }
+                                          )
+                                      );;
+
+
+
+
+                                      // ---------------------------
+                                      // ETAPAS HISTÓRICAS
+                                      // ---------------------------
+                                      Clear(colEtapasHistoricas);;
+
+                                      If(
+                                          !IsBlank(varAsigProyectoJson.Etapas);
+                                          ForAll(
+                                              Table(varAsigProyectoJson.Etapas) As e;
+                                              Collect(
+                                                  colEtapasHistoricas;
+                                                  {
+                                                      EtapaId: Text(e.Value.EtapaId);
+                                                      Version: Value(e.Value.Version);
+                                                      TipoMovimiento: Text(e.Value.TipoMovimiento);
+                                                      EstadoProyecto: Text(e.Value.EstadoProyecto);
+                                                      FechaRegistro: Text(e.Value.FechaRegistro);
+                                                      UsuarioRegistro: Text(e.Value.UsuarioRegistro);
+                                                      CorreoRegistro: Text(e.Value.CorreoRegistro);
+
+                                                      FechaInicio: DateValue(Left(Text(e.Value.FechaInicio); 10));
+                                                      FechaFin: DateValue(Left(Text(e.Value.FechaFin); 10));
+
+                                                      ModeloAsignacion: Text(e.Value.ModeloAsignacion);
+
+                                                      PrincipalesJson: Coalesce(Text(e.Value.PrincipalesJson); "[]");
+                                                      BacksJson: Coalesce(Text(e.Value.BacksJson); "[]");
+                                                      BloquesEtapaJson: Coalesce(Text(e.Value.BloquesEtapaJson); "[]");
+                                                      DetalleDiarioEtapaJson: Coalesce(Text(e.Value.DetalleDiarioEtapaJson); "[]");
+
+                                                      ActivityId: Coalesce(Text(e.Value.ActivityId); "");
+                                                      ActivityDescription: Coalesce(Text(e.Value.ActivityDescription); "");
+                                                      ActivityType: Coalesce(Text(e.Value.ActivityType); "")
+                                                  }
+                                              )
+                                          )
+                                      );;
+
+                                      // ---------------------------
+                                      // HISTORIAL DE ACTIVIDADES
+                                      // Si aún no existe, sembramos una actividad base
+                                      // ---------------------------
+                                      Clear(colHistorialActividades);;
+
+                                      If(
+                                          !IsBlank(varAsigProyectoJson.HistorialActividades);
+                                          ForAll(
+                                              Table(varAsigProyectoJson.HistorialActividades) As a;
+                                              Collect(
+                                                  colHistorialActividades;
+                                                  {
+                                                      MovimientoId: Text(a.Value.MovimientoId);
+                                                      Version: Value(a.Value.Version);
+                                                      TipoMovimiento: Text(a.Value.TipoMovimiento);
+                                                      FechaRegistro: Text(a.Value.FechaRegistro);
+                                                      UsuarioRegistro: Text(a.Value.UsuarioRegistro);
+                                                      CorreoRegistro: Text(a.Value.CorreoRegistro);
+                                                      FechaInicio: DateValue(Left(Text(a.Value.FechaInicio); 10));
+                                                      FechaFin: DateValue(Left(Text(a.Value.FechaFin); 10));
+                                                      ActivityId: Text(a.Value.ActivityId);
+                                                      ActivityDescription: Text(a.Value.ActivityDescription);
+                                                      ActivityType: Text(a.Value.ActivityType)
+                                                  }
+                                              )
+                                          )
+                                      );;
+
+                                      If(
+                                          CountRows(colHistorialActividades) = 0;
+                                          Collect(
+                                              colHistorialActividades;
+                                              {
+                                                  MovimientoId: GUID();
+                                                  Version: 1;
+                                                  TipoMovimiento: "CREACION";
+                                                  FechaRegistro: Text(Now(); "yyyy-mm-dd hh:mm:ss");
+                                                  UsuarioRegistro: UsuariosdeOffice365.MyProfileV2().displayName;
+                                                  CorreoRegistro: UsuariosdeOffice365.MyProfileV2().userPrincipalName;
+                                                  FechaInicio: gblFechaInicioProyecto;
+                                                  FechaFin: gblFechaFinProyecto;
+                                                  ActivityId: gblActivityIdProyecto;
+                                                  ActivityDescription: gblActividadProyecto;
+                                                  ActivityType: gblActivityTypeProyecto
+                                              }
+                                          )
+                                      );;
+
+                                      // ---------------------------
+                                      // CARGAR ACTIVIDADES API PARA CAMBIO DE ACTIVIDAD
+                                      // ---------------------------
+                                      Clear(colActividadesApiEdit);;
+
+                                      If(
+                                          !IsBlank(gblCompanyIdProyecto) && !IsBlank(gblProjectIdProyecto);
+                                          IfError(
+                                              Set(
+                                                  varRespuestaActividadesEdit;
+                                                  ConsultarProyecto.Run(
+                                                      Text(gblCompanyIdProyecto);
+                                                      Text(gblProjectIdProyecto);
+                                                      "ACTIVIDADES"
+                                                  ).respuestajson
+                                              );;
+
+                                              If(
+                                                  IsBlank(varRespuestaActividadesEdit) ||
+                                                  varRespuestaActividadesEdit = "[]" ||
+                                                  varRespuestaActividadesEdit = "null";
+                                                  Clear(colActividadesApiEdit);
+                                                  ClearCollect(
+                                                      colActividadesApiEdit;
+                                                      Table(ParseJSON(varRespuestaActividadesEdit))
+                                                  )
+                                              );
+
+                                              Clear(colActividadesApiEdit)
+                                          )
+                                      );;
+
+                                      If(
+                                          !IsBlank(gblActivityIdProyecto) &&
+                                          IsBlank(
+                                              LookUp(
+                                                  colActividadesApiEdit;
+                                                  Text(Value.activityId) = gblActivityIdProyecto
+                                              )
+                                          );
+                                          Collect(
+                                              colActividadesApiEdit;
+                                              {
+                                                  Value: ParseJSON(
+                                                      JSON(
+                                                          {
+                                                              projectId: gblProjectIdProyecto;
+                                                              activityId: gblActivityIdProyecto;
+                                                              description: gblActividadProyecto;
+                                                              activityType: gblActivityTypeProyecto
+                                                          };
+                                                          JSONFormat.Compact
+                                                      )
+                                                  )
+                                              }
+                                          )
+                                      );;
+
+                                      ClearCollect(
+                                          colAsignacionesPreviewOriginal;
+                                          colAsignacionesPreview
+                                      );;
+
+                                      ClearCollect(
+                                          colAsignacionesDiarioOriginal;
+                                          colAsignacionesDiario
+                                      );;
+
+                                      Set(varRequiereRegenerar; false);;
+                                      Set(varAsignacionRegenerada; false);;
+
+
+                                      Navigate(
+                                          ConfigurarProyecto;
+                                          ScreenTransition.Fade
+                                      );;
+                                      */
+
+
+                                      // ---------------------------
+                                      // PROYECTO SELECCIONADO (registro completo solo de este proyecto)
+                                      // ---------------------------
+                                      Set(varProyectoSeleccionado, LookUp('SIG PROYECTOS', ID = ThisItem.ID));
+                                      Set(varUidProyectoEdit, varProyectoSeleccionado.PROYECTO_UID);
+                                      Set(varModoProyecto, "EDITAR");
+
+                                      Set(varFechaCorteEdicion, Today());
+                                      Set(varRequiereRegenerar, false);
+
+                                      Set(varInfoProyectoJson, ParseJSON(varProyectoSeleccionado.INF_GENERAL));
+
+                                      // ---------------------------
+                                      // DATOS GENERALES (columnas de la cabecera)
+                                      // ---------------------------
+                                      Set(gblCompaniaProyecto, varProyectoSeleccionado.COMPANIA_NOMBRE);
+                                      Set(gblCompanyIdProyecto, varProyectoSeleccionado.COMPANY_ID);
+                                      Set(gblCompaniaRucProyecto, varProyectoSeleccionado.COMPANIA_RUC);
+                                      Set(gblGrupoProyecto, varProyectoSeleccionado.GRUPO);
+
+                                      Set(gblNombreProyecto, Text(varInfoProyectoJson.InfoProyecto.Proyecto.Nombre));
+                                      Set(gblNombreVisualProyecto, varProyectoSeleccionado.NOMBRE_PROYECTO);
+                                      Set(gblProjectIdProyecto, varProyectoSeleccionado.PROJECT_ID_EKON);
+                                      Set(gblEstadoApiProyecto, Text(varInfoProyectoJson.InfoProyecto.Proyecto.Estado));
+
+                                      Set(gblDimensionProyecto, varProyectoSeleccionado.DIMENSION_DESC);
+                                      Set(gblUegpIdProyecto, Text(varInfoProyectoJson.InfoProyecto.Dimension.UegpId));
+
+                                      Set(gblActividadProyecto, varProyectoSeleccionado.ACTIVITY_DESC);
+                                      Set(gblActivityIdProyecto, varProyectoSeleccionado.ACTIVITY_ID);
+                                      Set(gblActivityTypeProyecto, varProyectoSeleccionado.ACTIVITY_TYPE);
+
+                                      Set(varActivityIdEdit, gblActivityIdProyecto);
+                                      Set(varActivityNameEdit, gblActividadProyecto);
+                                      Set(varActivityTypeEdit, gblActivityTypeProyecto);
+
+                                      Set(gblCodigoHorario, varProyectoSeleccionado.HORARIO_CODIGO);
+                                      Set(gblDescripcionHorario, varProyectoSeleccionado.HORARIO_DESC);
+                                      Set(gblEntradaHorario, varProyectoSeleccionado.HORA_ENTRADA);
+                                      Set(gblSalidaHorario, varProyectoSeleccionado.HORA_SALIDA);
+                                      Set(gblHorasHorario, varProyectoSeleccionado.HORAS);
+                                      Set(gblHorasTrabHorario, varProyectoSeleccionado.HORAS_TRABAJADAS);
+                                      Set(gblTipoHorario, varProyectoSeleccionado.TIPO_HORARIO);
+                                      Set(gblSalidaAlmuerzo, varProyectoSeleccionado.SALIDA_ALMUERZO);
+                                      Set(gblRegresoAlmuerzo, varProyectoSeleccionado.REGRESO_ALMUERZO);
+
+                                      // Creador original (se conserva al guardar)
+                                      Set(gblUsuarioCreadorProyecto, varProyectoSeleccionado.USUARIO_CREADOR);
+                                      Set(gblCorreoCreadorProyecto, varProyectoSeleccionado.CORREO_CREADOR);
+                                      Set(
+                                          varUegpsCalculadas,
+                                          ForAll(Table(varInfoProyectoJson.InfoRegistro.Uegp) As u, Text(u.Value.Categoria))
+                                      );
+
+                                      Set(varActividadCambiadaVista, false);
+
+                                      Set(gblFechaInicioProyecto, varProyectoSeleccionado.FECHA_INICIO);
+                                      Set(gblFechaFinProyecto, varProyectoSeleccionado.FECHA_FIN);
+
+                                      Set(gblEstadoProyecto, varProyectoSeleccionado.ESTADO.Value);
+
+                                      // Control de estados del proyecto
+                                      Set(varEstadoOriginalProyecto, gblEstadoProyecto);
+                                      Set(varEstadoNuevoProyecto, gblEstadoProyecto);
+                                      Set(varEstadoCambiado, false);
+                                      Set(varTipoMovimientoEstado, "SIN_CAMBIO");
+                                      Set(varFechaMovimientoEstado, Blank());
+                                      Set(varEstadoRegenerado, false);
+
+                                      // ---------------------------
+                                      // PRINCIPALES (SIG_ASIGNACIONES_PERSONAL)
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colPrincipalesHistoricos,
+                                          ForAll(
+                                              Filter(SIG_ASIGNACIONES_PERSONAL, PROYECTO_UID = varUidProyectoEdit && ROL = "PRINCIPAL") As p,
+                                              {
+                                                  PrincipalId: p.PERSONA_ID,
+                                                  EsPrincipalInicial: p.ES_PRINCIPAL_INICIAL,
+                                                  EsNuevo: false,
+                                                  Nombre: p.NOMBRE,
+                                                  Cedula: p.CEDULA,
+                                                  Ekon: Text(p.EKON),
+                                                  Correo: Lower(Trim(p.CORREO)),
+                                                  Cargo: p.CARGO,
+                                                  FechaInicio: p.FECHA_INICIO,
+                                                  FechaFin: p.FECHA_FIN,
+                                                  JornadaCodigo: p.JORNADA_CODIGO,
+                                                  JornadaDescripcion: p.JORNADA_DESCRIPCION,
+                                                  DiasTrabajo: Coalesce(p.DIAS_TRABAJO, 0),
+                                                  DiasDescanso: Coalesce(p.DIAS_DESCANSO, 0)
+                                              }
+                                          )
+                                      );
+
+                                      ClearCollect(
+                                          colPrincipalesProyecto,
+                                          Filter(colPrincipalesHistoricos, FechaFin >= varFechaCorteEdicion)
+                                      );
+
+                                      // ---------------------------
+                                      // BACKS (SIG_ASIGNACIONES_PERSONAL)
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colBacksHistoricos,
+                                          ForAll(
+                                              Filter(SIG_ASIGNACIONES_PERSONAL, PROYECTO_UID = varUidProyectoEdit && ROL = "BACK") As b,
+                                              {
+                                                  BackId: b.PERSONA_ID,
+                                                  EsNuevo: false,
+                                                  PrincipalIdRelacionado: b.PRINCIPAL_ID_RELACIONADO,
+                                                  Nombre: b.NOMBRE,
+                                                  Cedula: b.CEDULA,
+                                                  Ekon: Text(b.EKON),
+                                                  Correo: Lower(Trim(b.CORREO)),
+                                                  Cargo: b.CARGO,
+                                                  FechaInicio: b.FECHA_INICIO,
+                                                  FechaFin: b.FECHA_FIN,
+                                                  Observacion: Coalesce(b.OBSERVACION, ""),
+                                                  TipoRegistro: Coalesce(b.TIPO_REGISTRO, "Jornada"),
+                                                  DiasDescanso: Coalesce(b.DIAS_DESCANSO, 0)
+                                              }
+                                          )
+                                      );
+
+                                      ClearCollect(
+                                          colBacksProyecto,
+                                          Filter(colBacksHistoricos, DateAdd(FechaFin, DiasDescanso, TimeUnit.Days) >= varFechaCorteEdicion)
+                                      );
+
+                                      // ---------------------------
+                                      // DETALLE DIARIO (SIG_ASIGNACIONES_DETALLE)
+                                      // Se excluyen los descansos automáticos de principales: se recalculan al guardar
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colAsignacionesDiario,
+                                          ForAll(
+                                              Filter(SIG_ASIGNACIONES_DETALLE, PROYECTO_UID = varUidProyectoEdit) As d,
+                                              {
+                                                  Fecha: d.FECHA,
+                                                  FechaClave: Text(d.FECHA, "[$-en-US]yyyy-mm-dd"),
+                                                  Bloque: d.BLOQUE,
+                                                  Rol: d.ROL,
+                                                  TipoAsignacion: d.TIPO_ASIGNACION,
+                                                  PrincipalId: d.PRINCIPAL_ID,
+                                                  BackId: d.BACK_ID,
+                                                  ResponsableNombre: d.NOMBRE_RESPONSABLE,
+                                                  ResponsableCedula: d.CEDULA,
+                                                  ResponsableEkon: Text(d.EKON),
+                                                  ResponsableCorreo: Lower(Trim(d.CORREO_RESPONSABLE)),
+                                                  ResponsableCargo: d.CARGO
+                                              }
+                                          )
+                                      );
+
+                                      RemoveIf(
+                                          colAsignacionesDiario,
+                                          Rol = "DESCANSO" && !IsBlank(PrincipalId) && IsBlank(BackId)
+                                      );
+
+                                      // ---------------------------
+                                      // BLOQUES (se derivan del detalle)
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colAsignacionesPreview,
+                                          ForAll(
+                                              GroupBy(
+                                                  colAsignacionesDiario,
+                                                  Bloque, Rol, TipoAsignacion, PrincipalId, BackId,
+                                                  ResponsableNombre, ResponsableCedula, ResponsableEkon, ResponsableCorreo, ResponsableCargo,
+                                                  Registros
+                                              ) As g,
+                                              {
+                                                  Bloque: g.Bloque,
+                                                  Rol: g.Rol,
+                                                  TipoAsignacion: g.TipoAsignacion,
+                                                  PrincipalId: g.PrincipalId,
+                                                  BackId: g.BackId,
+                                                  ResponsableNombre: g.ResponsableNombre,
+                                                  ResponsableCedula: g.ResponsableCedula,
+                                                  ResponsableEkon: g.ResponsableEkon,
+                                                  ResponsableCorreo: g.ResponsableCorreo,
+                                                  ResponsableCargo: g.ResponsableCargo,
+                                                  FechaInicio: Min(g.Registros, Fecha),
+                                                  FechaFin: Max(g.Registros, Fecha),
+                                                  DiasAsignados: CountRows(g.Registros)
+                                              }
+                                          )
+                                      );
+
+                                      // ---------------------------
+                                      // ETAPAS HISTÓRICAS (SIG_HISTORIAL, solo metadatos)
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colEtapasHistoricas,
+                                          ForAll(
+                                              SortByColumns(Filter(SIG_HISTORIAL, PROYECTO_UID = varUidProyectoEdit), "VERSION", SortOrder.Ascending) As e,
+                                              {
+                                                  EtapaId: e.ETAPA_ID,
+                                                  Version: e.VERSION,
+                                                  TipoMovimiento: e.Título,
+                                                  EstadoProyecto: e.ESTADO_PROYECTO,
+                                                  FechaRegistro: Text(e.FECHA_REGISTRO, "[$-en-US]yyyy-mm-dd hh:mm:ss"),
+                                                  UsuarioRegistro: e.USUARIO_REGISTRO,
+                                                  CorreoRegistro: e.CORREO_REGISTRO,
+                                                  FechaInicio: e.FECHA_INICIO,
+                                                  FechaFin: e.FECHA_FIN,
+                                                  ModeloAsignacion: "MULTIPLES_PRINCIPALES_BACK_MANUAL",
+                                                  PrincipalesJson: "[]",
+                                                  BacksJson: "[]",
+                                                  BloquesEtapaJson: "[]",
+                                                  DetalleDiarioEtapaJson: "[]",
+                                                  ActivityId: Coalesce(e.ACTIVITY_ID, ""),
+                                                  ActivityDescription: "",
+                                                  ActivityType: ""
+                                              }
+                                          )
+                                      );
+
+                                      // ---------------------------
+                                      // HISTORIAL DE ACTIVIDADES (SIG_HISTORIAL_ACTIVIDADES)
+                                      // ---------------------------
+                                      ClearCollect(
+                                          colHistorialActividades,
+                                          ForAll(
+                                              SortByColumns(Filter(SIG_HISTORIAL_ACTIVIDADES, PROYECTO_UID = varUidProyectoEdit), "FECHA_INICIO", SortOrder.Ascending) As a,
+                                              {
+                                                  MovimientoId: a.Título,
+                                                  Version: a.VERSION,
+                                                  TipoMovimiento: a.TIPO_MOVIMIENTO,
+                                                  FechaRegistro: Text(a.FECHA_REGISTRO, "[$-en-US]yyyy-mm-dd hh:mm:ss"),
+                                                  UsuarioRegistro: a.USUARIO_REGISTRO,
+                                                  CorreoRegistro: a.CORREO_REGISTRO,
+                                                  FechaInicio: a.FECHA_INICIO,
+                                                  FechaFin: a.FECHA_FIN,
+                                                  ActivityId: a.ACTIVITY_ID,
+                                                  ActivityDescription: a.ACTIVITY_DESCRIPTION,
+                                                  ActivityType: a.ACTIVITY_TYPE
+                                              }
+                                          )
+                                      );
+
+                                      If(
+                                          CountRows(colHistorialActividades) = 0 && !IsBlank(gblActivityIdProyecto),
+                                          Collect(
+                                              colHistorialActividades,
+                                              {
+                                                  MovimientoId: Text(GUID()),
+                                                  Version: 1,
+                                                  TipoMovimiento: "CREACION",
+                                                  FechaRegistro: Text(Now(), "[$-en-US]yyyy-mm-dd hh:mm:ss"),
+                                                  UsuarioRegistro: gblUsuarioCreadorProyecto,
+                                                  CorreoRegistro: gblCorreoCreadorProyecto,
+                                                  FechaInicio: gblFechaInicioProyecto,
+                                                  FechaFin: gblFechaFinProyecto,
+                                                  ActivityId: gblActivityIdProyecto,
+                                                  ActivityDescription: gblActividadProyecto,
+                                                  ActivityType: gblActivityTypeProyecto
+                                              }
+                                          )
+                                      );
+
+                                      // ---------------------------
+                                      // ACTIVIDADES API PARA CAMBIO DE ACTIVIDAD (igual que antes)
+                                      // ---------------------------
+                                      Clear(colActividadesApiEdit);
+
+                                      If(
+                                          !IsBlank(gblCompanyIdProyecto) && !IsBlank(gblProjectIdProyecto),
+                                          IfError(
+                                              Set(
+                                                  varRespuestaActividadesEdit,
+                                                  ConsultarProyecto.Run(
+                                                      Text(gblCompanyIdProyecto),
+                                                      Text(gblProjectIdProyecto),
+                                                      "ACTIVIDADES"
+                                                  ).respuestajson
+                                              );
+                                              If(
+                                                  IsBlank(varRespuestaActividadesEdit) ||
+                                                  varRespuestaActividadesEdit = "[]" ||
+                                                  varRespuestaActividadesEdit = "null",
+                                                  Clear(colActividadesApiEdit),
+                                                  ClearCollect(colActividadesApiEdit, Table(ParseJSON(varRespuestaActividadesEdit)))
+                                              ),
+                                              Clear(colActividadesApiEdit)
+                                          )
+                                      );
+
+                                      If(
+                                          !IsBlank(gblActivityIdProyecto) &&
+                                          IsBlank(LookUp(colActividadesApiEdit, Text(Value.activityId) = gblActivityIdProyecto)),
+                                          Collect(
+                                              colActividadesApiEdit,
+                                              {
+                                                  Value: ParseJSON(
+                                                      JSON(
+                                                          {
+                                                              projectId: gblProjectIdProyecto,
+                                                              activityId: gblActivityIdProyecto,
+                                                              description: gblActividadProyecto,
+                                                              activityType: gblActivityTypeProyecto
+                                                          },
+                                                          JSONFormat.Compact
+                                                      )
+                                                  )
+                                              }
+                                          )
+                                      );
+
+                                      // ---------------------------
+                                      // COPIAS ORIGINALES
+                                      // ---------------------------
+                                      ClearCollect(colAsignacionesPreviewOriginal, colAsignacionesPreview);
+                                      ClearCollect(colAsignacionesDiarioOriginal, colAsignacionesDiario);
+
+                                      Set(varRequiereRegenerar, false);
+                                      Set(varAsignacionRegenerada, false);
+
+                                      Navigate(ConfigurarProyecto_1, ScreenTransition.Fade)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =13
+                                    PaddingRight: =13
+                                    PaddingTop: =10
+                                    Tooltip: ="Configurar Proyecto"
+                                    Visible: |
+                                      =true
+                                    Width: =40
+                              - confPRY_1:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(0, 18, 107, 1)
+                                    Height: =50
+                                    Icon: =Icon.OpenInNewWindow
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |-
+                                      =/*
+                                      With(
+                                          { datos: ParseJSON(ThisItem.INF_GENERAL) };
+                                          Set(
+                                              gblProyectoSeleccionado;
+                                              {
+                                                  Registro: ThisItem;
+                                                  FechaInicio: IfError(DateValue(Left(Text(datos.Planificacion.FechaInicio); 10)); Blank());
+                                                  FechaFin: IfError(DateValue(Left(Text(datos.Planificacion.FechaFin); 10)); Blank())
+                                              }
+                                          )
+                                      );;
+
+                                      Refresh('SIG PROYECTOS');;
+
+                                      Navigate(
+                                          AsignarPersonal;
+                                          ScreenTransition.Fade;
+                                          {
+                                              ctxRegistroSeleccionado: ThisItem
+                                          }
+                                      )
+                                      */
+
+
+
+                                      With(
+                                          {
+                                              regCompleto: LookUp('SIG PROYECTOS', ID = ThisItem.ID)
+                                          },
+                                          Set(
+                                              gblProyectoSeleccionado,
+                                              {
+                                                  Registro: regCompleto,
+                                                  FechaInicio: ThisItem.FECHA_INICIO,
+                                                  FechaFin: ThisItem.FECHA_FIN
+                                              }
+                                          );
+                                          Navigate(
+                                              AsignarPersonal,
+                                              ScreenTransition.Fade,
+                                              {
+                                                  ctxRegistroSeleccionado: regCompleto
+                                              }
+                                          )
+                                      )
+                                    PaddingBottom: =10
+                                    PaddingLeft: =13
+                                    PaddingRight: =13
+                                    PaddingTop: =10
+                                    Tooltip: ="Generar for seri 11"
+                                    Visible: =varEsSuperAdmin
+                                    Width: =40
+                        - lblNombreResponsable:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: |-
+                                =Coalesce(
+                                    LookUp(
+                                        SIG_ASIGNACIONES_PERSONAL,
+                                        PROYECTO_UID = ThisItem.PROYECTO_UID && ROL = "PRINCIPAL" && ES_PRINCIPAL_INICIAL = true
+                                    ).NOMBRE,
+                                    "Sin Responsable"
+                                )
+                              X: =130
+                        - lblNombreBack:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: |-
+                                =/*
+                                With(
+                                    { datos: ParseJSON(ThisItem.INF_GENERAL) };
+                                    With(
+                                        { backs: Table(datos.Responsables.Backs) };
+                                        If(
+                                            CountRows(backs) = 0;
+                                            "Sin Back";
+                                            Concat(
+                                                backs;
+                                                Text(Value.Nombre);
+                                                " | "
+                                            )
+                                        )
+                                    )
+                                )
+                                */
+
+                                With(
+                                    {
+                                        nombresBack: Distinct(
+                                            Filter(SIG_ASIGNACIONES_PERSONAL, PROYECTO_UID = ThisItem.PROYECTO_UID && ROL = "BACK"),
+                                            NOMBRE
+                                        )
+                                    },
+                                    If(
+                                        CountRows(nombresBack) = 10,
+                                        "Sin Back",
+                                        Concat(nombresBack, Value, " | ")
+                                    )
+                                )
+                              X: =280
+                        - lblNombreResponsable_2:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: =Coalesce(Text(ThisItem.FECHA_INICIO, "yyyy-mm-dd"), "Sin Fecha Inicio")
+                              Width: =100
+                              X: =430
+                        - lblNombreResponsable_3:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: =Coalesce(Text(ThisItem.FECHA_FIN, "yyyy-mm-dd"), "Sin Fecha Fin")
+                              Width: =100
+                              X: =530
+                        - lblNombreResponsable_4:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: =ThisItem.ESTADO.Value
+                              Width: =110
+                              X: =800
+                        - lblNombreResponsable_5:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Align: =Align.Center
+                              BorderColor: =RGBA(214, 221, 224, 1)
+                              BorderStyle: =BorderStyle.Solid
+                              BorderThickness: =0
+                              Color: =RGBA(0, 0, 0, 1)
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =60
+                              OnSelect: =Select(Parent)
+                              PaddingBottom: =0
+                              PaddingTop: =0
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Size: =13
+                              Text: |-
+                                ="Jornada: " & Coalesce(ThisItem.HORA_ENTRADA, "Sin Registro") &
+                                " - " & Coalesce(ThisItem.HORA_SALIDA, "Sin Registro") &
+                                " | Almuerzo: " & Coalesce(ThisItem.SALIDA_ALMUERZO, "Sin Registro") &
+                                " - " & Coalesce(ThisItem.REGRESO_ALMUERZO, "Sin Registro")
+                              Width: =170
+                              X: =630

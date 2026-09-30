@@ -1,0 +1,508 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  ASISTENCIAVISUALIZACION:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: "=// Generamos la colección para el formato diario inyectando el índice secuencial y el check\r\nClear(colAsistenciaDiaria);\r\n\r\nForAll(\r\n    Sequence(CountRows(colPersonalFinal)) As Fila,\r\n    With(\r\n        {\r\n            varPersona: Last(FirstN(colPersonalFinal, Fila.Value))\r\n        },\r\n        Collect(\r\n            colAsistenciaDiaria,\r\n            {\r\n                NumeroSecuencial: Fila.Value,\r\n                CodigoEkon: varPersona.CodigoEkon,\r\n                Nombre: varPersona.Nombre,\r\n                Area: varPersona.Area,\r\n                Seccion: varPersona.Seccion,\r\n                Cargo: varPersona.Cargo,\r\n                Cedula: varPersona.Cedula,\r\n                HoraEntrada: \"08:00\",\r\n                HoraSalida: \"17:00\",\r\n                TotalHoras: 8,\r\n                \r\n                // NUEVA COLUMNA: Controla si se va o no al PDF\r\n                CheckAsistencia: false \r\n            }\r\n        )\r\n    )\r\n);"
+    Children:
+      - Container1_7:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_15:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0.15
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingRight: =6
+                Children:
+                  - Icon1_16:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Back(ScreenTransition.Fade)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_16:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="ASISTENCIA"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - Container12_36:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderThickness: =2
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.5
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  X: =40
+                  Y: =40
+                Children:
+                  - TextInput2_4:
+                      Control: ModernTextInput@1.1.2
+                      Properties:
+                        Align: =Align.Center
+                        Default: ="FOR SEI 011  08  16 06 2026"
+                        DisplayMode: =DisplayMode.View
+                        FillPortions: =0.6
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Size: =16
+                        Width: =Parent.Width
+                  - Container19_5:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                      Children:
+                        - Text5_16:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =0.6
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: |-
+                                ="NOMBRE DEL PROYECTO: "
+                        - nombreProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsNombreProyecto
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_17:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="N° DE CONTRATO / N° DE PROYECTO:"
+                        - numeroProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsCodigoProyecto
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =0.7
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_18:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =0.4
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="LUGAR:"
+                        - LugarProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                  - Container19_6:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                      Children:
+                        - Text5_19:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =0.5
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="TEMA IMPARTIDO:"
+                        - temaProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =gblTemaProyecto
+                              FillPortions: =2.2
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_20:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =0.6
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="EMPRESA SUBCONTRATISTA:"
+                        - empresaProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsEmpresa
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1.5
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                  - Container19_7:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                      Children:
+                        - Text5_21:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="FECHA:"
+                        - fechaProyecto_1:
+                            Control: ModernDatePicker@1.0.2
+                            Properties:
+                              DefaultDate: =Today()
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Format: =DatePickerFormat.Short
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Size: =15
+                        - Text5_22:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="HORA:"
+                        - horaProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =gblHoraProyecto
+                              FillPortions: =0.7
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              OnChange: "=// 1. Solo validamos si el campo no está vacío (para que no salte error al borrar todo)\r\nIf(\r\n    !IsBlank(Self.Text),\r\n    \r\n    // 2. Comparamos lo escrito contra el patrón de 24 horas (HH:mm)\r\n    If(\r\n        !IsMatch(Self.Text, \"^([01][0-9]|2[0-3]):[0-5][0-9]$\"),\r\n        \r\n        // 3. Si no coincide, mandamos la alerta y borramos el campo\r\n        Notify(\"Formato de hora inválido. Usa formato 24H (Ej: 08:30 o 14:15).\", NotificationType.Error);\r\n        Reset(horaProyecto_1)\r\n    )\r\n)"
+                              Placeholder: ="00:00"
+                              Size: =15
+                        - Text5_23:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="DURACIÓN:"
+                        - duracionProyecto_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =gblDuracionProyecto
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              OnChange: "=// 1. Validamos solo si el usuario escribió algo\r\nIf(\r\n    !IsBlank(Self.Text),\r\n    \r\n    // 2. Usamos IsMatch para obligar a que sean solo dígitos (sin letras, ni signos menos) \r\n    // y además validamos que el número convertido sea mayor a 0\r\n    If(\r\n        !IsMatch(Self.Text, \"^[0-9]+$\") Or Value(Self.Text) <= 0,\r\n        \r\n        // 3. Si incumple alguna de las dos, lanzamos la alerta y limpiamos\r\n        Notify(\"La duración debe ser un número entero mayor a 0 (minutos).\", NotificationType.Error);\r\n        Reset(duracionProyecto_1)\r\n    )\r\n)"
+                              Placeholder: |-
+                                ="Ej: 120"
+                              Size: =15
+                        - Text5_24:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="TIPO DE FORMACIÓN:"
+                        - formacionProyecto_1:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              ItemDisplayText: =ThisItem.Value
+                              Items: =["CAPACITACIÓN", "DIÁLOGO", "SOCIALIZACIÓN", "INDUCCIÓN"]
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              SelectMultiple: =false
+                              Size: =15
+            - Container26_2:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderThickness: =2
+                  FillPortions: =0.15
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                Children:
+                  - TextInput2_5:
+                      Control: ModernTextInput@1.1.2
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Default: ="2. ASISTENCIA"
+                        DisplayMode: =DisplayMode.View
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        LayoutMinHeight: =0
+                        LayoutMinWidth: =0
+                        Size: =16
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+            - contCronogramaMensual_5:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderThickness: =2
+                  DropShadow: =DropShadow.None
+                  FillPortions: =2
+                  Height: =Parent.Height - 100
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMinHeight: =0
+                  LayoutOverflowX: =LayoutOverflow.Scroll
+                  LayoutOverflowY: =LayoutOverflow.Scroll
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: |-
+                    =//Parent.Width - 40
+                    Parent.Width
+                  X: =20
+                  Y: =120
+                Children:
+                  - Container28_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        FillPortions: =0.1
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                      Children:
+                        - TextInput3_25:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Align: =Align.Center
+                              Default: ="NOMBRES Y APELLIDOS"
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =2
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                  - Gallery3_1:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        AccessibleLabel: =
+                        BorderColor: =RGBA(245, 245, 245, 1)
+                        Items: |-
+                          =SortByColumns(
+                              Filter(
+                                  'SIG ASISTENCIAS',
+                                  ProyectoID = varDsCodigoProyecto
+                              ),
+                              "FechaAsistencia",
+                              SortOrder.Descending
+                          )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        TemplateSize: =40
+                        WrapCount: =0
+                      Children:
+                        - Container38:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              PaddingBottom: =8
+                              PaddingLeft: =8
+                              PaddingRight: =8
+                              PaddingTop: =8
+                              Width: =Parent.Width
+                            Children:
+                              - HtmlText2:
+                                  Control: HtmlViewer@2.1.0
+                                  Properties:
+                                    AutoHeight: =true
+                                    DisabledBorderColor: =RGBA(161, 159, 157, 1)
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    FillPortions: =1
+                                    Font: =Font.'Segoe UI'
+                                    Height: =Parent.Height
+                                    HtmlText: |-
+                                      ="<div style='font-family: Arial, sans-serif; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; margin: 8px 0; padding: 8px 12px; box-sizing: border-box; overflow: hidden;'>
+                                          <div style='display: flex; align-items: center; gap: 8px;'>
+                                              <span style='font-weight: bold; color: #333;'>Fecha:</span>
+                                              <span style='color: #555;'>" & Text(ThisItem.FechaAsistencia, "dd/mm/yyyy") & "</span>
+                                          </div>
+                                          <div style='display: flex; align-items: center; gap: 8px;'>
+                                              <span style='font-weight: bold; color: #333;'>Asistentes:</span>
+                                              <span style='background-color: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.9em; font-weight: bold;'>" & CountRows(ParseJSON(ThisItem.AsistentesJSON)) & "</span>
+                                          </div>
+                                      </div>"
+                                    PaddingBottom: =0
+                                    PaddingLeft: =0
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    X: =40
+                                    Y: =40
+                              - Button9:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    Appearance: =ButtonAppearance.Transparent
+                                    Icon: ="ChevronRight"
+                                    Layout: =ButtonLayout.IconOnly
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |+
+                                      =Set(varRegistroAsistenciaSeleccionado, ThisItem);
+
+                                      Navigate(
+                                          FOR_SEI_12,  // pon el nombre real de tu pantalla de visualización
+                                          ScreenTransition.Fade
+                                      )
+
+                                    Width: =40

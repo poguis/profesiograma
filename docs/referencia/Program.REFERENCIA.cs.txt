@@ -1,0 +1,55 @@
+using App.Api.Configuracion;
+using App.Api.Endpoints;
+using App.Api.Seguridad;
+using App.Infrastructure.Persistencia;
+
+// =====================================================================
+// Program.cs de REFERENCIA (Paso 2).
+// Las líneas marcadas [EXISTENTE] corresponden a lo que ya tiene su Program.cs
+// (registro de IDatabaseDiagnostics y GET /api/health/db). Conserve SU versión
+// de esas líneas; solo agregue las marcadas [PASO 2].
+// =====================================================================
+
+var builder = WebApplication.CreateBuilder(args);
+
+var cadenaConexion = builder.Configuration.GetConnectionString("Profesiograma")
+    ?? throw new InvalidOperationException(
+        "Falta ConnectionStrings:Profesiograma. Configúrela con 'dotnet user-secrets set' en src\\App.Api.");
+
+// [EXISTENTE] Registro del diagnóstico de conexión (mantener su línea original), p. ej.:
+// builder.Services.AddScoped<IDatabaseDiagnostics>(_ => new SqlDatabaseDiagnostics(cadenaConexion));
+
+// [PASO 2] EF Core + auditoría + consultas + sembrador
+builder.Services.AddPersistencia(cadenaConexion);
+
+// [PASO 2] Autenticación (DevAuth en Development / Entra ID) + políticas Admin/Gestor
+builder.AddSeguridadProfesiograma();
+
+// [EXISTENTE] Si su proyecto usa controllers, mantenga: builder.Services.AddControllers();
+builder.Services.AddOpenApi(); // [EXISTENTE si ya estaba] plantilla webapi de .NET 10
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi(); // [EXISTENTE si ya estaba]
+}
+
+app.UseHttpsRedirection();
+
+// [PASO 2] UseAuthentication → UsuarioActualMiddleware → UseAuthorization
+app.UseSeguridadProfesiograma();
+
+// [EXISTENTE] Endpoint /api/health/db (mantener su implementación original).
+// Nota: con la FallbackPolicy, al pasar a Entra ID agregue .AllowAnonymous() a ese endpoint.
+
+// [EXISTENTE] Si usa controllers: app.MapControllers();
+
+// [PASO 2] Endpoints nuevos
+app.MapUsuarioEndpoints();
+app.MapCatalogoEndpoints();
+
+// [PASO 2] Datos de prueba (solo Development + DatosPrueba:SembrarAlIniciar = true)
+await app.SembrarDatosPruebaAsync();
+
+app.Run();

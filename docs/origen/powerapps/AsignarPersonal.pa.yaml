@@ -1,0 +1,1016 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  AsignarPersonal:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: "=// 1. Parseamos el JSON principal una sola vez\r\nSet(\r\n    varPryDirecto, \r\n    ParseJSON(ctxRegistroSeleccionado.INF_GENERAL)\r\n);\r\n\r\n// 2. Creamos variables tipadas para los textos fijos (evita errores de visualización)\r\nSet(varDsNombreProyecto, Text(varPryDirecto.InfoProyecto.Proyecto.Nombre));\r\nSet(varDsCodigoProyecto, Text(varPryDirecto.InfoProyecto.Proyecto.ProjectId));\r\nSet(varDsActividad, Text(varPryDirecto.InfoProyecto.Actividad.Descripcion));\r\nSet(varDsActividadId, Text(varPryDirecto.InfoProyecto.Actividad.ActivityId));\r\nSet(varDsGrupo, Text(varPryDirecto.InfoProyecto.Grupo));\r\nSet(varDsHorario, Text(varPryDirecto.InfoProyecto.Horario.Descripcion));\r\nSet(varDsEmpresa, Text(varPryDirecto.InfoProyecto.Compania.Nombre));\r\nSet(varDsEmpresaRuc, Text(varPryDirecto.InfoProyecto.Compania.Ruc));\r\nSet(varDsDimension, Text(varPryDirecto.InfoProyecto.Dimension.Descripcion));\r\nSet(varDsDimensionUegp, Text(varPryDirecto.InfoProyecto.Dimension.UegpId));\r\n\r\n// 3. Convertimos las fechas de texto a tipo Fecha real\r\nSet(varDsFechaInicio, DateValue(Text(varPryDirecto.Planificacion.FechaInicio)));\r\nSet(varDsFechaFin, DateValue(Text(varPryDirecto.Planificacion.FechaFin)));\r\n\r\n// 4. Creamos colecciones temporales para los Principales y Backs (Maneja N cantidad)\r\n// Usamos Table() para convertir el nodo JSON en una tabla leíble por la galería\r\nClearCollect(colDsPrincipales, Table(varPryDirecto.Responsables.Principales));\r\nClearCollect(colDsBacks, Table(varPryDirecto.Responsables.Backs));\r\n\r\n\r\n\r\n/*\r\n// 2. Cargamos el personal general y marcamos los checks si ya están en la lista final\r\nClearCollect(\r\n    colPersonalCheck;\r\n    ForAll(\r\n        Filter('ESTRUCTURA GENERAL'; Estado = \"A\");\r\n        {\r\n            Nombre: 'Nombre Apellido';\r\n            Departamento: Departamento;\r\n            Area: 'Area Gestión';\r\n            Seccion: Sección;\r\n            \r\n            // MAGIA: Busca si este nombre ya existe en la colección final. \r\n            // Si existe, nace en 'true' (marcado), si no, nace en 'false' (desmarcado).\r\n            Check: !IsBlank(LookUp(colPersonalFinal; Nombre = 'Nombre Apellido'))\r\n        }\r\n    )\r\n);;\r\n\r\n// 1. Cargamos el personal previamente asignado desde el JSON\r\nIf(\r\n    !IsBlank(ctxRegistroSeleccionado.ASIGNAR_PERSONAL);\r\n    \r\n    // Si hay datos, leemos el JSON y reconstruimos la colección\r\n    ClearCollect(\r\n        colPersonalFinal;\r\n        ForAll(\r\n            Table(ParseJSON(ctxRegistroSeleccionado.ASIGNAR_PERSONAL)) As personalGuardado;\r\n            {\r\n                Nombre: Text(personalGuardado.Value.Nombre);\r\n                // Convertimos el texto de regreso a una Fecha real para la galería\r\n                FechaActual: DateValue(Text(personalGuardado.Value.FechaAsignacion)) \r\n            }\r\n        )\r\n    );\r\n    \r\n    // Si la columna está vacía (proyecto nuevo), nos aseguramos de vaciar la colección\r\n    Clear(colPersonalFinal)\r\n);;\r\n*/\r\n\r\n// 1. Limpieza total inmediata para no arrastrar basura de otras tuplas\r\nClear(colPersonalFinal);\r\nClear(colPersonalCheck);\r\n\r\n// 1. Limpieza total inmediata para no arrastrar basura de otras tuplas\r\nClear(colPersonalFinal);\r\nClear(colPersonalCheck);\r\n\r\n// 2. Cargamos el catálogo base incluyendo Código Ekon, Cargo y Cédula\r\nClearCollect(\r\n    colPersonalCheck,\r\n    ForAll(\r\n        Filter('ESTRUCTURA GENERAL', Estado = \"A\"),\r\n        {\r\n            Nombre: 'Nombre Apellido',\r\n            CodigoEkon: 'Código Ekon',       // Asegúrate de colocar el nombre interno real de tu columna\r\n            Cargo: Cargo,                 // Asegúrate de colocar el nombre interno real de tu columna\r\n            Cedula: Cédula,               // Asegúrate de colocar el nombre interno real de tu columna\r\n            Departamento: Departamento,\r\n            Area: 'Area Gestión',\r\n            Seccion: Sección,\r\n            Check: false\r\n        }\r\n    )\r\n);\r\n\r\n// 3. Reconstruimos los asignados enriqueciéndolos mediante el CODIGO EKON\r\nIf(\r\n    !IsBlank(ctxRegistroSeleccionado.ASIGNAR_PERSONAL),\r\n    ClearCollect(\r\n        colPersonalFinal,\r\n        ForAll(\r\n            Table(ParseJSON(ctxRegistroSeleccionado.ASIGNAR_PERSONAL)) As personalGuardado,\r\n            With(\r\n                {\r\n                    // Almacenamos el código guardado en el JSON\r\n                    varEkon: Text(personalGuardado.Value.CodigoEkon),\r\n                    varFecha: DateValue(Text(personalGuardado.Value.FechaAsignacion))\r\n                },\r\n                With(\r\n                    {\r\n                        // Buscamos toda la fila correspondiente en nuestro catálogo local\r\n                        varInfoBase: LookUp(colPersonalCheck, CodigoEkon = varEkon)\r\n                    },\r\n                    {\r\n                        CodigoEkon: varEkon,\r\n                        Nombre: varInfoBase.Nombre,\r\n                        FechaActual: varFecha,\r\n                        Departamento: varInfoBase.Departamento,\r\n                        Area: varInfoBase.Area,\r\n                        Seccion: varInfoBase.Seccion,\r\n                        Cargo: varInfoBase.Cargo,\r\n                        Cedula: varInfoBase.Cedula\r\n                    }\r\n                )\r\n            )\r\n        )\r\n    )\r\n);\r\n\r\n// 4. Sincronizamos los checks basándonos en el Código Ekon\r\nUpdateIf(\r\n    colPersonalCheck,\r\n    CodigoEkon in colPersonalFinal.CodigoEkon,\r\n    {Check: true}\r\n);"
+    Children:
+      - Container1_5:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_13:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0.15
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingRight: =6
+                Children:
+                  - Icon1_14:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(ResumenProyectos)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_14:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="ASIGNAR PERSONAL"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - Container12_34:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.5
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  X: =40
+                  Y: =40
+                Children:
+                  - TextInput2:
+                      Control: ModernTextInput@1.1.2
+                      Properties:
+                        Default: ="1. DATOS DEL PROYECTO"
+                        DisplayMode: =DisplayMode.View
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Size: =16
+                        Width: =Parent.Width
+                  - Container19:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                      Children:
+                        - Text5:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: |-
+                                ="PROYECTO: "
+                              Width: =Parent.Width/10
+                        - TextInput3:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsNombreProyecto
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_1:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: |-
+                                ="PROYECTO ID: "
+                              Width: =Parent.Width/10
+                        - TextInput3_1:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsCodigoProyecto
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =0.7
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_2:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="ACTIVIDAD:"
+                              Width: =Parent.Width/10
+                        - TextInput3_2:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsActividad
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_3:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="ACTIVIDAD ID:"
+                              Width: =Parent.Width/10
+                        - TextInput3_3:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsActividadId
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =0.7
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                  - Container19_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                      Children:
+                        - Text5_4:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: |-
+                                ="COMPAÑIA: "
+                              Width: =Parent.Width/10
+                        - TextInput3_4:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsEmpresa
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =3
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_5:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="DIMENSIÓN:"
+                              Width: =Parent.Width/10
+                        - TextInput3_5:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsDimension
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+                        - Text5_6:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Semibold
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              PaddingBottom: =0
+                              PaddingLeft: =10
+                              PaddingRight: =0
+                              PaddingTop: =0
+                              Text: ="DIMENSIÓN ID:"
+                              Width: =Parent.Width/10
+                        - TextInput3_6:
+                            Control: ModernTextInput@1.1.2
+                            Properties:
+                              Default: =varDsDimensionUegp
+                              DisplayMode: =DisplayMode.View
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              Height: =Parent.Height * 0.9
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =0
+                              Size: =15
+            - Container26:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.15
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                Children:
+                  - TextInput2_1:
+                      Control: ModernTextInput@1.1.2
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Default: ="2. ASIGNAR PERSONAL"
+                        DisplayMode: =DisplayMode.View
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        LayoutMinHeight: =0
+                        LayoutMinWidth: =0
+                        Size: =16
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+            - contCronogramaMensual_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  BorderStyle: =BorderStyle.None
+                  DropShadow: =DropShadow.None
+                  FillPortions: =2
+                  Height: =Parent.Height - 100
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMinHeight: =0
+                  LayoutOverflowX: =LayoutOverflow.Scroll
+                  LayoutOverflowY: =LayoutOverflow.Scroll
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: |-
+                    =//Parent.Width - 40
+                    Parent.Width
+                  X: =20
+                  Y: =120
+                Children:
+                  - Container20:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        FillPortions: =0.8
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =0
+                        LayoutMinWidth: =0
+                      Children:
+                        - Container21:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              FillPortions: =0.23
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                            Children:
+                              - Container3_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    FillPortions: =2
+                                    Height: =Parent.Height
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    Width: =Parent.Width
+                                    X: =40
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas11_15:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(214, 221, 224, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =0
+                                          Color: =RGBA(12, 59, 94, 1)
+                                          Fill: =RGBA(245, 245, 245, 1)
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =60
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =0
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Text: ="NOMBRE COMPLETO"
+                                          Width: =Parent.Width
+                                          X: =40
+                                          Y: =40
+                                    - Container11_2:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =5
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =16
+                                          Width: =Parent.Width
+                                        Children:
+                                          - cmbTipoFiltro:
+                                              Control: ModernCombobox@1.1.2
+                                              Properties:
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                ItemDisplayText: =ThisItem.Value
+                                                Items: =["Nombre", "Departamento", "Área", "Sección"]
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnChange: |-
+                                                  =Reset(txtFiltroNombre);
+                                                  Reset(cmbFiltroValor);
+                                                RadiusBottomLeft: =20
+                                                RadiusBottomRight: =20
+                                                RadiusTopLeft: =20
+                                                RadiusTopRight: =20
+                                                SelectMultiple: =false
+                                                Size: =15
+                                          - txtFiltroNombre:
+                                              Control: ModernTextInput@1.1.2
+                                              Properties:
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =15
+                                                Visible: =cmbTipoFiltro.Selected.Value = "Nombre"
+                                          - cmbFiltroValor:
+                                              Control: ModernCombobox@1.1.2
+                                              Properties:
+                                                Color: =RGBA(0, 0, 0, 1)
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                ItemDisplayText: =ThisItem.Value
+                                                Items: |-
+                                                  =Switch(
+                                                      cmbTipoFiltro.Selected.Value,
+                                                      "Departamento", Distinct(colPersonalCheck, Departamento),
+                                                      "Área", Distinct(colPersonalCheck, Area),
+                                                      "Sección", Distinct(colPersonalCheck, Seccion),
+                                                      Blank()
+                                                  )
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                RadiusBottomLeft: =20
+                                                RadiusBottomRight: =20
+                                                RadiusTopLeft: =20
+                                                RadiusTopRight: =20
+                                                SelectMultiple: =false
+                                                Size: =15
+                                                Visible: =cmbTipoFiltro.Selected.Value <> "Nombre"
+                              - Container27:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    FillPortions: =0.6
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - TextInput3_8:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Align: =Align.Center
+                                          Color: =RGBA(12, 59, 94, 1)
+                                          Default: ="ACCIÓN"
+                                          DisplayMode: =DisplayMode.View
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =Parent.Height * 0.9
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =0
+                                          Size: =15
+                                          Width: =Parent.Width
+                                          X: =40
+                                          Y: =40
+                                    - chkMarcarTodos:
+                                        Control: CheckBox@0.0.30
+                                        Properties:
+                                          CheckboxSize: =15
+                                          Checked: =CountRows(Gallery2.AllItems) > 0 And CountRows(Filter(Gallery2.AllItems, Check = false)) = 0
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          Label: |-
+                                            =If(
+                                                Self.Checked, 
+                                                "Desmarcar Todos", 
+                                                "Seleccionar Todos"
+                                            )
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnCheck: "=UpdateIf(\r\n    colPersonalCheck,\r\n    IsBlank(cmbTipoFiltro.Selected.Value) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Nombre\" And (IsBlank(txtFiltroNombre.Text) Or Lower(txtFiltroNombre.Text) in Lower(Nombre))) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Departamento\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Departamento = cmbFiltroValor.Selected.Value)) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Área\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Area = cmbFiltroValor.Selected.Value)) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Sección\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Seccion = cmbFiltroValor.Selected.Value)),\r\n    \r\n    {Check: true}\r\n);"
+                                          OnUncheck: "=UpdateIf(\r\n    colPersonalCheck,\r\n    IsBlank(cmbTipoFiltro.Selected.Value) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Nombre\" And (IsBlank(txtFiltroNombre.Text) Or Lower(txtFiltroNombre.Text) in Lower(Nombre))) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Departamento\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Departamento = cmbFiltroValor.Selected.Value)) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Área\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Area = cmbFiltroValor.Selected.Value)) ||\r\n    (cmbTipoFiltro.Selected.Value = \"Sección\" And (IsBlank(cmbFiltroValor.Selected.Value) Or Seccion = cmbFiltroValor.Selected.Value)),\r\n    \r\n    {Check: false}\r\n);"
+                        - Gallery2:
+                            Control: Gallery@2.15.0
+                            Variant: Vertical
+                            Properties:
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              FillPortions: =2
+                              Items: |-
+                                =//colPersonalCheck
+
+                                Filter(
+                                    colPersonalCheck,
+                                    IsBlank(cmbTipoFiltro.Selected.Value) ||
+                                    (cmbTipoFiltro.Selected.Value = "Nombre" And (IsBlank(txtFiltroNombre.Text) Or Lower(txtFiltroNombre.Text) in Lower(Nombre))) ||
+                                    (cmbTipoFiltro.Selected.Value = "Departamento" And (IsBlank(cmbFiltroValor.Selected.Value) Or Departamento = cmbFiltroValor.Selected.Value)) ||
+                                    (cmbTipoFiltro.Selected.Value = "Área" And (IsBlank(cmbFiltroValor.Selected.Value) Or Area = cmbFiltroValor.Selected.Value)) ||
+                                    (cmbTipoFiltro.Selected.Value = "Sección" And (IsBlank(cmbFiltroValor.Selected.Value) Or Seccion = cmbFiltroValor.Selected.Value))
+                                )
+                              LayoutMinHeight: =0
+                              LayoutMinWidth: =16
+                              TemplatePadding: =0
+                              TemplateSize: =50
+                              WrapCount: =0
+                            Children:
+                              - Container22:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    Height: =Parent.TemplateHeight
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutJustifyContent: =LayoutJustifyContent.End
+                                    Width: =Parent.Width
+                                  Children:
+                                    - TextInput3_9:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =ThisItem.Nombre
+                                          DisplayMode: =DisplayMode.View
+                                          FillPortions: =2
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height * 0.9
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =0
+                                          Size: =15
+                                    - CheckboxCanvas1:
+                                        Control: CheckBox@0.0.30
+                                        Properties:
+                                          CheckboxSize: =15
+                                          Checked: =ThisItem.Check
+                                          FillPortions: =0.6
+                                          Font: =Font.'Open Sans Condensed'
+                                          Label: |-
+                                            =If(
+                                                CheckboxCanvas1.Checked,
+                                                "Seleccionado",
+                                                ""
+                                            )
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnCheck: |-
+                                            =UpdateIf(
+                                                colPersonalCheck, 
+                                                Nombre = ThisItem.Nombre, 
+                                                {Check: true}
+                                            );
+                                          OnUncheck: |-
+                                            =UpdateIf(
+                                                colPersonalCheck, 
+                                                Nombre = ThisItem.Nombre, 
+                                                {Check: false}
+                                            );
+                  - Container20_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMinHeight: =0
+                        LayoutMinWidth: =0
+                      Children:
+                        - Container24_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              FillPortions: =0.15
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =20
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: |+
+                                =Parent.Width * 0.5
+                              X: =40
+                              Y: =40
+                            Children:
+                              - Button5_1:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =Parent.Height * 0.9
+                                    Icon: ="SaveCopy"
+                                    IconStyle: =IconStyle.Filled
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: "=// 1. Recorremos solo las personas que tienen el Check marcado en la galería izquierda\r\nForAll(\r\n    Filter(colPersonalCheck, Check = true) As PersonaSeleccionada,\r\n    \r\n    // 2. Verificamos duplicados por el Código Ekon\r\n    If(\r\n        IsBlank(LookUp(colPersonalFinal, CodigoEkon = PersonaSeleccionada.CodigoEkon)),\r\n        \r\n        // 3. Si no existe, agregamos el registro completo\r\n        Collect(\r\n            colPersonalFinal,\r\n            {\r\n                CodigoEkon: PersonaSeleccionada.CodigoEkon,\r\n                Nombre: PersonaSeleccionada.Nombre,\r\n                Departamento: PersonaSeleccionada.Departamento,\r\n                Area: PersonaSeleccionada.Area,\r\n                Seccion: PersonaSeleccionada.Seccion,\r\n                Cargo: PersonaSeleccionada.Cargo,\r\n                Cedula: PersonaSeleccionada.Cedula,\r\n                FechaActual: Today()\r\n            }\r\n        )\r\n    )\r\n);\r\n\r\n// 4. Actualización visual\r\nUpdateIf(colPersonalCheck, Check = true, {Check: true});"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Size: =15
+                                    Text: ="AGREGAR"
+                                    Width: =Parent.Width * 0.15
+                                    X: =40
+                                    Y: =40
+                              - Button5_2:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    BasePaletteColor: =RGBA(156, 220, 79, 1)
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =Parent.Height * 0.9
+                                    Icon: ="Save"
+                                    IconStyle: =IconStyle.Filled
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: "=If(\r\n    CountRows(colPersonalFinal) = 0,\r\n    Notify(\"Debes agregar al menos una persona antes de continuar.\", NotificationType.Warning),\r\n\r\n    With(\r\n        {\r\n            jsonAEnviar: JSON(\r\n                ForAll(\r\n                    colPersonalFinal As personal,\r\n                    {\r\n                        CodigoEkon: personal.CodigoEkon, // <-- Guardamos la llave única\r\n                        Nombre: personal.Nombre,\r\n                        FechaAsignacion: Text(personal.FechaActual, \"yyyy-mm-dd\")\r\n                    }\r\n                ),\r\n                JSONFormat.Compact\r\n            )\r\n        },\r\n\r\n        // Guardamos en la lista maestra\r\n        Patch(\r\n            'SIG PROYECTOS',\r\n            ctxRegistroSeleccionado, \r\n            {\r\n                ASIGNAR_PERSONAL: jsonAEnviar\r\n            }\r\n        );\r\n\r\n        Notify(\"Personal actualizado. Abriendo formato de asistencia...\", NotificationType.Success);\r\n        \r\n        // Navegamos pasando el contexto\r\n        Navigate(\r\n            FOR_SEI_11, \r\n            ScreenTransition.Fade,\r\n            { ctxProyectoAsistencia: ctxRegistroSeleccionado }\r\n        ) \r\n    )\r\n)"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Size: =15
+                                    Text: ="REGISTRAR ASISTENCIA"
+                                    Width: =Parent.Width * 0.15
+                                    X: =40
+                                    Y: =40
+                              - Button7:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    Height: =25
+                                    Icon: ="Person"
+                                    Layout: =ButtonLayout.IconOnly
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: =Navigate(ASISTENCIAVISUALIZACION,ScreenTransition.Fade)
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Text: =
+                                    Width: =35
+                        - Container24:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              FillPortions: =0.2
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - Container3_3:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =1.8
+                                    Height: =Parent.Height
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =0
+                                    Width: =Parent.Width
+                                    X: =40
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas11_16:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(214, 221, 224, 1)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =0
+                                          Color: =RGBA(12, 59, 94, 1)
+                                          Fill: =RGBA(245, 245, 245, 1)
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =60
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =0
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =0
+                                          RadiusBottomRight: =0
+                                          RadiusTopLeft: =0
+                                          RadiusTopRight: =0
+                                          Text: ="PERSONA ASIGNADA"
+                                          Width: =Parent.Width
+                                          X: =40
+                                          Y: =40
+                                    - Container11_3:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          AlignInContainer: =AlignInContainer.Center
+                                          DropShadow: =DropShadow.None
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          LayoutGap: =5
+                                          LayoutJustifyContent: =LayoutJustifyContent.End
+                                          LayoutMinHeight: =0
+                                          LayoutMinWidth: =16
+                                          Width: =Parent.Width
+                                        Children:
+                                          - cmbTipoFiltro_1:
+                                              Control: ModernCombobox@1.1.2
+                                              Properties:
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                ItemDisplayText: =ThisItem.Value
+                                                Items: =["Nombre", "Departamento", "Área", "Sección"]
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnChange: |-
+                                                  =Reset(txtFiltroNombre_1);
+                                                  Reset(cmbFiltroValor_1);
+                                                RadiusBottomLeft: =20
+                                                RadiusBottomRight: =20
+                                                RadiusTopLeft: =20
+                                                RadiusTopRight: =20
+                                                SelectMultiple: =false
+                                                Size: =15
+                                          - txtFiltroNombre_1:
+                                              Control: ModernTextInput@1.1.2
+                                              Properties:
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                Size: =15
+                                                Visible: =cmbTipoFiltro_1.Selected.Value = "Nombre"
+                                          - cmbFiltroValor_1:
+                                              Control: ModernCombobox@1.1.2
+                                              Properties:
+                                                Color: =RGBA(0, 0, 0, 1)
+                                                Fill: =RGBA(214, 221, 224, 1)
+                                                FillPortions: =1
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height
+                                                ItemDisplayText: =ThisItem.Value
+                                                Items: |-
+                                                  =Switch(
+                                                      cmbTipoFiltro_1.Selected.Value,
+                                                      "Departamento", Distinct(colPersonalFinal, Departamento),
+                                                      "Área", Distinct(colPersonalFinal, Area),
+                                                      "Sección", Distinct(colPersonalFinal, Seccion),
+                                                      Blank()
+                                                  )
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                RadiusBottomLeft: =20
+                                                RadiusBottomRight: =20
+                                                RadiusTopLeft: =20
+                                                RadiusTopRight: =20
+                                                SelectMultiple: =false
+                                                Size: =15
+                                                Visible: =cmbTipoFiltro_1.Selected.Value <> "Nombre"
+                              - TextInput4_1:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Align: =Align.Center
+                                    Default: ="FECHA ASIGNACIÓN"
+                                    DisplayMode: =DisplayMode.View
+                                    FillPortions: =0.5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =Parent.Height
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =15
+                              - Container27_1:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0.5
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Vertical
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - TextInput3_12:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Align: =Align.Center
+                                          Color: =RGBA(12, 59, 94, 1)
+                                          Default: ="ELIMINAR"
+                                          DisplayMode: =DisplayMode.View
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =Parent.Height * 0.9
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =0
+                                          Size: =15
+                                          Width: =Parent.Width
+                                          X: =40
+                                          Y: =40
+                                    - Icon2:
+                                        Control: ModernIcon@1.1.1
+                                        Properties:
+                                          AccessibleLabel: ="Elinar todo"
+                                          FillPortions: =1
+                                          Icon: ="Delete"
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          Visible: =false
+                                    - Button6:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Appearance: =ButtonAppearance.Transparent
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          Icon: ="Delete"
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: |-
+                                            =// 1. Guardamos temporalmente a quiénes vamos a borrar aplicando tu filtro exacto
+                                            ClearCollect(
+                                                colTempABorrar,
+                                                Filter(
+                                                    colPersonalFinal,
+                                                    IsBlank(cmbTipoFiltro_1.Selected.Value) ||
+                                                    (cmbTipoFiltro_1.Selected.Value = "Nombre" And (IsBlank(txtFiltroNombre_1.Text) Or Lower(txtFiltroNombre_1.Text) in Lower(Nombre))) ||
+                                                    (cmbTipoFiltro_1.Selected.Value = "Departamento" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Departamento = cmbFiltroValor_1.Selected.Value)) ||
+                                                    (cmbTipoFiltro_1.Selected.Value = "Área" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Area = cmbFiltroValor_1.Selected.Value)) ||
+                                                    (cmbTipoFiltro_1.Selected.Value = "Sección" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Seccion = cmbFiltroValor_1.Selected.Value))
+                                                )
+                                            );
+
+                                            // 2. Desmarcamos el check en la lista general SOLO de las personas que acabamos de filtrar
+                                            UpdateIf(
+                                                colPersonalCheck,
+                                                Nombre in colTempABorrar.Nombre,
+                                                {Check: false}
+                                            );
+
+                                            // 3. Finalmente, los eliminamos de la galería de asignados
+                                            RemoveIf(
+                                                colPersonalFinal,
+                                                Nombre in colTempABorrar.Nombre
+                                            );
+
+                                            // 4. (Opcional) Vaciamos la colección temporal para liberar memoria
+                                            Clear(colTempABorrar);
+
+                                            Notify("Registros filtrados eliminados correctamente", NotificationType.Information);
+                                          Size: =15
+                                          Text: ="Borrar Todo"
+                                          Width: =Parent.Width
+                        - Container24_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              FillPortions: =2
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                            Children:
+                              - Gallery2_1:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    BorderColor: =RGBA(245, 245, 245, 1)
+                                    FillPortions: =2
+                                    Items: |-
+                                      =//colPersonalFinal
+
+                                      Filter(
+                                          colPersonalFinal,
+                                          IsBlank(cmbTipoFiltro_1.Selected.Value) ||
+                                          (cmbTipoFiltro_1.Selected.Value = "Nombre" And (IsBlank(txtFiltroNombre_1.Text) Or Lower(txtFiltroNombre_1.Text) in Lower(Nombre))) ||
+                                          (cmbTipoFiltro_1.Selected.Value = "Departamento" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Departamento = cmbFiltroValor_1.Selected.Value)) ||
+                                          (cmbTipoFiltro_1.Selected.Value = "Área" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Area = cmbFiltroValor_1.Selected.Value)) ||
+                                          (cmbTipoFiltro_1.Selected.Value = "Sección" And (IsBlank(cmbFiltroValor_1.Selected.Value) Or Seccion = cmbFiltroValor_1.Selected.Value))
+                                      )
+                                    LayoutMinHeight: =0
+                                    LayoutMinWidth: =16
+                                    TemplatePadding: =0
+                                    TemplateSize: =50
+                                    WrapCount: =0
+                                  Children:
+                                    - Container22_1:
+                                        Control: GroupContainer@1.5.0
+                                        Variant: AutoLayout
+                                        Properties:
+                                          Height: =Parent.TemplateHeight
+                                          LayoutAlignItems: =LayoutAlignItems.Center
+                                          LayoutDirection: =LayoutDirection.Horizontal
+                                          Width: =Parent.Width
+                                        Children:
+                                          - TextInput3_10:
+                                              Control: ModernTextInput@1.1.2
+                                              Properties:
+                                                Default: =ThisItem.Nombre
+                                                DisplayMode: =DisplayMode.View
+                                                FillPortions: =1.8
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height * 0.9
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =0
+                                                Size: =15
+                                          - TextInput3_11:
+                                              Control: ModernTextInput@1.1.2
+                                              Properties:
+                                                Align: =Align.Center
+                                                Default: =Text(ThisItem.FechaActual, "[$-es-ES]dd/mm/yyyy")
+                                                DisplayMode: =DisplayMode.View
+                                                FillPortions: =0.5
+                                                Font: =Font.'Open Sans Condensed'
+                                                Height: =Parent.Height * 0.9
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =0
+                                                Size: =15
+                                          - Icon1:
+                                              Control: ModernIcon@1.1.1
+                                              Properties:
+                                                FillPortions: =0.5
+                                                Icon: ="Delete"
+                                                IconColor: =RGBA(184, 0, 0, 1)
+                                                IconStyle: =IconStyle.Filled
+                                                LayoutMinHeight: =16
+                                                LayoutMinWidth: =16
+                                                OnSelect: |-
+                                                  =// 1. Quitamos al seleccionado
+                                                  Remove(colPersonalFinal, ThisItem);
+
+                                                  // 2. Desmarcamos ese check específico en la lista de origen
+                                                  UpdateIf(colPersonalCheck, Nombre = ThisItem.Nombre, {Check: false})
+            - Container25:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.2
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =15
+                  PaddingTop: =8
+                Children:
+                  - Button5:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Icon: ="Save"
+                        IconStyle: =IconStyle.Filled
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: "=// 1. Validamos que la colección no esté vacía para no enviar datos en blanco\r\nIf(\r\n    CountRows(colPersonalFinal) = 0,\r\n    Notify(\"Debes agregar al menos una persona antes de guardar.\", NotificationType.Warning),\r\n\r\n    // 2. Usamos With para estructurar la info temporalmente\r\n    With(\r\n        {\r\n            // Transformamos la colección a un formato seguro para el JSON.\r\n            jsonAEnviar: JSON(\r\n                ForAll(\r\n                    colPersonalFinal As personal,\r\n                    {\r\n                        CodigoEkon: personal.CodigoEkon, // <-- Agregamos la llave única aquí\r\n                        Nombre: personal.Nombre,\r\n                        FechaAsignacion: Text(personal.FechaActual, \"yyyy-mm-dd\")\r\n                    }\r\n                ),\r\n                JSONFormat.Compact\r\n            )\r\n        },\r\n\r\n        // 3. Ejecutamos la actualización directamente a la tupla en SharePoint\r\n        Patch(\r\n            'SIG PROYECTOS',\r\n            ctxRegistroSeleccionado, \r\n            {\r\n                ASIGNAR_PERSONAL: jsonAEnviar\r\n            }\r\n        );\r\n\r\n        // 4. Notificamos al usuario y salimos de la pantalla\r\n        Notify(\"Personal asignado correctamente al proyecto.\", NotificationType.Success);\r\n        \r\n        // Limpiamos las colecciones por precaución\r\n        Clear(colPersonalFinal);\r\n        Clear(colPersonalCheck);\r\n        \r\n        // Regresamos a la pantalla anterior\r\n        Back() \r\n    )\r\n)"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =15
+                        Text: ="GUARDAR"
+                        Width: =120

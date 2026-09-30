@@ -1,0 +1,16 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# Node / frontend
+node_modules/
+dist/
+
+# Datos reales (personales / médicos)
+docs/origen/sharepoint/muestras/
+*.bak
+
+# Secretos locales
+appsettings.*.local.json

@@ -1,0 +1,499 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  ControlEPPS:
+    Properties:
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: "=ClearCollect(\n    colEPPs,\n    ForAll(\n        ADMIN_EPPS,\n        {\n            // Identificador\n            ID_Registro: ID,\n            \n            // Extracción de DATOS_GENERALES_EPPS\n            Categoria: Text(ParseJSON(DATOS_GENERALES_EPPS).Categoria),\n            Articulo: Text(ParseJSON(DATOS_GENERALES_EPPS).Articulo),\n            Codigo: Text(ParseJSON(DATOS_GENERALES_EPPS).Codigo),\n            Talla: Text(ParseJSON(DATOS_GENERALES_EPPS).Talla),\n            Tipo: Text(ParseJSON(DATOS_GENERALES_EPPS).Tipo),\n            Detalle: Text(ParseJSON(DATOS_GENERALES_EPPS).Detalle),\n            Normativa: Text(ParseJSON(DATOS_GENERALES_EPPS).Normativa),\n            Marca: Text(ParseJSON(DATOS_GENERALES_EPPS).Marca),\n            Caducidad: Text(ParseJSON(DATOS_GENERALES_EPPS).Caducidad),\n            Precio: Text(ParseJSON(DATOS_GENERALES_EPPS).Precio),\n            CriteriosCarga: Text(ParseJSON(DATOS_GENERALES_EPPS).CriteriosCarga),\n            Area: Text(ParseJSON(DATOS_GENERALES_EPPS).Area),\n            Procesos: Text(ParseJSON(DATOS_GENERALES_EPPS).Procesos),\n            Cargo: Text(ParseJSON(DATOS_GENERALES_EPPS).Cargo),\n            VidaUtil: Text(ParseJSON(DATOS_GENERALES_EPPS).VidaUtil),\n            FechaInicio : Text(ParseJSON(DATOS_GENERALES_EPPS).FechaInicio),\n            \n            // Extracción de ESPECIFICACIONES y MANTENIMIENTO\n            Especificaciones: Text(ParseJSON(ESPECIFICACIONES).Especificaciones),\n            Mantenimiento: Text(ParseJSON(MANTENIMIENTO).Mantenimiento),\n            \n            // Fotografía\n            FotoURL: Fotografia\n        }\n    )\n)"
+    Children:
+      - Contenedor General_1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            Height: =Parent.Height
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - HeaderContainer3_5:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(0, 0, 0, 1)
+                  FillPortions: =0.5
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  LayoutMinWidth: =0
+                  PaddingLeft: =10
+                  PaddingRight: =50
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =1366
+                Children:
+                  - Icon3_4:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FillPortions: =0.2
+                        FocusedBorderColor: =Color.Black
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        HoverBorderColor: =Color.Black
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        LayoutMinWidth: =0
+                        OnSelect: |-
+                          =Reset(cmbFiltroCategoria);
+                          Reset(cmbFiltroDetalle);
+                          Navigate(PantallaPrincipal,ScreenTransition.Fade)
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        Width: =60
+                        X: =10
+                  - Header2_5:
+                      Control: Header@0.0.44
+                      Properties:
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FillPortions: =5
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsLogoVisible: =false
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        LayoutMinWidth: |
+                          =0
+                        OnSelectLogo: =
+                        Title: ="GESTIÓN DE RIESGOS"
+                        Width: =1296
+                        X: =75
+            - Contenedor Encabezados_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.6
+                  Height: =60
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  LayoutMinWidth: =0
+                  Width: =1366
+                Children:
+                  - Contenedor Filtros_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutMaxWidth: =
+                        LayoutMinHeight: =0
+                        LayoutMinWidth: =0
+                        Width: =1366
+                      Children:
+                        - Filtros_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =80
+                              Width: =1366
+                            Children:
+                              - ContenedorA_1:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.Center
+                                    DropShadow: =DropShadow.None
+                                    Height: =Parent.Height
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutGap: =20
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =80
+                                    PaddingLeft: =20
+                                    Width: =1366
+                                  Children:
+                                    - TextCanvas12:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderStyle: =BorderStyle.Solid
+                                          BorderThickness: =0
+                                          Color: =RGBA(0, 0, 0, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =45
+                                          LayoutMinWidth: =96
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =5
+                                          RadiusBottomRight: =5
+                                          RadiusTopLeft: =5
+                                          RadiusTopRight: =5
+                                          Size: =14
+                                          Text: ="CATEGORIA"
+                                          Width: =180
+                                          X: =150
+                                    - cmbFiltroCategoria:
+                                        Control: ModernCombobox@1.1.2
+                                        Properties:
+                                          AllowExternalSelectedItems: =false
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =""
+                                          InputTextPlaceholder: ="Buscar Responsable"
+                                          ItemDisplayText: =ThisItem.Value
+                                          Items: |-
+                                            =Table(
+                                                {Value: "Protección Respiratoria"},
+                                                {Value: "Protección para Manos"},
+                                                {Value: "Protección Auditiva"},
+                                                {Value: "Protección para Pies"},
+                                                {Value: "Protección Corporal"},
+                                                {Value: "Protección para la Cabeza"},
+                                                {Value: "Protección Visual"},
+                                                {Value: "Ropa de Trabajo"},
+                                                {Value: "Protección en la Altura"}
+                                            )
+                                          LayoutMinWidth: =0
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =13
+                                          Width: =300
+                                          X: =990
+                                    - TextCanvas12_12:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderStyle: =BorderStyle.Solid
+                                          BorderThickness: =0
+                                          Color: =RGBA(0, 0, 0, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =45
+                                          LayoutMinWidth: =0
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =5
+                                          RadiusBottomRight: =5
+                                          RadiusTopLeft: =5
+                                          RadiusTopRight: =5
+                                          Size: =14
+                                          Text: ="DETALLE"
+                                          Visible: =false
+                                          Width: =180
+                                          X: =570
+                                    - DatePickerHasta:
+                                        Control: ModernDatePicker@1.0.2
+                                        Properties:
+                                          DefaultDate: =Today()
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnChange: =Set(varFiltroFecha, Now())
+                                          Placeholder: ="Select a date"
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =13
+                                          Visible: =false
+                                          Width: =200
+                                          X: =770
+                                    - TextCanvas12_13:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          BorderColor: =RGBA(0, 0, 0, 1)
+                                          BorderStyle: =BorderStyle.Solid
+                                          BorderThickness: =0
+                                          Color: =RGBA(0, 0, 0, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Bold
+                                          Height: =45
+                                          LayoutMinWidth: =96
+                                          PaddingBottom: =0
+                                          PaddingLeft: =0
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          RadiusBottomLeft: =5
+                                          RadiusBottomRight: =5
+                                          RadiusTopLeft: =5
+                                          RadiusTopRight: =5
+                                          Size: =14
+                                          Text: ="DETALLE"
+                                          Width: =180
+                                          X: =570
+                                    - cmbFiltroDetalle:
+                                        Control: ModernCombobox@1.1.2
+                                        Properties:
+                                          AllowExternalSelectedItems: =false
+                                          FillPortions: =1
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =""
+                                          InputTextPlaceholder: ="Buscar Responsable"
+                                          ItemDisplayText: =ThisItem.Value
+                                          Items: =ColEppDetalle
+                                          LayoutMinWidth: =0
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =13
+                                          Width: =300
+                                          X: =990
+                                    - Button4:
+                                        Control: ModernButton@1.0.0
+                                        Properties:
+                                          Appearance: =ButtonAppearance.Transparent
+                                          Icon: ="DocumentAdd"
+                                          IconStyle: =IconStyle.Filled
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          OnSelect: |+
+                                            =
+                                            Set(varModoEdicion, false);
+                                            Set(varEPPSeleccionado, Blank());
+                                            Navigate(RegistroEPP,ScreenTransition.Fade)
+                                          Text: =
+                                          Width: =60
+            - Container10_29:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =RGBA(245, 245, 245, 1)
+                  FillPortions: =0
+                  Height: =32
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  Width: =1366
+                Children:
+                  - TextCanvas12_1:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =0
+                        Color: =RGBA(0, 0, 0, 1)
+                        Fill: =RGBA(255, 255, 255, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.Height
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =5
+                        RadiusBottomRight: =5
+                        RadiusTopLeft: =5
+                        RadiusTopRight: =5
+                        Size: =14
+                        Text: ="REGISTROS"
+                        Width: =Parent.Width
+                        X: =40
+                        Y: =40
+            - Container13_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =8
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =1366
+                Children:
+                  - Gallery1_7:
+                      Control: Gallery@2.15.0
+                      Variant: Vertical
+                      Properties:
+                        BorderColor: =RGBA(245, 245, 245, 1)
+                        Items: "=Sort(\r\n    Filter(\r\n        colEPPs,\r\n        // Filtro por Criterio de Categoría (Selección múltiple)\r\n        (IsBlank(cmbFiltroCategoria.SelectedItems) || IsEmpty(cmbFiltroCategoria.SelectedItems) || \r\n            Categoria in cmbFiltroCategoria.SelectedItems.Value || \r\n            Categoria in cmbFiltroCategoria.Selected.Value) &&\r\n        \r\n        // Filtro por Criterio de Detalle (Selección múltiple)\r\n        (IsBlank(cmbFiltroDetalle.SelectedItems) || IsEmpty(cmbFiltroDetalle.SelectedItems) || \r\n            Detalle in cmbFiltroDetalle.SelectedItems.Value || \r\n            Detalle in cmbFiltroDetalle.Selected.Value)\r\n    ),\r\n    ID_Registro,\r\n    SortOrder.Descending\r\n)"
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =0
+                        TemplatePadding: =0
+                        TemplateSize: =100
+                        Transition: =Transition.Push
+                        Width: =1360
+                      Children:
+                        - Container2_4:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              Height: =100
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - HtmlText3:
+                                  Control: HtmlViewer@2.1.0
+                                  Properties:
+                                    AutoHeight: =true
+                                    DisabledBorderColor: =RGBA(161, 159, 157, 1)
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HtmlText: "=\"<div style='\r\n    font-family: Segoe UI, sans-serif;\r\n    background: #ffffff;\r\n    border: 1px solid #e2e8f0;\r\n    border-radius: 6px;\r\n    padding: 6px 10px;\r\n    display: flex;\r\n    flex-direction: row;\r\n    gap: 10px;\r\n    align-items: stretch;\r\n    height: 100%;\r\n    box-sizing: border-box;\r\n    font-size: 10px;\r\n    color: #334155;\r\n    line-height: 1.2;\r\n'>\r\n\r\n    <!-- COLUMNA 1: CATEGORÍA Y DATOS PRINCIPALES -->\r\n    <div style='flex: 1.1; min-width: 140px; border-right: 1px solid #f1f5f9; padding-right: 8px; display: flex; flex-direction: column; justify-content: center;'>\r\n        <div>\r\n            <span style='\r\n                background: #be123c;\r\n                color: #ffffff;\r\n                padding: 1px 5px;\r\n                border-radius: 8px;\r\n                font-size: 8.5px;\r\n                font-weight: 700;\r\n                text-transform: uppercase;\r\n                display: inline-block;\r\n                margin-bottom: 2px;\r\n            '>\" & ThisItem.Categoria & \"</span>\r\n        </div>\r\n        \r\n        <!-- CÓDIGO DESTACADO CON ESTILO DE ARTÍCULO -->\r\n        <div style='font-size: 12px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>Cód: \" & ThisItem.Codigo & \"</div>\r\n        \r\n        <div style='font-size: 9.5px; color: #475569; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>\r\n            <b>Detalle:</b> \" & ThisItem.Detalle & \"\r\n        </div>\r\n        <div style='font-size: 9.5px; color: #475569;'>\r\n            <b>Talla:</b> \" & ThisItem.Talla & \"\r\n        </div>\r\n    </div>\r\n\r\n    <!-- COLUMNA 2: DETALLES Y LOGÍSTICA -->\r\n    <div style='flex: 1.3; min-width: 170px; border-right: 1px solid #f1f5f9; padding-right: 8px; display: flex; flex-direction: column; justify-content: center; gap: 2px;'>\r\n        <div style='white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'><b>Área:</b> \" & ThisItem.Area & \"</div>\r\n        <div style='white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'><b>Procesos:</b> \" & ThisItem.Procesos & \"</div>\r\n        <div style='white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'><b>Cargo:</b> \" & ThisItem.Cargo & \"</div>\r\n        \r\n        <div style='display: flex; gap: 4px; margin-top: 2px;'>\r\n            <span style='background: #f1f5f9; color: #334155; padding: 1px 4px; border-radius: 3px; font-size: 8.5px; font-weight: 600;'>\r\n                Inicio: \" & ThisItem.FechaInicio & \"\r\n            </span>\r\n            <span style='background: #e0f2fe; color: #0369a1; padding: 1px 4px; border-radius: 3px; font-size: 8.5px; font-weight: 600;'>\r\n                Vida: \" & ThisItem.VidaUtil & \"\r\n            </span>\r\n            <span style='background: #fef3c7; color: #b45309; padding: 1px 4px; border-radius: 3px; font-size: 8.5px; font-weight: 600;'>\r\n                Cad: \" & ThisItem.Caducidad & \"\r\n            </span>\r\n        </div>\r\n    </div>\r\n\r\n    <!-- COLUMNA 3: CRITERIOS Y ESPECIFICACIONES -->\r\n    <div style='flex: 1.3; min-width: 170px; border-right: 1px solid #f1f5f9; padding-right: 8px; display: flex; flex-direction: column; justify-content: center; gap: 4px;'>\r\n        <div style='background: #f8fafc; border-left: 2px solid #3b82f6; padding: 2px 5px; border-radius: 0 3px 3px 0;'>\r\n            <div style='font-size: 8.5px; font-weight: 700; color: #1e40af;'>CRITERIOS DE CAMBIO</div>\r\n            <div style='font-size: 9px; color: #475569; max-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>\" & ThisItem.CriteriosCarga & \"</div>\r\n        </div>\r\n\r\n        <div style='background: #f8fafc; border-left: 2px solid #06b6d4; padding: 2px 5px; border-radius: 0 3px 3px 0;'>\r\n            <div style='font-size: 8.5px; font-weight: 700; color: #0e7490;'>ESPECIFICACIONES</div>\r\n            <div style='font-size: 9px; color: #475569; max-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>\" & ThisItem.Especificaciones & \"</div>\r\n        </div>\r\n    </div>\r\n\r\n    <!-- COLUMNA 4: MANTENIMIENTO -->\r\n    <div style='flex: 1.2; min-width: 150px; display: flex; flex-direction: column; justify-content: center;'>\r\n        <div style='background: #f8fafc; border-left: 2px solid #10b981; padding: 3px 6px; border-radius: 0 3px 3px 0; height: 100%; box-sizing: border-box;'>\r\n            <div style='font-size: 8.5px; font-weight: 700; color: #047857; margin-bottom: 2px;'>MANTENIMIENTO</div>\r\n            <div style='font-size: 9px; color: #475569; max-height: 45px; overflow-y: auto; line-height: 1.15;'>\" & ThisItem.Mantenimiento & \"</div>\r\n        </div>\r\n    </div>\r\n\r\n</div>\""
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =3
+                                    PaddingLeft: =3
+                                    PaddingRight: =3
+                                    PaddingTop: =3
+                              - Icon13:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 0, 0, 0)
+                                    BorderStyle: =BorderStyle.None
+                                    Color: =RGBA(255, 0, 0, 1)
+                                    DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                    DisabledColor: =RGBA(225, 223, 221, 1)
+                                    DisabledFill: =RGBA(0, 0, 0, 0)
+                                    FocusedBorderThickness: =0
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                    HoverColor: =Self.Color
+                                    HoverFill: =RGBA(0, 0, 0, 0)
+                                    Icon: =Icon.Trash
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: "=// 1. Guardar el ID antes de removerlo de la vista local\r\nWith(\r\n    { registroID: ThisItem.ID_Registro },\r\n    \r\n    // 2. Intentar eliminar directamente en la lista de SharePoint ADMIN_EPPS\r\n    IfError(\r\n        Remove(ADMIN_EPPS, LookUp(ADMIN_EPPS, ID = registroID)),\r\n        \r\n        // Si ocurre un error al eliminar en SharePoint\r\n        Notify(\"No se pudo eliminar el registro en ADMIN_EPPS: \" & FirstError.Message, NotificationType.Error),\r\n        \r\n        // Si se elimina correctamente en SharePoint\r\n        RemoveIf(colEPPs, ID_Registro = registroID);\r\n        Notify(\"EPP eliminado exitosamente de ADMIN_EPPS.\", NotificationType.Success)\r\n    )\r\n)"
+                                    PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                    PressedColor: =RGBA(16, 110, 190, 1)
+                                    PressedFill: =RGBA(0, 0, 0, 0)
+                                    Visible: =false
+                                    Width: |+
+                                      =40
+                              - Button12:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    Appearance: =ButtonAppearance.Transparent
+                                    Icon: ="Edit"
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |-
+                                      =// Guardar el registro seleccionado en una variable global y navegar
+                                      Set(varEPPSeleccionado, ThisItem);
+                                      Set(varModoEdicion, true);
+                                      Navigate(RegistroEPP, ScreenTransition.Fade)
+                                    Text: =
+                                    Width: =60
+                              - Button12_3:
+                                  Control: ModernButton@1.0.0
+                                  Properties:
+                                    Appearance: =ButtonAppearance.Transparent
+                                    Icon: ="Image"
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    OnSelect: |-
+                                      =// Guardar el registro seleccionado en una variable global y navegar
+                                      Set(varEPPSeleccionado, ThisItem);
+                                      Set(varVerImagen, true);
+                                      //Navigate(RegistroPerfiles_1; ScreenTransition.Fade)
+                                    Text: =
+                                    Width: =60
+      - Overlay_2:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledFill: =RGBA(161, 159, 157, 1)
+            Fill: =RGBA(0, 0, 0, 0.26)
+            FocusedBorderThickness: =4
+            Height: =Parent.Height
+            HoverFill: =
+            OnSelect: =Set(varVerImagen,false)
+            PressedFill: =
+            Visible: =varVerImagen
+            Width: =Parent.Width
+      - Container45:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =500
+            Visible: =varVerImagen
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - Image3:
+                Control: Image@2.2.3
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 0)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =2
+                  DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                  DisabledFill: =RGBA(0, 0, 0, 0)
+                  FocusedBorderThickness: =4
+                  Height: =400
+                  HoverBorderColor: =RGBA(0, 0, 0, 0)
+                  HoverFill: =RGBA(0, 0, 0, 0)
+                  Image: |-
+                    =Coalesce(
+                        AddMediaButton1_1.Media,
+                        varEPPSeleccionado.FotoURL.Full,
+                        SampleImage
+                    )
+                  PressedBorderColor: =RGBA(0, 0, 0, 0)
+                  PressedFill: =RGBA(0, 0, 0, 0)
+                  Width: =400
+                  X: =(Parent.Width - Self.Width) / 2
+                  Y: =(Parent.Height - Self.Height) / 2

@@ -1,0 +1,1420 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  ControlMensualProyectos:
+    Properties:
+      Fill: '=RGBA(255, 255, 255, 1) '
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: "=/*\r\nSet(cargarInfo; true);;\r\n\r\nRefresh('SIG PROYECTOS');;\r\n\r\n// Limpieza inicial de colecciones\r\nClear(colAsignacionesGlobales);;\r\nClear(colVinculosProyectoPersonal);;\r\nClear(colMesesVista);;\r\nClear(colDiasVista);;\r\nClear(colPersonasVista);;\r\nClear(colCronogramaBase);;\r\nClear(colTodasAsignaciones);;\r\nClear(colTodasNovedades);;\r\nClear(colHistorialActividades);;\r\n\r\n// Carga estática de Meses\r\nClearCollect(\r\n    colMesesVista;\r\n    {Id: 1; Nombre: \"ENERO\"}; {Id: 2; Nombre: \"FEBRERO\"}; {Id: 3; Nombre: \"MARZO\"};\r\n    {Id: 4; Nombre: \"ABRIL\"}; {Id: 5; Nombre: \"MAYO\"}; {Id: 6; Nombre: \"JUNIO\"};\r\n    {Id: 7; Nombre: \"JULIO\"}; {Id: 8; Nombre: \"AGOSTO\"}; {Id: 9; Nombre: \"SEPTIEMBRE\"};\r\n    {Id: 10; Nombre: \"OCTUBRE\"}; {Id: 11; Nombre: \"NOVIEMBRE\"}; {Id: 12; Nombre: \"DICIEMBRE\"}\r\n);;\r\n\r\n// ------------------------------------------------------------------\r\n// 1. LECTURA Y DESERIALIZACIÓN OPTIMIZADA\r\n// ------------------------------------------------------------------\r\nClearCollect(\r\n    colProyectosFiltrados;\r\n    Filter(\r\n        'SIG PROYECTOS';\r\n        !IsBlank(ASIGNACIONES) &&\r\n        (varEsSuperAdmin || Text(ParseJSON(INF_GENERAL).InfoRegistro.Correo) = varUsuarioActual.Email)\r\n    )\r\n);;\r\n\r\nForAll(\r\n    colProyectosFiltrados As Proy;\r\n    With(\r\n        {\r\n            jsonInfo: ParseJSON(Proy.INF_GENERAL);\r\n            jsonAsig: ParseJSON(Proy.ASIGNACIONES)\r\n        };\r\n        With(\r\n            {\r\n                pID: Text(Proy.PROJECT_UID);\r\n                pCode: Text(Proy.Título);\r\n                pEstado: Text(Proy.ESTADO.Value);\r\n                pNombre: Coalesce(Text(jsonInfo.InfoProyecto.Proyecto.Nombre); \"PLANTA - \" & Text(jsonInfo.InfoProyecto.Dimension.Descripcion));\r\n                pCorreoCreador: Lower(Trim(Text(jsonInfo.InfoRegistro.Correo)));\r\n                pEmpresa: Text(jsonInfo.InfoProyecto.Compania.CompanyId);\r\n                pProjectIdExcel: Text(jsonInfo.InfoProyecto.Proyecto.ProjectId);\r\n                pActividadExcel: Text(jsonInfo.InfoProyecto.Actividad.ActivityId);\r\n                fInicio: DateValue(Text(jsonInfo.Planificacion.FechaInicio));\r\n                fFin: DateValue(Text(jsonInfo.Planificacion.FechaFin));\r\n                \r\n                // Precalculo de horarios por proyecto (evita procesarlos n veces por día)\r\n                hEntrada: With({h: Text(jsonInfo.InfoProyecto.Horario.Entrada)}; If(Len(h)=4; Left(h;2)&\":\"&Right(h;2)&\":00\"; h));\r\n                hSalida: With({h: Text(jsonInfo.InfoProyecto.Horario.Salida)}; If(Len(h)=4; Left(h;2)&\":\"&Right(h;2)&\":00\"; h));\r\n                hSalidaAlmuerzo: Text(jsonInfo.InfoProyecto.Horario.SalidaAlmuerzo);\r\n                hIngresoAlmuerzo: Text(jsonInfo.InfoProyecto.Horario.RegresoAlmuezo);\r\n                pGrupoObs: Text(jsonInfo.InfoProyecto.Grupo);\r\n\r\n                tblPrincipales: Table(jsonAsig.Principales);\r\n                tblBacks: Table(jsonAsig.Backs);\r\n                tblHistorial: Table(jsonAsig.HistorialActividades);\r\n                \r\n                tblDetalleEfectivo: If(\r\n                    CountRows(Table(jsonAsig.DetalleDiario)) > 0;\r\n                    Table(jsonAsig.DetalleDiario);\r\n                    If(\r\n                        CountRows(Table(jsonAsig.Etapas)) > 0;\r\n                        Table(ParseJSON(Text(Last(Table(jsonAsig.Etapas)).Value.DetalleDiarioEtapaJson)));\r\n                        Table(jsonAsig.DetalleDiario)\r\n                    )\r\n                )\r\n            };\r\n            \r\n            // A. Historial de Actividades\r\n            ForAll(\r\n                tblHistorial As Hist;\r\n                Collect(\r\n                    colHistorialActividades;\r\n                    {\r\n                        ProyectoUID: pID;\r\n                        ActivityId: Text(Hist.Value.ActivityId);\r\n                        FechaInicio: DateValue(Text(Hist.Value.FechaInicio));\r\n                        FechaFin: DateValue(Text(Hist.Value.FechaFin))\r\n                    }\r\n                )\r\n            );;\r\n\r\n            // B. Vínculos Históricos (Principales y Backs)\r\n            ForAll(\r\n                Table(jsonInfo.Responsables.Principales) As p;\r\n                Collect(\r\n                    colVinculosProyectoPersonal;\r\n                    {\r\n                        ProjectUID: pID; ProyectoCodigo: pCode; ProyectoNombre: pNombre;\r\n                        EstadoProyecto: pEstado; FechaInicioProyecto: fInicio; FechaFinProyecto: fFin;\r\n                        ResponsableCorreo: Lower(Trim(Text(p.Value.Correo))); ResponsableNombre: Upper(Trim(Text(p.Value.Nombre)));\r\n                        ResponsableCargo: Text(p.Value.Cargo); Cedula: Text(p.Value.Cedula); Ekon: Text(p.Value.Ekon); TipoVinculo: \"PRINCIPAL\"\r\n                    }\r\n                )\r\n            );;\r\n\r\n            ForAll(\r\n                Table(jsonInfo.Responsables.Backs) As b;\r\n                Collect(\r\n                    colVinculosProyectoPersonal;\r\n                    {\r\n                        ProjectUID: pID; ProyectoCodigo: pCode; ProyectoNombre: pNombre;\r\n                        EstadoProyecto: pEstado; FechaInicioProyecto: fInicio; FechaFinProyecto: fFin;\r\n                        ResponsableCorreo: Lower(Trim(Text(b.Value.Correo))); ResponsableNombre: Upper(Trim(Text(b.Value.Nombre)));\r\n                        ResponsableCargo: Text(b.Value.Cargo); Cedula: Text(b.Value.Cedula); Ekon: Text(b.Value.Ekon); TipoVinculo: \"BACK\"\r\n                    }\r\n                )\r\n            );;\r\n\r\n            // C. Detalle Diario (Lectura 100% Lineal - Sin LookUps internamente)\r\n            ForAll(\r\n                tblDetalleEfectivo As Det;\r\n                Collect(\r\n                    colTodasAsignaciones;\r\n                    {\r\n                        ProyectoUID: pID; TituloProyecto: pCode; NombreVisualProyecto: pNombre;\r\n                        Fecha: DateValue(Text(Det.Value.Fecha)); Rol: Text(Det.Value.Rol); Ekon: Text(Det.Value.ResponsableEkon);\r\n                        CorreoResponsable: Lower(Trim(Text(Det.Value.ResponsableCorreo)));\r\n                        NombreResponsable: Upper(Trim(Text(Det.Value.ResponsableNombre)));\r\n                        ResponsableCargo: Text(Det.Value.ResponsableCargo);\r\n                        Cedula: Text(Det.Value.ResponsableCedula);\r\n                        CorreoCreador: pCorreoCreador; Empresa: pEmpresa;\r\n                        ProyectoIDExcel: pProjectIdExcel; ActividadExcel: pActividadExcel;\r\n                        EntradaJornada: hEntrada;\r\n                        SalidaJornada: hSalida;\r\n                        SalidaAlmuerzo: hSalidaAlmuerzo;\r\n                        IngresoAlmuerzo: hIngresoAlmuerzo;\r\n                        GrupoObservacion: pGrupoObs\r\n                    }\r\n                )\r\n            );;\r\n\r\n            // D. Generación Directa de Descansos (Desde Principales)\r\n            ForAll(\r\n                tblPrincipales As P;\r\n                With(\r\n                    {\r\n                        numDiasDescanso: Value(P.Value.DiasDescanso);\r\n                        fFinJornada: DateValue(Text(P.Value.FechaFin));\r\n                        ekonP: Text(P.Value.Ekon);\r\n                        correoP: Lower(Trim(Text(P.Value.Correo)));\r\n                        nombreP: Upper(Trim(Text(P.Value.Nombre)));\r\n                        cargoP: Text(P.Value.Cargo);\r\n                        cedulaP: Text(P.Value.Cedula)\r\n                    };\r\n                    If(\r\n                        numDiasDescanso > 0 && !IsBlank(fFinJornada);\r\n                        ForAll(\r\n                            Sequence(numDiasDescanso) As Seq;\r\n                            Collect(\r\n                                colTodasAsignaciones;\r\n                                {\r\n                                    ProyectoUID: pID; TituloProyecto: pCode; NombreVisualProyecto: pNombre;\r\n                                    Fecha: DateAdd(fFinJornada; Seq.Value; TimeUnit.Days); Rol: \"DESCANSO\"; Ekon: ekonP;\r\n                                    CorreoResponsable: correoP;\r\n                                    NombreResponsable: nombreP;\r\n                                    ResponsableCargo: cargoP;\r\n                                    Cedula: cedulaP;\r\n                                    CorreoCreador: pCorreoCreador; Empresa: pEmpresa;\r\n                                    ProyectoIDExcel: pProjectIdExcel; ActividadExcel: pActividadExcel;\r\n                                    EntradaJornada: hEntrada;\r\n                                    SalidaJornada: hSalida;\r\n                                    SalidaAlmuerzo: hSalidaAlmuerzo;\r\n                                    IngresoAlmuerzo: hIngresoAlmuerzo;\r\n                                    GrupoObservacion: pGrupoObs\r\n                                }\r\n                            )\r\n                        )\r\n                    )\r\n                )\r\n            )\r\n        )\r\n    )\r\n);;\r\n\r\nClearCollect(colAsignacionesGlobales; colTodasAsignaciones);;\r\n\r\n// ------------------------------------------------------------------\r\n// 2. EXTRAER NOVEDADES\r\n// ------------------------------------------------------------------\r\nForAll(\r\n    'NOVEDADES ASISTENCIA' As Nov;\r\n    With({jsonDetalle: ParseJSON(Nov.DETALLE_JSON)};\r\n        ForAll(\r\n            Table(jsonDetalle.Dias) As DiaNovedad;\r\n            Collect(\r\n                colTodasNovedades;\r\n                {\r\n                    TipoAplicacion: Text(jsonDetalle.TipoAplicacion);\r\n                    ProyectoUID: Text(jsonDetalle.Proyecto.ProjectUID);\r\n                    CorreoPersona: Lower(Trim(Text(jsonDetalle.Persona.Correo)));\r\n                    EkonPersona: Coalesce(Text(jsonDetalle.Persona.Ekon); Text(jsonDetalle.Fechas.Ekon));\r\n                    Fecha: DateValue(Text(DiaNovedad.Value.Fecha));\r\n                    EstadoExcel: Text(DiaNovedad.Value.EstadoExcel);\r\n                    Observacion: Text(DiaNovedad.Value.ObservacionExcel);\r\n                    TipoNovedad: Text(jsonDetalle.TipoNovedad)\r\n                }\r\n            )\r\n        )\r\n    )\r\n);;\r\n\r\n// ------------------------------------------------------------------\r\n// 3. GENERAR LISTA ÚNICA DE PERSONAS (OPTIMIZADO CON GROUPBY)\r\n// ------------------------------------------------------------------\r\nClearCollect(\r\n    colPersonasVista;\r\n    DropColumns(\r\n        AddColumns(\r\n            GroupBy(colTodasAsignaciones; Ekon; GrupoAsig);\r\n            Nombre; First(GrupoAsig).NombreResponsable;\r\n            CedulaPersona; First(GrupoAsig).Cedula;\r\n            Correo; First(GrupoAsig).CorreoResponsable\r\n        );\r\n        GrupoAsig\r\n    )\r\n);;\r\n\r\nSet(varAnioVista; Year(Today()));;\r\nSet(varMesVista; Month(Today()));;\r\nClearCollect(colDiasVista; Sequence(Day(DateAdd(Date(varAnioVista; varMesVista + 1; 1); -1; TimeUnit.Days))));;\r\n\r\nSet(varAnchoBaseCronograma; 150 + CountRows(colDiasVista) * 34);;\r\nSet(varEscalaCronograma; Min(1; (App.Width - 80) / varAnchoBaseCronograma));;\r\nSet(varEscalaCronogramaTxt; Substitute(Text(varEscalaCronograma; \"0,00\"); \",\"; \".\"));;\r\n\r\nSet(cargarInfo; false);;\r\n*/\r\n\r\n\r\n\r\nSet(cargarInfo, true);\r\nSet(varCorreoUsuarioActual, Lower(Trim(varUsuarioActual.Email)));\r\n\r\n// ------------------------------------------------------------------\r\n// LIMPIEZA\r\n// ------------------------------------------------------------------\r\nClear(colAsignacionesRango);\r\nClear(colDetalleRango);\r\nClear(colPersonasVista);\r\n//Clear(colCronogramaBase);;\r\nClear(colColoresProyectos);\r\nClear(colDiasVista);\r\nClear(colTodasNovedades);\r\nClear(colCronogramaFilas);\r\nSet(varHtmlInicio, \"\");\r\nSet(varHtmlFin, \"\");\r\n\r\nClearCollect(\r\n    colMesesVista,\r\n    {Id: 1, Nombre: \"ENERO\"}, {Id: 2, Nombre: \"FEBRERO\"}, {Id: 3, Nombre: \"MARZO\"},\r\n    {Id: 4, Nombre: \"ABRIL\"}, {Id: 5, Nombre: \"MAYO\"}, {Id: 6, Nombre: \"JUNIO\"},\r\n    {Id: 7, Nombre: \"JULIO\"}, {Id: 8, Nombre: \"AGOSTO\"}, {Id: 9, Nombre: \"SEPTIEMBRE\"},\r\n    {Id: 10, Nombre: \"OCTUBRE\"}, {Id: 11, Nombre: \"NOVIEMBRE\"}, {Id: 12, Nombre: \"DICIEMBRE\"}\r\n);\r\n\r\n/*\r\n// ------------------------------------------------------------------\r\n// 1. CABECERA LIVIANA DE PROYECTOS (sin JSON; excluye la fila 666)\r\n// ------------------------------------------------------------------\r\nClearCollect(\r\n    colProyectosCab;\r\n    ForAll(\r\n        If(\r\n            varEsSuperAdmin;\r\n            Filter('SIG PROYECTOS'; StartsWith(Título; \"PRY-\"));\r\n            Filter('SIG PROYECTOS'; StartsWith(Título; \"PRY-\") && CORREO_CREADOR = varCorreoUsuarioActual)\r\n        ) As px;\r\n        {\r\n            ProyectoUID: px.PROYECTO_UID;\r\n            Codigo: px.Título;\r\n            NombreProyecto: px.NOMBRE_PROYECTO;\r\n            CorreoCreador: px.CORREO_CREADOR;\r\n            Estado: px.ESTADO.Value;\r\n            Empresa: Text(px.COMPANY_ID);\r\n            ProyectoIDExcel: px.PROJECT_ID_EKON;\r\n            ActividadExcel: px.ACTIVITY_ID;\r\n            GrupoObservacion: px.GRUPO;\r\n            EntradaJornada: If(Len(px.HORA_ENTRADA) = 4; Left(px.HORA_ENTRADA; 2) & \":\" & Right(px.HORA_ENTRADA; 2) & \":00\"; px.HORA_ENTRADA);\r\n            SalidaJornada: If(Len(px.HORA_SALIDA) = 4; Left(px.HORA_SALIDA; 2) & \":\" & Right(px.HORA_SALIDA; 2) & \":00\"; px.HORA_SALIDA);\r\n            SalidaAlmuerzo: px.SALIDA_ALMUERZO;\r\n            IngresoAlmuerzo: px.REGRESO_ALMUERZO\r\n        }\r\n    )\r\n);;\r\n*/\r\n\r\n// ------------------------------------------------------------------\r\n// 1. CABECERA LIVIANA DE PROYECTOS (columnas forzadas con ShowColumns)\r\n// ------------------------------------------------------------------\r\nClearCollect(\r\n    colProyectosCab,\r\n    ForAll(\r\n        ShowColumns(\r\n            If(\r\n                varEsSuperAdmin,\r\n                Filter('SIG PROYECTOS', StartsWith(Título, \"PRY-\")),\r\n                Filter('SIG PROYECTOS', StartsWith(Título, \"PRY-\") && CORREO_CREADOR = varCorreoUsuarioActual)\r\n            ),\r\n            Título, PROYECTO_UID, NOMBRE_PROYECTO, CORREO_CREADOR, ESTADO,\r\n            COMPANY_ID, PROJECT_ID_EKON, ACTIVITY_ID, GRUPO,\r\n            HORA_ENTRADA, HORA_SALIDA, SALIDA_ALMUERZO, REGRESO_ALMUERZO\r\n        ) As px,\r\n        {\r\n            ProyectoUID: px.PROYECTO_UID,\r\n            Codigo: px.Title,\r\n            NombreProyecto: px.NOMBRE_PROYECTO,\r\n            CorreoCreador: px.CORREO_CREADOR,\r\n            Estado: px.ESTADO.Value,\r\n            Empresa: Text(px.COMPANY_ID),\r\n            ProyectoIDExcel: px.PROJECT_ID_EKON,\r\n            ActividadExcel: px.ACTIVITY_ID,\r\n            GrupoObservacion: px.GRUPO,\r\n            EntradaJornada: If(Len(px.HORA_ENTRADA) = 4, Left(px.HORA_ENTRADA, 2) & \":\" & Right(px.HORA_ENTRADA, 2) & \":00\", px.HORA_ENTRADA),\r\n            SalidaJornada: If(Len(px.HORA_SALIDA) = 4, Left(px.HORA_SALIDA, 2) & \":\" & Right(px.HORA_SALIDA, 2) & \":00\", px.HORA_SALIDA),\r\n            SalidaAlmuerzo: px.SALIDA_ALMUERZO,\r\n            IngresoAlmuerzo: px.REGRESO_ALMUERZO\r\n        }\r\n    )\r\n);\r\n\r\n// ------------------------------------------------------------------\r\n// 2. NOVEDADES (igual que antes)\r\n// ------------------------------------------------------------------\r\nForAll(\r\n    'NOVEDADES ASISTENCIA' As Nov,\r\n    With(\r\n        {jsonDetalle: ParseJSON(Nov.DETALLE_JSON)},\r\n        ForAll(\r\n            Table(jsonDetalle.Dias) As DiaNovedad,\r\n            Collect(\r\n                colTodasNovedades,\r\n                {\r\n                    TipoAplicacion: Text(jsonDetalle.TipoAplicacion),\r\n                    ProyectoUID: Text(jsonDetalle.Proyecto.ProjectUID),\r\n                    CorreoPersona: Lower(Trim(Text(jsonDetalle.Persona.Correo))),\r\n                    EkonPersona: Coalesce(Text(jsonDetalle.Persona.Ekon), Text(jsonDetalle.Fechas.Ekon)),\r\n                    Fecha: DateValue(Text(DiaNovedad.Value.Fecha)),\r\n                    EstadoExcel: Text(DiaNovedad.Value.EstadoExcel),\r\n                    Observacion: Text(DiaNovedad.Value.ObservacionExcel),\r\n                    TipoNovedad: Text(jsonDetalle.TipoNovedad)\r\n                }\r\n            )\r\n        )\r\n    )\r\n);\r\n\r\nSet(cargarInfo, false);\r\n\r\n// ------------------------------------------------------------------\r\n// 3. CARGA AUTOMÁTICA DEL MES ACTUAL\r\n// ------------------------------------------------------------------\r\nSelect(btnCargarVista)"
+    Children:
+      - Container1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_8:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0.1
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingRight: =6
+                Children:
+                  - Icon1_9:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(PantallaPrincipal)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_8:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="CRONOGRAMA MENSUAL DE PROYECTOS"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - Container12_26:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.1
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container31:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        FillPortions: =0
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =8
+                        PaddingLeft: =8
+                        PaddingRight: =8
+                        PaddingTop: =8
+                        Width: =80
+                      Children:
+                        - IcoRefrescarCronograma:
+                            Control: ModernIcon@1.1.1
+                            Properties:
+                              Icon: ="ArrowClockwise"
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              OnSelect: =
+                              Width: =50
+                        - ddMesVista:
+                            Control: ModernCombobox@1.1.2
+                            Properties:
+                              DefaultSelectedItems: |-
+                                =Table(
+                                    LookUp(
+                                        colMesesVista,
+                                        Id = Month(Today())
+                                    )
+                                )
+                              Font: =Font.'Open Sans Condensed'
+                              InputTextPlaceholder: ="Mes"
+                              ItemDisplayText: =ThisItem.Nombre
+                              Items: =colMesesVista
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              SelectMultiple: =false
+                              Visible: =false
+                              Width: =100
+                  - tlt_nombresColaborador_22:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="FECHA INICIO"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =80
+                  - ddAnioVista:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        DefaultSelectedItems: |-
+                          =Table({Value: Year(Today())})
+                        Font: =Font.'Open Sans Condensed'
+                        InputTextPlaceholder: ="Año"
+                        ItemDisplayText: =ThisItem.Value
+                        Items: =Sequence(6, Year(Today()) - 2, 1)
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        SelectMultiple: =false
+                        Visible: =false
+                        Width: =80
+                  - fechaInicioProyecto:
+                      Control: ModernDatePicker@1.0.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Format: =DatePickerFormat.Short
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Placeholder: ="Inicio"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Width: =130
+                  - tlt_nombresColaborador_23:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="FECHA FIN"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =80
+                  - fechaFinProyecto:
+                      Control: ModernDatePicker@1.0.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Format: =DatePickerFormat.Short
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Placeholder: ="Fin"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Width: =130
+                  - btnCargarVista:
+                      Control: Button@0.0.45
+                      Properties:
+                        Appearance: ='ButtonCanvas.Appearance'.Outline
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        BorderRadius: =20
+                        DisplayMode: |
+                          =DisplayMode.Edit
+                        Font: =Font.'Open Sans Condensed'
+                        FontSize: =16
+                        Icon: ="CheckmarkCircle"
+                        IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: |-
+                          =/*
+                          Set(cargarInfo; true);;
+
+                          // 1. Selección de fechas del rango
+                          Set(varFechaInicio; Coalesce(fechaInicioProyecto.SelectedDate; Date(Year(Today()); Month(Today()); 1)));;
+                          Set(varFechaFin; Coalesce(fechaFinProyecto.SelectedDate; DateAdd(Date(Year(Today()); Month(Today()) + 1; 1); -1; TimeUnit.Days)));;
+
+                          If(varFechaInicio > varFechaFin; Set(varFechaFin; varFechaInicio));;
+
+                          If(
+                              DateDiff(varFechaInicio; varFechaFin; TimeUnit.Days) >= 60;
+                              Set(varFechaFin; DateAdd(varFechaInicio; 59; TimeUnit.Days));;
+                              Notify("El rango excede 60 días. Se mostrarán los primeros 60 días para mantener la fluidez de la app."; NotificationType.Warning)
+                          );;
+
+                          Set(varTotalDias; DateDiff(varFechaInicio; varFechaFin; TimeUnit.Days) + 1);;
+
+                          ClearCollect(
+                              colDiasVista;
+                              ForAll(
+                                  Sequence(varTotalDias);
+                                  {
+                                      FechaReal: DateAdd(varFechaInicio; Value - 1; TimeUnit.Days);
+                                      DiaNumero: Day(DateAdd(varFechaInicio; Value - 1; TimeUnit.Days))
+                                  }
+                              )
+                          );;
+
+                          // 2. Pre-filtrado del mes/rango
+                          ClearCollect(
+                              colAsignacionesRango;
+                              Filter(
+                                  colTodasAsignaciones;
+                                  Fecha >= varFechaInicio && Fecha <= varFechaFin &&
+                                  (varEsSuperAdmin || CorreoCreador = varUsuarioActual.Email)
+                              )
+                          );;
+
+                          Clear(colCronogramaBase);;
+
+                          // 3. Generación de la matriz
+                          ForAll(
+                              colPersonasVista As p;
+                              With(
+                                  {
+                                      varEkon: p.Ekon;
+                                      asigPersona: Filter(colAsignacionesRango; Ekon = p.Ekon);
+                                      novPersona: Filter(colTodasNovedades; TipoAplicacion = "PERSONA" && EkonPersona = p.Ekon && Fecha >= varFechaInicio && Fecha <= varFechaFin)
+                                  };
+                                  With(
+                                      {
+                                          proyectosDelRango: Distinct(asigPersona; ProyectoUID)
+                                      };
+                                      ForAll(
+                                          colDiasVista As DiaVista;
+                                          With(
+                                              {
+                                                  varFechaEval: DiaVista.FechaReal
+                                              };
+                                              With(
+                                                  {
+                                                      asigDia: Filter(asigPersona; Fecha = varFechaEval);
+                                                      nP: LookUp(novPersona; Fecha = varFechaEval);
+                                                      nG: LookUp(colTodasNovedades; TipoAplicacion = "GENERAL" && Fecha = varFechaEval);
+                                                      nPr: LookUp(colTodasNovedades; TipoAplicacion = "PROYECTO" && Fecha = varFechaEval && ProyectoUID in proyectosDelRango.Value)
+                                                  };
+                                                  With(
+                                                      {
+                                                          cantActivas: CountRows(Filter(asigDia; Rol <> "DESCANSO"));
+                                                          cantDescansos: CountRows(Filter(asigDia; Rol = "DESCANSO"));
+                                                          primerActivo: First(Filter(asigDia; Rol <> "DESCANSO"));
+                                                          primerDescanso: First(Filter(asigDia; Rol = "DESCANSO"))
+                                                      };
+                                                      Collect(
+                                                          colCronogramaBase;
+                                                          {
+                                                              Ekon: varEkon;
+                                                              Correo: p.Correo;
+                                                              Fecha: varFechaEval;
+                                                              Dia: DiaVista.DiaNumero;
+                                                              EstadoFinal: If(
+                                                                  !IsBlank(nP); nP.Observacion;
+                                                                  !IsBlank(nG); nG.Observacion;
+                                                                  !IsBlank(nPr); nPr.Observacion;
+                                                                  cantActivas > 1; "CHOQUE";
+                                                                  cantActivas = 1; "PROYECTO";
+                                                                  cantDescansos > 0; "DESCANSO";
+                                                                  "LIBRE"
+                                                              );
+                                                              DetalleMostrar: If(
+                                                                  !IsBlank(nP); nP.TipoNovedad;
+                                                                  !IsBlank(nG); nG.TipoNovedad;
+                                                                  !IsBlank(nPr); nPr.TipoNovedad;
+                                                                  cantActivas > 1; "¡ALERTA! Asignado a " & cantActivas & " proyectos";
+                                                                  cantActivas = 1; primerActivo.NombreVisualProyecto;
+                                                                  cantDescansos > 0; primerDescanso.NombreVisualProyecto;
+                                                                  Blank()
+                                                              )
+                                                          }
+                                                      )
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          );;
+
+                          // 4. Mapeo de Colores
+                          Clear(colColoresProyectos);;
+                          ClearCollect(colProyectosUnicosRango; Distinct(Filter(colCronogramaBase; EstadoFinal = "PROYECTO" || EstadoFinal = "DESCANSO"); DetalleMostrar));;
+
+                          ForAll(
+                              colProyectosUnicosRango As pr;
+                              Collect(
+                                  colColoresProyectos;
+                                  {
+                                      ProyectoCodigo: pr.Value;
+                                      ColorHex: Switch(CountRows(colColoresProyectos) + 1; 1; "#0078D4"; 2; "#008272"; 3; "#8764B8"; 4; "#D83B01"; 5; "#107C41"; 6; "#004B50"; "#737373")
+                                  }
+                              )
+                          );;
+
+                          Notify("Cronograma generado del " & Text(varFechaInicio; "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin; "[$-es-ES]dd/mm/yyyy"); NotificationType.Success);;
+
+                          Set(cargarInfo; false);;
+                          */
+
+
+
+
+
+
+
+
+
+
+                          /*
+                          // Nuevo función
+                          Set(cargarInfo; true);;
+
+                          // ------------------------------------------------------------------
+                          // 1. RANGO DE FECHAS (máximo 60 días)
+                          // ------------------------------------------------------------------
+                          Set(varFechaInicio; Coalesce(fechaInicioProyecto.SelectedDate; Date(Year(Today()); Month(Today()); 1)));;
+                          Set(varFechaFin; Coalesce(fechaFinProyecto.SelectedDate; DateAdd(Date(Year(Today()); Month(Today()) + 1; 1); -1; TimeUnit.Days)));;
+
+                          If(varFechaInicio > varFechaFin; Set(varFechaFin; varFechaInicio));;
+
+                          If(
+                              DateDiff(varFechaInicio; varFechaFin; TimeUnit.Days) >= 60;
+                              Set(varFechaFin; DateAdd(varFechaInicio; 59; TimeUnit.Days));;
+                              Notify("El rango excede 60 días. Se mostrarán los primeros 60 días para mantener la fluidez de la app."; NotificationType.Warning)
+                          );;
+
+                          Set(varTotalDias; DateDiff(varFechaInicio; varFechaFin; TimeUnit.Days) + 1);;
+
+                          ClearCollect(
+                              colDiasVista;
+                              ForAll(
+                                  Sequence(varTotalDias);
+                                  {
+                                      FechaReal: DateAdd(varFechaInicio; Value - 1; TimeUnit.Days);
+                                      DiaNumero: Day(DateAdd(varFechaInicio; Value - 1; TimeUnit.Days))
+                                  }
+                              )
+                          );;
+
+                          // ------------------------------------------------------------------
+                          // 2. CONSULTA A SHAREPOINT SOLO DEL RANGO (bloques de 10 días)
+                          // ------------------------------------------------------------------
+                          Clear(colDetalleRango);;
+
+                          ForAll(
+                              Sequence(RoundUp(varTotalDias / 10; 0)) As bloque;
+                              With(
+                                  {
+                                      iniBloque: DateAdd(varFechaInicio; (bloque.Value - 1) * 10; TimeUnit.Days);
+                                      finBloque: If(
+                                          DateAdd(varFechaInicio; bloque.Value * 10 - 1; TimeUnit.Days) > varFechaFin;
+                                          varFechaFin;
+                                          DateAdd(varFechaInicio; bloque.Value * 10 - 1; TimeUnit.Days)
+                                      )
+                                  };
+                                  If(
+                                      varEsSuperAdmin;
+                                      Collect(
+                                          colDetalleRango;
+                                          Filter(SIG_ASIGNACIONES_DETALLE; FECHA >= iniBloque && FECHA <= finBloque)
+                                      );
+                                      Collect(
+                                          colDetalleRango;
+                                          Filter(SIG_ASIGNACIONES_DETALLE; FECHA >= iniBloque && FECHA <= finBloque && CORREO_CREADOR = varCorreoUsuarioActual)
+                                      )
+                                  )
+                              )
+                          );;
+
+                          // ------------------------------------------------------------------
+                          // 3. NORMALIZAR (mismos nombres de campo que usa el HTML)
+                          // ------------------------------------------------------------------
+                          ClearCollect(
+                              colAsignacionesRango;
+                              ForAll(
+                                  colDetalleRango As r;
+                                  {
+                                      ProyectoUID: r.PROYECTO_UID;
+                                      TituloProyecto: r.CODIGO_PROYECTO;
+                                      NombreVisualProyecto: r.NOMBRE_PROYECTO;
+                                      Fecha: r.FECHA;
+                                      Rol: r.ROL;
+                                      Ekon: Text(r.EKON);
+                                      CorreoResponsable: Lower(Trim(r.CORREO_RESPONSABLE));
+                                      NombreResponsable: r.NOMBRE_RESPONSABLE;
+                                      ResponsableCargo: r.CARGO;
+                                      Cedula: r.CEDULA;
+                                      CorreoCreador: r.CORREO_CREADOR
+                                  }
+                              )
+                          );;
+
+                          // ------------------------------------------------------------------
+                          // 4. PERSONAS DEL RANGO
+                          // ------------------------------------------------------------------
+                          ClearCollect(
+                              colPersonasVista;
+                              ForAll(
+                                  Distinct(colAsignacionesRango; Ekon) As e;
+                                  With(
+                                      {regPersona: LookUp(colAsignacionesRango; Ekon = e.Value)};
+                                      {
+                                          Ekon: e.Value;
+                                          Nombre: regPersona.NombreResponsable;
+                                          CedulaPersona: regPersona.Cedula;
+                                          Correo: regPersona.CorreoResponsable
+                                      }
+                                  )
+                              )
+                          );;
+
+                          // ------------------------------------------------------------------
+                          // 5. MATRIZ DEL CRONOGRAMA (misma lógica de prioridades que antes)
+                          // ------------------------------------------------------------------
+                          Clear(colCronogramaBase);;
+
+                          ForAll(
+                              colPersonasVista As p;
+                              With(
+                                  {
+                                      varEkon: p.Ekon;
+                                      asigPersona: Filter(colAsignacionesRango; Ekon = p.Ekon);
+                                      novPersona: Filter(colTodasNovedades; TipoAplicacion = "PERSONA" && EkonPersona = p.Ekon && Fecha >= varFechaInicio && Fecha <= varFechaFin)
+                                  };
+                                  With(
+                                      {
+                                          proyectosDelRango: Distinct(asigPersona; ProyectoUID)
+                                      };
+                                      ForAll(
+                                          colDiasVista As DiaVista;
+                                          With(
+                                              {
+                                                  varFechaEval: DiaVista.FechaReal
+                                              };
+                                              With(
+                                                  {
+                                                      asigDia: Filter(asigPersona; Fecha = varFechaEval);
+                                                      nP: LookUp(novPersona; Fecha = varFechaEval);
+                                                      nG: LookUp(colTodasNovedades; TipoAplicacion = "GENERAL" && Fecha = varFechaEval);
+                                                      nPr: LookUp(colTodasNovedades; TipoAplicacion = "PROYECTO" && Fecha = varFechaEval && ProyectoUID in proyectosDelRango.Value)
+                                                  };
+                                                  With(
+                                                      {
+                                                          cantActivas: CountRows(Filter(asigDia; Rol <> "DESCANSO"));
+                                                          cantDescansos: CountRows(Filter(asigDia; Rol = "DESCANSO"));
+                                                          primerActivo: First(Filter(asigDia; Rol <> "DESCANSO"));
+                                                          primerDescanso: First(Filter(asigDia; Rol = "DESCANSO"))
+                                                      };
+                                                      Collect(
+                                                          colCronogramaBase;
+                                                          {
+                                                              Ekon: varEkon;
+                                                              Correo: p.Correo;
+                                                              Fecha: varFechaEval;
+                                                              Dia: DiaVista.DiaNumero;
+                                                              EstadoFinal: If(
+                                                                  !IsBlank(nP); nP.Observacion;
+                                                                  !IsBlank(nG); nG.Observacion;
+                                                                  !IsBlank(nPr); nPr.Observacion;
+                                                                  cantActivas > 1; "CHOQUE";
+                                                                  cantActivas = 1; "PROYECTO";
+                                                                  cantDescansos > 0; "DESCANSO";
+                                                                  "LIBRE"
+                                                              );
+                                                              DetalleMostrar: If(
+                                                                  !IsBlank(nP); nP.TipoNovedad;
+                                                                  !IsBlank(nG); nG.TipoNovedad;
+                                                                  !IsBlank(nPr); nPr.TipoNovedad;
+                                                                  cantActivas > 1; "¡ALERTA! Asignado a " & cantActivas & " proyectos";
+                                                                  cantActivas = 1; primerActivo.NombreVisualProyecto;
+                                                                  cantDescansos > 0; primerDescanso.NombreVisualProyecto;
+                                                                  Blank()
+                                                              )
+                                                          }
+                                                      )
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          );;
+
+                          // ------------------------------------------------------------------
+                          // 6. COLORES POR PROYECTO
+                          // ------------------------------------------------------------------
+                          Clear(colColoresProyectos);;
+                          ClearCollect(colProyectosUnicosRango; Distinct(Filter(colCronogramaBase; EstadoFinal = "PROYECTO" || EstadoFinal = "DESCANSO"); DetalleMostrar));;
+
+                          ForAll(
+                              colProyectosUnicosRango As pr;
+                              Collect(
+                                  colColoresProyectos;
+                                  {
+                                      ProyectoCodigo: pr.Value;
+                                      ColorHex: Switch(CountRows(colColoresProyectos) + 1; 1; "#0078D4"; 2; "#008272"; 3; "#8764B8"; 4; "#D83B01"; 5; "#107C41"; 6; "#004B50"; "#737373")
+                                  }
+                              )
+                          );;
+
+                          Notify(
+                              "Cronograma generado del " & Text(varFechaInicio; "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin; "[$-es-ES]dd/mm/yyyy") &
+                              " (" & CountRows(colAsignacionesRango) & " registros)";
+                              NotificationType.Success
+                          );;
+
+                          Set(cargarInfo; false)
+                          */
+
+
+                          Set(cargarInfo, true);
+                          Set(varT0, Now());
+                          Set(varMaxDias, 90);
+
+                          // ------------------------------------------------------------------
+                          // 1. RANGO DE FECHAS (máximo 60 días)
+                          // ------------------------------------------------------------------
+                          Set(varFechaInicio, Coalesce(fechaInicioProyecto.SelectedDate, Date(Year(Today()), Month(Today()), 1)));
+                          Set(varFechaFin, Coalesce(fechaFinProyecto.SelectedDate, DateAdd(Date(Year(Today()), Month(Today()) + 1, 1), -1, TimeUnit.Days)));
+
+                          If(varFechaInicio > varFechaFin, Set(varFechaFin, varFechaInicio));
+
+                          Set(varMaxDias, 90);
+
+                          If(
+                              DateDiff(varFechaInicio, varFechaFin, TimeUnit.Days) >= varMaxDias,
+                              Set(varFechaFin, DateAdd(varFechaInicio, varMaxDias - 1, TimeUnit.Days));
+                              Notify("El rango excede " & varMaxDias & " días. Se mostrarán los primeros " & varMaxDias & " días.", NotificationType.Warning)
+                          );
+
+                          Set(varTotalDias, DateDiff(varFechaInicio, varFechaFin, TimeUnit.Days) + 1);
+                          Set(varAnchoColaborador, 240);
+                          Set(varAnchoDia, 40);
+
+                          ClearCollect(
+                              colDiasVista,
+                              ForAll(
+                                  Sequence(varTotalDias),
+                                  {
+                                      FechaReal: DateAdd(varFechaInicio, Value - 1, TimeUnit.Days),
+                                      DiaNumero: Day(DateAdd(varFechaInicio, Value - 1, TimeUnit.Days))
+                                  }
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 2. CONSULTA A SHAREPOINT (bloques de 30 días, delegable)
+                          // ------------------------------------------------------------------
+                          Clear(colDetalleRango);
+
+                          ForAll(
+                              Sequence(RoundUp(varTotalDias / 30, 0)) As bloque,
+                              With(
+                                  {
+                                      iniBloque: DateAdd(varFechaInicio, (bloque.Value - 1) * 30, TimeUnit.Days),
+                                      finBloque: If(
+                                          DateAdd(varFechaInicio, bloque.Value * 30 - 1, TimeUnit.Days) > varFechaFin,
+                                          varFechaFin,
+                                          DateAdd(varFechaInicio, bloque.Value * 30 - 1, TimeUnit.Days)
+                                      )
+                                  },
+                                  If(
+                                      varEsSuperAdmin,
+                                      Collect(colDetalleRango, Filter(SIG_ASIGNACIONES_DETALLE, FECHA >= iniBloque && FECHA <= finBloque)),
+                                      Collect(colDetalleRango, Filter(SIG_ASIGNACIONES_DETALLE, FECHA >= iniBloque && FECHA <= finBloque && CORREO_CREADOR = varCorreoUsuarioActual))
+                                  )
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 3. NORMALIZAR (una sola escritura)
+                          // ------------------------------------------------------------------
+                          ClearCollect(
+                              colAsignacionesRango,
+                              ForAll(
+                                  colDetalleRango As r,
+                                  {
+                                      ProyectoUID: r.PROYECTO_UID,
+                                      NombreVisualProyecto: r.NOMBRE_PROYECTO,
+                                      Fecha: r.FECHA,
+                                      Rol: r.ROL,
+                                      Ekon: Text(r.EKON),
+                                      CorreoResponsable: Lower(Trim(r.CORREO_RESPONSABLE)),
+                                      NombreResponsable: r.NOMBRE_RESPONSABLE,
+                                      Cedula: r.CEDULA
+                                  }
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 4. NOVEDADES SOLO DEL RANGO (se filtran una vez, no por celda)
+                          // ------------------------------------------------------------------
+                          ClearCollect(colNovRango, Filter(colTodasNovedades, Fecha >= varFechaInicio && Fecha <= varFechaFin));
+                          ClearCollect(colNovGeneral, Filter(colNovRango, TipoAplicacion = "GENERAL"));
+                          ClearCollect(colNovProyecto, Filter(colNovRango, TipoAplicacion = "PROYECTO"));
+                          ClearCollect(colNovPersona, Filter(colNovRango, TipoAplicacion = "PERSONA"));
+
+                          // ------------------------------------------------------------------
+                          // 5. COLORES POR PROYECTO (antes de armar la matriz)
+                          // ------------------------------------------------------------------
+                          ClearCollect(colNombresProyectosRango, Sort(Distinct(colAsignacionesRango, NombreVisualProyecto), Value, SortOrder.Ascending));
+
+                          ClearCollect(
+                              colColoresProyectos,
+                              ForAll(
+                                  Sequence(CountRows(colNombresProyectosRango)) As i,
+                                  {
+                                      ProyectoCodigo: Last(FirstN(colNombresProyectosRango, i.Value)).Value,
+                                      ColorHex: Switch(
+                                          Mod(i.Value - 1, 12) + 1,
+                                          1, "#0078D4", 2, "#008272", 3, "#8764B8", 4, "#D83B01",
+                                          5, "#107C41", 6, "#004B50", 7, "#C239B3", 8, "#986F0B",
+                                          9, "#0063B1", 10, "#E3008C", 11, "#00B7C3", "#737373"
+                                      )
+                                  }
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 6. PERSONAS DEL RANGO (ordenadas)
+                          // ------------------------------------------------------------------
+                          ClearCollect(
+                              colPersonasVista,
+                              SortByColumns(
+                                  ForAll(
+                                      Distinct(colAsignacionesRango, Ekon) As e,
+                                      With(
+                                          {regPersona: LookUp(colAsignacionesRango, Ekon = e.Value)},
+                                          {
+                                              Ekon: e.Value,
+                                              Nombre: regPersona.NombreResponsable,
+                                              CedulaPersona: regPersona.Cedula,
+                                              Correo: regPersona.CorreoResponsable
+                                          }
+                                      )
+                                  ),
+                                  "Nombre",
+                                  SortOrder.Ascending
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 7. MATRIZ: UNA FILA POR PERSONA CON SU HTML YA ARMADO (un solo ClearCollect)
+                          // ------------------------------------------------------------------
+                          ClearCollect(
+                              colCronogramaFilas,
+                              ForAll(
+                                  colPersonasVista As p,
+                                  With(
+                                      {
+                                          asigPersona: Filter(colAsignacionesRango, Ekon = p.Ekon),
+                                          novPer: Filter(colNovPersona, EkonPersona = p.Ekon || CorreoPersona = p.Correo)
+                                      },
+                                      With(
+                                          {
+                                              proyectosPersona: Distinct(asigPersona, ProyectoUID),
+                                              nombresPersona: Distinct(asigPersona, NombreVisualProyecto)
+                                          },
+                                          {
+                                              Ekon: p.Ekon,
+                                              Nombre: p.Nombre,
+                                              ListaProyectos: "|" & Concat(nombresPersona, Value, "|") & "|",
+                                              FilaHtml:
+                                                  "<tr>" &
+                                                  "<td style='position:sticky;left:0;z-index:1;border-right:1px solid #EAEAEA;border-bottom:1px solid #EAEAEA;background:#FFF;width:" & varAnchoColaborador & "px;padding:4px 6px;overflow:hidden;'>" &
+                                                      "<strong style='color:#323130;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;' title='" & p.Nombre & "'>" & p.Nombre & "</strong>" &
+                                                      "<span style='font-size:9px;color:#A19F9D;white-space:nowrap;'>EKON: " & p.Ekon & " | CI: " & p.CedulaPersona & "</span>" &
+                                                  "</td>" &
+                                                  Concat(
+                                                      colDiasVista As dv,
+                                                      With(
+                                                          {
+                                                              fDia: dv.FechaReal,
+                                                              asigDia: Filter(asigPersona, Fecha = dv.FechaReal)
+                                                          },
+                                                          With(
+                                                              {
+                                                                  nP: LookUp(novPer, Fecha = fDia),
+                                                                  nG: LookUp(colNovGeneral, Fecha = fDia),
+                                                                  nPr: LookUp(colNovProyecto, Fecha = fDia && ProyectoUID in proyectosPersona.Value),
+                                                                  cantAct: CountRows(Filter(asigDia, Rol <> "DESCANSO")),
+                                                                  cantDes: CountRows(Filter(asigDia, Rol = "DESCANSO")),
+                                                                  primerAct: First(Filter(asigDia, Rol <> "DESCANSO")),
+                                                                  primerDes: First(Filter(asigDia, Rol = "DESCANSO"))
+                                                              },
+                                                              With(
+                                                                  {
+                                                                      estado: If(
+                                                                          !IsBlank(nP), nP.Observacion,
+                                                                          !IsBlank(nG), nG.Observacion,
+                                                                          !IsBlank(nPr), nPr.Observacion,
+                                                                          cantAct > 1, "CHOQUE",
+                                                                          cantAct = 1, "PROYECTO",
+                                                                          cantDes > 0, "DESCANSO",
+                                                                          "LIBRE"
+                                                                      ),
+                                                                      detalle: If(
+                                                                          !IsBlank(nP), nP.TipoNovedad,
+                                                                          !IsBlank(nG), nG.TipoNovedad,
+                                                                          !IsBlank(nPr), nPr.TipoNovedad,
+                                                                          cantAct > 1, "¡ALERTA! Asignado a " & cantAct & " proyectos",
+                                                                          cantAct = 1, primerAct.NombreVisualProyecto,
+                                                                          cantDes > 0, primerDes.NombreVisualProyecto,
+                                                                          ""
+                                                                      )
+                                                                  },
+                                                                  With(
+                                                                      {
+                                                                          bg: Switch(
+                                                                              estado,
+                                                                              "PROYECTO", Coalesce(LookUp(colColoresProyectos, ProyectoCodigo = detalle).ColorHex, "#0078D4"),
+                                                                              "DESCANSO", "#607D8B",
+                                                                              "FERIADO", "#D13438",
+                                                                              "VACACIONES", "#0277BD",
+                                                                              "CALAMIDAD DOMESTICA", "#8E44AD",
+                                                                              "PATERNIDAD", "#27AE60",
+                                                                              "PERMISO", "#FFB900",
+                                                                              "PERMISO MEDICO", "#FFB900",
+                                                                              "CHOQUE", "#201F1E",
+                                                                              "LIBRE", If(Weekday(fDia, StartOfWeek.Monday) > 5, "#F9F9F9", "#FFFFFF"),
+                                                                              "#EAEAEA"
+                                                                          ),
+                                                                          tc: If(estado = "LIBRE" || estado = "PERMISO" || estado = "PERMISO MEDICO", "#333", "#FFF"),
+                                                                          txt: Switch(
+                                                                              estado,
+                                                                              "LIBRE", "",
+                                                                              "PROYECTO", Left(detalle, 2),
+                                                                              "DESCANSO", "D-" & Left(detalle, 2),
+                                                                              "CALAMIDAD DOMESTICA", "CD",
+                                                                              "PATERNIDAD", "PT",
+                                                                              "FERIADO", "F",
+                                                                              "VACACIONES", "V",
+                                                                              "PERMISO", "P",
+                                                                              "PERMISO MEDICO", "PM",
+                                                                              Left(estado, 1)
+                                                                          ),
+                                                                          tip: If(estado = "DESCANSO", "Descanso (del proyecto) - " & detalle, estado & ": " & detalle)
+                                                                      },
+                                                                      "<td title='" & tip & " | " & Text(fDia, "dd/mm/yyyy") & "' style='border-right:1px solid #EAEAEA;border-bottom:1px solid #EAEAEA;background:" & bg & ";color:" & tc & ";text-align:center;font-weight:600;font-size:" & If(estado = "DESCANSO", "8px", "9px") & ";white-space:nowrap;overflow:hidden;'>" & txt & "</td>"
+                                                                  )
+                                                              )
+                                                          )
+                                                      )
+                                                  ) &
+                                                  "</tr>"
+                                          }
+                                      )
+                                  )
+                              )
+                          );
+
+                          // ------------------------------------------------------------------
+                          // 8. CABECERA Y LEYENDA DEL HTML (se arman una sola vez)
+                          // ------------------------------------------------------------------
+                          Set(
+                              varHtmlInicio,
+                              "<div style='width:100%;height:100%;overflow:auto;position:relative;border:1px solid #EAEAEA;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.05);font-family:Segoe UI,Open Sans,sans-serif;'>" &
+                              "<table style='table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:10px;width:" & (varAnchoColaborador + varTotalDias * varAnchoDia) & "px;background:#FFF;'>" &
+                              "<tr>" &
+                                  "<th style='position:sticky;top:0;left:0;z-index:3;height:26px;border-bottom:1px solid #D9D9D9;border-right:1px solid #D9D9D9;background:#FAFAFA;width:" & varAnchoColaborador & "px;'></th>" &
+                                  "<th colspan='" & varTotalDias & "' style='position:sticky;top:0;z-index:2;height:26px;border-bottom:1px solid #D9D9D9;background:#FAFAFA;color:#333;font-size:13px;padding:6px;text-align:center;font-weight:600;text-transform:uppercase;'>" &
+                                      "Cronograma del " & Text(varFechaInicio, "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin, "[$-es-ES]dd/mm/yyyy") &
+                                  "</th>" &
+                              "</tr>" &
+                              "<tr>" &
+                                  "<th style='position:sticky;top:26px;left:0;z-index:3;border-right:1px solid #EAEAEA;border-bottom:2px solid #EAEAEA;background:#FFF;width:" & varAnchoColaborador & "px;text-align:left;padding:4px 6px;color:#555;'>COLABORADOR</th>" &
+                                  Concat(
+                                      colDiasVista As dh,
+                                      With(
+                                          {
+                                              esFinde: Weekday(dh.FechaReal, StartOfWeek.Monday) > 5,
+                                              diaSemana: Upper(Left(Text(dh.FechaReal, "[$-es-ES]ddd"), 1))
+                                          },
+                                          "<th style='position:sticky;top:26px;z-index:1;border-right:1px solid #EAEAEA;border-bottom:2px solid #EAEAEA;background:" & If(esFinde, "#F3F3F3", "#FFF") & ";width:" & varAnchoDia & "px;text-align:center;padding:2px 0;overflow:hidden;'>" &
+                                              "<span style='color:#888;font-size:8px;font-weight:400;'>" & If(diaSemana = "M", Text(dh.FechaReal, "[$-es-ES]ddd"), diaSemana) & "</span><br>" &
+                                              "<strong style='font-size:11px;color:" & If(esFinde, "#D13438", "#333") & ";'>" & dh.DiaNumero & "</strong>" &
+                                          "</th>"
+                                      )
+                                  ) &
+                              "</tr>"
+                          );
+
+                          Set(
+                              varHtmlFin,
+                              "</table>" &
+                              "<div style='width:" & (varAnchoColaborador + varTotalDias * varAnchoDia) & "px;margin-top:10px;padding:10px;border-top:1px solid #EAEAEA;background:#FAFAFA;'>" &
+                                  "<strong style='font-size:12px;color:#323130;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;'>Leyenda del Cronograma</strong>" &
+                                  "<table style='font-size:10px;color:#555;border-collapse:collapse;'>" &
+                                      "<tr>" &
+                                          "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block;width:10px;height:10px;background:#D13438;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>F</strong> Feriado</td>" &
+                                          "<td style='padding:3px 10px;'><span style='display:inline-block;width:10px;height:10px;background:#0277BD;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>V</strong> Vacaciones</td>" &
+                                          "<td style='padding:3px 10px;'><span style='display:inline-block;width:10px;height:10px;background:#FFB900;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>P / PM</strong> Permisos</td>" &
+                                      "</tr><tr>" &
+                                          "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block;width:10px;height:10px;background:#8E44AD;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>CD</strong> Calamidad Doméstica</td>" &
+                                          "<td style='padding:3px 10px;'><span style='display:inline-block;width:10px;height:10px;background:#27AE60;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>PT</strong> Paternidad</td>" &
+                                          "<td style='padding:3px 10px;'><span style='display:inline-block;width:10px;height:10px;background:#201F1E;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>C</strong> Choque</td>" &
+                                      "</tr><tr>" &
+                                          "<td colspan='3' style='padding:3px 10px 3px 0;'><span style='display:inline-block;width:10px;height:10px;background:#607D8B;vertical-align:middle;margin-right:5px;border-radius:2px;'></span><strong>D-</strong> Descanso de Proyecto</td>" &
+                                      "</tr>" &
+                                  "</table>" &
+                                  If(CountRows(colColoresProyectos) > 0, "<hr style='border:0;border-top:1px dashed #D9D9D9;margin:10px 0;'>", "") &
+                                  "<div style='display:flex;flex-wrap:wrap;max-width:1190px;row-gap:4px;'>" &
+                                      Concat(
+                                          colColoresProyectos,
+                                          "<div style='flex:0 0 170px;padding:3px 6px 3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:#555;' title='" & ProyectoCodigo & "'>" &
+                                              "<span style='display:inline-block;width:10px;height:10px;background:" & ColorHex & ";vertical-align:middle;margin-right:5px;border-radius:2px;'></span>" &
+                                              "<strong style='color:#333;'>" & Left(ProyectoCodigo, 2) & "</strong> - " & ProyectoCodigo &
+                                          "</div>"
+                                      ) &
+                                  "</div>" &
+                              "</div>" &
+                              "</div>"
+                          );
+
+                          Set(cargarInfo, false);
+
+                          Notify(
+                              "Cronograma del " & Text(varFechaInicio, "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin, "[$-es-ES]dd/mm/yyyy") &
+                              ": " & CountRows(colAsignacionesRango) & " registros, " & CountRows(colCronogramaFilas) & " personas en " &
+                              Text(DateDiff(varT0, Now(), TimeUnit.Seconds)) & " s",
+                              NotificationType.Success
+                          )
+                        Text: ="Ver"
+                        Width: =90
+                  - tlt_nombresColaborador_30:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="PERSONA:"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =100
+                  - txtBuscarPersona:
+                      Control: ModernTextInput@1.1.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Placeholder: |-
+                          ="🔍 Buscar persona..."
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Width: =170
+                  - tlt_nombresColaborador_31:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="PROYECTO:"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =90
+                  - cmbFiltroProyecto:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        InputTextPlaceholder: ="Seleccionar Proyecto"
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =/*
+                          Sort(
+                              Distinct(
+                                  Filter(
+                                      colTodasAsignaciones;
+                                      varEsSuperAdmin || CorreoCreador = varUsuarioActual.Email
+                                  );
+                                  NombreVisualProyecto
+                              );
+                              Value;
+                              SortOrder.Ascending
+                          )
+                          */
+
+                          Sort(
+                              Distinct(colProyectosCab, NombreProyecto),
+                              Value,
+                              SortOrder.Ascending
+                          )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        SelectMultiple: =false
+                        Width: =170
+                  - Button1:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: "=/*\r\nIf(\r\n    // 1. Validar que seleccionó un proyecto\r\n    IsBlank(cmbFiltroProyecto.Selected.Value);\r\n    Notify(\"Por favor, selecciona un proyecto para generar el reporte.\"; NotificationType.Warning);\r\n\r\n    // 2. Validar que seleccionó una fecha de inicio\r\n    IsBlank(fechaInicioProyecto.SelectedDate);\r\n    Notify(\"Debes seleccionar la fecha de inicio del rango.\"; NotificationType.Warning);\r\n\r\n    // 3. Validar que seleccionó una fecha de fin\r\n    IsBlank(fechaFinProyecto.SelectedDate);\r\n    Notify(\"Debes seleccionar la fecha de fin del rango.\"; NotificationType.Warning);\r\n\r\n    // 4. Validar coherencia de fechas\r\n    fechaInicioProyecto.SelectedDate > fechaFinProyecto.SelectedDate;\r\n    Notify(\"La fecha de inicio no puede ser mayor a la fecha de fin.\"; NotificationType.Error);\r\n\r\n    // 5. SI TODO ESTÁ CORRECTO, EJECUTA EL CÓDIGO PRINCIPAL\r\n    Set(varFechaInicioExport; fechaInicioProyecto.SelectedDate);;\r\n    Set(varFechaFinExport; fechaFinProyecto.SelectedDate);;\r\n\r\n    // Generar un calendario secuencial puro con TODOS los días del rango elegido\r\n    ClearCollect(\r\n        colFechasCorte;\r\n        ForAll(\r\n            Sequence(DateDiff(varFechaInicioExport; varFechaFinExport; TimeUnit.Days) + 1; 0);\r\n            { FechaRango: DateAdd(varFechaInicioExport; Value; TimeUnit.Days) }\r\n        )\r\n    );;\r\n\r\n    // Obtener el listado filtrando por las FECHAS y por el PROYECTO seleccionado\r\n    ClearCollect(\r\n        colCombosUnicosExport;\r\n        ForAll(\r\n            Distinct(\r\n                Filter(\r\n                    colTodasAsignaciones; \r\n                    Fecha >= varFechaInicioExport And \r\n                    Fecha <= varFechaFinExport And\r\n                    NombreVisualProyecto = cmbFiltroProyecto.Selected.Value\r\n                ); \r\n                CorreoResponsable & \"|\" & ProyectoUID\r\n            ) As Combo;\r\n            With(\r\n                {\r\n                    primerRegistro: LookUp(colTodasAsignaciones; CorreoResponsable & \"|\" & ProyectoUID = Combo.Value)\r\n                };\r\n                {\r\n                    Correo: primerRegistro.CorreoResponsable;\r\n                    ProyectoUID: primerRegistro.ProyectoUID;\r\n                    Empresa: primerRegistro.Empresa;\r\n                    ProyectoIDExcel: primerRegistro.ProyectoIDExcel;\r\n                    ActividadExcel: primerRegistro.ActividadExcel;\r\n                    Nombre: primerRegistro.NombreResponsable;\r\n                    Cedula: primerRegistro.Cedula;\r\n                    Ekon: primerRegistro.Ekon;\r\n                    EntradaJornada: primerRegistro.EntradaJornada;\r\n                    SalidaJornada: primerRegistro.SalidaJornada;\r\n                    IngresoAlmuerzo: primerRegistro.IngresoAlmuerzo;\r\n                    SalidaAlmuerzo: primerRegistro.SalidaAlmuerzo;\r\n                    GrupoObservacion: primerRegistro.GrupoObservacion;\r\n                    \r\n                    CargoInforCode: Switch(\r\n                        Upper(Trim(primerRegistro.ResponsableCargo));\r\n                        \"PARAMEDICO\"; \"P0021\";\r\n                        \"DESARROLLADOR DE SOFTWARE\"; \"PPOOPP\"; \r\n                        \"SUPERVISOR SSA\"; \"P00030\";\r\n                        \"\" \r\n                    );\r\n                    \r\n                    FechaMin: Min(Filter(colAsignacionesGlobales; ResponsableCorreo = primerRegistro.CorreoResponsable And ProjectUID = primerRegistro.ProyectoUID); Fecha);\r\n                    \r\n                    /*\r\n                    // --- EXCELENTE LÓGICA REVISADA: Extraemos la FechaFin real del JSON considerando múltiples bloques ---\r\n                    // DEL CODIGO\r\n                    FechaMax: With(\r\n                        {\r\n                            registroProy: LookUp('SIG PROYECTOS'; Text(PROJECT_UID) = Text(primerRegistro.ProyectoUID))\r\n                        };\r\n                        If(\r\n                            IsBlank(registroProy.ASIGNACIONES);\r\n                            // Backup en caso de que no haya JSON\r\n                            Max(Filter(colAsignacionesGlobales; ResponsableCorreo = primerRegistro.CorreoResponsable And ProjectUID = primerRegistro.ProyectoUID); Fecha);\r\n                            \r\n                            With(\r\n                                {\r\n                                    jsonAsig: ParseJSON(registroProy.ASIGNACIONES)\r\n                                };\r\n                                With(\r\n                                    {\r\n                                        // \U0001F6E0️ FIX: Usamos Max + Filter en lugar de LookUp para atrapar la fecha de fin más lejana de TODOS sus bloques\r\n                                        maxFechaPrincipal: Max(\r\n                                            Filter(\r\n                                                Table(jsonAsig.Principales);\r\n                                                Lower(Trim(Text(Value.Correo))) = Lower(Trim(primerRegistro.CorreoResponsable))\r\n                                            );\r\n                                            DateValue(Text(Value.FechaFin))\r\n                                        );\r\n                                        maxFechaBack: Max(\r\n                                            Filter(\r\n                                                Table(jsonAsig.Backs);\r\n                                                Lower(Trim(Text(Value.Correo))) = Lower(Trim(primerRegistro.CorreoResponsable))\r\n                                            );\r\n                                            DateValue(Text(Value.FechaFin))\r\n                                        )\r\n                                    };\r\n                                    // Evaluamos cuál tiene datos válidos y asignamos la fecha tope\r\n                                    If(\r\n                                        !IsBlank(maxFechaPrincipal) And Year(maxFechaPrincipal) > 2000; \r\n                                        maxFechaPrincipal;\r\n                                        If(\r\n                                            !IsBlank(maxFechaBack) And Year(maxFechaBack) > 2000;\r\n                                            maxFechaBack;\r\n                                            // Backup final si el usuario no está en el JSON por alguna razón\r\n                                            Max(Filter(colAsignacionesGlobales; ResponsableCorreo = primerRegistro.CorreoResponsable And ProjectUID = primerRegistro.ProyectoUID); Fecha)\r\n                                        )\r\n                                    )\r\n                                )\r\n                            )\r\n                        )\r\n                    )\r\n                    */\r\n                    /*\r\n                    FechaMax: With(\r\n                        {\r\n                            registroProy: LookUp('SIG PROYECTOS'; Text(PROJECT_UID) = Text(primerRegistro.ProyectoUID))\r\n                        };\r\n                        If(\r\n                            IsBlank(registroProy.ASIGNACIONES);\r\n                            Max(Filter(colAsignacionesGlobales; ResponsableCorreo = primerRegistro.CorreoResponsable And ProjectUID = primerRegistro.ProyectoUID); Fecha);\r\n                            \r\n                            With(\r\n                                {\r\n                                    jsonAsig: ParseJSON(registroProy.ASIGNACIONES)\r\n                                };\r\n                                With(\r\n                                    {\r\n                                        maxFechaPrincipal: Max(\r\n                                            Filter(\r\n                                                Table(jsonAsig.Principales);\r\n                                                Lower(Trim(Text(Value.Correo))) = Lower(Trim(primerRegistro.CorreoResponsable))\r\n                                            );\r\n                                            DateValue(Text(Value.FechaFin))\r\n                                        );\r\n                                        maxFechaBack: Max(\r\n                                            Filter(\r\n                                                Table(jsonAsig.Backs);\r\n                                                Lower(Trim(Text(Value.Correo))) = Lower(Trim(primerRegistro.CorreoResponsable))\r\n                                            );\r\n                                            DateValue(Text(Value.FechaFin))\r\n                                        );\r\n                                        maxFechaColeccion: Max(\r\n                                            Filter(colAsignacionesGlobales; ResponsableCorreo = primerRegistro.CorreoResponsable And ProjectUID = primerRegistro.ProyectoUID);\r\n                                            Fecha\r\n                                        )\r\n                                    };\r\n                                    // ✨ FIX REAL: tomamos el MAYOR de los tres, no el primero que no esté en blanco\r\n                                    Max(\r\n                                        If(!IsBlank(maxFechaPrincipal) And Year(maxFechaPrincipal) > 2000; maxFechaPrincipal; Date(1900;1;1));\r\n                                        If(!IsBlank(maxFechaBack) And Year(maxFechaBack) > 2000; maxFechaBack; Date(1900;1;1));\r\n                                        If(!IsBlank(maxFechaColeccion) And Year(maxFechaColeccion) > 2000; maxFechaColeccion; Date(1900;1;1))\r\n                                    )\r\n                                )\r\n                            )\r\n                        )\r\n                    )\r\n                }\r\n            )\r\n        )\r\n    );;\r\n\r\n    // Cruzar el personal con el calendario, aplicando prioridades correctas de sobreposición\r\n    Clear(colExportacionPrevia);;\r\n\r\n    ForAll(\r\n        colCombosUnicosExport As Combo;\r\n        ForAll(\r\n            Filter(colFechasCorte; FechaRango >= Combo.FechaMin And FechaRango <= Combo.FechaMax) As DiaExport;\r\n            \r\n            With(\r\n                {\r\n                    // 1. Obtenemos el registro exacto\r\n                    registroDia: LookUp(\r\n                        colTodasAsignaciones; \r\n                        CorreoResponsable = Combo.Correo And \r\n                        ProyectoUID = Combo.ProyectoUID And \r\n                        Fecha = DiaExport.FechaRango\r\n                    )\r\n                };\r\n                \r\n                // ✨ LA SOLUCIÓN: Solo procesamos si la persona REALMENTE tiene un registro ese día \r\n                // en este proyecto (sea laborable o descanso explícito). Si es Blank, es un hueco y lo saltamos.\r\n                If(\r\n                    !IsBlank(registroDia);\r\n                    \r\n                    With(\r\n                        {\r\n                            novP: LookUp(colTodasNovedades; TipoAplicacion = \"PERSONA\" And CorreoPersona = Combo.Correo And Fecha = DiaExport.FechaRango);\r\n                            novG: LookUp(colTodasNovedades; TipoAplicacion = \"GENERAL\" And Fecha = DiaExport.FechaRango);\r\n                            novProy: LookUp(colTodasNovedades; TipoAplicacion = \"PROYECTO\" And ProyectoUID = Combo.ProyectoUID And Fecha = DiaExport.FechaRango);\r\n                            \r\n                            historialAct: LookUp(\r\n                                colHistorialActividades; \r\n                                ProyectoUID = Combo.ProyectoUID And \r\n                                FechaInicio <= DiaExport.FechaRango And \r\n                                FechaFin >= DiaExport.FechaRango\r\n                            )\r\n                        };\r\n                        With(\r\n                            {\r\n                                hayNovedad: !IsBlank(novP) Or !IsBlank(novG) Or !IsBlank(novProy);\r\n                                textoNovedad: If(!IsBlank(novP); novP.TipoNovedad; !IsBlank(novG); novG.TipoNovedad; !IsBlank(novProy); novProy.TipoNovedad; \"\");\r\n                                actividadFinal: If(!IsBlank(historialAct); historialAct.ActivityId; Combo.ActividadExcel);\r\n                                \r\n                                // ✨ CORRECCIÓN LOGICA: Como ya filtramos los Blanks, solo es descanso \r\n                                // si el Rol dice explícitamente \"DESCANSO\"\r\n                                esDescanso: registroDia.Rol = \"DESCANSO\"\r\n                            };\r\n                            \r\n                            Collect(colExportacionPrevia;\r\n                                {\r\n                                    FiltroEmpresa: Combo.Empresa;\r\n                                    FiltroProyecto: Combo.ProyectoIDExcel;\r\n                                    FiltroNombre: Combo.Nombre;\r\n                                    FiltroFecha: DiaExport.FechaRango;\r\n                                    \r\n                                    EMPRESA: Combo.Empresa;\r\n                                    EKON: Combo.Ekon;\r\n                                    CEDULA: Combo.Cedula;\r\n                                    NOMBRE: Combo.Nombre;\r\n                                    FECHA: Text(DiaExport.FechaRango; \"d/m/yyyy\");\r\n                                    \r\n                                    // CORRECCIÓN DE HORARIOS\r\n                                    'INGRESO DE JORNADA': If(hayNovedad Or esDescanso; \"00:00:00\"; Combo.EntradaJornada);\r\n                                    'INGRESO ALMUERZO': If(hayNovedad Or esDescanso; \"00:00:00\"; Combo.IngresoAlmuerzo);\r\n                                    'SALIDA ALMUERZO': If(hayNovedad Or esDescanso; \"00:00:00\"; Combo.SalidaAlmuerzo);\r\n                                    'SALIDA DE JORNADA': If(hayNovedad Or esDescanso; \"00:00:00\"; Combo.SalidaJornada);\r\n                                    \r\n                                    PROYECTO: Combo.ProyectoIDExcel;\r\n                                    ACTIVIDAD: actividadFinal;\r\n                                    \r\n                                    // CORRECCIÓN DE ESTADO\r\n                                    ESTADO: If(\r\n                                        hayNovedad; \"LIBRE\";\r\n                                        esDescanso; \"LIBRE\";\r\n                                        \"LABORABLE\"\r\n                                    );\r\n                                    \r\n                                    // CORRECCIÓN DE OBSERVACION\r\n                                    OBSERVACION: If(\r\n                                        hayNovedad; Upper(textoNovedad);\r\n                                        esDescanso; \"DESCANSO\";\r\n                                        Combo.GrupoObservacion\r\n                                    );\r\n                                    \r\n                                    'CARGO INFOR': Combo.CargoInforCode\r\n                                }\r\n                            )\r\n                        )\r\n                    )\r\n                )\r\n            )\r\n        )\r\n    );;\r\n\r\n    // Agrupar y Ordenar los datos finales\r\n    ClearCollect(\r\n        colExportacionExcel;\r\n        DropColumns(\r\n            SortByColumns(\r\n                colExportacionPrevia;\r\n                \"FiltroEmpresa\"; SortOrder.Ascending;\r\n                \"FiltroProyecto\"; SortOrder.Ascending;\r\n                \"FiltroNombre\"; SortOrder.Ascending;\r\n                \"FiltroFecha\"; SortOrder.Ascending\r\n            );\r\n            FiltroEmpresa; FiltroProyecto; FiltroNombre; FiltroFecha\r\n        )\r\n    );;\r\n\r\n    // Ejecución del flujo pasándole la colección estructurada\r\n    ReporteProyectosSIG.Run(\r\n        JSON(colExportacionExcel; JSONFormat.IncludeBinaryData);\r\n        cmbFiltroProyecto.Selected.Value;\r\n        User().Email\r\n    );;\r\n\r\n    Notify(\r\n        \"Datos del proyecto \" & cmbFiltroProyecto.Selected.Value & \" enviados correctamente al flujo.\"; \r\n        NotificationType.Success\r\n    )\r\n)\r\n*/\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n/*\r\nIf(\r\n    // 1. Validaciones (igual que antes)\r\n    IsBlank(cmbFiltroProyecto.Selected.Value);\r\n    Notify(\"Por favor, selecciona un proyecto para generar el reporte.\"; NotificationType.Warning);\r\n\r\n    IsBlank(fechaInicioProyecto.SelectedDate);\r\n    Notify(\"Debes seleccionar la fecha de inicio del rango.\"; NotificationType.Warning);\r\n\r\n    IsBlank(fechaFinProyecto.SelectedDate);\r\n    Notify(\"Debes seleccionar la fecha de fin del rango.\"; NotificationType.Warning);\r\n\r\n    fechaInicioProyecto.SelectedDate > fechaFinProyecto.SelectedDate;\r\n    Notify(\"La fecha de inicio no puede ser mayor a la fecha de fin.\"; NotificationType.Error);\r\n\r\n    // 2. Código principal\r\n    Set(cargarInfo; true);;\r\n    Set(varFechaInicioExport; fechaInicioProyecto.SelectedDate);;\r\n    Set(varFechaFinExport; fechaFinProyecto.SelectedDate);;\r\n\r\n    // Proyectos con ese nombre (puede haber más de uno con el mismo nombre)\r\n    ClearCollect(\r\n        colProyectosExport;\r\n        Filter(colProyectosCab; NombreProyecto = cmbFiltroProyecto.Selected.Value)\r\n    );;\r\n\r\n    \r\n    // Detalle y actividades SOLO de esos proyectos y del rango (consultas delegables)\r\n    //Clear(colExpDetalle);;\r\n    //Clear(colExpActividades);;\r\n\r\n    //ForAll(\r\n    //    colProyectosExport As px;\r\n    //    Collect(\r\n    //        colExpDetalle;\r\n    //        Filter(\r\n    //            SIG_ASIGNACIONES_DETALLE;\r\n    //            PROYECTO_UID = px.ProyectoUID &&\r\n    //            FECHA >= varFechaInicioExport &&\r\n    //            FECHA <= varFechaFinExport\r\n    //        )\r\n    //    );;\r\n    //    Collect(\r\n    //        colExpActividades;\r\n    //        Filter(SIG_HISTORIAL_ACTIVIDADES; PROYECTO_UID = px.ProyectoUID)\r\n    //    )\r\n    //);;\r\n    \r\n    Clear(colExpDetalle);;\r\n    Clear(colExpActividades);;\r\n\r\n    ForAll(\r\n        colProyectosExport As px;\r\n        Collect(\r\n            colExpDetalle;\r\n            ShowColumns(\r\n                Filter(\r\n                    SIG_ASIGNACIONES_DETALLE;\r\n                    PROYECTO_UID = px.ProyectoUID &&\r\n                    FECHA >= varFechaInicioExport &&\r\n                    FECHA <= varFechaFinExport\r\n                );\r\n                PROYECTO_UID; FECHA; ROL; EKON; CEDULA; CARGO;\r\n                NOMBRE_RESPONSABLE; CORREO_RESPONSABLE\r\n            )\r\n        );;\r\n        Collect(\r\n            colExpActividades;\r\n            ShowColumns(\r\n                Filter(SIG_HISTORIAL_ACTIVIDADES; PROYECTO_UID = px.ProyectoUID);\r\n                PROYECTO_UID; FECHA_INICIO; FECHA_FIN; ACTIVITY_ID; VERSION\r\n            )\r\n        )\r\n    );;\r\n\r\n    // Clave persona|proyecto|día (una fila de Excel por persona y día)\r\n    ClearCollect(\r\n        colExpDetalleClave;\r\n        AddColumns(\r\n            colExpDetalle;\r\n            ClaveDia; Text(EKON) & \"|\" & PROYECTO_UID & \"|\" & Text(FECHA; \"[$-en-US]yyyy-mm-dd\")\r\n        )\r\n    );;\r\n\r\n    Clear(colExportacionPrevia);;\r\n\r\n    ForAll(\r\n        Distinct(colExpDetalleClave; ClaveDia) As k;\r\n        With(\r\n            {\r\n                regsDia: Filter(colExpDetalleClave; ClaveDia = k.Value)\r\n            };\r\n            With(\r\n                {\r\n                    // Si ese día tiene trabajo y descanso, prevalece el trabajo\r\n                    reg: If(\r\n                        CountRows(Filter(regsDia; ROL <> \"DESCANSO\")) > 0;\r\n                        First(Filter(regsDia; ROL <> \"DESCANSO\"));\r\n                        First(regsDia)\r\n                    )\r\n                };\r\n                With(\r\n                    {\r\n                        proy: LookUp(colProyectosExport; ProyectoUID = reg.PROYECTO_UID);\r\n                        fechaDia: reg.FECHA;\r\n                        ekonTxt: Text(reg.EKON);\r\n                        correoResp: Lower(Trim(reg.CORREO_RESPONSABLE))\r\n                    };\r\n                    With(\r\n                        {\r\n                            novP: LookUp(\r\n                                colTodasNovedades;\r\n                                TipoAplicacion = \"PERSONA\" && Fecha = fechaDia &&\r\n                                (EkonPersona = ekonTxt || CorreoPersona = correoResp)\r\n                            );\r\n                            novG: LookUp(colTodasNovedades; TipoAplicacion = \"GENERAL\" && Fecha = fechaDia);\r\n                            novProy: LookUp(colTodasNovedades; TipoAplicacion = \"PROYECTO\" && ProyectoUID = reg.PROYECTO_UID && Fecha = fechaDia);\r\n                            histAct: First(\r\n                                SortByColumns(\r\n                                    Filter(\r\n                                        colExpActividades;\r\n                                        PROYECTO_UID = reg.PROYECTO_UID &&\r\n                                        FECHA_INICIO <= fechaDia &&\r\n                                        FECHA_FIN >= fechaDia\r\n                                    );\r\n                                    \"VERSION\";\r\n                                    SortOrder.Descending\r\n                                )\r\n                            )\r\n                        };\r\n                        With(\r\n                            {\r\n                                hayNovedad: !IsBlank(novP) Or !IsBlank(novG) Or !IsBlank(novProy);\r\n                                textoNovedad: If(!IsBlank(novP); novP.TipoNovedad; !IsBlank(novG); novG.TipoNovedad; !IsBlank(novProy); novProy.TipoNovedad; \"\");\r\n                                actividadFinal: If(!IsBlank(histAct); histAct.ACTIVITY_ID; proy.ActividadExcel);\r\n                                esDescanso: reg.ROL = \"DESCANSO\"\r\n                            };\r\n                            Collect(\r\n                                colExportacionPrevia;\r\n                                {\r\n                                    FiltroEmpresa: proy.Empresa;\r\n                                    FiltroProyecto: proy.ProyectoIDExcel;\r\n                                    FiltroNombre: reg.NOMBRE_RESPONSABLE;\r\n                                    FiltroFecha: fechaDia;\r\n\r\n                                    EMPRESA: proy.Empresa;\r\n                                    EKON: ekonTxt;\r\n                                    CEDULA: reg.CEDULA;\r\n                                    NOMBRE: reg.NOMBRE_RESPONSABLE;\r\n                                    FECHA: Text(fechaDia; \"d/m/yyyy\");\r\n\r\n                                    'INGRESO DE JORNADA': If(hayNovedad Or esDescanso; \"00:00:00\"; proy.EntradaJornada);\r\n                                    'INGRESO ALMUERZO': If(hayNovedad Or esDescanso; \"00:00:00\"; proy.IngresoAlmuerzo);\r\n                                    'SALIDA ALMUERZO': If(hayNovedad Or esDescanso; \"00:00:00\"; proy.SalidaAlmuerzo);\r\n                                    'SALIDA DE JORNADA': If(hayNovedad Or esDescanso; \"00:00:00\"; proy.SalidaJornada);\r\n\r\n                                    PROYECTO: proy.ProyectoIDExcel;\r\n                                    ACTIVIDAD: actividadFinal;\r\n\r\n                                    ESTADO: If(\r\n                                        hayNovedad; \"LIBRE\";\r\n                                        esDescanso; \"LIBRE\";\r\n                                        \"LABORABLE\"\r\n                                    );\r\n\r\n                                    OBSERVACION: If(\r\n                                        hayNovedad; Upper(textoNovedad);\r\n                                        esDescanso; \"DESCANSO\";\r\n                                        proy.GrupoObservacion\r\n                                    );\r\n\r\n                                    'CARGO INFOR': Switch(\r\n                                        Upper(Trim(reg.CARGO));\r\n                                        \"PARAMEDICO\"; \"P0021\";\r\n                                        \"DESARROLLADOR DE SOFTWARE\"; \"PPOOPP\";\r\n                                        \"SUPERVISOR SSA\"; \"P00030\";\r\n                                        \"\"\r\n                                    )\r\n                                }\r\n                            )\r\n                        )\r\n                    )\r\n                )\r\n            )\r\n        )\r\n    );;\r\n\r\n    // Ordenar y quitar columnas auxiliares (igual que antes)\r\n    ClearCollect(\r\n        colExportacionExcel;\r\n        DropColumns(\r\n            SortByColumns(\r\n                colExportacionPrevia;\r\n                \"FiltroEmpresa\"; SortOrder.Ascending;\r\n                \"FiltroProyecto\"; SortOrder.Ascending;\r\n                \"FiltroNombre\"; SortOrder.Ascending;\r\n                \"FiltroFecha\"; SortOrder.Ascending\r\n            );\r\n            FiltroEmpresa; FiltroProyecto; FiltroNombre; FiltroFecha\r\n        )\r\n    );;\r\n\r\n    If(\r\n        CountRows(colExportacionExcel) = 0;\r\n        Notify(\"No hay registros del proyecto en el rango seleccionado.\"; NotificationType.Warning);\r\n\r\n        ReporteProyectosSIG.Run(\r\n            JSON(colExportacionExcel; JSONFormat.IncludeBinaryData);\r\n            cmbFiltroProyecto.Selected.Value;\r\n            User().Email\r\n        );;\r\n        Notify(\r\n            \"Datos del proyecto \" & cmbFiltroProyecto.Selected.Value & \" enviados correctamente al flujo (\" & CountRows(colExportacionExcel) & \" filas).\";\r\n            NotificationType.Success\r\n        )\r\n    );;\r\n\r\n    Set(cargarInfo; false)\r\n)\r\n*/\r\n\r\n\r\n\r\n\r\n\r\nIf(\r\n    IsBlank(cmbFiltroProyecto.Selected.Value),\r\n    Notify(\"Por favor, selecciona un proyecto para generar el reporte.\", NotificationType.Warning),\r\n\r\n    IsBlank(fechaInicioProyecto.SelectedDate),\r\n    Notify(\"Debes seleccionar la fecha de inicio del rango.\", NotificationType.Warning),\r\n\r\n    IsBlank(fechaFinProyecto.SelectedDate),\r\n    Notify(\"Debes seleccionar la fecha de fin del rango.\", NotificationType.Warning),\r\n\r\n    fechaInicioProyecto.SelectedDate > fechaFinProyecto.SelectedDate,\r\n    Notify(\"La fecha de inicio no puede ser mayor a la fecha de fin.\", NotificationType.Error),\r\n\r\n    Set(cargarInfo, true);\r\n    Set(varFechaInicioExport, fechaInicioProyecto.SelectedDate);\r\n    Set(varFechaFinExport, fechaFinProyecto.SelectedDate);\r\n\r\n    ClearCollect(\r\n        colProyectosExport,\r\n        Filter(colProyectosCab, NombreProyecto = cmbFiltroProyecto.Selected.Value)\r\n    );\r\n\r\n    Clear(colExpDetalle);\r\n    Clear(colExpActividades);\r\n\r\n    // ShowColumns obliga a traer estas columnas en la app publicada\r\n    ForAll(\r\n        colProyectosExport As px,\r\n        Collect(\r\n            colExpDetalle,\r\n            ShowColumns(\r\n                Filter(\r\n                    SIG_ASIGNACIONES_DETALLE,\r\n                    PROYECTO_UID = px.ProyectoUID &&\r\n                    FECHA >= varFechaInicioExport &&\r\n                    FECHA <= varFechaFinExport\r\n                ),\r\n                PROYECTO_UID, FECHA, ROL, EKON, CEDULA, CARGO,\r\n                NOMBRE_RESPONSABLE, CORREO_RESPONSABLE\r\n            )\r\n        );\r\n        Collect(\r\n            colExpActividades,\r\n            ShowColumns(\r\n                Filter(SIG_HISTORIAL_ACTIVIDADES, PROYECTO_UID = px.ProyectoUID),\r\n                PROYECTO_UID, FECHA_INICIO, FECHA_FIN, ACTIVITY_ID, VERSION\r\n            )\r\n        )\r\n    );\r\n\r\n    // Normalización explícita: los campos quedan como texto/fecha propios de la colección\r\n    ClearCollect(\r\n        colExpDetalleClave,\r\n        ForAll(\r\n            colExpDetalle As d,\r\n            {\r\n                PROYECTO_UID: d.PROYECTO_UID,\r\n                FECHA: d.FECHA,\r\n                ROL: d.ROL,\r\n                EKON: Text(d.EKON),\r\n                CEDULA: Text(d.CEDULA),\r\n                CARGO: d.CARGO,\r\n                NOMBRE_RESPONSABLE: d.NOMBRE_RESPONSABLE,\r\n                CORREO_RESPONSABLE: Lower(Trim(d.CORREO_RESPONSABLE)),\r\n                ClaveDia: Text(d.EKON) & \"|\" & d.PROYECTO_UID & \"|\" & Text(d.FECHA, \"[$-en-US]yyyy-mm-dd\")\r\n            }\r\n        )\r\n    );\r\n\r\n    Clear(colExportacionPrevia);\r\n\r\n    ForAll(\r\n        Distinct(colExpDetalleClave, ClaveDia) As k,\r\n        With(\r\n            {\r\n                regsDia: Filter(colExpDetalleClave, ClaveDia = k.Value)\r\n            },\r\n            With(\r\n                {\r\n                    reg: If(\r\n                        CountRows(Filter(regsDia, ROL <> \"DESCANSO\")) > 0,\r\n                        First(Filter(regsDia, ROL <> \"DESCANSO\")),\r\n                        First(regsDia)\r\n                    )\r\n                },\r\n                With(\r\n                    {\r\n                        proy: LookUp(colProyectosExport, ProyectoUID = reg.PROYECTO_UID),\r\n                        fechaDia: reg.FECHA,\r\n                        ekonTxt: reg.EKON,\r\n                        correoResp: reg.CORREO_RESPONSABLE\r\n                    },\r\n                    With(\r\n                        {\r\n                            novP: LookUp(\r\n                                colTodasNovedades,\r\n                                TipoAplicacion = \"PERSONA\" && Fecha = fechaDia &&\r\n                                (EkonPersona = ekonTxt || CorreoPersona = correoResp)\r\n                            ),\r\n                            novG: LookUp(colTodasNovedades, TipoAplicacion = \"GENERAL\" && Fecha = fechaDia),\r\n                            novProy: LookUp(colTodasNovedades, TipoAplicacion = \"PROYECTO\" && ProyectoUID = reg.PROYECTO_UID && Fecha = fechaDia),\r\n                            histAct: First(\r\n                                SortByColumns(\r\n                                    Filter(\r\n                                        colExpActividades,\r\n                                        PROYECTO_UID = reg.PROYECTO_UID &&\r\n                                        FECHA_INICIO <= fechaDia &&\r\n                                        FECHA_FIN >= fechaDia\r\n                                    ),\r\n                                    \"VERSION\",\r\n                                    SortOrder.Descending\r\n                                )\r\n                            )\r\n                        },\r\n                        With(\r\n                            {\r\n                                hayNovedad: !IsBlank(novP) Or !IsBlank(novG) Or !IsBlank(novProy),\r\n                                textoNovedad: If(!IsBlank(novP), novP.TipoNovedad, !IsBlank(novG), novG.TipoNovedad, !IsBlank(novProy), novProy.TipoNovedad, \"\"),\r\n                                actividadFinal: If(!IsBlank(histAct), histAct.ACTIVITY_ID, proy.ActividadExcel),\r\n                                esDescanso: reg.ROL = \"DESCANSO\"\r\n                            },\r\n                            Collect(\r\n                                colExportacionPrevia,\r\n                                {\r\n                                    FiltroEmpresa: proy.Empresa,\r\n                                    FiltroProyecto: proy.ProyectoIDExcel,\r\n                                    FiltroNombre: reg.NOMBRE_RESPONSABLE,\r\n                                    FiltroFecha: fechaDia,\r\n\r\n                                    EMPRESA: proy.Empresa,\r\n                                    EKON: ekonTxt,\r\n                                    CEDULA: reg.CEDULA,\r\n                                    NOMBRE: reg.NOMBRE_RESPONSABLE,\r\n                                    FECHA: Text(fechaDia, \"d/m/yyyy\"),\r\n\r\n                                    'INGRESO DE JORNADA': If(hayNovedad Or esDescanso, \"00:00:00\", proy.EntradaJornada),\r\n                                    'INGRESO ALMUERZO': If(hayNovedad Or esDescanso, \"00:00:00\", proy.IngresoAlmuerzo),\r\n                                    'SALIDA ALMUERZO': If(hayNovedad Or esDescanso, \"00:00:00\", proy.SalidaAlmuerzo),\r\n                                    'SALIDA DE JORNADA': If(hayNovedad Or esDescanso, \"00:00:00\", proy.SalidaJornada),\r\n\r\n                                    PROYECTO: proy.ProyectoIDExcel,\r\n                                    ACTIVIDAD: actividadFinal,\r\n\r\n                                    ESTADO: If(hayNovedad, \"LIBRE\", esDescanso, \"LIBRE\", \"LABORABLE\"),\r\n\r\n                                    OBSERVACION: If(\r\n                                        hayNovedad, Upper(textoNovedad),\r\n                                        esDescanso, \"DESCANSO\",\r\n                                        proy.GrupoObservacion\r\n                                    ),\r\n\r\n                                    'CARGO INFOR': Switch(\r\n                                        Upper(Trim(reg.CARGO)),\r\n                                        \"PARAMEDICO\", \"P0021\",\r\n                                        \"DESARROLLADOR DE SOFTWARE\", \"PPOOPP\",\r\n                                        \"SUPERVISOR SSA\", \"P00030\",\r\n                                        \"\"\r\n                                    )\r\n                                }\r\n                            )\r\n                        )\r\n                    )\r\n                )\r\n            )\r\n        )\r\n    );\r\n\r\n    ClearCollect(\r\n        colExportacionExcel,\r\n        DropColumns(\r\n            SortByColumns(\r\n                colExportacionPrevia,\r\n                \"FiltroEmpresa\", SortOrder.Ascending,\r\n                \"FiltroProyecto\", SortOrder.Ascending,\r\n                \"FiltroNombre\", SortOrder.Ascending,\r\n                \"FiltroFecha\", SortOrder.Ascending\r\n            ),\r\n            FiltroEmpresa, FiltroProyecto, FiltroNombre, FiltroFecha\r\n        )\r\n    );\r\n\r\n    If(\r\n        CountRows(colExportacionExcel) = 0,\r\n        Notify(\"No hay registros del proyecto en el rango seleccionado.\", NotificationType.Warning),\r\n\r\n        ReporteProyectosSIG.Run(\r\n            JSON(colExportacionExcel, JSONFormat.IncludeBinaryData),\r\n            cmbFiltroProyecto.Selected.Value,\r\n            User().Email\r\n        );\r\n        Notify(\r\n            \"Datos del proyecto \" & cmbFiltroProyecto.Selected.Value & \" enviados correctamente al flujo (\" & CountRows(colExportacionExcel) & \" filas).\",\r\n            NotificationType.Success\r\n        )\r\n    );\r\n\r\n    Set(cargarInfo, false)\r\n)"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =15
+                        Text: ="REPORTE"
+            - contCronogramaMensual:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Height: =
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMinHeight: =0
+                  PaddingBottom: =10
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                  RadiusBottomLeft: =0
+                  RadiusBottomRight: =0
+                  RadiusTopLeft: =0
+                  RadiusTopRight: =0
+                  Width: =
+                  X: =20
+                  Y: =120
+                Children:
+                  - HtmlText1_1:
+                      Control: HtmlViewer@2.1.0
+                      Properties:
+                        AlignInContainer: =AlignInContainer.Stretch
+                        DisabledBorderColor: =RGBA(161, 159, 157, 1)
+                        FillPortions: =1
+                        Font: =Font.'Open Sans Condensed'
+                        Height: |-
+                          =//contCronogramaMensual.Height
+
+                          Parent.Height
+                        HtmlText: |-
+                          =/*
+                          With(
+                              {
+                                  totalDias: CountRows(colDiasVista);
+
+                                  // 👉 CONFIGURA AQUÍ estos valores
+                                  itemsPorFila: 7;              // proyectos por fila en la leyenda
+                                  anchoItemProyecto: 170;       // ancho fijo de cada bloque de proyecto en la leyenda (px)
+                                  anchoColumnaColaborador: 240; // ancho de la columna de nombres (px)
+                                  anchoColumnaDia: 40           // ancho de cada columna de día (px)
+                              };
+                              With(
+                                  {
+                                      maxWidthLeyenda: itemsPorFila * anchoItemProyecto;
+                                      anchoTotalTabla: anchoColumnaColaborador + (totalDias * anchoColumnaDia)
+                                  };
+
+                                  With(
+                                      {
+                                          personasFiltradas: Filter(
+                                              colPersonasVista As p;
+                                              With(
+                                                  {
+                                                      asignacionesDelRango: Filter(
+                                                          colTodasAsignaciones;
+                                                          Ekon = p.Ekon And
+                                                          Fecha >= varFechaInicio And
+                                                          Fecha <= varFechaFin
+                                                      )
+                                                  };
+
+                                                  CountRows(asignacionesDelRango) > 0 And
+                                                  (IsBlank(txtBuscarPersona.Text) Or Lower(txtBuscarPersona.Text) in Lower(p.Nombre)) And
+                                                  (IsBlank(cmbFiltroProyecto.Selected.Value) Or
+                                                  CountRows(Filter(asignacionesDelRango; NombreVisualProyecto = cmbFiltroProyecto.Selected.Value)) > 0)
+                                              )
+                                          )
+                                      };
+
+                                      // Contenedor único con scroll horizontal y vertical
+                                      "<div style='width:100%; height:100%; overflow:auto; position:relative; border:1px solid #EAEAEA; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.05); font-family:Segoe UI,Open Sans,sans-serif;'>" &
+
+                                      "<table style='table-layout:fixed; border-collapse:separate; border-spacing:0; font-size:10px; width:" & anchoTotalTabla & "px; background:#FFF;'>" &
+
+                                          // Fila 1: título del rango (sticky top)
+                                          "<tr>" &
+                                              "<th style='position:sticky; top:0; left:0; z-index:3; height:26px; border-bottom:1px solid #D9D9D9; border-right:1px solid #D9D9D9; background:#FAFAFA; width:" & anchoColumnaColaborador & "px;'></th>" &
+                                              "<th colspan='" & totalDias & "' style='position:sticky; top:0; z-index:2; height:26px; border-bottom:1px solid #D9D9D9; background:#FAFAFA; color:#333; font-size:13px; padding:6px; text-align:center; font-weight:600; text-transform:uppercase;'>" &
+                                                  "Cronograma del " & Text(varFechaInicio; "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin; "[$-es-ES]dd/mm/yyyy") &
+                                              "</th>" &
+                                          "</tr>" &
+
+                                          // Fila 2: días (sticky top, debajo de la fila 1)
+                                          "<tr>" &
+                                              "<th style='position:sticky; top:26px; left:0; z-index:3; border-right:1px solid #EAEAEA; border-bottom:2px solid #EAEAEA; background:#FFFFFF; width:" & anchoColumnaColaborador & "px; text-align:left; padding:4px 6px; color:#555;'>COLABORADOR</th>" &
+                                              Concat(
+                                                  SortByColumns(colDiasVista; "FechaReal"; SortOrder.Ascending);
+                                                  With(
+                                                      {
+                                                          esFinde: Weekday(FechaReal; StartOfWeek.Monday) > 5;
+                                                          diaSemana: Upper(Left(Text(FechaReal; "[$-es-ES]ddd"); 1))
+                                                      };
+                                                      "<th style='position:sticky; top:26px; z-index:1; border-right:1px solid #EAEAEA; border-bottom:2px solid #EAEAEA; background:" & If(esFinde; "#F3F3F3"; "#FFFFFF") & "; width:" & anchoColumnaDia & "px; text-align:center; padding:2px 0px; overflow:hidden;'>" &
+                                                          "<span style='color:#888; font-size:8px; font-weight:400;'>" & If(diaSemana="M"; Text(FechaReal; "[$-es-ES]ddd"); diaSemana) & "</span><br>" &
+                                                          "<strong style='font-size:11px; color:" & If(esFinde; "#D13438"; "#333") & ";'>" & DiaNumero & "</strong>" &
+                                                      "</th>"
+                                                  )
+                                              ) &
+                                          "</tr>" &
+
+                                          // Cuerpo: filas de colaboradores
+                                          Concat(
+                                              SortByColumns(personasFiltradas; "Nombre"; SortOrder.Ascending) As p;
+                                              "<tr style='border-bottom:1px solid #EAEAEA;'>" &
+                                                  "<td style='position:sticky; left:0; z-index:1; border-right:1px solid #EAEAEA; background:#FFFFFF; width:" & anchoColumnaColaborador & "px; padding:4px 6px; overflow:hidden;'>" &
+                                                      "<strong style='color:#323130; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px;' title='" & p.Nombre & "'>" & p.Nombre & "</strong>" &
+                                                      "<span style='font-size:9px; color:#A19F9D; white-space:nowrap;'>EKON: " & p.Ekon & " | CI: " & p.CedulaPersona & "</span>" &
+                                                  "</td>" &
+
+                                                  Concat(
+                                                      SortByColumns(
+                                                          Filter(colCronogramaBase; Ekon = p.Ekon);
+                                                          "Fecha";
+                                                          SortOrder.Ascending
+                                                      ) As d;
+
+                                                      With(
+                                                          {
+                                                              bgColor: Switch(
+                                                                  d.EstadoFinal;
+                                                                  "PROYECTO"; Coalesce(LookUp(colColoresProyectos; ProyectoCodigo = d.DetalleMostrar).ColorHex; "#0078D4");
+                                                                  "DESCANSO"; "#607D8B";
+                                                                  "FERIADO"; "#D13438";
+                                                                  "VACACIONES"; "#0277BD";
+                                                                  "CALAMIDAD DOMESTICA"; "#8E44AD";
+                                                                  "PATERNIDAD"; "#27AE60";
+                                                                  "PERMISO"; "#FFB900";
+                                                                  "PERMISO MEDICO"; "#FFB900";
+                                                                  "CHOQUE"; "#201F1E";
+                                                                  "LIBRE"; If(Weekday(d.Fecha; StartOfWeek.Monday) > 5; "#F9F9F9"; "#FFFFFF");
+                                                                  "#EAEAEA"
+                                                              );
+
+                                                              textColor: If(d.EstadoFinal = "LIBRE" || d.EstadoFinal = "PERMISO" || d.EstadoFinal = "PERMISO MEDICO"; "#333333"; "#FFFFFF");
+
+                                                              textoCelda: Switch(
+                                                                  d.EstadoFinal;
+                                                                  "LIBRE"; "";
+                                                                  "PROYECTO"; Left(d.DetalleMostrar; 2);
+                                                                  "DESCANSO"; "D-" & Left(d.DetalleMostrar; 2);
+                                                                  "CALAMIDAD DOMESTICA"; "CD";
+                                                                  "PATERNIDAD"; "PT";
+                                                                  "FERIADO"; "F";
+                                                                  "VACACIONES"; "V";
+                                                                  "PERMISO"; "P";
+                                                                  "PERMISO MEDICO"; "PM";
+                                                                  Left(d.EstadoFinal; 1)
+                                                              );
+
+                                                              tooltipCelda: If(
+                                                                  d.EstadoFinal = "DESCANSO";
+                                                                  "Descanso (del proyecto) - " & d.DetalleMostrar;
+                                                                  d.EstadoFinal & ": " & d.DetalleMostrar
+                                                              )
+                                                          };
+
+                                                          "<td title='" & tooltipCelda & " | " & Text(d.Fecha; "dd/mm/yyyy") & "' " &
+                                                              "style='border-right:1px solid #EAEAEA; background:" & bgColor & "; color:" & textColor & "; text-align:center; font-weight:600; padding:2px 0px; font-size:" & If(d.EstadoFinal="DESCANSO"; "8px"; "9px") & "; white-space:nowrap; overflow:hidden; width:" & anchoColumnaDia & "px;'>" &
+                                                              textoCelda &
+                                                          "</td>"
+                                                      )
+                                                  ) &
+                                              "</tr>"
+                                          ) &
+                                      "</table>" &
+
+                                      // Leyenda
+                                      "<div style='width:" & anchoTotalTabla & "px; margin-top:10px; padding:10px; border-top:1px solid #EAEAEA; background:#FAFAFA;'>" &
+                                          "<strong style='font-size:12px; color:#323130; display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;'>Leyenda del Cronograma</strong>" &
+
+                                          "<table style='font-size:10px; color:#555; border-collapse:collapse;'>" &
+                                              "<tr>" &
+                                                  "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#D13438; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>F</strong> Feriado</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#0277BD; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>V</strong> Vacaciones</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#FFB900; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>P / PM</strong> Permisos</td>" &
+                                              "</tr><tr>" &
+                                                  "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#8E44AD; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>CD</strong> Calamidad Doméstica</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#27AE60; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>PT</strong> Paternidad</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#201F1E; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>C</strong> Choque</td>" &
+                                              "</tr><tr>" &
+                                                  "<td colspan='3' style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#607D8B; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>D-</strong> Descanso de Proyecto</td>" &
+                                              "</tr>" &
+                                          "</table>" &
+
+                                          If(CountRows(colColoresProyectos) > 0; "<hr style='border:0; border-top:1px dashed #D9D9D9; margin:10px 0;'>"; "") &
+
+                                          // Leyenda de proyectos: ancho fijo por bloque (anchoItemProyecto), se ajusta hacia abajo cada "itemsPorFila"
+                                          "<div style='display:flex; flex-wrap:wrap; max-width:" & maxWidthLeyenda & "px; row-gap:4px;'>" &
+                                              Concat(
+                                                  colColoresProyectos;
+                                                  "<div style='flex:0 0 " & anchoItemProyecto & "px; padding:3px 6px 3px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; color:#555;' title='" & ProyectoCodigo & "'>" &
+                                                      "<span style='display:inline-block; width:10px; height:10px; background:" & ColorHex & "; vertical-align:middle; margin-right:5px; border-radius:2px;'></span>" &
+                                                      "<strong style='color:#333;'>" & Left(ProyectoCodigo; 2) & "</strong> - " & ProyectoCodigo &
+                                                  "</div>"
+                                              ) &
+                                          "</div>" &
+                                      "</div>" &
+                                      "</div>"
+                                  )
+                              )
+                          )
+                          */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                          /*
+                          With(
+                              {
+                                  totalDias: CountRows(colDiasVista);
+
+                                  // 👉 CONFIGURA AQUÍ estos valores
+                                  itemsPorFila: 7;              // proyectos por fila en la leyenda
+                                  anchoItemProyecto: 170;       // ancho fijo de cada bloque de proyecto en la leyenda (px)
+                                  anchoColumnaColaborador: 240; // ancho de la columna de nombres (px)
+                                  anchoColumnaDia: 40           // ancho de cada columna de día (px)
+                              };
+                              With(
+                                  {
+                                      maxWidthLeyenda: itemsPorFila * anchoItemProyecto;
+                                      anchoTotalTabla: anchoColumnaColaborador + (totalDias * anchoColumnaDia)
+                                  };
+
+                                  With(
+                                      {
+                                          personasFiltradas: Filter(
+                                              colPersonasVista As p;
+                                              With(
+                                                  {
+                                                      asignacionesDelRango: Filter(colAsignacionesRango; Ekon = p.Ekon)
+                                                  };
+
+                                                  CountRows(asignacionesDelRango) > 0 And
+                                                  (IsBlank(txtBuscarPersona.Text) Or Lower(txtBuscarPersona.Text) in Lower(p.Nombre)) And
+                                                  (IsBlank(cmbFiltroProyecto.Selected.Value) Or
+                                                  CountRows(Filter(asignacionesDelRango; NombreVisualProyecto = cmbFiltroProyecto.Selected.Value)) > 0)
+                                              )
+                                          )
+                                      };
+
+                                      // Contenedor único con scroll horizontal y vertical
+                                      "<div style='width:100%; height:100%; overflow:auto; position:relative; border:1px solid #EAEAEA; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.05); font-family:Segoe UI,Open Sans,sans-serif;'>" &
+
+                                      "<table style='table-layout:fixed; border-collapse:separate; border-spacing:0; font-size:10px; width:" & anchoTotalTabla & "px; background:#FFF;'>" &
+
+                                          // Fila 1: título del rango (sticky top)
+                                          "<tr>" &
+                                              "<th style='position:sticky; top:0; left:0; z-index:3; height:26px; border-bottom:1px solid #D9D9D9; border-right:1px solid #D9D9D9; background:#FAFAFA; width:" & anchoColumnaColaborador & "px;'></th>" &
+                                              "<th colspan='" & totalDias & "' style='position:sticky; top:0; z-index:2; height:26px; border-bottom:1px solid #D9D9D9; background:#FAFAFA; color:#333; font-size:13px; padding:6px; text-align:center; font-weight:600; text-transform:uppercase;'>" &
+                                                  "Cronograma del " & Text(varFechaInicio; "[$-es-ES]dd/mm/yyyy") & " al " & Text(varFechaFin; "[$-es-ES]dd/mm/yyyy") &
+                                              "</th>" &
+                                          "</tr>" &
+
+                                          // Fila 2: días (sticky top, debajo de la fila 1)
+                                          "<tr>" &
+                                              "<th style='position:sticky; top:26px; left:0; z-index:3; border-right:1px solid #EAEAEA; border-bottom:2px solid #EAEAEA; background:#FFFFFF; width:" & anchoColumnaColaborador & "px; text-align:left; padding:4px 6px; color:#555;'>COLABORADOR</th>" &
+                                              Concat(
+                                                  SortByColumns(colDiasVista; "FechaReal"; SortOrder.Ascending);
+                                                  With(
+                                                      {
+                                                          esFinde: Weekday(FechaReal; StartOfWeek.Monday) > 5;
+                                                          diaSemana: Upper(Left(Text(FechaReal; "[$-es-ES]ddd"); 1))
+                                                      };
+                                                      "<th style='position:sticky; top:26px; z-index:1; border-right:1px solid #EAEAEA; border-bottom:2px solid #EAEAEA; background:" & If(esFinde; "#F3F3F3"; "#FFFFFF") & "; width:" & anchoColumnaDia & "px; text-align:center; padding:2px 0px; overflow:hidden;'>" &
+                                                          "<span style='color:#888; font-size:8px; font-weight:400;'>" & If(diaSemana="M"; Text(FechaReal; "[$-es-ES]ddd"); diaSemana) & "</span><br>" &
+                                                          "<strong style='font-size:11px; color:" & If(esFinde; "#D13438"; "#333") & ";'>" & DiaNumero & "</strong>" &
+                                                      "</th>"
+                                                  )
+                                              ) &
+                                          "</tr>" &
+
+                                          // Cuerpo: filas de colaboradores
+                                          Concat(
+                                              SortByColumns(personasFiltradas; "Nombre"; SortOrder.Ascending) As p;
+                                              "<tr style='border-bottom:1px solid #EAEAEA;'>" &
+                                                  "<td style='position:sticky; left:0; z-index:1; border-right:1px solid #EAEAEA; background:#FFFFFF; width:" & anchoColumnaColaborador & "px; padding:4px 6px; overflow:hidden;'>" &
+                                                      "<strong style='color:#323130; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px;' title='" & p.Nombre & "'>" & p.Nombre & "</strong>" &
+                                                      "<span style='font-size:9px; color:#A19F9D; white-space:nowrap;'>EKON: " & p.Ekon & " | CI: " & p.CedulaPersona & "</span>" &
+                                                  "</td>" &
+
+                                                  Concat(
+                                                      SortByColumns(
+                                                          Filter(colCronogramaBase; Ekon = p.Ekon);
+                                                          "Fecha";
+                                                          SortOrder.Ascending
+                                                      ) As d;
+
+                                                      With(
+                                                          {
+                                                              bgColor: Switch(
+                                                                  d.EstadoFinal;
+                                                                  "PROYECTO"; Coalesce(LookUp(colColoresProyectos; ProyectoCodigo = d.DetalleMostrar).ColorHex; "#0078D4");
+                                                                  "DESCANSO"; "#607D8B";
+                                                                  "FERIADO"; "#D13438";
+                                                                  "VACACIONES"; "#0277BD";
+                                                                  "CALAMIDAD DOMESTICA"; "#8E44AD";
+                                                                  "PATERNIDAD"; "#27AE60";
+                                                                  "PERMISO"; "#FFB900";
+                                                                  "PERMISO MEDICO"; "#FFB900";
+                                                                  "CHOQUE"; "#201F1E";
+                                                                  "LIBRE"; If(Weekday(d.Fecha; StartOfWeek.Monday) > 5; "#F9F9F9"; "#FFFFFF");
+                                                                  "#EAEAEA"
+                                                              );
+
+                                                              textColor: If(d.EstadoFinal = "LIBRE" || d.EstadoFinal = "PERMISO" || d.EstadoFinal = "PERMISO MEDICO"; "#333333"; "#FFFFFF");
+
+                                                              textoCelda: Switch(
+                                                                  d.EstadoFinal;
+                                                                  "LIBRE"; "";
+                                                                  "PROYECTO"; Left(d.DetalleMostrar; 2);
+                                                                  "DESCANSO"; "D-" & Left(d.DetalleMostrar; 2);
+                                                                  "CALAMIDAD DOMESTICA"; "CD";
+                                                                  "PATERNIDAD"; "PT";
+                                                                  "FERIADO"; "F";
+                                                                  "VACACIONES"; "V";
+                                                                  "PERMISO"; "P";
+                                                                  "PERMISO MEDICO"; "PM";
+                                                                  Left(d.EstadoFinal; 1)
+                                                              );
+
+                                                              tooltipCelda: If(
+                                                                  d.EstadoFinal = "DESCANSO";
+                                                                  "Descanso (del proyecto) - " & d.DetalleMostrar;
+                                                                  d.EstadoFinal & ": " & d.DetalleMostrar
+                                                              )
+                                                          };
+
+                                                          "<td title='" & tooltipCelda & " | " & Text(d.Fecha; "dd/mm/yyyy") & "' " &
+                                                              "style='border-right:1px solid #EAEAEA; background:" & bgColor & "; color:" & textColor & "; text-align:center; font-weight:600; padding:2px 0px; font-size:" & If(d.EstadoFinal="DESCANSO"; "8px"; "9px") & "; white-space:nowrap; overflow:hidden; width:" & anchoColumnaDia & "px;'>" &
+                                                              textoCelda &
+                                                          "</td>"
+                                                      )
+                                                  ) &
+                                              "</tr>"
+                                          ) &
+                                      "</table>" &
+
+                                      // Leyenda
+                                      "<div style='width:" & anchoTotalTabla & "px; margin-top:10px; padding:10px; border-top:1px solid #EAEAEA; background:#FAFAFA;'>" &
+                                          "<strong style='font-size:12px; color:#323130; display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;'>Leyenda del Cronograma</strong>" &
+
+                                          "<table style='font-size:10px; color:#555; border-collapse:collapse;'>" &
+                                              "<tr>" &
+                                                  "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#D13438; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>F</strong> Feriado</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#0277BD; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>V</strong> Vacaciones</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#FFB900; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>P / PM</strong> Permisos</td>" &
+                                              "</tr><tr>" &
+                                                  "<td style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#8E44AD; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>CD</strong> Calamidad Doméstica</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#27AE60; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>PT</strong> Paternidad</td>" &
+                                                  "<td style='padding:3px 10px;'><span style='display:inline-block; width:10px; height:10px; background:#201F1E; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>C</strong> Choque</td>" &
+                                              "</tr><tr>" &
+                                                  "<td colspan='3' style='padding:3px 10px 3px 0;'><span style='display:inline-block; width:10px; height:10px; background:#607D8B; vertical-align:middle; margin-right:5px; border-radius:2px;'></span><strong>D-</strong> Descanso de Proyecto</td>" &
+                                              "</tr>" &
+                                          "</table>" &
+
+                                          If(CountRows(colColoresProyectos) > 0; "<hr style='border:0; border-top:1px dashed #D9D9D9; margin:10px 0;'>"; "") &
+
+                                          // Leyenda de proyectos: ancho fijo por bloque (anchoItemProyecto), se ajusta hacia abajo cada "itemsPorFila"
+                                          "<div style='display:flex; flex-wrap:wrap; max-width:" & maxWidthLeyenda & "px; row-gap:4px;'>" &
+                                              Concat(
+                                                  colColoresProyectos;
+                                                  "<div style='flex:0 0 " & anchoItemProyecto & "px; padding:3px 6px 3px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; color:#555;' title='" & ProyectoCodigo & "'>" &
+                                                      "<span style='display:inline-block; width:10px; height:10px; background:" & ColorHex & "; vertical-align:middle; margin-right:5px; border-radius:2px;'></span>" &
+                                                      "<strong style='color:#333;'>" & Left(ProyectoCodigo; 2) & "</strong> - " & ProyectoCodigo &
+                                                  "</div>"
+                                              ) &
+                                          "</div>" &
+                                      "</div>" &
+                                      "</div>"
+                                  )
+                              )
+                          )
+                          */
+
+
+
+
+
+
+
+
+
+
+
+                          varHtmlInicio &
+                          Concat(
+                              Filter(
+                                  colCronogramaFilas,
+                                  (IsBlank(txtBuscarPersona.Text) || Lower(txtBuscarPersona.Text) in Lower(Nombre)) &&
+                                  (IsBlank(cmbFiltroProyecto.Selected.Value) || ("|" & cmbFiltroProyecto.Selected.Value & "|") in ListaProyectos)
+                              ),
+                              FilaHtml
+                          ) &
+                          varHtmlFin
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        Width: |-
+                          =//contCronogramaMensual.Width
+                          //Parent.Width-75
+
+                          //Max(Parent.Width - 150; varAnchoBaseCronograma + 40)
+                          //Max(Parent.Width; varAnchoBaseCronograma + 100)
+                          Parent.Width
+                        X: =40
+                        Y: =40
+      - Spinner1:
+          Control: Spinner@1.4.6
+          Properties:
+            BasePaletteColor: =RGBA(249, 83, 109, 1)
+            Font: =Font.'Open Sans Condensed'
+            FontColor: =RGBA(0, 0, 0, 1)
+            FontSize: =35
+            Height: =Parent.Height
+            Label: ="BUSCANDO..."
+            Visible: =cargarInfo
+            Width: =Parent.Width

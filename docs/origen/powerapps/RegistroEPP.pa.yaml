@@ -1,0 +1,1191 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  RegistroEPP:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =ClearCollect(
+            col_AreasGestion,
+            Distinct(
+                'ESTRUCTURA GENERAL',
+                'Area Gestión'
+            )
+        );
+        ClearCollect(
+            col_Cargos,
+            Distinct(
+                'ESTRUCTURA GENERAL',
+                Cargo
+            )
+        )
+    Children:
+      - Container1_9:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutGap: =5
+            LayoutJustifyContent: =LayoutJustifyContent.Center
+            PaddingBottom: =2
+            PaddingLeft: =2
+            PaddingRight: =2
+            PaddingTop: =2
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_17:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0.1
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  LayoutMinHeight: =0
+                  PaddingRight: =6
+                Children:
+                  - Icon1_18:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(ControlEPPS)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_18:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="REGISTRO DE EPP"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - TextInput1_1:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  Default: ="1. INFORMACIÓN BÁSICA"
+                  DisplayMode: =DisplayMode.View
+                  FillPortions: =0.07
+                  Font: =Font.'Open Sans Condensed'
+                  FontWeight: =FontWeight.Semibold
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  Placeholder: ="Enter text"
+                  Size: =16
+                  Width: =Parent.Width
+            - INFORMACION_BASICA_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0.2
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container10_30:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                      Children:
+                        - Container11_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Vertical
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                            Children:
+                              - Container12_1:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - Text17_10:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: |-
+                                            ="ARTICULO: "
+                                          Visible: =false
+                                          Width: =Parent.Width/10
+                                    - txtArticulo:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Articulo, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Visible: =false
+                                          Width: =Parent.Width/5
+                                    - Text17_11:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="CODIGO:"
+                                          Width: =Parent.Width/10
+                                    - txtCodigo:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Codigo, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Width: =Parent.Width/5
+                                    - Text17_12:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="TALLA:"
+                                          Width: =Parent.Width/10
+                                    - txtTalla:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Talla, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Width: |
+                                            =Parent.Width/10
+                                    - Text17_13:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="TIPO:"
+                                          Width: =Parent.Width/20
+                                    - txtTipo:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Tipo, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Width: |
+                                            =Parent.Width/10
+                              - Container13_2:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - Text17_14:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: |-
+                                            ="DETALLE: "
+                                          Width: =Parent.Width/10
+                                    - cmbDetalle:
+                                        Control: ModernCombobox@1.1.2
+                                        Properties:
+                                          DefaultSelectedItems: |-
+                                            =If(
+                                                varModoEdicion,
+                                                Filter(
+                                                    ColEppDetalle,
+                                                    Value = varEPPSeleccionado.Detalle
+                                                ),
+                                                Blank()
+                                            )
+                                          Font: =Font.'Open Sans Condensed'
+                                          ItemDisplayText: =ThisItem.Value
+                                          Items: =ColEppDetalle
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          SelectMultiple: =false
+                                          Width: =Parent.Width/5
+                                    - Text17_15:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: |-
+                                            ="NORMATIVA: "
+                                          Width: =Parent.Width/10
+                                    - txtNormativa:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Normativa, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Width: =Parent.Width/5
+                                    - Text17_16:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: |-
+                                            ="CATEGORIA: "
+                                          Width: =Parent.Width/10
+                                    - cmbCategoriaEPP:
+                                        Control: ModernCombobox@1.1.2
+                                        Properties:
+                                          DefaultSelectedItems: =If(varModoEdicion, [varEPPSeleccionado.Categoria], Blank())
+                                          Font: =Font.'Open Sans Condensed'
+                                          ItemDisplayText: =ThisItem.Value
+                                          Items: |-
+                                            =Table(
+                                                {Value: "Protección Respiratoria"},
+                                                {Value: "Protección para Manos"},
+                                                {Value: "Protección Auditiva"},
+                                                {Value: "Protección para Pies"},
+                                                {Value: "Protección Corporal"},
+                                                {Value: "Protección para la Cabeza"},
+                                                {Value: "Protección Visual"},
+                                                {Value: "Ropa de Trabajo"},
+                                                {Value: "Protección en la Altura"}
+                                            )
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          SelectMultiple: =false
+                                          Width: =Parent.Width/5
+                              - Container14_4:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: AutoLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    LayoutAlignItems: =LayoutAlignItems.Center
+                                    LayoutDirection: =LayoutDirection.Horizontal
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                  Children:
+                                    - Text17_17:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="MARCA:"
+                                          Visible: =false
+                                          Width: =Parent.Width/10
+                                    - txtMarca:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Marca, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Visible: =false
+                                          Width: =Parent.Width/5
+                                    - Text17_18:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="CADUCIDAD:"
+                                          Width: =Parent.Width/10
+                                    - txtCaducidad:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: |-
+                                            =With(
+                                                {
+                                                    fechaInicio: FechaFabricacion.SelectedDate,
+                                                    itemSeleccionado: cmbVidaUtil.Selected
+                                                },
+                                                If(
+                                                    !IsBlank(fechaInicio) && !IsBlank(itemSeleccionado.Value),
+                                                    Text(
+                                                        DateAdd(
+                                                            DateAdd(
+                                                                DateAdd(fechaInicio, itemSeleccionado.Dias, TimeUnit.Days),
+                                                                itemSeleccionado.Meses,
+                                                                TimeUnit.Months
+                                                            ),
+                                                            itemSeleccionado.Anos,
+                                                            TimeUnit.Years
+                                                        ),
+                                                        "dd/mm/yyyy"
+                                                    ),
+                                                    If(varModoEdicion, varEPPSeleccionado.Caducidad, "")
+                                                )
+                                            )
+                                          DisplayMode: =DisplayMode.View
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Width: =Parent.Width/5
+                                    - Text17_19:
+                                        Control: ModernText@1.0.0
+                                        Properties:
+                                          Align: =Align.Center
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =Parent.Height
+                                          PaddingBottom: =0
+                                          PaddingLeft: =10
+                                          PaddingRight: =0
+                                          PaddingTop: =0
+                                          Text: ="PRECIO:"
+                                          Visible: =false
+                                          Width: =Parent.Width/10
+                                    - txtPrecio:
+                                        Control: ModernTextInput@1.1.2
+                                        Properties:
+                                          Default: =If(varModoEdicion, varEPPSeleccionado.Precio, "")
+                                          Font: =Font.'Open Sans Condensed'
+                                          Height: =Parent.Height
+                                          LayoutMinHeight: =16
+                                          LayoutMinWidth: =16
+                                          PaddingLeft: =0
+                                          Placeholder: ="Escriba..."
+                                          RadiusBottomLeft: =20
+                                          RadiusBottomRight: =20
+                                          RadiusTopLeft: =20
+                                          RadiusTopRight: =20
+                                          Size: =15
+                                          Visible: =false
+                                          Width: =Parent.Width/5
+            - INF_ADICIONAL_EMERGENCIA_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =3
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container17_24:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(245, 245, 245, 1)
+                        FillPortions: =0.15
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =10
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMinHeight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - Text10_3:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              AutoHeight: =true
+                              Fill: =RGBA(245, 245, 245, 1)
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =Parent.Height
+                              PaddingLeft: =10
+                              Size: =16
+                              Text: ="2. INFORMACIÓN ACICIONAL"
+                  - Container16_13:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        BorderStyle: =BorderStyle.None
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =150
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMinHeight: =0
+                        Width: =Parent.Width * 0.993
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container10_31:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =50
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =0
+                              LayoutOverflowY: =LayoutOverflow.Scroll
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - Text4_74:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="CRITERIOS DE CAMBIO:"
+                                    Width: =Parent.Width/8
+                                    X: =40
+                                    Y: =40
+                              - txtCriteriosCarga:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Default: =If(varModoEdicion, varEPPSeleccionado.CriteriosCarga, "")
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Placeholder: ="Escriba los criterios de cambio (Bodega)"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Size: =15
+                                    Type: =TextInputType.Multiline
+                        - Container10_32:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =50
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =0
+                              LayoutOverflowY: =LayoutOverflow.Scroll
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - Text4_75:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="AREA:"
+                                    Width: =Parent.Width/12
+                                    X: =40
+                                    Y: =40
+                              - cmbArea:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    DefaultSelectedItems: =If(varModoEdicion, [varEPPSeleccionado.Area], Blank())
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =34
+                                    InputTextPlaceholder: ="Buscar..."
+                                    ItemDisplayText: =ThisItem.Value
+                                    Items: =col_AreasGestion
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Width: =Parent.Width/6
+                                    X: =40
+                                    Y: =40
+                              - Text4_77:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="PROCESOS:"
+                                    Width: =Parent.Width/10
+                                    X: =40
+                                    Y: =40
+                              - cmbProcesos:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    DefaultSelectedItems: =If(varModoEdicion, Split(varEPPSeleccionado.Procesos, ", "), Blank())
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =34
+                                    InputTextPlaceholder: ="Seleccionar proceso"
+                                    ItemDisplayText: =ThisItem.Value
+                                    Items: |-
+                                      =[
+                                          "Proceso 1",
+                                          "Proceso 2",
+                                          "Proceso 3",
+                                          "Proceso 4",
+                                          "Proceso 5",
+                                          "Proceso 6",
+                                          "Proceso 7",
+                                          "Proceso 8",
+                                          "Proceso 9",
+                                          "Proceso 10"
+                                      ]
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    SelectMultiple: =false
+                                    Width: =Parent.Width/6
+                              - Text4_76:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="CARGO:"
+                                    Width: =Parent.Width/12
+                                    X: =40
+                                    Y: =40
+                              - cmbCargo:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    DefaultSelectedItems: =If(varModoEdicion, Split(varEPPSeleccionado.Cargo, ", "), Blank())
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =34
+                                    InputTextPlaceholder: ="Seleccionar cargo"
+                                    ItemDisplayText: =ThisItem.Value
+                                    Items: =col_Cargos
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Width: =Parent.Width/4
+                        - Container10_33:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =50
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =0
+                              LayoutOverflowY: =LayoutOverflow.Scroll
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - Text4_79:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="FECHA FABRICACION:"
+                                    Width: =Parent.Width/10
+                                    X: =40
+                                    Y: =40
+                              - FechaFabricacion:
+                                  Control: ModernDatePicker@1.0.2
+                                  Properties:
+                                    DefaultDate: =If(varModoEdicion && !IsBlank(varEPPSeleccionado), DateValue(varEPPSeleccionado.FechaInicio), Today())
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Placeholder: ="Seleccionar fecha"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                              - Text4_78:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="VIDA UTIL:"
+                                    Width: =Parent.Width/10
+                                    X: =40
+                                    Y: =40
+                              - txtVidaUtil:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Default: =If(varModoEdicion, varEPPSeleccionado.VidaUtil, "")
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Visible: =false
+                              - cmbVidaUtil:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    DefaultSelectedItems: |-
+                                      =If(
+                                          varModoEdicion,
+                                          Filter(
+                                              colEppsVU,
+                                              Value = varEPPSeleccionado.VidaUtil
+                                          ),
+                                          Blank()
+                                      )
+                                    ItemDisplayText: =ThisItem.Value
+                                    Items: =colEppsVU
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    SelectMultiple: =false
+                  - Container17_25:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        Fill: =RGBA(245, 245, 245, 1)
+                        FillPortions: =0.15
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Horizontal
+                        LayoutGap: =10
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        LayoutMinHeight: =0
+                        Width: =Parent.Width
+                      Children:
+                        - Text10_4:
+                            Control: ModernText@1.0.0
+                            Properties:
+                              AutoHeight: =true
+                              Fill: =RGBA(245, 245, 245, 1)
+                              FillPortions: =1
+                              Font: =Font.'Open Sans Condensed'
+                              FontWeight: =FontWeight.Bold
+                              Height: =Parent.Height
+                              PaddingLeft: =10
+                              Size: =16
+                              Text: ="3. INFORMACIÓN DE EMERGENCIA"
+                  - Container16_14:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        BorderStyle: =BorderStyle.None
+                        DropShadow: =DropShadow.None
+                        Height: =Parent.Height
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutJustifyContent: =LayoutJustifyContent.Center
+                        Width: =Parent.Width * 0.993
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container10_34:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              Height: =50
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutMinHeight: =0
+                              LayoutOverflowY: =LayoutOverflow.Scroll
+                              Width: =Parent.Width
+                              X: =40
+                              Y: =40
+                            Children:
+                              - Text4_80:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: |-
+                                      ="ESPECIFICACIONES: "
+                                    Width: =Parent.Width/8
+                                    X: =40
+                                    Y: =40
+                              - txtEspecificaciones:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Default: =If(varModoEdicion, varEPPSeleccionado.Especificaciones, "")
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Placeholder: ="Ingrese el número de teléfono"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Size: =15
+                                    Type: =TextInputType.Multiline
+                              - Text4_81:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: =Parent.Height
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="USO Y MANTENIMIENTO (CONSERVACIÓN):"
+                                    Width: =Parent.Width/8
+                                    X: =40
+                                    Y: =40
+                              - txtMatenimiento:
+                                  Control: ModernTextInput@1.1.2
+                                  Properties:
+                                    Default: =If(varModoEdicion, varEPPSeleccionado.Mantenimiento, "")
+                                    FillPortions: =1
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height * 0.8
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Placeholder: ="Ingrese el número de teléfono"
+                                    RadiusBottomLeft: =20
+                                    RadiusBottomRight: =20
+                                    RadiusTopLeft: =20
+                                    RadiusTopRight: =20
+                                    Size: =15
+                                    Type: =TextInputType.Multiline
+                        - Container50:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              DropShadow: =DropShadow.None
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                            Children:
+                              - Text4_82:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    Height: |+
+                                      =Parent.Height
+                                    LayoutMinWidth: =0
+                                    OnSelect: =
+                                    PaddingBottom: =0
+                                    PaddingLeft: =10
+                                    PaddingRight: =0
+                                    PaddingTop: =0
+                                    Text: ="FOTOGRAFIA"
+                                    X: =40
+                                    Y: =40
+                              - Container51:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
+                                  Properties:
+                                    DropShadow: =DropShadow.None
+                                    FillPortions: =0
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    PaddingBottom: =10
+                                    PaddingTop: =10
+                                  Children:
+                                    - UploadedImage1_1:
+                                        Control: Image@2.2.3
+                                        Group: AddMediaWithImage1_1
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderThickness: =2
+                                          DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =Parent.Height
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Image: |-
+                                            =Coalesce(
+                                                AddMediaButton1_1.Media,
+                                                varEPPSeleccionado.FotoURL.Full,
+                                                SampleImage
+                                            )
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Width: =Parent.Width
+                                          Y: |+
+                                            =0
+                                    - AddMediaButton1_1:
+                                        Control: AddMedia@2.2.1
+                                        Group: AddMediaWithImage1_1
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          ChangePictureText: =
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                                          DisabledColor: =RGBA(161, 159, 157, 1)
+                                          DisabledFill: =RGBA(242, 242, 241, 0)
+                                          Fill: =RGBA(0, 120, 212, 1)
+                                          FocusedBorderThickness: =4
+                                          Font: =Font.'Segoe UI'
+                                          Height: =Parent.Height
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 255, 255, 1)
+                                          HoverFill: =RGBA(16, 110, 190, 1)
+                                          PressedBorderColor: =RGBA(0, 69, 120, 1)
+                                          PressedColor: =RGBA(255, 255, 255, 1)
+                                          PressedFill: =RGBA(16, 110, 190, 1)
+                                          Size: =25
+                                          Text: =
+                                          Width: =Parent.Width
+                                          Y: |+
+                                            =0
+            - BOTONES_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0.07
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =20
+                  LayoutJustifyContent: =LayoutJustifyContent.End
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingLeft: =20
+                  PaddingRight: =20
+                Children:
+                  - Siguiente_1:
+                      Control: ModernButton@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height * 0.8
+                        Icon: ="Save"
+                        IconStyle: =IconStyle.Filled
+                        Layout: =ButtonLayout.IconAfter
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnSelect: |-
+                          =With(
+                              {
+                                  JSONDATOSGENERALES: JSON(
+                                      {
+                                          Categoria: Coalesce(cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value),
+                                          Articulo: txtArticulo.Text,
+                                          Codigo: txtCodigo.Text,
+                                          Talla: txtTalla.Text,
+                                          Tipo: txtTipo.Text,
+                                          Detalle: Coalesce(cmbDetalle.Selected.Value, cmbDetalle.Selected.Value),
+                                          Normativa: txtNormativa.Text,
+                                          Marca: txtMarca.Text,
+                                          FechaInicio: Text(FechaFabricacion.SelectedDate, "dd/mm/yyyy"),
+                                          Caducidad: txtCaducidad.Text,
+                                          Precio: txtPrecio.Text,
+                                          CriteriosCarga: txtCriteriosCarga.Text,
+                                          Area: Coalesce(cmbArea.Selected.Value, cmbArea.Selected.Value),
+                                          Procesos: Concat(cmbProcesos.SelectedItems, Coalesce(Value), ", "),
+                                          Cargo: Concat(cmbCargo.SelectedItems, Coalesce(Value), ", "),
+                                          VidaUtil: cmbVidaUtil.Selected.Value
+                                      },
+                                      JSONFormat.IndentFour
+                                  ),
+                                  jsonEspecificaciones: JSON(
+                                      {
+                                          Categoria: Coalesce(cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value),
+                                          Articulo: txtArticulo.Text,
+                                          Especificaciones: txtEspecificaciones.Text
+                                      },
+                                      JSONFormat.IndentFour
+                                  ),
+                                  jsonMantenimiento: JSON(
+                                      {
+                                          Categoria: Coalesce(cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value, cmbCategoriaEPP.Selected.Value),
+                                          Articulo: txtArticulo.Text,
+                                          Mantenimiento: txtMatenimiento.Text
+                                      },
+                                      JSONFormat.IndentFour
+                                  )
+                              },
+                              Patch(
+                                  ADMIN_EPPS,
+                                  If(
+                                      varModoEdicion,
+                                      LookUp(ADMIN_EPPS, ID = varEPPSeleccionado.ID_Registro),
+                                      Defaults(ADMIN_EPPS)
+                                  ),
+                                  {
+                                      Título: txtArticulo.Text,
+                                      DATOS_GENERALES_EPPS: JSONDATOSGENERALES,
+                                      ESPECIFICACIONES: jsonEspecificaciones,
+                                      MANTENIMIENTO: jsonMantenimiento,
+                                      Fotografia: UploadedImage1_1.Image
+                                  }
+                              )
+                          );
+
+                          // Notificación y reinicio de variables
+                          Notify(If(varModoEdicion, "EPP actualizado exitosamente.", "EPP registrado exitosamente."), NotificationType.Success);
+
+                          // Limpiar estados
+                          Set(varModoEdicion, false);
+                          Set(varEPPSeleccionado, Blank());
+
+                          // Resetear controles
+                          Reset(txtArticulo);
+                          Reset(txtCodigo);
+                          Reset(txtTalla);
+                          Reset(txtTipo);
+                          Reset(cmbDetalle);
+                          Reset(txtNormativa);
+                          Reset(txtMarca);
+                          Reset(FechaFabricacion);
+                          Reset(cmbVidaUtil);
+                          Reset(txtCaducidad);
+                          Reset(txtPrecio);
+                          Reset(txtCriteriosCarga);
+                          Reset(cmbArea);
+                          Reset(cmbProcesos);
+                          Reset(cmbCargo);
+                          Reset(txtEspecificaciones);
+                          Reset(txtMatenimiento);
+                          Reset(cmbCategoriaEPP);
+                          Reset(AddMediaButton1_1);
+
+                          // Regresar a la galería
+                          Back()
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: ="GUARDAR"
+                        Width: =120

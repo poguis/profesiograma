@@ -1,0 +1,1152 @@
+{
+    "name": "d5185f41-f7c3-48ff-896f-879d40be8f0c",
+    "id": "/providers/Microsoft.Flow/flows/d5185f41-f7c3-48ff-896f-879d40be8f0c",
+    "type": "Microsoft.Flow/flows",
+    "properties": {
+        "apiId": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+        "displayName": "ConsultarProyecto",
+        "definition": {
+            "metadata": {
+                "workflowEntityId": null,
+                "processAdvisorMetadata": null,
+                "flowChargedByPaygo": null,
+                "migrationSourceId": "/subscriptions/a2981534-245e-417c-8407-c364e109fa35/resourceGroups/3cec92645c1c429e8877c23d701139ac-default3cec92645c1c429e8877c23d701139ac-env/providers/Microsoft.Logic/workflows/d5185f41-f7c3-48ff-896f-879d40be8f0c-azshadow",
+                "flowclientsuspensionreason": "None",
+                "flowclientsuspensiontime": null,
+                "flowclientsuspensionreasondetails": "",
+                "creator": {
+                    "id": "ef0af68f-45bc-4826-8eb2-072449841daa",
+                    "type": "User",
+                    "tenantId": "3cec9264-5c1c-429e-8877-c23d701139ac"
+                },
+                "provisioningMethod": "FromDefinition",
+                "failureAlertSubscription": true,
+                "clientLastModifiedTime": "2026-09-15T14:47:09.5913063Z",
+                "lastModifiedBy": "94c0d90e-68ad-433f-a3b4-a3910fc3681b",
+                "clientCreatedTime": "2026-05-03T21:08:45.0123018Z",
+                "connectionKeySavedTimeKey": "2026-09-15T14:38:28.7929633Z",
+                "creationSource": "Portal",
+                "modifiedSources": "Portal;PowerappsPpux"
+            },
+            "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+            "contentVersion": "undefined",
+            "parameters": {
+                "$authentication": {
+                    "defaultValue": {},
+                    "type": "SecureObject"
+                },
+                "$connections": {
+                    "defaultValue": {},
+                    "type": "Object"
+                }
+            },
+            "triggers": {
+                "manual": {
+                    "metadata": {
+                        "operationMetadataId": "6ac50216-94d1-4b9a-b491-a01e6c29cd7d"
+                    },
+                    "type": "Request",
+                    "kind": "PowerAppV2",
+                    "inputs": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "description": "Please enter your input",
+                                    "title": "compania",
+                                    "type": "string",
+                                    "x-ms-content-hint": "TEXT",
+                                    "x-ms-dynamically-added": true
+                                },
+                                "text_1": {
+                                    "description": "Please enter your input",
+                                    "title": "projecto",
+                                    "type": "string",
+                                    "x-ms-content-hint": "TEXT",
+                                    "x-ms-dynamically-added": true
+                                },
+                                "text_2": {
+                                    "description": "Please enter your input",
+                                    "title": "proceso",
+                                    "type": "string",
+                                    "x-ms-content-hint": "TEXT",
+                                    "x-ms-dynamically-added": true
+                                }
+                            },
+                            "required": [
+                                "text",
+                                "text_1",
+                                "text_2"
+                            ]
+                        }
+                    }
+                }
+            },
+            "actions": {
+                "Switch": {
+                    "runAfter": {},
+                    "cases": {
+                        "Actividades": {
+                            "case": "ACTIVIDADES",
+                            "actions": {
+                                "HTTP_Actividades": {
+                                    "metadata": {
+                                        "operationMetadataId": "c7527c24-b32f-4bb4-9fc7-fb4e8b93d2fa"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7055/api/Activity/GetActivitiesProject/@{triggerBody()?['text_1']}/@{triggerBody()?['text']}",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Hay_Actividades": {
+                                    "actions": {
+                                        "Parse_JSON_Actividad": {
+                                            "metadata": {
+                                                "operationMetadataId": "c36f2e61-51d6-464d-8a85-817ec6de4574"
+                                            },
+                                            "type": "ParseJson",
+                                            "inputs": {
+                                                "content": "@body('HTTP_Actividades')",
+                                                "schema": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "statusCode": {
+                                                            "type": "integer"
+                                                        },
+                                                        "isSuccess": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "errorMessages": {
+                                                            "type": [
+                                                                "array",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "result": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "projectId": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "activityId": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "activityType": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "Select_Actividad": {
+                                            "runAfter": {
+                                                "Parse_JSON_Actividad": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "metadata": {
+                                                "operationMetadataId": "1eb60425-86dc-445f-a62b-6492a846730a"
+                                            },
+                                            "type": "Select",
+                                            "inputs": {
+                                                "from": "@body('Parse_JSON_Actividad')?['result']",
+                                                "select": {
+                                                    "projectId": "@item()?['projectId']",
+                                                    "activityId": "@item()?['activityId']",
+                                                    "description": "@item()?['description']",
+                                                    "activityType": "@item()?['activityType']"
+                                                }
+                                            }
+                                        },
+                                        "Respond_to_a_Power_App_Actividad": {
+                                            "runAfter": {
+                                                "Select_Actividad": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "metadata": {
+                                                "operationMetadataId": "e03d8e4a-3933-4859-8fb2-266492104aec"
+                                            },
+                                            "type": "Response",
+                                            "kind": "PowerApp",
+                                            "inputs": {
+                                                "schema": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "respuestajson": {
+                                                            "title": "respuestaJson",
+                                                            "x-ms-dynamically-added": true,
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "additionalProperties": {}
+                                                },
+                                                "statusCode": 200,
+                                                "body": {
+                                                    "respuestajson": "@{string(body('Select_Actividad'))}"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "HTTP_Actividades": [
+                                            "Succeeded",
+                                            "TimedOut",
+                                            "Failed"
+                                        ]
+                                    },
+                                    "else": {
+                                        "actions": {
+                                            "Respond_to_a_Power_App_Actividad_Vacia": {
+                                                "metadata": {
+                                                    "operationMetadataId": "08a5eeec-355c-43ea-a434-55eca5c5ed9b"
+                                                },
+                                                "type": "Response",
+                                                "kind": "PowerApp",
+                                                "inputs": {
+                                                    "schema": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "respuestajson": {
+                                                                "title": "respuestaJson",
+                                                                "x-ms-dynamically-added": true,
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "additionalProperties": {}
+                                                    },
+                                                    "statusCode": 200,
+                                                    "body": {
+                                                        "respuestajson": "[]"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@outputs('HTTP_Actividades')?['statusCode']",
+                                                    200
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "145d6e0c-db1d-462c-8dbd-87b3d713047f"
+                                    },
+                                    "type": "If"
+                                }
+                            }
+                        },
+                        "Dimensiones": {
+                            "case": "DIMENSIONES",
+                            "actions": {
+                                "HTTP_Dimension": {
+                                    "metadata": {
+                                        "operationMetadataId": "eca2398c-3f5e-4f9c-803b-88346773a46a"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7048/api/Uegp/GetUegpCompany/@{triggerBody()?['text']}\n",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_Dimension": {
+                                    "runAfter": {
+                                        "HTTP_Dimension": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "6ad18212-422e-443c-9e5b-b50718aa3b0f"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_Dimension')",
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "companyId": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uegpId": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "uploadDate": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_Dimension": {
+                                    "runAfter": {
+                                        "Parse_JSON_Dimension": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "0a09efbf-a7d9-4a90-b3dc-cdae117bcc57"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_Dimension')",
+                                        "select": {
+                                            "companyId": "@item()?['companyId']",
+                                            "uegpId": "@item()?['uegpId']",
+                                            "description": "@item()?['description']",
+                                            "uploadDate": "@item()?['uploadDate']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Dimensiones": {
+                                    "runAfter": {
+                                        "Select_Dimension": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "c3c6bd21-b104-4e3d-a480-14158e20502c"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_Dimension'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "Proyectos": {
+                            "case": "PROYECTOS",
+                            "actions": {
+                                "HTTP_Proyecto": {
+                                    "metadata": {
+                                        "operationMetadataId": "aa2724a2-b63e-41e9-8b13-74fbde25a7c6"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7048/api/Project/GetProject/@{triggerBody()?['text']}",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_Proyecto": {
+                                    "runAfter": {
+                                        "HTTP_Proyecto": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "4a6f0302-bcd4-4deb-9fff-1db2e6b24a7e"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_Proyecto')",
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "projectId": {
+                                                        "type": "string"
+                                                    },
+                                                    "companyId": {
+                                                        "type": "integer"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "sectorId": {
+                                                        "type": "string"
+                                                    },
+                                                    "sectorDescription": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "technicalOfficeId": {
+                                                        "type": "string"
+                                                    },
+                                                    "technicalOfficeName": {
+                                                        "type": "string"
+                                                    },
+                                                    "uploadDate": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_Proyecto": {
+                                    "runAfter": {
+                                        "Parse_JSON_Proyecto": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "5c69e9ab-6198-47dd-b0b1-0a54e5b803bf"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_Proyecto')",
+                                        "select": {
+                                            "projectId": "@item()?['projectId']",
+                                            "companyId": "@item()?['companyId']",
+                                            "description": "@item()?['description']",
+                                            "status": "@item()?['status']",
+                                            "sectorId": "@item()?['sectorId']",
+                                            "sectorDescription": "@item()?['sectorDescription']",
+                                            "technicalOfficeId": "@item()?['technicalOfficeId']",
+                                            "technicalOfficeName": "@item()?['technicalOfficeName']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Proyectos": {
+                                    "runAfter": {
+                                        "Select_Proyecto": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "e1148a1f-87f6-400c-a649-944abdf11802"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_Proyecto'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "Companias": {
+                            "case": "COMPANIAS",
+                            "actions": {
+                                "HTTP_Compania": {
+                                    "metadata": {
+                                        "operationMetadataId": "f81ccdae-d82c-4106-a35b-e33f712b6b11"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7048/api/Company/list_company",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_Compania": {
+                                    "runAfter": {
+                                        "HTTP_Compania": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "ee2fafcc-d563-4a6d-bcf7-7c0e51f70b1c"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_Compania')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "statusCode": {
+                                                    "type": "integer"
+                                                },
+                                                "isSuccess": {
+                                                    "type": "boolean"
+                                                },
+                                                "errorMessages": {},
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "companyId": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "ruc": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "tradeName": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "companyId",
+                                                            "name"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_Compania": {
+                                    "runAfter": {
+                                        "Parse_JSON_Compania": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "17524cd1-d0fb-4693-8df3-ea9887467770"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_Compania')?['result']",
+                                        "select": {
+                                            "companyId": "@item()?['companyId']",
+                                            "name": "@item()?['name']",
+                                            "tradeName": "@item()?['tradeName']",
+                                            "ruc": "@item()?['ruc']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Companias": {
+                                    "runAfter": {
+                                        "Select_Compania": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "87d87f4b-85d1-4224-9558-c44de399fb6b"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_Compania'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "Horarios": {
+                            "case": "HORARIOS",
+                            "actions": {
+                                "HTTP_Horarios": {
+                                    "metadata": {
+                                        "operationMetadataId": "53e397db-e8b8-409f-8bb9-1e0d5d0d8db3"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7055/api/PayrollSchedule/ListPayrollSchedule",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_Horario": {
+                                    "runAfter": {
+                                        "HTTP_Horarios": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "d76d4bbe-a12e-430f-966f-00a5c7f7f3df"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_Horarios')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "statusCode": {
+                                                    "type": "integer"
+                                                },
+                                                "isSuccess": {
+                                                    "type": "boolean"
+                                                },
+                                                "errorMessages": {},
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "codHorario": {
+                                                                "type": "integer"
+                                                            },
+                                                            "descripcion": {
+                                                                "type": "string"
+                                                            },
+                                                            "horaEntrada": {
+                                                                "type": "string"
+                                                            },
+                                                            "horaSalida": {
+                                                                "type": "string"
+                                                            },
+                                                            "horas": {
+                                                                "type": "string"
+                                                            },
+                                                            "horasTrab": {
+                                                                "type": "string"
+                                                            },
+                                                            "tipoHorario": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "codHorario",
+                                                            "descripcion"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_Horario": {
+                                    "runAfter": {
+                                        "Parse_JSON_Horario": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "82233e90-2213-4a42-a88f-06121eb3748b"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_Horario')?['result']",
+                                        "select": {
+                                            "codHorario": "@item()?['codHorario']",
+                                            "descripcion": "@item()?['descripcion']",
+                                            "horaEntrada": "@item()?['horaEntrada']",
+                                            "horaSalida": "@item()?['horaSalida']",
+                                            "horas": "@item()?['horas']",
+                                            "horasTrab": "@item()?['horasTrab']",
+                                            "tipoHorario": "@item()?['tipoHorario']",
+                                            "status": "@item()?['status']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Horarios": {
+                                    "runAfter": {
+                                        "Select_Horario": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "3adad0a3-b2dc-46bf-83b6-a61af40b9bb5"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_Horario'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "CIUO": {
+                            "case": "CIUO",
+                            "actions": {
+                                "HTTP_CIUO": {
+                                    "metadata": {
+                                        "operationMetadataId": "8e7e337a-2cab-4191-b52c-dc566b8ad746"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7055/api/OccupationalGroup/ListCIUOGroup",
+                                        "method": "GET"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_CIUO": {
+                                    "runAfter": {
+                                        "HTTP_CIUO": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "4e690cf0-5181-442d-8c16-47d153127bb0"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_CIUO')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "statusCode": {
+                                                    "type": "integer"
+                                                },
+                                                "isSuccess": {
+                                                    "type": "boolean"
+                                                },
+                                                "errorMessages": {},
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "perId": {
+                                                                "type": "integer"
+                                                            },
+                                                            "perIdPadre": {
+                                                                "type": "integer"
+                                                            },
+                                                            "perNombre": {
+                                                                "type": "string"
+                                                            },
+                                                            "perDescripcion": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "perId",
+                                                            "perIdPadre",
+                                                            "perNombre",
+                                                            "perDescripcion"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_CIUO": {
+                                    "runAfter": {
+                                        "Parse_JSON_CIUO": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "d71a04fd-a237-473b-9301-e4c2102ad710"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_CIUO')?['result']",
+                                        "select": {
+                                            "perId": "@item()?['perId']",
+                                            "perIdPadre": "@item()?['perIdPadre']",
+                                            "perNombre": "@item()?['perNombre']",
+                                            "perDescripcion": "@item()?['perDescripcion']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Horarios_1": {
+                                    "runAfter": {
+                                        "Select_CIUO": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "0aca9122-4ea3-4624-b994-610a108c7ce9"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_CIUO'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "Contrato": {
+                            "case": "CONTRATO",
+                            "actions": {
+                                "HTTP_Contrato": {
+                                    "metadata": {
+                                        "operationMetadataId": "aa2724a2-b63e-41e9-8b13-74fbde25a7c6"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7048/api/ProjectsCubeInfor",
+                                        "method": "POST",
+                                        "body": {
+                                            "idCompania": "@triggerBody()?['text']"
+                                        }
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_Contrato": {
+                                    "runAfter": {
+                                        "HTTP_Contrato": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "4a6f0302-bcd4-4deb-9fff-1db2e6b24a7e"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_Contrato')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "idCompania": {
+                                                    "type": "integer"
+                                                },
+                                                "idDepartamento": {
+                                                    "type": "string"
+                                                },
+                                                "idDimDepartamento": {
+                                                    "type": "integer"
+                                                },
+                                                "departamento": {
+                                                    "type": "string"
+                                                },
+                                                "idProyecto": {
+                                                    "type": "string"
+                                                },
+                                                "descripcionProyecto": {
+                                                    "type": "string"
+                                                },
+                                                "idEstatus": {
+                                                    "type": "integer"
+                                                },
+                                                "estatus": {
+                                                    "type": "string"
+                                                },
+                                                "idJerarquia": {
+                                                    "type": "integer"
+                                                },
+                                                "tipoJerarquia": {
+                                                    "type": "string"
+                                                },
+                                                "provincia": {
+                                                    "type": "string"
+                                                },
+                                                "idContrato": {
+                                                    "type": "string"
+                                                },
+                                                "progresoFisico": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_Contrato": {
+                                    "runAfter": {
+                                        "Parse_JSON_Contrato": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "5c69e9ab-6198-47dd-b0b1-0a54e5b803bf"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_Contrato')?['result']",
+                                        "select": {
+                                            "idCompania": "@item()?['idCompania']",
+                                            "idDepartamento": "@item()?['idDepartamento']",
+                                            "idDimDepartamento": "@item()?['idDimDepartamento']",
+                                            "departamento": "@item()?['departamento']",
+                                            "idProyecto": "@item()?['idProyecto']",
+                                            "descripcionProyecto": "@item()?['descripcionProyecto']",
+                                            "idEstatus": "@item()?['idEstatus']",
+                                            "estatus": "@item()?['estatus']",
+                                            "idJerarquia": "@item()?['idJerarquia']",
+                                            "tipoJerarquia": "@item()?['tipoJerarquia']",
+                                            "provincia": "@item()?['provincia']",
+                                            "idContrato": "@item()?['idContrato']",
+                                            "progresoFisico": "@item()?['progresoFisico']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_Contrato": {
+                                    "runAfter": {
+                                        "Select_Contrato": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "e1148a1f-87f6-400c-a649-944abdf11802"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_Contrato'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "FIG": {
+                            "case": "FIG",
+                            "actions": {
+                                "HTTP_FIG": {
+                                    "metadata": {
+                                        "operationMetadataId": "aa2724a2-b63e-41e9-8b13-74fbde25a7c6"
+                                    },
+                                    "type": "Http",
+                                    "inputs": {
+                                        "uri": "https://backstack.sedemi.com:7048/api/ProjectsFigsInfor?project=@{triggerBody()?['text_1']}",
+                                        "method": "POST"
+                                    },
+                                    "runtimeConfiguration": {
+                                        "contentTransfer": {
+                                            "transferMode": "Chunked"
+                                        }
+                                    }
+                                },
+                                "Parse_JSON_FIG": {
+                                    "runAfter": {
+                                        "HTTP_FIG": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "4a6f0302-bcd4-4deb-9fff-1db2e6b24a7e"
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@body('HTTP_FIG')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "statusCode": {
+                                                    "type": "integer"
+                                                },
+                                                "isSuccess": {
+                                                    "type": "boolean"
+                                                },
+                                                "errorMessages": {},
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "proy": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "proy"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "Select_FIG": {
+                                    "runAfter": {
+                                        "Parse_JSON_FIG": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "5c69e9ab-6198-47dd-b0b1-0a54e5b803bf"
+                                    },
+                                    "type": "Select",
+                                    "inputs": {
+                                        "from": "@body('Parse_JSON_FIG')?['result']",
+                                        "select": {
+                                            "fig": "@item()?['proy']"
+                                        }
+                                    }
+                                },
+                                "Respond_to_a_Power_App_FIG": {
+                                    "runAfter": {
+                                        "Select_FIG": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "operationMetadataId": "e1148a1f-87f6-400c-a649-944abdf11802"
+                                    },
+                                    "type": "Response",
+                                    "kind": "PowerApp",
+                                    "inputs": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "respuestajson": {
+                                                    "title": "respuestaJson",
+                                                    "x-ms-dynamically-added": true,
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "additionalProperties": {}
+                                        },
+                                        "statusCode": 200,
+                                        "body": {
+                                            "respuestajson": "@{string(body('Select_FIG'))}"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "actions": {
+                            "Respond_to_a_Power_App_Default": {
+                                "metadata": {
+                                    "operationMetadataId": "344c7af1-40f7-4fd2-9eb0-73b42cb3f41d"
+                                },
+                                "type": "Response",
+                                "kind": "PowerApp",
+                                "inputs": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "respuestajson": {
+                                                "title": "respuestaJson",
+                                                "x-ms-dynamically-added": true,
+                                                "type": "string"
+                                            }
+                                        },
+                                        "additionalProperties": {}
+                                    },
+                                    "statusCode": 200,
+                                    "body": {
+                                        "respuestajson": "[]"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "expression": "@triggerBody()?['text_2']",
+                    "metadata": {
+                        "operationMetadataId": "275b6009-db07-4cc7-a886-f2cb12adaa7f"
+                    },
+                    "type": "Switch"
+                }
+            }
+        },
+        "connectionReferences": {},
+        "flowFailureAlertSubscribed": false,
+        "isManaged": false
+    }
+}

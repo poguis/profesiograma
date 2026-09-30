@@ -1,0 +1,888 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  RegistrarNovedadAsistencia:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =Refresh('NOVEDADES ASISTENCIA');
+        Refresh('SIG PROYECTOS');
+
+        Clear(colAsignacionesGlobales);
+
+        ForAll(
+            Filter(
+                'SIG PROYECTOS',
+                !IsBlank(ASIGNACIONES) &&
+                (
+                    ESTADO.Value = "ACTIVO" ||
+                    ESTADO.Value = "SUSPENDIDO"
+                )
+            ),
+            With(
+                {
+                    info: ParseJSON(INF_GENERAL),
+                    asig: ParseJSON(ASIGNACIONES)
+                },
+                ForAll(
+                    Table(asig.DetalleDiario) As d,
+                    Collect(
+                        colAsignacionesGlobales,
+                        {
+                            ProjectUID: Text(PROJECT_UID),
+                            ProyectoCodigo: Text(Título),
+                            ProyectoNombre: Text(info.InfoProyecto.Proyecto.Nombre),
+                            EstadoProyecto: Text(ESTADO.Value),
+                            Fecha: DateValue(Left(Text(d.Value.Fecha), 10)),
+                            FechaClave: Text(
+                                DateValue(Left(Text(d.Value.Fecha), 10)),
+                                "[$-en-US]yyyy-mm-dd"
+                            ),
+                            ResponsableCorreo: Lower(Trim(Text(d.Value.ResponsableCorreo))),
+                            ResponsableNombre: Text(d.Value.ResponsableNombre),
+                            ResponsableCargo: Text(d.Value.ResponsableCargo),
+                            Rol: Text(d.Value.Rol)
+                        }
+                    )
+                )
+            )
+        );
+
+        Clear(colNovedadPreview);
+
+        Set(varTipoAplicacionNov, Blank());
+        Set(varCorreoPersonaNov, Blank());
+        Set(varProjectUIDNov, Blank());
+        //Set(varNombrePersonaNov; Blank());;
+        Set(varNombrePersonaNov, "");
+        Set(varCompanyIdNov, Blank());
+        Set(varPuedeRegistrarNovedad, false);
+
+
+        Clear(colPersonaSeleccionadaNov);
+        Clear(colProyectoSeleccionadoNov);
+
+        Set(varProyectoNombreNov, Blank());
+        Set(varTipoNovedadSeleccionadaNov, Blank());
+    Children:
+      - Container1_1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            BorderStyle: =BorderStyle.None
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Contenedor_Encabezado_9:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  Fill: =App.Theme.Colors.Primary
+                  FillPortions: =0
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  PaddingRight: =6
+                Children:
+                  - Icon1_10:
+                      Control: Classic/Icon@2.5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 18, 107, 1)
+                        Color: =RGBA(255, 255, 255, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        FocusedBorderThickness: =0
+                        Height: =Parent.Height
+                        Icon: =Icon.BackArrow
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: =Navigate(PantallaPrincipal)
+                        PaddingBottom: =12
+                        PaddingLeft: =12
+                        PaddingRight: =12
+                        PaddingTop: =12
+                  - Header2_10:
+                      Control: Header@0.0.44
+                      Properties:
+                        BasePaletteColor: =RGBA(189, 178, 176, 1)
+                        Fill: =RGBA(0, 0, 0, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =Parent.Height
+                        IsProfilePictureVisible: =false
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        Logo: =logo
+                        LogoTooltip: ="logotipo"
+                        Style: ='Header.Style'.Primary
+                        Title: ="REGISTRO DE NOVEDAD ES DEL PERSONAL"
+                        TitleFontSize: =15
+                        Width: =Parent.Width-60
+            - Container12_31:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                  X: =40
+                  Y: =40
+                Children:
+                  - tlt_nombresColaborador_24:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="NOVEDAD"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =90
+                  - cmbTipoAplicacionNov:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        ItemDisplayText: =ThisItem.Value
+                        Items: =["PERSONA", "PROYECTO", "GENERAL"]
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnChange: |+
+                          =Set(
+                              varTipoAplicacionNov,
+                              cmbTipoAplicacionNov.Selected.Value
+                          );
+
+                          Set(varTipoNovedadSeleccionadaNov, Blank());
+
+                          Reset(cmbPersonaNov);
+                          Reset(cmbProyectoNov);
+                          Reset(cmbTipoNovedadNov);
+                          Reset(fechaInicioNov);
+                          Reset(fechaFinNov);
+
+
+                          Clear(colPersonaSeleccionadaNov);
+                          Clear(colProyectoSeleccionadoNov);
+                          Clear(colNovedadPreview);
+
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        SelectMultiple: =false
+                        Width: =100
+                  - tlt_nombresColaborador_25:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="NOMBRE"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Visible: =varTipoAplicacionNov = "PERSONA"
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =100
+                  - cmbPersonaNov:
+                      Control: ComboBox@0.0.51
+                      Properties:
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderRadius: =0
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =0.5
+                        DefaultSelectedItems: =colPersonaSeleccionadaNov
+                        Fill: =RGBA(255, 255, 255, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontSize: =13
+                        Height: =30
+                        InputTextPlaceholder: ="Buscar Principal"
+                        Items: |-
+                          =SortByColumns(
+                              Search(
+                                  Filter(
+                                      'ESTRUCTURA GENERAL',
+                                      Upper(Trim(Estado)) = "A" && 
+                                      Grupo = "ADMINISTRATIVO"
+                                  ),
+                                  cmbPersonaNov.SearchText,
+                                  'Nombre Apellido'
+                              ),
+                              "field_2",
+                              SortOrder.Ascending
+                          )
+                        OnChange: "=If(\r\n    !IsBlank(cmbPersonaNov.Selected),\r\n    \r\n    ClearCollect(\r\n        colPersonaSeleccionadaNov,\r\n        cmbPersonaNov.Selected\r\n    );\r\n\r\n    Set(\r\n        varCorreoPersonaNov,\r\n        Lower(\r\n            Trim(\r\n                Coalesce(\r\n                    cmbPersonaNov.Selected.Usuario,\r\n                    cmbPersonaNov.Selected.'Correo Empresa'\r\n                )\r\n            )\r\n        )\r\n    );\r\n\r\n    Set(\r\n        varNombrePersonaNov,\r\n        cmbPersonaNov.Selected.'Nombre Apellido'\r\n    );\r\n\r\n    Set(\r\n        varCargoNov,\r\n        Coalesce(\r\n            cmbPersonaNov.Selected.Cargo,\r\n            \"\"\r\n        )\r\n    );\r\n\r\n    // --- NUEVA LÍNEA: Guardamos el Ekon ---\r\n    Set(\r\n        varEkonPersonaNov,\r\n        Coalesce(\r\n            Text(cmbPersonaNov.Selected.'Código Ekon'),\r\n            \"\"\r\n        )\r\n    );\r\n    \r\n    Clear(colNovedadPreview);\r\n    Set(varPuedeRegistrarNovedad, false)\r\n\r\n);"
+                        Visible: =varTipoAplicacionNov = "PERSONA"
+                        Width: =200
+                      Children:
+                        - field_25:
+                            Control: ComboBoxDataField@1.5.0
+                            Variant: textualColumn
+                            IsLocked: true
+                            Properties:
+                              FieldDisplayName: ="field_2"
+                              FieldName: ="field_2"
+                              FieldType: ="s"
+                              Order: =2
+                  - lblResumenPersonaNov:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        PaddingBottom: =
+                        PaddingLeft: =
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: |-
+                          =With(
+                              {
+                                  asignacionHoy: LookUp(
+                                      colAsignacionesGlobales,
+                                      ResponsableCorreo = varCorreoPersonaNov &&
+                                      FechaClave = Text(Today(), "[$-en-US]yyyy-mm-dd")
+                                  )
+                              },
+                              If(
+                                  IsBlank(varCorreoPersonaNov),
+                                  "",
+                                  If(
+                                      IsBlank(asignacionHoy.ResponsableCorreo),
+                                      "Sin asignación activa hoy",
+                                      "Hoy está en: " &
+                                      Coalesce(
+                                          asignacionHoy.ProyectoNombre,
+                                          asignacionHoy.ProyectoCodigo,
+                                          "Proyecto sin nombre"
+                                      ) &
+                                      " | Rol: " & asignacionHoy.Rol
+                                  )
+                              )
+                          )
+                        Visible: =varTipoAplicacionNov = "PERSONA"
+                        Width: =300
+                  - tlt_nombresColaborador_29:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =35
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="PROYECTO"
+                        Visible: =varTipoAplicacionNov = "PROYECTO"
+                        Width: =75
+                  - cmbProyectoNov:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        DefaultSelectedItems: =colProyectoSeleccionadoNov
+                        Font: =Font.'Open Sans Condensed'
+                        InputTextPlaceholder: ="Seleccionar Proyecto"
+                        ItemDisplayText: =ThisItem.NombreMostrar
+                        Items: |-
+                          =/*
+                          AddColumns(
+                              Filter(
+                                  'SIG PROYECTOS';
+                                  ESTADO.Value = "ACTIVO" ||
+                                  ESTADO.Value = "SUSPENDIDO"
+                              );
+                              NombreMostrar;
+                              Text(Título) & " - " & Text(ParseJSON(INF_GENERAL).InfoProyecto.Proyecto.Nombre)
+                          )
+                          */
+
+                          AddColumns(
+                              Filter(
+                                  'SIG PROYECTOS',
+                                  (ESTADO.Value = "ACTIVO" || ESTADO.Value = "SUSPENDIDO") &&
+                                  // ✨ FILTRO DE SEGURIDAD: Admin ve todo, los demás solo lo que crearon
+                                  (varEsSuperAdmin || Text(ParseJSON(INF_GENERAL).InfoRegistro.Correo) = varUsuarioActual.Email)
+                              ),
+                              NombreMostrar,
+                              With(
+                                  { jsonInfo: ParseJSON(INF_GENERAL) },
+                                  If(
+                                      IsBlank(Text(jsonInfo.InfoProyecto.Proyecto.Nombre)),
+                                      "PLANTA - " & Text(jsonInfo.InfoProyecto.Dimension.Descripcion),
+                                      Text(jsonInfo.InfoProyecto.Proyecto.Nombre)
+                                  )
+                              )
+                          )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnChange: |-
+                          =If(
+                              !IsBlank(cmbProyectoNov.Selected.Título),
+
+                              ClearCollect(
+                                  colProyectoSeleccionadoNov,
+                                  cmbProyectoNov.Selected
+                              );
+
+                              Set(
+                                  varProyectoNovedadSeleccionado,
+                                  cmbProyectoNov.Selected
+                              );
+
+                              Set(
+                                  varProjectUIDNov,
+                                  Text(cmbProyectoNov.Selected.PROJECT_UID)
+                              );
+
+                              Set(
+                                  varInfoProyectoNov,
+                                  ParseJSON(cmbProyectoNov.Selected.INF_GENERAL)
+                              );
+
+                              Set(
+                                  varCompanyIdNov,
+                                  Value(varInfoProyectoNov.InfoProyecto.Compania.CompanyId)
+                              );
+
+                              Set(
+                                  varProyectoNombreNov,
+                                  Text(varInfoProyectoNov.InfoProyecto.Proyecto.Nombre)
+                              );
+
+                              Clear(colNovedadPreview);
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        SelectMultiple: =false
+                        Visible: =varTipoAplicacionNov = "PROYECTO"
+                        Width: =175
+                  - tlt_nombresColaborador_27:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =35
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="DESDE"
+                        Width: =60
+                  - fechaInicioNov:
+                      Control: ModernDatePicker@1.0.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Format: =DatePickerFormat.Short
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Placeholder: ="Inicio"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Width: =120
+                  - tlt_nombresColaborador_28:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Color: =RGBA(9, 33, 98, 1)
+                        Font: =Font.'Open Sans Condensed'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =35
+                        LayoutMinWidth: =96
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        RadiusBottomLeft: =0
+                        RadiusBottomRight: =0
+                        RadiusTopLeft: =0
+                        RadiusTopRight: =0
+                        Size: =14
+                        Text: ="HASTA"
+                        Width: =60
+                  - fechaFinNov:
+                      Control: ModernDatePicker@1.0.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Format: =DatePickerFormat.Short
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        Placeholder: ="Fin"
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        StartDate: =fechaInicioNov.SelectedDate
+                        Width: =120
+            - Container7:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  FillPortions: =0
+                  Height: =50
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutGap: =10
+                  LayoutJustifyContent: =LayoutJustifyContent.Center
+                  LayoutMinHeight: =16
+                  LayoutMinWidth: =16
+                  PaddingRight: =8
+                Children:
+                  - tlt_nombresColaborador_26:
+                      Control: Text@0.0.51
+                      Properties:
+                        Align: ='TextCanvas.Align'.Center
+                        BorderColor: =RGBA(0, 0, 0, 1)
+                        BorderStyle: =BorderStyle.None
+                        BorderThickness: =1
+                        Font: =Font.'Open Sans Condensed'
+                        FontColor: =RGBA(9, 33, 98, 1)
+                        Height: =35
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        Text: ="TIPO"
+                        VerticalAlign: =VerticalAlign.Middle
+                        Weight: ='TextCanvas.Weight'.Semibold
+                        Width: =100
+                  - cmbTipoNovedadNov:
+                      Control: ModernCombobox@1.1.2
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        InputTextPlaceholder: ="Seleccionar"
+                        ItemDisplayText: =ThisItem.TipoNovedad
+                        Items: |-
+                          =If(
+                              varTipoAplicacionNov = "PROYECTO" ||
+                              varTipoAplicacionNov = "GENERAL",
+
+                              Filter(
+                                  colCatalogoNovedades,
+                                  TipoNovedad = "FERIADO"
+                              ),
+
+                              Filter(
+                                  colCatalogoNovedades,
+                                  TipoNovedad <> "DESCANSO" &&
+                                  TipoNovedad <> "FERIADO"
+                              )
+                          )
+                        LayoutMinHeight: =16
+                        LayoutMinWidth: =16
+                        OnChange: |-
+                          =Set(
+                              varTipoNovedadSeleccionadaNov,
+                              cmbTipoNovedadNov.Selected.TipoNovedad
+                          );
+
+                          Set(
+                              varPuedeRegistrarNovedad,
+                              false
+                          );
+
+                          Clear(colNovedadPreview);
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        SelectMultiple: =false
+                        Width: =150
+                  - btnVistaPreviaNov:
+                      Control: Button@0.0.45
+                      Properties:
+                        Appearance: ='ButtonCanvas.Appearance'.Outline
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        BorderRadius: =20
+                        DisplayMode: |
+                          =DisplayMode.Edit
+                        Font: =Font.'Open Sans Condensed'
+                        FontSize: =16
+                        Icon: ="CheckmarkCircle"
+                        IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: |-
+                          =Clear(colNovedadPreview);
+
+                          Set(varPuedeRegistrarNovedad, true);
+
+                          If(
+                              IsBlank(varTipoAplicacionNov),
+                              Notify(
+                                  "Selecciona el tipo de aplicación",
+                                  NotificationType.Warning
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad &&
+                              varTipoAplicacionNov = "PERSONA" &&
+                              IsBlank(varNombrePersonaNov),
+                              Notify(
+                                  "Selecciona la persona",
+                                  NotificationType.Warning
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad &&
+                              varTipoAplicacionNov = "PROYECTO" &&
+                              IsBlank(varProjectUIDNov),
+                              Notify(
+                                  "Selecciona el proyecto",
+                                  NotificationType.Warning
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad &&
+                              IsBlank(cmbTipoNovedadNov.Selected.TipoNovedad),
+                              Notify(
+                                  "Selecciona el tipo de novedad",
+                                  NotificationType.Warning
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad &&
+                              (
+                                  IsBlank(fechaInicioNov.SelectedDate) ||
+                                  IsBlank(fechaFinNov.SelectedDate)
+                              ),
+                              Notify(
+                                  "Selecciona fecha inicio y fecha fin",
+                                  NotificationType.Warning
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad &&
+                              fechaFinNov.SelectedDate < fechaInicioNov.SelectedDate,
+                              Notify(
+                                  "La fecha fin debe ser mayor o igual a la fecha inicio",
+                                  NotificationType.Error
+                              );
+                              Set(varPuedeRegistrarNovedad, false)
+                          );
+
+                          If(
+                              varPuedeRegistrarNovedad,
+                              ForAll(
+                                  Sequence(
+                                      DateDiff(
+                                          fechaInicioNov.SelectedDate,
+                                          fechaFinNov.SelectedDate,
+                                          TimeUnit.Days
+                                      ) + 1
+                                  ) As d,
+                                  With(
+                                      {
+                                          fechaDiaNov: DateAdd(
+                                              fechaInicioNov.SelectedDate,
+                                              d.Value - 1,
+                                              TimeUnit.Days
+                                          )
+                                      },
+                                      Collect(
+                                          colNovedadPreview,
+                                          {
+                                              Fecha: fechaDiaNov,
+                                              FechaClave: Text(
+                                                  fechaDiaNov,
+                                                  "[$-en-US]yyyy-mm-dd"
+                                              ),
+                                              TipoAplicacion: varTipoAplicacionNov,
+                                              TipoNovedad: cmbTipoNovedadNov.Selected.TipoNovedad,
+                                              CategoriaId: cmbTipoNovedadNov.Selected.CategoriaId,
+                                              CategoriaDescripcion: cmbTipoNovedadNov.Selected.CategoriaDescripcion,
+                                              EstadoExcel: cmbTipoNovedadNov.Selected.EstadoExcel,
+                                              ObservacionExcel: cmbTipoNovedadNov.Selected.ObservacionExcel,
+                                              Sigla: cmbTipoNovedadNov.Selected.Sigla,
+                                              CorreoPersona: varCorreoPersonaNov,
+                                              NombrePersona: varNombrePersonaNov,
+                                              ProjectUID: varProjectUIDNov,
+                                              CompanyId: varCompanyIdNov,
+                                              NombreProyecto: varProyectoNombreNov,
+                                              NombreMostrar: If(
+                                                  varTipoAplicacionNov = "PERSONA",
+                                                  varNombrePersonaNov,
+                                                  If(
+                                                      varTipoAplicacionNov = "PROYECTO",
+                                                      varProyectoNombreNov,
+                                                      "GENERAL"
+                                                  )
+                                              )
+                                          }
+                                      )
+                                  )
+                              );
+
+                              Notify(
+                                  "Vista previa generada correctamente",
+                                  NotificationType.Success
+                              )
+                          );
+                        Text: ="Ver"
+                  - btnRegistrarNovedadNov:
+                      Control: Button@0.0.45
+                      Properties:
+                        Appearance: ='ButtonCanvas.Appearance'.Outline
+                        BasePaletteColor: =RGBA(249, 83, 109, 1)
+                        BorderRadius: =20
+                        DisplayMode: |-
+                          =If(
+                              CountRows(colNovedadPreview) = 0,
+                              DisplayMode.Disabled,
+                              DisplayMode.Edit
+                          )
+                        Font: =Font.'Open Sans Condensed'
+                        FontSize: =16
+                        Icon: ="CheckmarkCircle"
+                        IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        OnSelect: |-
+                          =Set(varNovedadUID, GUID());
+
+                          Set(
+                              varCodigoNovedad,
+                              "NOV-" & Text(Today(), "yyyymmdd") & "-" & Right(Substitute(varNovedadUID, "-", ""), 6)
+                          );
+
+                          Set(
+                              varDetalleNovedadJson,
+                              JSON(
+                                  {
+                                      NovedadUID: varNovedadUID,
+                                      TipoAplicacion: varTipoAplicacionNov,
+                                      TipoNovedad: cmbTipoNovedadNov.Selected.TipoNovedad,
+                                      CategoriaId: cmbTipoNovedadNov.Selected.CategoriaId,
+                                      CategoriaDescripcion: cmbTipoNovedadNov.Selected.CategoriaDescripcion,
+                                      EstadoExcel: cmbTipoNovedadNov.Selected.EstadoExcel,
+                                      ObservacionExcel: cmbTipoNovedadNov.Selected.ObservacionExcel,
+                                      Sigla: cmbTipoNovedadNov.Selected.Sigla,
+
+                                      Persona: {
+                                          Correo: varCorreoPersonaNov,
+                                          Nombre: varNombrePersonaNov,
+                                          Ekon: varEkonPersonaNov
+                                      },
+
+                                      OrigenPermiso: "aplicacionProyectos",
+                                      Origen: "",
+
+                                      Proyecto: {
+                                          ProjectUID: varProjectUIDNov,
+                                          CompanyId: varCompanyIdNov,
+                                          NombreProyecto: varProyectoNombreNov
+                                      },
+
+                                      Fechas: {
+                                          FechaInicio: Text(fechaInicioNov.SelectedDate, "yyyy-mm-dd"),
+                                          FechaFin: Text(fechaFinNov.SelectedDate, "yyyy-mm-dd")
+                                      },
+
+                                      Dias: ForAll(
+                                          colNovedadPreview,
+                                          {
+                                              Fecha: Text(Fecha, "yyyy-mm-dd"),
+                                              FechaClave: FechaClave,
+                                              EstadoExcel: EstadoExcel,
+                                              ObservacionExcel: ObservacionExcel
+                                          }
+                                      ),
+
+                                      Registro: {
+                                          FechaRegistro: Text(Now(), "yyyy-mm-dd hh:mm:ss"),
+                                          UsuarioRegistro: UsuariosdeOffice365.MyProfileV2().displayName,
+                                          CorreoRegistro: UsuariosdeOffice365.MyProfileV2().userPrincipalName
+                                      }
+                                  },
+                                  JSONFormat.Compact
+                              )
+                          );
+
+                          Patch(
+                              'NOVEDADES ASISTENCIA',
+                              Defaults('NOVEDADES ASISTENCIA'),
+                              {
+                                  Título: varCodigoNovedad,
+                                  NOVEDAD_UID: Text(varNovedadUID),
+                                  TIPO_APLICACION: varTipoAplicacionNov,
+                                  FECHA_INICIO: fechaInicioNov.SelectedDate,
+                                  FECHA_FIN: fechaFinNov.SelectedDate,
+                                  CORREO_PERSONA: varCorreoPersonaNov,
+                                  PROJECT_UID: varProjectUIDNov,
+                                  COMPANY_ID: varCompanyIdNov,
+                                  ESTADO_NOVEDAD: "ACTIVA",
+                                  DETALLE_JSON: varDetalleNovedadJson
+                              }
+                          );
+
+                          Notify(
+                              "Novedad registrada correctamente",
+                              NotificationType.Success
+                          );
+
+                          Clear(colNovedadPreview);
+                          Reset(cmbTipoAplicacionNov);
+                          Reset(cmbPersonaNov);
+                          Reset(cmbProyectoNov);
+                          Reset(cmbTipoNovedadNov);
+                          Reset(fechaInicioNov);
+                          Reset(fechaFinNov);
+                        Text: ="Registrar"
+                        Width: =120
+            - galVistaPreviaNov:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  AlignInContainer: =AlignInContainer.Start
+                  BorderColor: =RGBA(245, 245, 245, 1)
+                  Items: |-
+                    =SortByColumns(
+                        colNovedadPreview,
+                        "Fecha",
+                        SortOrder.Ascending
+                    )
+                  TemplateSize: =30
+                  Width: =Parent.Width * 0.7
+                Children:
+                  - Text3_3:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        OnSelect: =Select(Parent)
+                        PaddingBottom: =
+                        PaddingLeft: =
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: |-
+                          ="OBSERVACIÓN: " & ThisItem.ObservacionExcel
+                        Width: =200
+                        X: =732
+                  - Text3_2:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        OnSelect: =Select(Parent)
+                        PaddingBottom: =
+                        PaddingLeft: =
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: |-
+                          ="ESTADO: " & ThisItem.EstadoExcel
+                        X: =600
+                  - Text3:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        OnSelect: =Select(Parent)
+                        PaddingBottom: =
+                        PaddingLeft: =10
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: |-
+                          ="Fecha: " & ThisItem.Fecha
+                        X: =392
+                  - Text3_1:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        OnSelect: =Select(Parent)
+                        PaddingBottom: =
+                        PaddingLeft: =10
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: |-
+                          ="TIPO: " & ThisItem.TipoNovedad
+                        X: =200
+                  - Text3_4:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Font: =Font.'Open Sans Condensed'
+                        Height: =30
+                        OnSelect: =Select(Parent)
+                        PaddingBottom: =
+                        PaddingLeft: =10
+                        PaddingRight: =
+                        PaddingTop: =
+                        Size: =14
+                        Text: =ThisItem.NombreMostrar
+                        Width: =200

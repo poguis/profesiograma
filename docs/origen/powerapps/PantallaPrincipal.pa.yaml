@@ -1,0 +1,2462 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  PantallaPrincipal:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      OnVisible: |-
+        =
+        /*
+        ClearCollect(colInfraestructuraIntegral; {Nombre: ""; Departamento: ""; Usuario: ""});; 
+        Clear(colInfraestructuraIntegral);;
+
+        ClearCollect(colTelecomunicaciones; {Nombre: ""; Departamento: ""; Usuario: ""});;
+        Clear(colTelecomunicaciones);;
+
+        ClearCollect(colPetroleoGas; {Nombre: ""; Departamento: ""; Usuario: ""});;
+        Clear(colPetroleoGas);;
+
+        ClearCollect(colEnergia; {Nombre: ""; Departamento: ""; Usuario: ""});;
+        Clear(colEnergia);;
+
+        ClearCollect(colInfraestructura; {Nombre: ""; Departamento: ""; Usuario: ""});;
+        Clear(colInfraestructura);;
+
+        ClearCollect(colMineria; {Nombre: ""; Departamento: ""; Usuario: ""});; 
+        Clear(colMineria);;
+        */
+
+
+
+
+        With(
+            { _jsonParseado: ParseJSON(varRegistroPermisos.PermisosGenerales) },
+
+            // 1. Llenamos Infraestructura Integral
+            ClearCollect(
+                colInfraestructuraIntegral,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO DE INFRAESTRUCTURA'),
+                        { Nombre: Text(Value.Nombre), Correo: Text(Value.Correo), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+
+            // 2. Llenamos Infraestructura Metálica
+            ClearCollect(
+                colInfraestructura,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO DE INFRAESTRUCTURA METALICA'),
+                        { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+
+            // 3. Llenamos Telecomunicaciones
+            ClearCollect(
+                colTelecomunicaciones,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO SEDEMI TELECOM'),
+                        { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+
+            // 4. Llenamos Petróleo y Gas
+            ClearCollect(
+                colPetroleoGas,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO SEDEMI PETROLEO Y GAS'),
+                        { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+
+            // 5. Llenamos Energía
+            ClearCollect(
+                colEnergia,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO SEDEMI ENERGIA'),
+                        { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+
+            // 6. Llenamos Minería
+            ClearCollect(
+                colMineria,
+                IfError(
+                    ForAll(
+                        Table(_jsonParseado.'DEPARTAMENTO SEDEMI MINERIA'),
+                        { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario) }
+                    ),
+                    []
+                )
+            );
+        )
+    Children:
+      - ScreenContainer1:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Height: =Parent.Height
+            LayoutDirection: =LayoutDirection.Vertical
+            Width: =Parent.Width
+          Children:
+            - Container4_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  LayoutMaxHeight: =
+                  LayoutMaxWidth: =
+                Children:
+                  - Container5_1:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        BorderColor: =RGBA(214, 221, 224, 1)
+                        BorderThickness: =1
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        LayoutAlignItems: =LayoutAlignItems.Center
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =30
+                        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                        PaddingBottom: =20
+                        PaddingLeft: =6
+                        PaddingRight: =6
+                        PaddingTop: =20
+                        Width: =If(menuabierto = true, 290, 100)
+                      Children:
+                        - Image1:
+                            Control: Image@2.2.3
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Stretch
+                              BorderColor: =RGBA(0, 18, 107, 1)
+                              Height: =70
+                              Image: =If(menuabierto,logo_blancoSF, logo)
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinWidth: =60
+                              OnSelect: "=/*\n// 1. Buscamos el registro específico y lo guardamos en una variable\nUpdateContext({varRegistroActual: LookUp('SIG PROYECTOS'; Título = \"666\")});;\n\n// 2. Evaluamos los permisos usando If() y tu variable global del OnStart\nIf(\n    // Condición: El correo está en el JSON de PermisosGenerales OR es un Super Admin\n    User().Email in varRegistroActual.PermisosGenerales Or varEsSuperAdmin;\n    \n    // --- ACCIONES SI EL USUARIO SÍ TIENE PERMISOS ---\n    \n    // Abrimos el PopUp\n    UpdateContext({varMostrarPopUp: true});;\n    \n    // \"Parseamos\" el JSON que está en la columna PermisosGenerales\n    UpdateContext({varDatosGuardados: ParseJSON(varRegistroActual.PermisosGenerales)});;\n    \n    // Llenamos las 6 colecciones\n    ClearCollect(\n        colInfraestructuraIntegral;\n        ForAll(\n            Table(varDatosGuardados.InfraestructuraIntegral);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    );;\n    ClearCollect(\n        colTelecomunicaciones;\n        ForAll(\n            Table(varDatosGuardados.Telecomunicaciones);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    );;\n    ClearCollect(\n        colPetroleoGas;\n        ForAll(\n            Table(varDatosGuardados.PetroleoGas);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    );;\n    ClearCollect(\n        colEnergia;\n        ForAll(\n            Table(varDatosGuardados.Energia);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    );;\n    ClearCollect(\n        colInfraestructura;\n        ForAll(\n            Table(varDatosGuardados.Infraestructura);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    );;\n    ClearCollect(\n        colMineria;\n        ForAll(\n            Table(varDatosGuardados.Mineria);\n            {\n                Nombre: Text(Value.Nombre);\n                Departamento: Text(Value.Departamento);\n                Usuario: Text(Value.Usuario)\n            }\n        )\n    ) // <-- Separador del argumento Falso del If()\n)\n*/\n\n// 1. Buscamos el registro específico y lo guardamos en una variable\nUpdateContext({varRegistroActual: LookUp('SIG PROYECTOS', Título = \"666\")});\n\n// 2. Evaluamos los permisos usando If() y tu variable global del OnStart\nIf(\n    // Condición: El correo está en el JSON de PermisosGenerales OR es un Super Admin\n    //User().Email in varRegistroActual.PermisosGenerales Or varEsSuperAdmin;\n    varEsSuperAdmin,\n    \n    // --- ACCIONES SI EL USUARIO SÍ TIENE PERMISOS ---\n    \n    // Abrimos el PopUp\n    UpdateContext({varMostrarPopUp: true});\n    \n    // \"Parseamos\" el JSON que está en la columna PermisosGenerales\n    UpdateContext({varDatosGuardados: ParseJSON(varRegistroActual.PermisosGenerales)});\n    \n    // Llenamos las 6 colecciones con los nombres CORRECTOS\n    ClearCollect(\n        colInfraestructuraIntegral,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO DE INFRAESTRUCTURA'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colTelecomunicaciones,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO SEDEMI TELECOM'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colPetroleoGas,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO SEDEMI PETROLEO Y GAS'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colEnergia,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO SEDEMI ENERGIA'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colInfraestructura,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO DE INFRAESTRUCTURA METALICA'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colMineria,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'DEPARTAMENTO SEDEMI MINERIA'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    );\n    ClearCollect(\n        colSig,\n        IfError(\n            ForAll(\n                Table(varDatosGuardados.'UNIDAD SISTEMA INTEGRADO DE GESTION'),\n                { Nombre: Text(Value.Nombre), Departamento: Text(Value.Departamento), Usuario: Text(Value.Usuario), Notificado: IfError(Boolean(Value.Notificado), true) }\n            ),\n            []\n        )\n    ) \n)"
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                        - Opciones_planta_1:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: =User().Email in Text(LookUp('SIG PROYECTOS', Título = "666").PermisosGenerales) Or varEsSuperAdmin
+                              Width: =If(menuabierto,280,60)
+                            Children:
+                              - Button1_2:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: |-
+                                      =Clear(colAsignacionesPreview);
+                                      Clear(colConflictosAsignacion);
+                                      Clear(colConflictosResumen);
+
+
+
+
+
+                                      Set(varModoProyecto, "NUEVO");
+                                      Set(varProyectoSeleccionado, Blank());
+
+                                      ClearCollect(
+                                          colCompanias,
+                                          Table(
+                                              ParseJSON(
+                                                  ConsultarProyecto.Run(
+                                                      "",
+                                                      "",
+                                                      "COMPANIAS"
+                                                  ).respuestajson
+                                              )
+                                          )
+                                      );
+
+
+                                      ClearCollect(
+                                          colHorarios,
+                                          Table(
+                                              ParseJSON(
+                                                  ConsultarProyecto.Run(
+                                                      "",
+                                                      "",
+                                                      "HORARIOS"
+                                                  ).respuestajson
+                                              )
+                                          )
+                                      );
+
+                                      Navigate(GestionProyecto)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Proyectos"
+                                    Visible: |+
+                                      =If(menuabierto,true,false)
+
+                                    Width: =Parent.Width
+                              - Icon2_2:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisplayMode: |-
+                                      =DisplayMode.Edit
+                                      /*
+                                      If(User().Email in ["sig9@sedemi.com"; //Evelin Condor
+                                                          "dispensario.medico6@sedemi.com"; //Indry Cardenas 
+                                                          "dispensario.medico3@sedemi.com";  //Jorge Maisincho
+                                                          "asistente.auditoria1@sedemi.com"; //Ariel Narváez
+                                                          "dispensario.medico2@sedemi.com"; //Balbina Rodriguez
+                                                          //"sig3@sedemi.com"
+                                                          ]; //Asistente 2 SIG
+                                      DisplayMode.Edit; DisplayMode.Disabled)
+                                      */
+                                    Height: =Parent.Height
+                                    Icon: =Icon.ListScrollWatchlist
+                                    OnSelect: |-
+                                      =Clear(colAsignacionesPreview);
+                                      Clear(colConflictosAsignacion);
+                                      Clear(colConflictosResumen);
+
+
+
+
+                                      Set(varModoProyecto, "NUEVO");
+                                      Set(varProyectoSeleccionado, Blank());
+
+                                      ClearCollect(
+                                          colCompanias,
+                                          Table(
+                                              ParseJSON(
+                                                  ConsultarProyecto.Run(
+                                                      "",
+                                                      "",
+                                                      "COMPANIAS"
+                                                  ).respuestajson
+                                              )
+                                          )
+                                      );
+
+
+                                      ClearCollect(
+                                          colHorarios,
+                                          Table(
+                                              ParseJSON(
+                                                  ConsultarProyecto.Run(
+                                                      "",
+                                                      "",
+                                                      "HORARIOS"
+                                                  ).respuestajson
+                                              )
+                                          )
+                                      );
+
+                                      Navigate(GestionProyecto)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =5
+                                    PaddingRight: =5
+                                    PaddingTop: =10
+                                    Tooltip: ="Consulta Personal"
+                                    Visible: |
+                                      =true
+                                    Width: =60
+                        - Opciones_planta_2:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: =User().Email in Text(LookUp('SIG PROYECTOS', Título = "666").PermisosGenerales) Or varEsSuperAdmin
+                              Width: =If(menuabierto,280,60)
+                              Y: |+
+                                =0
+
+                            Children:
+                              - Button1_3:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: =Navigate(ResumenProyectos)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Control Proyectos"
+                                    Visible: =If(menuabierto,true,false)
+                                    Width: =Parent.Width
+                              - Icon2_3:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    Height: =Parent.Height
+                                    Icon: =Icon.LogJournal
+                                    OnSelect: =Navigate(ResumenProyectos)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =5
+                                    PaddingRight: =5
+                                    PaddingTop: =10
+                                    Tooltip: ="Gestión de Proyectos"
+                                    Width: =60
+                        - Opciones_planta_3:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: =User().Email in Text(LookUp('SIG PROYECTOS', Título = "666").PermisosGenerales) Or varEsSuperAdmin
+                              Width: =If(menuabierto,280,60)
+                              Y: |+
+                                =0
+
+                            Children:
+                              - Button1_4:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: =Navigate(ControlMensualProyectos)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Cronograma Proyectos"
+                                    Visible: =If(menuabierto,true,false)
+                                    Width: =Parent.Width
+                              - Icon2_4:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    Height: =Parent.Height
+                                    Icon: =Icon.CalendarBlank
+                                    OnSelect: =Navigate(ControlMensualProyectos)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =10
+                                    PaddingRight: =10
+                                    PaddingTop: =10
+                                    Tooltip: ="Cronograma"
+                                    Width: =60
+                        - Opciones_planta_4:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: =User().Email in Text(LookUp('SIG PROYECTOS', Título = "666").PermisosGenerales) Or varEsSuperAdmin
+                              Width: =If(menuabierto,280,60)
+                              Y: |+
+                                =0
+
+                            Children:
+                              - Button1_5:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: =Navigate(RegistrarNovedadAsistencia)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Noverdad Personal"
+                                    Visible: =If(menuabierto,true,false)
+                                    Width: =Parent.Width
+                              - Icon2_5:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    Height: =Parent.Height
+                                    Icon: =Icon.AddToCalendar
+                                    OnSelect: =Navigate(RegistrarNovedadAsistencia)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =10
+                                    PaddingRight: =10
+                                    PaddingTop: =10
+                                    Tooltip: ="Registro de Novedades"
+                                    Width: =60
+                        - Opciones_planta_5:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: |-
+                                =varEsSuperAdmin || User().Email in
+                                [
+                                    "dispensario.medico2@sedemi.com", //Balbina
+                                    "sig9@sedemi.com",
+                                    "dispensario.medico6@sedemi.com",
+                                    "salud_ocupacional@sedemi.com",
+                                    "paramedico22@sedemi.com",
+                                    "paramedico3@sedemi.com",
+                                    ""
+                                ]
+                              Width: =If(menuabierto,280,60)
+                            Children:
+                              - Button1_6:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: =Navigate(ControlPerfiles)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Perfiles"
+                                    Visible: |+
+                                      =If(menuabierto,true,false)
+
+                                    Width: =Parent.Width
+                              - Icon2_6:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisplayMode: |-
+                                      =DisplayMode.Edit
+                                      /*
+                                      If(User().Email in ["sig9@sedemi.com"; //Evelin Condor
+                                                          "dispensario.medico6@sedemi.com"; //Indry Cardenas 
+                                                          "dispensario.medico3@sedemi.com";  //Jorge Maisincho
+                                                          "asistente.auditoria1@sedemi.com"; //Ariel Narváez
+                                                          "dispensario.medico2@sedemi.com"; //Balbina Rodriguez
+                                                          //"sig3@sedemi.com"
+                                                          ]; //Asistente 2 SIG
+                                      DisplayMode.Edit; DisplayMode.Disabled)
+                                      */
+                                    Height: =Parent.Height
+                                    Icon: =Icon.ListScrollWatchlist
+                                    OnSelect: =Navigate(ControlPerfiles)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =5
+                                    PaddingRight: =5
+                                    PaddingTop: =10
+                                    Tooltip: ="Consultar Perfil"
+                                    Width: =60
+                        - Opciones_planta_6:
+                            Control: GroupContainer@1.5.0
+                            Variant: ManualLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.Center
+                              BorderColor: =RGBA(245, 245, 245, 1)
+                              BorderStyle: =BorderStyle.None
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =45
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              LayoutMinHeight: =50
+                              LayoutMinWidth: =0
+                              RadiusBottomLeft: =20
+                              RadiusBottomRight: =20
+                              RadiusTopLeft: =20
+                              RadiusTopRight: =20
+                              Visible: =varEsSuperAdmin
+                              Width: =If(menuabierto,280,60)
+                            Children:
+                              - Button1_8:
+                                  Control: Classic/Button@2.2.0
+                                  Properties:
+                                    BorderColor: =ColorFade(Self.Fill, -15%)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                                    Fill: =RGBA(0, 0, 0, 0)
+                                    Font: =Font.'Open Sans Condensed'
+                                    Height: =Parent.Height
+                                    HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                                    HoverColor: =RGBA(255, 255, 255, 1)
+                                    HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                                    OnSelect: =Navigate(ControlEPPS)
+                                    PaddingLeft: =60
+                                    PressedBorderColor: =Self.Fill
+                                    PressedColor: =Self.Fill
+                                    PressedFill: =Self.Color
+                                    Text: ="Control EPPS"
+                                    Visible: |+
+                                      =If(menuabierto,true,false)
+
+                                    Width: =Parent.Width
+                              - Icon2_14:
+                                  Control: Classic/Icon@2.5.0
+                                  Properties:
+                                    BorderColor: =RGBA(0, 18, 107, 1)
+                                    Color: =RGBA(12, 59, 94, 1)
+                                    DisplayMode: |-
+                                      =DisplayMode.Edit
+                                      /*
+                                      If(User().Email in ["sig9@sedemi.com"; //Evelin Condor
+                                                          "dispensario.medico6@sedemi.com"; //Indry Cardenas 
+                                                          "dispensario.medico3@sedemi.com";  //Jorge Maisincho
+                                                          "asistente.auditoria1@sedemi.com"; //Ariel Narváez
+                                                          "dispensario.medico2@sedemi.com"; //Balbina Rodriguez
+                                                          //"sig3@sedemi.com"
+                                                          ]; //Asistente 2 SIG
+                                      DisplayMode.Edit; DisplayMode.Disabled)
+                                      */
+                                    Height: =Parent.Height
+                                    Icon: =Icon.ToolsWrench
+                                    OnSelect: =Navigate(ControlEPPS)
+                                    PaddingBottom: =10
+                                    PaddingLeft: =5
+                                    PaddingRight: =5
+                                    PaddingTop: =10
+                                    Tooltip: ="Consultar Perfil"
+                                    Visible: |
+                                      =true
+                                    Width: =60
+                        - Icon1_2:
+                            Control: Classic/Icon@2.5.0
+                            Properties:
+                              BorderColor: =RGBA(0, 18, 107, 1)
+                              Color: =RGBA(12, 59, 94, 1)
+                              Height: =50
+                              Icon: =Icon.Hamburger
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              OnSelect: =If(menuabierto = true, Set(menuabierto, false),Set(menuabierto, true))
+                              PaddingBottom: =10
+                              PaddingRight: =10
+                              PaddingTop: =10
+                              Width: =If(menuabierto,320,60)
+                  - Container9:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        DropShadow: =DropShadow.None
+                        LayoutMaxHeight: =
+                        LayoutMaxWidth: =
+                      Children:
+                        - Image8:
+                            Control: Image@2.2.3
+                            Properties:
+                              BorderColor: =RGBA(0, 18, 107, 1)
+                              Height: =Parent.Height
+                              Image: ='logo blanco'
+                              Width: =Parent.Width
+      - Container18:
+          Control: GroupContainer@1.5.0
+          Variant: AutoLayout
+          Properties:
+            Fill: =RGBA(53, 61, 63, 1)
+            Height: =Parent.Height
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Vertical
+            LayoutOverflowX: =LayoutOverflow.Scroll
+            LayoutOverflowY: =LayoutOverflow.Scroll
+            PaddingBottom: =8
+            PaddingLeft: =8
+            PaddingRight: =8
+            PaddingTop: =8
+            Visible: =varMostrarPopUp
+            Width: =Parent.Width
+          Children:
+            - CerrarPopUpP_9:
+                Control: Classic/Icon@2.5.0
+                Properties:
+                  AlignInContainer: =AlignInContainer.End
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =40
+                  Icon: =Icon.CancelBadge
+                  OnSelect: |-
+                    =UpdateContext({varMostrarPopUp: false})
+                  Width: =40
+                  X: =40
+                  Y: =40
+            - Container14_2:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0
+                  Height: =(Parent.Height/2) - 60
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  Width: =Parent.Width
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container3_5:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_5:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_28:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="INFRAESTRUCTURA INTEGRAL"
+                                    Width: =Parent.Width
+                        - Container17_4:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_3:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_3.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_11:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_3.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colInfraestructuraIntegral, Usuario = cmbAdminsBuscar_3.Selected.Usuario)),
+                                              Collect(
+                                                  colInfraestructuraIntegral, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_3.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_3.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_3.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_3)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_5:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_3:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colInfraestructuraIntegral
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_5:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_7:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_7:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colInfraestructuraIntegral, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+                  - Container3_6:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_6:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_29:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="TELECOMUNICACIONES"
+                                    Width: =Parent.Width
+                        - Container17_7:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_4:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_4.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_13:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_4.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colTelecomunicaciones, Usuario = cmbAdminsBuscar_4.Selected.Usuario)),
+                                              Collect(
+                                                  colTelecomunicaciones, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_4.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_4.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_4.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_4)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_6:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_4:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colTelecomunicaciones
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_6:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_8:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_8:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colTelecomunicaciones, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+                  - Container3_7:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_8:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_30:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="PETRÓLEO & GAS"
+                                    Width: =Parent.Width
+                        - Container17_15:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_5:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_5.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_14:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_5.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colPetroleoGas, Usuario = cmbAdminsBuscar_5.Selected.Usuario)),
+                                              Collect(
+                                                  colPetroleoGas, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_5.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_5.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_5.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_5)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_7:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_5:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colPetroleoGas
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_7:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_9:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_9:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colPetroleoGas, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+            - Container14_1:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0
+                  Height: =(Parent.Height/2) - 60
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  Width: =Parent.Width
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container3_8:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_9:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_25:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="ENERGÍA"
+                                    Width: =Parent.Width
+                        - Container17_10:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_6:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_6.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_15:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_6.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colEnergia, Usuario = cmbAdminsBuscar_6.Selected.Usuario)),
+                                              Collect(
+                                                  colEnergia, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_6.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_6.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_6.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_6)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_8:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_6:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colEnergia
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_8:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_10:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_10:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colEnergia, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+                  - Container3_9:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_11:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_26:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="INFRAESTRUCTURA METÁLICA"
+                                    Width: =Parent.Width
+                        - Container17_12:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_7:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_7.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_16:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_7.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colInfraestructura, Usuario = cmbAdminsBuscar_7.Selected.Usuario)),
+                                              Collect(
+                                                  colInfraestructura, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_7.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_7.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_7.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_7)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_9:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_7:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colInfraestructura
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_9:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_11:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_11:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colInfraestructura, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+                  - Container3_10:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_13:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_27:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="MINERÍA"
+                                    Width: =Parent.Width
+                        - Container17_14:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_8:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_8.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_17:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_8.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colMineria, Usuario = cmbAdminsBuscar_8.Selected.Usuario)),
+                                              Collect(
+                                                  colMineria, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_8.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_8.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_8.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_8)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_10:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_8:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colMineria
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_10:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_12:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_12:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colMineria, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+            - Container14_3:
+                Control: GroupContainer@1.5.0
+                Variant: AutoLayout
+                Properties:
+                  FillPortions: =0
+                  Height: =(Parent.Height/2) - 60
+                  LayoutAlignItems: =LayoutAlignItems.Center
+                  LayoutDirection: =LayoutDirection.Horizontal
+                  PaddingBottom: =8
+                  PaddingLeft: =8
+                  PaddingRight: =8
+                  PaddingTop: =8
+                  Width: =Parent.Width
+                  X: =40
+                  Y: =40
+                Children:
+                  - Container3_11:
+                      Control: GroupContainer@1.5.0
+                      Variant: AutoLayout
+                      Properties:
+                        AlignInContainer: =AlignInContainer.SetByContainer
+                        DropShadow: =DropShadow.None
+                        FillPortions: =0
+                        Height: =Parent.Height
+                        LayoutDirection: =LayoutDirection.Vertical
+                        Width: =Parent.Width / 3
+                        X: =40
+                        Y: =40
+                      Children:
+                        - Container17_16:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =30
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              PaddingBottom: =5
+                              PaddingLeft: =5
+                              PaddingRight: =5
+                              PaddingTop: =5
+                              Width: =Parent.Width
+                            Children:
+                              - Text4_34:
+                                  Control: ModernText@1.0.0
+                                  Properties:
+                                    Align: =Align.Center
+                                    Color: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =FontWeight.Semibold
+                                    LayoutMinHeight: =16
+                                    LayoutMinWidth: =16
+                                    Size: =16
+                                    Text: ="SIG"
+                                    Width: =Parent.Width
+                        - Container17_17:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =40
+                              LayoutAlignItems: =LayoutAlignItems.Center
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutGap: =5
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMinHeight: =16
+                              LayoutMinWidth: =16
+                              Width: =Parent.Width
+                            Children:
+                              - cmbAdminsBuscar_9:
+                                  Control: ModernCombobox@1.1.2
+                                  Properties:
+                                    AllowExternalSelectedItems: =false
+                                    Appearance: =Appearance.FilledLighter
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    BorderStyle: =BorderStyle.None
+                                    BorderThickness: =0
+                                    DefaultSelectedItems: =[]
+                                    Fill: =RGBA(255, 255, 255, 1)
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontWeight: =""
+                                    Height: =35
+                                    InputTextPlaceholder: ="Buscar Responsable"
+                                    ItemDisplayText: =ThisItem.'Nombre Apellido'
+                                    Items: |-
+                                      =Search(
+                                          Filter(
+                                              'ESTRUCTURA GENERAL', 
+                                              Estado = "A", 
+                                              Grupo = "ADMINISTRATIVO"
+                                          ), 
+                                          cmbAdminsBuscar_9.SearchText, 
+                                          'Nombre Apellido'
+                                      )
+                                    RadiusBottomLeft: =5
+                                    RadiusBottomRight: =5
+                                    RadiusTopLeft: =5
+                                    RadiusTopRight: =5
+                                    SelectMultiple: =false
+                                    Size: =16
+                                    Width: =200
+                              - btnEvidencia_18:
+                                  Control: Button@0.0.45
+                                  Properties:
+                                    AccessibleLabel: ="Seleccionar el registro"
+                                    BasePaletteColor: =RGBA(234, 10, 41, 1)
+                                    BorderRadius: =5
+                                    Font: =Font.'Open Sans Condensed'
+                                    FontColor: =RGBA(255, 255, 255, 1)
+                                    FontSize: =16
+                                    FontWeight: =FontWeight.Bold
+                                    Height: =35
+                                    Icon: ="CheckmarkCircle"
+                                    IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    OnSelect: |-
+                                      =If(
+                                          !IsBlank(cmbAdminsBuscar_9.Selected.'Nombre Apellido'),
+
+                                          // 1. Evitar duplicados en esta categoría validando por el 'Usuario'
+                                          If(
+                                              IsEmpty(Filter(colSig, Usuario = cmbAdminsBuscar_9.Selected.Usuario)),
+                                              Collect(
+                                                  colSig, 
+                                                  {
+                                                      Nombre: cmbAdminsBuscar_9.Selected.'Nombre Apellido',
+                                                      Departamento: cmbAdminsBuscar_9.Selected.Departamento, // Lo dejamos en blanco si tu lista no tiene correo
+                                                      Usuario: cmbAdminsBuscar_9.Selected.Usuario,
+                                                      Notificado: false // ✨ AQUÍ ESTÁ EL CAMBIO CLAVE
+                                                  }
+                                              )
+                                          );
+
+                                          // 2. Limpiar el buscador
+                                          Reset(cmbAdminsBuscar_9)
+                                      )
+                                    Text: ="REGISTRAR"
+                                    Width: =115
+                                    X: =583
+                                    Y: =648
+                        - 2.INDICADORES_11:
+                            Control: GroupContainer@1.5.0
+                            Variant: AutoLayout
+                            Properties:
+                              AlignInContainer: =AlignInContainer.SetByContainer
+                              DropShadow: =DropShadow.None
+                              FillPortions: =0
+                              Height: =Parent.Height - 70
+                              LayoutAlignItems: =LayoutAlignItems.End
+                              LayoutDirection: =LayoutDirection.Horizontal
+                              LayoutJustifyContent: =LayoutJustifyContent.Center
+                              LayoutMaxHeight: =
+                              LayoutMaxWidth: =
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Width: =Parent.Width
+                            Children:
+                              - galSeleccionadosAdmins_9:
+                                  Control: Gallery@2.15.0
+                                  Variant: Vertical
+                                  Properties:
+                                    AlignInContainer: =AlignInContainer.SetByContainer
+                                    BorderColor: =RGBA(214, 221, 224, 1)
+                                    FillPortions: =0
+                                    Height: =Parent.Height
+                                    Items: =colSig
+                                    LayoutMaxHeight: =
+                                    LayoutMaxWidth: =
+                                    LayoutMinHeight: =0
+                                    TemplateSize: =32
+                                    Transition: =Transition.Pop
+                                    Width: =300
+                                    X: |+
+                                      =40
+
+                                    Y: =40
+                                  Children:
+                                    - TextCanvas4_11:
+                                        Control: Text@0.0.51
+                                        Properties:
+                                          Font: =Font.'Open Sans Condensed'
+                                          FontColor: =RGBA(255, 255, 255, 1)
+                                          PaddingLeft: =10
+                                          Size: =16
+                                          Text: =ThisItem.Nombre
+                                          VerticalAlign: =VerticalAlign.Middle
+                                          Width: =225
+                                          X: =25
+                                    - Rectangle1_13:
+                                        Control: Rectangle@2.3.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          BorderStyle: =BorderStyle.None
+                                          BorderThickness: =2
+                                          DisabledFill: =RGBA(161, 159, 157, 1)
+                                          Fill: =RGBA(255, 255, 255, 1)
+                                          FocusedBorderThickness: =4
+                                          Height: =1
+                                          HoverFill: =RGBA(255, 255, 255, 1)
+                                          OnSelect: =Select(Parent)
+                                          PressedFill: =RGBA(255, 255, 255, 1)
+                                          Width: =Parent.Width-10
+                                          Y: =31
+                                    - Icon2_13:
+                                        Control: Classic/Icon@2.5.0
+                                        Properties:
+                                          BorderColor: =RGBA(0, 0, 0, 0)
+                                          Color: =RGBA(255, 255, 255, 1)
+                                          DisabledBorderColor: =RGBA(245, 245, 245, 1)
+                                          DisabledColor: =RGBA(225, 223, 221, 1)
+                                          DisabledFill: =RGBA(0, 0, 0, 0)
+                                          FocusedBorderThickness: =4
+                                          Height: =32
+                                          HoverBorderColor: =RGBA(0, 0, 0, 0)
+                                          HoverColor: =RGBA(255, 0, 0, 1)
+                                          HoverFill: =RGBA(0, 0, 0, 0)
+                                          Icon: =Icon.CancelBadge
+                                          OnSelect: =Remove(colSig, ThisItem)
+                                          PaddingBottom: =5
+                                          PaddingLeft: =5
+                                          PaddingRight: =5
+                                          PaddingTop: =5
+                                          PressedBorderColor: =RGBA(0, 0, 0, 0)
+                                          PressedColor: =RGBA(16, 110, 190, 1)
+                                          PressedFill: =RGBA(0, 0, 0, 0)
+                                          Tooltip: ="Quitar colaborador"
+                                          Width: =50
+                                          X: =240
+            - btnEvidencia_12:
+                Control: Button@0.0.45
+                Properties:
+                  AccessibleLabel: ="Seleccionar el registro"
+                  BasePaletteColor: =RGBA(234, 10, 41, 1)
+                  BorderRadius: =5
+                  Font: =Font.'Open Sans Condensed'
+                  FontColor: =RGBA(255, 255, 255, 1)
+                  FontSize: =16
+                  FontWeight: =FontWeight.Bold
+                  Height: =35
+                  Icon: ="CheckmarkCircle"
+                  IconStyle: ='ButtonCanvas.IconStyle'.Filled
+                  OnSelect: |-
+                    =/*
+                    // 1. Preparamos el JSON con las 6 colecciones
+                    UapdateContext({
+                        varJSONEnvio: JSON(
+                            {
+                                'DEPARTAMENTO DE INFRAESTRUCTURA': colInfraestructuraIntegral;
+                                'DEPARTAMENTO SEDEMI TELECOM': colTelecomunicaciones;
+                                'DEPARTAMENTO SEDEMI PETROLEO Y GAS': colPetroleoGas;
+                                'DEPARTAMENTO SEDEMI ENERGIA': colEnergia;
+                                'DEPARTAMENTO DE INFRAESTRUCTURA METALICA': colInfraestructura;
+                                'DEPARTAMENTO SEDEMI MINERIA': colMineria
+                            };
+                            JSONFormat.Compact
+                        )
+                    });;
+
+                    // 2. Hacemos el Patch sobre el registro correcto (Tupla 666)
+                    Patch(
+                        'SIG PROYECTOS';
+                        LookUp('SIG PROYECTOS'; Title = "666"); // <-- EL CAMBIO ESTÁ AQUÍ
+                        {
+                            PermisosGenerales: varJSONEnvio
+                        }
+                    );;
+
+                    // 3. Actualizamos la variable global para que la app lea los nuevos datos de inmediato
+                    Set(varRegistroPermisos; LookUp('SIG PROYECTOS'; Title = "666"));;
+
+                    Notify("¡Configuración de permisos actualizada!"; NotificationType.Success);;
+                    UpdateContext({varMostrarPopUp: false});;
+                    */
+
+
+
+                    // ===================================================================
+                    // 1. RECOLECTAR A LOS NUEVOS Y AGRUPARLOS
+                    // ===================================================================
+                    Clear(colNuevosAvisos);
+
+                    // Filtramos cada colección buscando solo los que tienen Notificado en false
+                    ForAll(Filter(colInfraestructuraIntegral, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Infraestructura Integral"}));
+                    ForAll(Filter(colTelecomunicaciones, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Telecomunicaciones"}));
+                    ForAll(Filter(colPetroleoGas, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Petróleo y Gas"}));
+                    ForAll(Filter(colEnergia, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Energía"}));
+                    ForAll(Filter(colInfraestructura, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Infraestructura Metálica"}));
+                    ForAll(Filter(colMineria, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Minería"}));
+                    ForAll(Filter(colSig, !Notificado), Collect(colNuevosAvisos, {Email: Usuario, Nombre: Nombre, Depto: "Sistema Integrado de Gestión"}));
+
+                    // Extraemos los correos únicos
+                    ClearCollect(colUsuariosUnicosNuevos, Distinct(colNuevosAvisos, Email));
+
+                    // ===================================================================
+                    // 2. ARMAR EL PAQUETE PARA POWER AUTOMATE Y EJECUTAR EL FLUJO
+                    // ===================================================================
+                    Clear(colDataParaFlujo);
+
+                    ForAll(
+                        colUsuariosUnicosNuevos As Destinatario,
+                        With(
+                            {
+                                // Buscamos el nombre de la persona
+                                varNombrePersona: LookUp(colNuevosAvisos, Email = Destinatario.Value).Nombre,
+                                // Concatenamos todos los departamentos (las etiquetas) en los que fue ingresado
+                                varDepartamentosNuevos: Concat(Filter(colNuevosAvisos, Email = Destinatario.Value), Depto, ", ")
+                            },
+                            Collect(
+                                colDataParaFlujo,
+                                {
+                                    Correo: Destinatario.Value,
+                                    Nombre: varNombrePersona,
+                                    Departamentos: varDepartamentosNuevos
+                                }
+                            )
+                        )
+                    );
+
+
+                    // Si encontramos personas nuevas, enviamos el JSON al flujo
+                    If(
+                        CountRows(colDataParaFlujo) > 0,
+                        ReporteProyectosSIG.Run(
+                            JSON(colDataParaFlujo, JSONFormat.IgnoreUnsupportedTypes),
+                            "NOTIFICAR",
+                            ""
+                        ) // Cambia 'FlujoNotificarSIGProyectos' por el nombre real de tu flujo
+                    );
+
+
+                    // ===================================================================
+                    // 3. ACTUALIZAR LAS COLECCIONES AL NUEVO ESTADO (Marcarlos como notificados)
+                    // ===================================================================
+                    UpdateIf(colInfraestructuraIntegral, !Notificado, {Notificado: true});
+                    UpdateIf(colTelecomunicaciones, !Notificado, {Notificado: true});
+                    UpdateIf(colPetroleoGas, !Notificado, {Notificado: true});
+                    UpdateIf(colEnergia, !Notificado, {Notificado: true});
+                    UpdateIf(colInfraestructura, !Notificado, {Notificado: true});
+                    UpdateIf(colMineria, !Notificado, {Notificado: true});
+                    UpdateIf(colSig, !Notificado, {Notificado: true});
+
+                    // ===================================================================
+                    // 4. GUARDAR EN LA BASE DE DATOS
+                    // ===================================================================
+                    UpdateContext({
+                        varJSONEnvio: JSON(
+                            {
+                                'DEPARTAMENTO DE INFRAESTRUCTURA': colInfraestructuraIntegral,
+                                'DEPARTAMENTO SEDEMI TELECOM': colTelecomunicaciones,
+                                'DEPARTAMENTO SEDEMI PETROLEO Y GAS': colPetroleoGas,
+                                'DEPARTAMENTO SEDEMI ENERGIA': colEnergia,
+                                'DEPARTAMENTO DE INFRAESTRUCTURA METALICA': colInfraestructura,
+                                'DEPARTAMENTO SEDEMI MINERIA': colMineria,
+                                'UNIDAD SISTEMA INTEGRADO DE GESTION': colSig
+                            },
+                            JSONFormat.Compact
+                        )
+                    });
+
+                    Patch(
+                        'SIG PROYECTOS',
+                        LookUp('SIG PROYECTOS', Título = "666"),
+                        {
+                            PermisosGenerales: varJSONEnvio
+                        }
+                    );
+
+                    Set(varRegistroPermisos, LookUp('SIG PROYECTOS', Título = "666"));
+
+                    Notify("¡Configuración guardada! Se enviaron las notificaciones a los nuevos usuarios.", NotificationType.Success);
+                    UpdateContext({varMostrarPopUp: false});
+                  Text: ="GUARDAR"
+                  Width: =200
+                  X: =40
+                  Y: =40
