@@ -39,6 +39,7 @@ Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `d
 
 ## Compilar (desde backend/)
 dotnet build Profesiograma.slnx
+dotnet test --solution Profesiograma.slnx -c Release   (pruebas: xUnit v3 sobre Microsoft Testing Platform, activado en global.json)
 
 - La API suele estar corriendo (la ejecuta el usuario) y bloquea bin\Debug.
   Para verificar compilación usa: dotnet build Profesiograma.slnx -c Release
