@@ -59,6 +59,7 @@ npm install
 npm run dev        (lo ejecuta el usuario; no ejecutarlo)
 npm run build      (tsc -b + vite build: verificación de tipos y compilación)
 npm run lint       (oxlint)
+npm test           (Vitest 5.0.3: lógica pura del frontend, p. ej. src/features/proyectos/formularioProyecto*.test.ts)
 
 - X-Dev-User solo existe en desarrollo: se envía únicamente si import.meta.env.DEV y VITE_AUTH_MODE=dev.
   Nunca debe enviarse en producción. La identidad se obtiene solo en src/auth/ (Fase 7: MSAL).

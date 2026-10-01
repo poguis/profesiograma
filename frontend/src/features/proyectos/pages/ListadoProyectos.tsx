@@ -20,9 +20,14 @@ import { TablaProyectos } from '../components/TablaProyectos'
 import { PAGINA_POR_DEFECTO, TAMANOS_PAGINA, TAMANO_POR_DEFECTO, useFiltrosUrl } from '../filtrosUrl'
 import { useProyectos } from '../hooks'
 
-/** Estado de navegación: el detalle usa `busqueda` para volver al listado con los mismos filtros. */
+/**
+ * Estado de navegación hacia el detalle:
+ * - `busqueda`: volver al listado con los mismos filtros.
+ * - `codigoCreado`: aviso "Proyecto … registrado" al llegar desde "Nuevo proyecto".
+ */
 export interface EstadoNavegacionProyectos {
-  busqueda: string
+  busqueda?: string
+  codigoCreado?: string
 }
 
 const CAMPOS_EN_FILTROS = new Set(['desde', 'hasta'])

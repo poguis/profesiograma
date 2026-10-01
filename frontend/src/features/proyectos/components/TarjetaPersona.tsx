@@ -27,11 +27,13 @@ export interface TarjetaPersonaProps {
   acciones: ReactNode
   /** Advertencias visibles (fuera de rango, relación eliminada…). */
   advertencias: string[]
+  /** Errores del servidor sin un campo en la tarjeta (p. ej. empleado inactivo). */
+  errores?: string[]
   children: ReactNode
 }
 
 /** Una persona del proyecto: encabezado con acciones y campos en grilla (una columna en móvil). */
-export function TarjetaPersona({ etiqueta, empleado, acciones, advertencias, children }: TarjetaPersonaProps) {
+export function TarjetaPersona({ etiqueta, empleado, acciones, advertencias, errores = [], children }: TarjetaPersonaProps) {
   const estilos = useEstilos()
 
   return (
@@ -48,6 +50,12 @@ export function TarjetaPersona({ etiqueta, empleado, acciones, advertencias, chi
         </div>
         <div className={estilos.acciones}>{acciones}</div>
       </div>
+
+      {errores.map((mensaje) => (
+        <MessageBar key={mensaje} intent="error">
+          <MessageBarBody>{mensaje}</MessageBarBody>
+        </MessageBar>
+      ))}
 
       {advertencias.map((mensaje) => (
         <MessageBar key={mensaje} intent="warning">

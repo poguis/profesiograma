@@ -1,8 +1,28 @@
-import { Button, Dropdown, Field, Input, Option, SpinButton, Text, makeStyles, tokens } from '@fluentui/react-components'
+import {
+  Button,
+  Dropdown,
+  Field,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  Option,
+  SpinButton,
+  Text,
+  makeStyles,
+  tokens,
+} from '@fluentui/react-components'
 import { Add20Regular, Delete20Regular } from '@fluentui/react-icons'
 import { type Dispatch, useState } from 'react'
 import { SelectorFecha } from '../../../components/SelectorFecha'
-import { type AccionFormulario, type CambiosBack, type ErroresFila, type FilaBack, type FilaPrincipal, numeroPrincipal } from '../formularioProyecto'
+import {
+  type AccionFormulario,
+  type CambiosBack,
+  type ErroresFila,
+  type FilaBack,
+  type FilaPrincipal,
+  mensajesSinCampo,
+  numeroPrincipal,
+} from '../formularioProyecto'
 import type { TipoRegistroBack } from '../tipos'
 import { AyudaAgregarPersonal } from './AyudaAgregarPersonal'
 import { TarjetaPersona } from './TarjetaPersona'
@@ -32,6 +52,8 @@ export interface ListaBacksProps {
   rangoListo: boolean
   advertencias: Map<string, string>
   errores: Record<string, ErroresFila>
+  /** Error de la lista completa (p. ej. máximo superado). */
+  errorSeccion?: string
   onAgregar: () => void
 }
 
@@ -44,6 +66,7 @@ export function ListaBacks({
   rangoListo,
   advertencias,
   errores,
+  errorSeccion,
   onAgregar,
 }: ListaBacksProps) {
   const estilos = useEstilos()
@@ -60,6 +83,12 @@ export function ListaBacks({
         </Button>
         <AyudaAgregarPersonal rangoListo={rangoListo} lleno={lleno} maximo={maximo} plural="backs" />
       </div>
+
+      {errorSeccion && (
+        <MessageBar intent="error">
+          <MessageBarBody>{errorSeccion}</MessageBarBody>
+        </MessageBar>
+      )}
 
       {backs.length === 0 && <Text size={200}>Sin backs.</Text>}
 
@@ -80,6 +109,8 @@ export function ListaBacks({
     </section>
   )
 }
+
+const CAMPOS_VISIBLES = ['tipoRegistro', 'fechaInicio', 'fechaFin', 'principalRelacionado', 'observacion']
 
 interface TarjetaBackProps {
   fila: FilaBack
@@ -104,6 +135,10 @@ function TarjetaBack({ fila, numero, principales, dispatch, maxDiasDescanso, adv
       etiqueta={etiqueta}
       empleado={fila.empleado}
       advertencias={advertencias}
+      errores={mensajesSinCampo(
+        errores,
+        fila.tipoRegistro === 'JORNADA' ? [...CAMPOS_VISIBLES, 'diasDescanso'] : CAMPOS_VISIBLES,
+      )}
       acciones={
         <Button
           appearance="subtle"

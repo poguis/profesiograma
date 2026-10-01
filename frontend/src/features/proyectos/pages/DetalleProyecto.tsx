@@ -39,7 +39,9 @@ export function DetalleProyecto() {
   const [pestana, setPestana] = useState<Pestana>('personal')
 
   // Vuelve al listado con los filtros con que se abrió el detalle (si se llegó desde allí).
-  const busqueda = (location.state as EstadoNavegacionProyectos | null)?.busqueda ?? ''
+  const estadoNavegacion = location.state as EstadoNavegacionProyectos | null
+  const busqueda = estadoNavegacion?.busqueda ?? ''
+  const codigoCreado = estadoNavegacion?.codigoCreado
   const rutaListado = `/proyectos${busqueda}`
 
   const noEncontrado = !idValido || (error instanceof ErrorApi && error.tipo === 'noEncontrado')
@@ -49,6 +51,14 @@ export function DetalleProyecto() {
       <Button className={estilos.volver} icon={<ArrowLeft20Regular />} onClick={() => void navigate(rutaListado)}>
         Volver al listado
       </Button>
+
+      {codigoCreado && (
+        <MessageBar intent="success">
+          <MessageBarBody>
+            <MessageBarTitle>Proyecto {codigoCreado} registrado.</MessageBarTitle>
+          </MessageBarBody>
+        </MessageBar>
+      )}
 
       {noEncontrado ? (
         // La API responde 404 tanto si no existe como si no es visible: no se distingue.

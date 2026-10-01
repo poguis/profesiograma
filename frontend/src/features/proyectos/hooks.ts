@@ -1,10 +1,11 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import {
   buscarEmpleados,
   clavesEmpleados,
   clavesErp,
   clavesProyectos,
+  crearProyecto,
   listarActividadesErp,
   listarCompaniasErp,
   listarDimensionesErp,
@@ -14,6 +15,7 @@ import {
   obtenerCatalogos,
   obtenerOpcionesFormulario,
   obtenerProyecto,
+  previsualizarProyecto,
 } from './api'
 import type { Catalogos, FiltroEmpleados, FiltrosProyectos } from './tipos'
 
@@ -128,5 +130,19 @@ export function useBusquedaEmpleados(filtro: FiltroEmpleados, habilitada: boolea
     queryFn: ({ signal }) => buscarEmpleados(filtro, signal),
     enabled: habilitada,
     placeholderData: keepPreviousData,
+  })
+}
+
+/** POST /api/proyectos/previsualizar (no guarda; sin reintentos). */
+export function usePrevisualizarProyecto() {
+  return useMutation({ mutationFn: previsualizarProyecto })
+}
+
+/** POST /api/proyectos. Al crear, invalida los listados y detalles de proyectos. */
+export function useCrearProyecto() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: crearProyecto,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
   })
 }

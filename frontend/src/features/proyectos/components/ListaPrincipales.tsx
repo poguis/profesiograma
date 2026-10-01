@@ -1,8 +1,25 @@
-import { Button, Dropdown, Field, Input, Option, Text, makeStyles, tokens } from '@fluentui/react-components'
+import {
+  Button,
+  Dropdown,
+  Field,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  Option,
+  Text,
+  makeStyles,
+  tokens,
+} from '@fluentui/react-components'
 import { Add20Regular, ArrowDown20Regular, ArrowUp20Regular, Delete20Regular } from '@fluentui/react-icons'
 import { type Dispatch, useState } from 'react'
 import { SelectorFecha } from '../../../components/SelectorFecha'
-import type { AccionFormulario, CambiosPrincipal, ErroresFila, FilaPrincipal } from '../formularioProyecto'
+import {
+  type AccionFormulario,
+  type CambiosPrincipal,
+  type ErroresFila,
+  type FilaPrincipal,
+  mensajesSinCampo,
+} from '../formularioProyecto'
 import type { JornadaCatalogo } from '../tipos'
 import { AyudaAgregarPersonal } from './AyudaAgregarPersonal'
 import { TarjetaPersona } from './TarjetaPersona'
@@ -21,6 +38,8 @@ export interface ListaPrincipalesProps {
   rangoListo: boolean
   advertencias: Map<string, string>
   errores: Record<string, ErroresFila>
+  /** Error de la lista completa (p. ej. máximo superado). */
+  errorSeccion?: string
   onAgregar: () => void
 }
 
@@ -32,6 +51,7 @@ export function ListaPrincipales({
   rangoListo,
   advertencias,
   errores,
+  errorSeccion,
   onAgregar,
 }: ListaPrincipalesProps) {
   const estilos = useEstilos()
@@ -48,6 +68,12 @@ export function ListaPrincipales({
         </Button>
         <AyudaAgregarPersonal rangoListo={rangoListo} lleno={lleno} maximo={maximo} plural="principales" />
       </div>
+
+      {errorSeccion && (
+        <MessageBar intent="error">
+          <MessageBarBody>{errorSeccion}</MessageBarBody>
+        </MessageBar>
+      )}
 
       {principales.length === 0 && <Text size={200}>Sin principales (no son obligatorios).</Text>}
 
@@ -67,6 +93,8 @@ export function ListaPrincipales({
     </section>
   )
 }
+
+const CAMPOS_VISIBLES = ['jornada', 'fechaInicio', 'fechaFin', 'cargo']
 
 interface TarjetaPrincipalProps {
   fila: FilaPrincipal
@@ -91,6 +119,7 @@ function TarjetaPrincipal({ fila, numero, esPrimero, esUltimo, dispatch, jornada
       etiqueta={etiqueta}
       empleado={fila.empleado}
       advertencias={advertencia ? [advertencia] : []}
+      errores={mensajesSinCampo(errores, CAMPOS_VISIBLES)}
       acciones={
         <>
           <Button

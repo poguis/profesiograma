@@ -4,9 +4,12 @@
 import { formatearFecha } from '../../utils/formato'
 import type {
   BackSolicitud,
+  CruceAsignacion,
   EmpleadoBusqueda,
   GrupoProyectoCatalogo,
+  Previsualizacion,
   PrincipalSolicitud,
+  ResumenCruce,
   SolicitudCrearProyecto,
   TipoRegistroBack,
 } from './tipos'
@@ -388,4 +391,156 @@ export function aSolicitud(estado: EstadoFormulario): SolicitudCrearProyecto {
 function texto(valor: string | null): string | null {
   const recortado = valor?.trim()
   return recortado ? recortado : null
+}
+
+// ------------------------------------------------------------------ errores 400 del servidor (R13)
+
+/** Claves locales de las filas en el orden en que se enviaron: el índice del error apunta a ESA fila. */
+export interface ClavesEnvio {
+  principales: string[]
+  backs: string[]
+}
+
+export function clavesDelEnvio(estado: EstadoFormulario): ClavesEnvio {
+  return { principales: estado.principales.map((p) => p.clave), backs: estado.backs.map((b) => b.clave) }
+}
+
+export interface ErroresServidor {
+  cabecera: Partial<Record<CampoCabecera, string>>
+  /** clave de fila → campo → mensaje (sigue a la fila aunque luego se reordene). */
+  filas: Record<string, ErroresFila>
+  /** Errores de la lista completa (p. ej. máximo de principales). */
+  secciones: { principales?: string; backs?: string }
+  /** Errores sin campo identificable: se muestran arriba del formulario. */
+  generales: string[]
+}
+
+export const SIN_ERRORES_SERVIDOR: ErroresServidor = { cabecera: {}, filas: {}, secciones: {}, generales: [] }
+
+const CAMPOS_CABECERA = new Set<string>([
+  'companiaId',
+  'grupo',
+  'proyectoErpId',
+  'actividadId',
+  'dimensionUegpId',
+  'fechaInicio',
+  'fechaFin',
+  'horarioCodigo',
+  'salidaAlmuerzo',
+  'regresoAlmuerzo',
+  'departamentoId',
+] satisfies CampoCabecera[])
+
+const PATRON_CAMPO_FILA = /^(principales|backs)\[(\d+)\]\.(\w+)$/
+
+/**
+ * ValidationProblem → errores por campo. Claves "principales[i].campo" / "backs[i].campo" se asignan a la fila
+ * que ocupaba el índice i EN EL ENVÍO (claves). Lo que no corresponde a un campo visible va a `generales`.
+ */
+export function distribuirErrores(errores: Record<string, string[]>, claves: ClavesEnvio): ErroresServidor {
+  const resultado: ErroresServidor = { cabecera: {}, filas: {}, secciones: {}, generales: [] }
+
+  for (const [campo, mensajes] of Object.entries(errores)) {
+    const mensaje = mensajes.join(' ')
+    if (CAMPOS_CABECERA.has(campo)) {
+      resultado.cabecera[campo as CampoCabecera] = mensaje
+      continue
+    }
+    if (campo === 'principales' || campo === 'backs') {
+      resultado.secciones[campo] = mensaje
+      continue
+    }
+    const partes = PATRON_CAMPO_FILA.exec(campo)
+    const clave = partes ? claves[partes[1] as keyof ClavesEnvio][Number(partes[2])] : undefined
+    if (partes && clave !== undefined) {
+      resultado.filas[clave] = { ...resultado.filas[clave], [partes[3]]: mensaje }
+      continue
+    }
+    resultado.generales.push(mensaje)
+  }
+  return resultado
+}
+
+/** Mensajes de campos que la tarjeta no muestra (p. ej. "empleadoId"): se muestran en la tarjeta. */
+export function mensajesSinCampo(errores: ErroresFila, camposVisibles: string[]): string[] {
+  return Object.entries(errores)
+    .filter(([campo, mensaje]) => mensaje && !camposVisibles.includes(campo))
+    .map(([, mensaje]) => mensaje!)
+}
+
+/** Editar un campo borra su error del servidor (los demás se conservan hasta el próximo envío). */
+export function limpiarErroresServidor(errores: ErroresServidor, accion: AccionFormulario): ErroresServidor {
+  const sinCabecera = (...campos: CampoCabecera[]) => {
+    const cabecera = { ...errores.cabecera }
+    campos.forEach((c) => delete cabecera[c])
+    return { ...errores, cabecera }
+  }
+  const sinCamposFila = (clave: string, campos: string[]) => {
+    const fila = { ...errores.filas[clave] }
+    campos.forEach((c) => delete fila[c])
+    return { ...errores, filas: { ...errores.filas, [clave]: fila } }
+  }
+  const sinFila = (clave: string, seccion: keyof ErroresServidor['secciones']) => {
+    const filas = { ...errores.filas }
+    delete filas[clave]
+    return { ...errores, filas, secciones: { ...errores.secciones, [seccion]: undefined } }
+  }
+
+  switch (accion.tipo) {
+    case 'compania':
+      return sinCabecera('companiaId', 'proyectoErpId', 'actividadId', 'dimensionUegpId')
+    case 'grupo':
+      return sinCabecera('grupo', 'proyectoErpId', 'actividadId', 'dimensionUegpId')
+    case 'proyectoErp':
+      return sinCabecera('proyectoErpId', 'actividadId')
+    case 'cabecera':
+      return sinCabecera(...(Object.keys(accion.cambios) as CampoCabecera[]))
+    case 'agregarPrincipal':
+      return { ...errores, secciones: { ...errores.secciones, principales: undefined } }
+    case 'agregarBack':
+      return { ...errores, secciones: { ...errores.secciones, backs: undefined } }
+    case 'eliminarPrincipal':
+      return sinFila(accion.clave, 'principales')
+    case 'eliminarBack':
+      return sinFila(accion.clave, 'backs')
+    case 'actualizarPrincipal':
+      return sinCamposFila(accion.clave, Object.keys(accion.cambios))
+    case 'actualizarBack': {
+      const campos = Object.keys(accion.cambios).map((c) => (c === 'principalClave' ? 'principalRelacionado' : c))
+      if ('tipoRegistro' in accion.cambios) {
+        campos.push('diasDescanso')
+      }
+      return sinCamposFila(accion.clave, campos)
+    }
+    case 'moverPrincipal':
+      return errores // los errores siguen a la fila por su clave
+  }
+}
+
+// ------------------------------------------------------------------ vista previa y registro (R11–R13)
+
+/** Vista previa ligada a la revisión del formulario con que se generó. */
+export interface VistaPreviaFormulario {
+  revision: number
+  datos: Previsualizacion
+}
+
+/** La vista previa corresponde al estado actual del formulario (R12). */
+export function vistaVigente(vista: VistaPreviaFormulario | null, revision: number): boolean {
+  return vista !== null && vista.revision === revision
+}
+
+/** R12: "Registrar" solo con una vista previa vigente, sin cruces y sin un envío en curso. */
+export function puedeRegistrar(vista: VistaPreviaFormulario | null, revision: number, enviando: boolean): boolean {
+  return !enviando && vistaVigente(vista, revision) && vista!.datos.cruces.length === 0
+}
+
+/** Extensiones `cruces` y `resumen` del 409 de POST /api/proyectos; null si no tienen la forma esperada. */
+export function crucesDeConflicto(
+  extensiones: Record<string, unknown>,
+): { cruces: CruceAsignacion[]; resumen: ResumenCruce[] } | null {
+  const { cruces, resumen } = extensiones
+  return Array.isArray(cruces) && Array.isArray(resumen)
+    ? { cruces: cruces as CruceAsignacion[], resumen: resumen as ResumenCruce[] }
+    : null
 }

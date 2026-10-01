@@ -1,4 +1,4 @@
-import { apiGet } from '../../api/clienteHttp'
+import { apiGet, apiPost } from '../../api/clienteHttp'
 import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
@@ -11,9 +11,12 @@ import type {
   FiltrosProyectos,
   HorarioErp,
   OpcionesFormularioProyecto,
+  Previsualizacion,
+  ProyectoCreado,
   ProyectoDetalle,
   ProyectoErp,
   ProyectoResumen,
+  SolicitudCrearProyecto,
 } from './tipos'
 
 export const clavesProyectos = {
@@ -87,4 +90,14 @@ export function buscarEmpleados(filtro: FiltroEmpleados, signal?: AbortSignal) {
     consulta.set('texto', filtro.texto)
   }
   return apiGet<PaginaResultado<EmpleadoBusqueda>>(`/empleados?${consulta.toString()}`, { signal })
+}
+
+/** 200 con tramos, días y cruces; no guarda nada. 400 validación; 503 ERP no disponible. */
+export function previsualizarProyecto(solicitud: SolicitudCrearProyecto) {
+  return apiPost<SolicitudCrearProyecto, Previsualizacion>('/proyectos/previsualizar', solicitud)
+}
+
+/** 201 { id, codigo }; 400 validación; 409 cruces (extensiones); 503 ERP no disponible o registro ocupado. */
+export function crearProyecto(solicitud: SolicitudCrearProyecto) {
+  return apiPost<SolicitudCrearProyecto, ProyectoCreado>('/proyectos', solicitud)
 }
