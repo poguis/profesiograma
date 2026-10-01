@@ -13,6 +13,25 @@ internal sealed class EmpleadoConsultas(ProfesiogramaDbContext db) : IEmpleadoCo
 
     public async Task<PaginaResultado<EmpleadoBusquedaDto>> BuscarAsync(EmpleadoFiltro filtro, CancellationToken ct)
     {
+        var consulta = ConsultaBusqueda(db, filtro);
+        var total = await consulta.CountAsync(ct);
+        var saltar = (long)(filtro.Pagina - 1) * filtro.Tamano;
+        if (total == 0 || saltar >= total)
+        {
+            return new PaginaResultado<EmpleadoBusquedaDto>([], filtro.Pagina, filtro.Tamano, total);
+        }
+
+        var items = await PaginaBusqueda(consulta, (int)saltar, filtro.Tamano).ToListAsync(ct);
+        return new PaginaResultado<EmpleadoBusquedaDto>(items, filtro.Pagina, filtro.Tamano, total);
+    }
+
+    public async Task<IReadOnlyList<string>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct) =>
+        await ConsultaDepartamentosDeUsuario(db, usuarioId).ToListAsync(ct);
+
+    // ------------------------------------------------------------------ consultas (internal: pruebas de traducción con ToQueryString)
+
+    internal static IQueryable<Domain.Maestros.Empleado> ConsultaBusqueda(ProfesiogramaDbContext db, EmpleadoFiltro filtro)
+    {
         var consulta = db.Empleados.AsNoTracking().Where(e => e.EstadoErp == EstadoActivo);
 
         if (filtro.Texto is not null)
@@ -28,27 +47,20 @@ internal sealed class EmpleadoConsultas(ProfesiogramaDbContext db) : IEmpleadoCo
                 (e.Unidad != null && departamentos.Contains(e.Unidad)));
         }
 
-        var total = await consulta.CountAsync(ct);
-        var saltar = (long)(filtro.Pagina - 1) * filtro.Tamano;
-        if (total == 0 || saltar >= total)
-        {
-            return new PaginaResultado<EmpleadoBusquedaDto>([], filtro.Pagina, filtro.Tamano, total);
-        }
-
-        var items = await consulta
-            .OrderBy(e => e.NombreCompleto).ThenBy(e => e.CodigoEkon)
-            .Skip((int)saltar)
-            .Take(filtro.Tamano)
-            .Select(e => new EmpleadoBusquedaDto(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, e.Departamento))
-            .ToListAsync(ct);
-
-        return new PaginaResultado<EmpleadoBusquedaDto>(items, filtro.Pagina, filtro.Tamano, total);
+        return consulta;
     }
 
-    public async Task<IReadOnlyList<string>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct) =>
-        await db.UsuarioDepartamentos.AsNoTracking()
+    /// <summary>Página ordenada por nombre; proyección sin cédula ni correo.</summary>
+    internal static IQueryable<EmpleadoBusquedaDto> PaginaBusqueda(IQueryable<Domain.Maestros.Empleado> consulta, int saltar, int tamano) =>
+        consulta
+            .OrderBy(e => e.NombreCompleto).ThenBy(e => e.CodigoEkon)
+            .Skip(saltar)
+            .Take(tamano)
+            .Select(e => new EmpleadoBusquedaDto(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, e.Departamento));
+
+    internal static IQueryable<string> ConsultaDepartamentosDeUsuario(ProfesiogramaDbContext db, int usuarioId) =>
+        db.UsuarioDepartamentos.AsNoTracking()
             .Where(ud => ud.UsuarioId == usuarioId && ud.Activo && ud.Departamento.Activo)
             .Select(ud => ud.Departamento.Nombre)
-            .Distinct()
-            .ToListAsync(ct);
+            .Distinct();
 }

@@ -141,3 +141,111 @@ X-Dev-User: anonimo
 ### E11. Tamaño fuera de rango → 400
 GET {{base}}/api/empleados?tamano=500
 X-Dev-User: gestor
+
+### ---------------------------------------------------------------------------
+### TAREA-12 — Crear proyecto (previsualizar / registrar). ERP Simulado (Development).
+### Empleados sin uso en los datos de prueba: 6 (DEV006), 7 (DEV007), 8 (DEV008).
+
+### C1. Previsualizar (válido) → 200, sin cruces. No guarda nada.
+POST {{base}}/api/proyectos/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{
+  "companiaId": 9001, "grupo": "CAMPO", "proyectoErpId": "DEV-ERP-001", "actividadId": "DEV.01", "dimensionUegpId": null,
+  "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [
+    { "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "cargo": null },
+    { "empleadoId": 7, "jornada": "TIPO_3", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "cargo": null }
+  ],
+  "backs": [
+    { "empleadoId": 8, "tipoRegistro": "JORNADA", "diasDescanso": 2, "fechaInicio": "2026-12-12", "fechaFin": "2026-12-15",
+      "principalRelacionado": 1, "observacion": "Cubre el descanso del principal 1" }
+  ]
+}
+
+### C2. Registrar el mismo → 201 { id, codigo } + Location
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{
+  "companiaId": 9001, "grupo": "CAMPO", "proyectoErpId": "DEV-ERP-001", "actividadId": "DEV.01", "dimensionUegpId": null,
+  "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [
+    { "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "cargo": null },
+    { "empleadoId": 7, "jornada": "TIPO_3", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31", "cargo": null }
+  ],
+  "backs": [
+    { "empleadoId": 8, "tipoRegistro": "JORNADA", "diasDescanso": 2, "fechaInicio": "2026-12-12", "fechaFin": "2026-12-15",
+      "principalRelacionado": 1, "observacion": "Cubre el descanso del principal 1" }
+  ]
+}
+
+### C4. Otro proyecto con DEV006 en días de trabajo del C2 (05–10/12) → 409 con cruces y resumen
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{
+  "companiaId": 9001, "grupo": "PLANTA", "dimensionUegpId": "DEV-DIM-01",
+  "fechaInicio": "2026-12-05", "fechaFin": "2026-12-10", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [ { "empleadoId": 6, "jornada": "ESPECIAL", "fechaInicio": "2026-12-05", "fechaFin": "2026-12-10" } ],
+  "backs": []
+}
+
+### C5. DEV001 del 01 al 04/10 (DESCANSO en PRY-DEV-0001) → previsualizar sin cruces
+POST {{base}}/api/proyectos/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{
+  "companiaId": 9001, "grupo": "PLANTA", "dimensionUegpId": "DEV-DIM-01",
+  "fechaInicio": "2026-10-01", "fechaFin": "2026-10-04", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [ { "empleadoId": 1, "jornada": "ESPECIAL", "fechaInicio": "2026-10-01", "fechaFin": "2026-10-04" } ],
+  "backs": []
+}
+
+### C5b. Contraste: incluye el 30/09 (día de trabajo en PRY-DEV-0001) → cruce externo solo el 30/09
+POST {{base}}/api/proyectos/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{
+  "companiaId": 9001, "grupo": "PLANTA", "dimensionUegpId": "DEV-DIM-01",
+  "fechaInicio": "2026-09-30", "fechaFin": "2026-10-04", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [ { "empleadoId": 1, "jornada": "ESPECIAL", "fechaInicio": "2026-09-30", "fechaFin": "2026-10-04" } ],
+  "backs": []
+}
+
+### C6. CAMPO sin proyecto ERP → 400
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "companiaId": 9001, "grupo": "CAMPO", "actividadId": "DEV.01", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31",
+  "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00", "principales": [], "backs": [] }
+
+### C7. Almuerzo inválido (regreso antes de la salida) → 400
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "companiaId": 9001, "grupo": "PLANTA", "dimensionUegpId": "DEV-DIM-01", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31",
+  "horarioCodigo": 1, "salidaAlmuerzo": "15:00", "regresoAlmuerzo": "14:00", "principales": [], "backs": [] }
+
+### C8. Back con principalRelacionado inexistente → 400
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "companiaId": 9001, "grupo": "PLANTA", "dimensionUegpId": "DEV-DIM-01", "fechaInicio": "2026-12-01", "fechaFin": "2026-12-31",
+  "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00", "principales": [],
+  "backs": [ { "empleadoId": 8, "tipoRegistro": "JORNADA", "diasDescanso": 0, "fechaInicio": "2026-12-20", "fechaFin": "2026-12-21", "principalRelacionado": 5 } ] }
+
+### C9. Sin identidad → 401
+POST {{base}}/api/proyectos/previsualizar
+X-Dev-User: anonimo
+Content-Type: application/json
+
+{}

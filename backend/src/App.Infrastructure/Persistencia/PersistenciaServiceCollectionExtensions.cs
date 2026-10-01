@@ -1,10 +1,12 @@
 using App.Application.Catalogos;
 using App.Application.Empleados;
+using App.Application.Proyectos.Crear;
 using App.Application.Proyectos;
 using App.Application.Seguridad;
 using App.Infrastructure.Consultas;
 using App.Infrastructure.Persistencia.Auditoria;
 using App.Infrastructure.Persistencia.DatosPrueba;
+using App.Infrastructure.Persistencia.Proyectos;
 using App.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +41,10 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<ICatalogoConsultas, CatalogoConsultas>();
         services.AddScoped<IProyectoConsultas, ProyectoConsultas>();
         services.AddScoped<IEmpleadoConsultas, EmpleadoConsultas>();
+        services.AddScoped<IDatosReferenciaProyecto, DatosReferenciaProyecto>();
+        services.AddScoped<IConsultaCrucesExternos, ConsultaCrucesExternos>();
+        services.AddScoped<IProyectoRepositorio, ProyectoRepositorio>();
+        services.AddScoped<ITransaccionAsignaciones, TransaccionAsignaciones>();
         services.AddScoped<IUsuarioProvisionamiento, UsuarioProvisionamiento>();
         services.AddScoped<DatosPruebaSembrador>();
 

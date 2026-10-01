@@ -49,6 +49,11 @@ dotnet test --solution Profesiograma.slnx -c Release   (pruebas: xUnit v3 sobre 
 - User-secrets: `App.Api.csproj` tiene `UserSecretsId = profesiograma-api-4d2f7c1e`. No cambiarlo ni regenerarlo:
   la cadena de conexión está asociada a ese Id. Verificar solo la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
 
+## Reglas de pruebas
+- Toda consulta EF nueva o modificada debe tener una prueba de traducción con ToQueryString() en App.Infrastructure.Tests.
+  Las pruebas con dobles no detectan consultas que EF no puede traducir a SQL.
+  (Patrón: la consulta se expone como método `internal static IQueryable<…>` y se prueba con la base `Consultas/BaseSql.cs`.)
+
 ## Frontend (desde frontend/)
 npm install
 npm run dev        (lo ejecuta el usuario; no ejecutarlo)

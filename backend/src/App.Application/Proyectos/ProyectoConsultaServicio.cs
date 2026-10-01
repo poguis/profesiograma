@@ -12,10 +12,6 @@ public sealed class ProyectoConsultaServicio(IProyectoConsultas consultas, IUsua
     public const int TamanoPorDefecto = 20;
     public const int TamanoMaximo = 100;
 
-    // [PENDIENTE] Leer de Parametro.ZONA_HORARIA (hoy es el mismo valor que usa el sembrador de datos de prueba).
-    private const string ZonaNegocio = "SA Pacific Standard Time";
-    private static readonly Lazy<TimeZoneInfo> Zona = new(() => TimeZoneInfo.FindSystemTimeZoneById(ZonaNegocio));
-
     public async Task<ResultadoConsulta<PaginaResultado<ProyectoResumenDto>>> ListarAsync(
         ProyectoListadoSolicitud solicitud, CancellationToken ct)
     {
@@ -76,6 +72,5 @@ public sealed class ProyectoConsultaServicio(IProyectoConsultas consultas, IUsua
         return propietarioUsuarioId is not null;
     }
 
-    private DateOnly HoyEcuador()
-        => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), Zona.Value).DateTime);
+    private DateOnly HoyEcuador() => FechaNegocio.Hoy(reloj);
 }

@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddExceptionHandler<ErpNoDisponibleExceptionHandler>(); // ERP caído → 503
+builder.Services.AddExceptionHandler<RegistroOcupadoExceptionHandler>(); // applock de asignaciones no obtenido → 503
 builder.Services.AddProblemDetails();
 builder.AddSeguridadProfesiograma();             // DevAuth / Entra ID + políticas Admin/Gestor
 

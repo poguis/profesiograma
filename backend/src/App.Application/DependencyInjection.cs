@@ -1,6 +1,7 @@
 using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Proyectos;
+using App.Application.Proyectos.Crear;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -15,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<ProyectoConsultaServicio>();
         services.AddScoped<EmpleadoConsultaServicio>();
         services.AddScoped<CatalogoErpConsultaServicio>();
+        services.AddScoped<CrearProyectoValidador>();
+        services.AddScoped<CrearProyectoServicio>();
         return services;
     }
 }
