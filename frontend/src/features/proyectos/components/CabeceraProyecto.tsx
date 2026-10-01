@@ -35,7 +35,13 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode })
   )
 }
 
-export function CabeceraProyecto({ proyecto }: { proyecto: ProyectoDetalle }) {
+export interface CabeceraProyectoProps {
+  proyecto: ProyectoDetalle
+  /** Acciones junto al título (p. ej. "Cambiar estado"). */
+  acciones?: ReactNode
+}
+
+export function CabeceraProyecto({ proyecto, acciones }: CabeceraProyectoProps) {
   const estilos = useEstilos()
   const { erp, horario, almuerzo, actividadVigente: actividad } = proyecto
   const tieneErp = Object.values(erp).some((valor) => valor !== null && valor !== '')
@@ -48,6 +54,7 @@ export function CabeceraProyecto({ proyecto }: { proyecto: ProyectoDetalle }) {
           {proyecto.codigo} · {proyecto.nombre}
         </Text>
         <EtiquetaEstado codigo={proyecto.estado.codigo} nombre={proyecto.estado.nombre} />
+        {acciones}
       </div>
 
       <div className={estilos.tarjetas}>

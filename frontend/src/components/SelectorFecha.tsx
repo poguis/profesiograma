@@ -36,12 +36,24 @@ export interface SelectorFechaProps {
   onCambiar: (valor: string | undefined) => void
   /** Informa si el texto escrito no es una fecha dd/MM/yyyy válida (undefined = sin error). */
   onErrorFormato?: (mensaje: string | undefined) => void
+  /** Límites opcionales "yyyy-MM-dd" (inclusivos): los días fuera quedan deshabilitados. */
+  fechaMinima?: string
+  fechaMaxima?: string
   id?: string
   placeholder?: string
   'aria-labelledby'?: string
 }
 
-export function SelectorFecha({ valor, onCambiar, onErrorFormato, id, placeholder, ...aria }: SelectorFechaProps) {
+export function SelectorFecha({
+  valor,
+  onCambiar,
+  onErrorFormato,
+  fechaMinima,
+  fechaMaxima,
+  id,
+  placeholder,
+  ...aria
+}: SelectorFechaProps) {
   return (
     <DatePicker
       id={id}
@@ -51,9 +63,9 @@ export function SelectorFecha({ valor, onCambiar, onErrorFormato, id, placeholde
         onErrorFormato?.(undefined)
         onCambiar(fecha ? aFechaIso(fecha) : undefined)
       }}
-      onValidationResult={({ error }) =>
-        onErrorFormato?.(error === 'invalid-input' ? 'Ingrese una fecha válida con el formato dd/MM/yyyy.' : undefined)
-      }
+      onValidationResult={({ error }) => onErrorFormato?.(mensajeValidacion(error, fechaMinima, fechaMaxima))}
+      minDate={desdeFechaIso(fechaMinima) ?? undefined}
+      maxDate={desdeFechaIso(fechaMaxima) ?? undefined}
       formatDate={(fecha) => (fecha ? formatearFecha(aFechaIso(fecha)) : '')}
       parseDateFromString={desdeFechaEc}
       allowTextInput
@@ -63,4 +75,14 @@ export function SelectorFecha({ valor, onCambiar, onErrorFormato, id, placeholde
       placeholder={placeholder ?? 'dd/mm/aaaa'}
     />
   )
+}
+
+function mensajeValidacion(error: string | undefined, minima?: string, maxima?: string): string | undefined {
+  if (error === 'invalid-input') {
+    return 'Ingrese una fecha válida con el formato dd/MM/yyyy.'
+  }
+  if (error === 'out-of-bounds') {
+    return `La fecha debe estar entre ${formatearFecha(minima) || '—'} y ${formatearFecha(maxima) || '—'}.`
+  }
+  return undefined
 }

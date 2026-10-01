@@ -3,6 +3,7 @@ import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
   ActividadErp,
+  CambioEstadoRealizado,
   Catalogos,
   CompaniaErp,
   DimensionErp,
@@ -12,10 +13,12 @@ import type {
   HorarioErp,
   OpcionesFormularioProyecto,
   Previsualizacion,
+  PrevisualizacionCambioEstado,
   ProyectoCreado,
   ProyectoDetalle,
   ProyectoErp,
   ProyectoResumen,
+  SolicitudCambioEstado,
   SolicitudCrearProyecto,
 } from './tipos'
 
@@ -100,4 +103,14 @@ export function previsualizarProyecto(solicitud: SolicitudCrearProyecto) {
 /** 201 { id, codigo }; 400 validación; 409 cruces (extensiones); 503 ERP no disponible o registro ocupado. */
 export function crearProyecto(solicitud: SolicitudCrearProyecto) {
   return apiPost<SolicitudCrearProyecto, ProyectoCreado>('/proyectos', solicitud)
+}
+
+/** Impacto de suspender o terminar (no guarda). 400 / 404 / 503. */
+export function previsualizarCambioEstado(id: number, solicitud: SolicitudCambioEstado) {
+  return apiPost<SolicitudCambioEstado, PrevisualizacionCambioEstado>(`/proyectos/${id}/cambio-estado/previsualizar`, solicitud)
+}
+
+/** Aplica la suspensión o el cierre: 200 { id, estado, version }; 400 / 404 / 409 / 503. */
+export function aplicarCambioEstado(id: number, solicitud: SolicitudCambioEstado) {
+  return apiPost<SolicitudCambioEstado, CambioEstadoRealizado>(`/proyectos/${id}/cambio-estado`, solicitud)
 }

@@ -306,3 +306,79 @@ export interface ProyectoCreado {
   id: number
   codigo: string
 }
+
+// ------------------------------------------------------------------ Cambio de estado (TAREA-15, contrato TAREA-14)
+
+/** Destinos que la interfaz permite elegir (REACTIVACION llega en la TAREA-17). */
+export type DestinoCambioEstado = 'SUSPENDIDO' | 'TERMINADO'
+
+/** Cuerpo de POST /api/proyectos/{id}/cambio-estado[/previsualizar]. Fecha "yyyy-MM-dd". */
+export interface SolicitudCambioEstado {
+  estadoDestino: string | null
+  fecha: string | null
+}
+
+/** `id` es el Id del EMPLEADO (no el de la fila de personal). Sin cédula ni correo. */
+export interface EmpleadoCambio {
+  id: number
+  codigoEkon: string
+  nombreCompleto: string
+}
+
+/** rol = PRINCIPAL | BACK | DESCANSO */
+export interface DiasEliminadosCambio {
+  empleado: EmpleadoCambio
+  rol: string
+  cantidad: number
+  desde: string
+  hasta: string
+}
+
+export interface PersonaEliminadaCambio {
+  empleado: EmpleadoCambio
+  rol: string
+  numero: number
+  fechaInicio: string
+  fechaFin: string
+}
+
+export interface PersonaRecortadaCambio {
+  empleado: EmpleadoCambio
+  rol: string
+  numero: number
+  fechaInicio: string
+  fechaFinAnterior: string
+  fechaFinNueva: string
+}
+
+/** fechaFinNueva es null cuando la actividad se elimina. */
+export interface ActividadAfectadaCambio {
+  actividadCodigo: string
+  version: number
+  fechaInicio: string
+  fechaFinAnterior: string
+  fechaFinNueva: string | null
+  accion: 'RECORTADA' | 'ELIMINADA'
+}
+
+/** 200 de POST /api/proyectos/{id}/cambio-estado/previsualizar (no guarda nada). */
+export interface PrevisualizacionCambioEstado {
+  movimiento: 'SUSPENSION' | 'CIERRE'
+  estadoActual: string
+  estadoNuevo: string
+  fecha: string
+  fechaFinActual: string
+  fechaFinNueva: string
+  diasEliminados: DiasEliminadosCambio[]
+  personalEliminado: PersonaEliminadaCambio[]
+  personalRecortado: PersonaRecortadaCambio[]
+  actividadesAfectadas: ActividadAfectadaCambio[]
+  advertencias: string[]
+}
+
+/** 200 de POST /api/proyectos/{id}/cambio-estado. `estado` es el código del estado nuevo. */
+export interface CambioEstadoRealizado {
+  id: number
+  estado: string
+  version: number
+}

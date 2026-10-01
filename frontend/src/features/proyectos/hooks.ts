@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import {
+  aplicarCambioEstado,
   buscarEmpleados,
   clavesEmpleados,
   clavesErp,
@@ -15,9 +16,10 @@ import {
   obtenerCatalogos,
   obtenerOpcionesFormulario,
   obtenerProyecto,
+  previsualizarCambioEstado,
   previsualizarProyecto,
 } from './api'
-import type { Catalogos, FiltroEmpleados, FiltrosProyectos } from './tipos'
+import type { Catalogos, FiltroEmpleados, FiltrosProyectos, SolicitudCambioEstado } from './tipos'
 
 /** Datos del ERP y del formulario: cambian poco; el servidor ya los cachea 5–10 min. */
 const VIGENCIA_DATOS_FORMULARIO_MS = 5 * 60_000
@@ -143,6 +145,22 @@ export function useCrearProyecto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: crearProyecto,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+  })
+}
+
+// ------------------------------------------------------------------ Cambio de estado
+
+/** POST /api/proyectos/{id}/cambio-estado/previsualizar (no guarda; sin reintentos). */
+export function usePrevisualizarCambioEstado(id: number) {
+  return useMutation({ mutationFn: (solicitud: SolicitudCambioEstado) => previsualizarCambioEstado(id, solicitud) })
+}
+
+/** POST /api/proyectos/{id}/cambio-estado. Al aplicar, invalida el detalle y los listados de proyectos. */
+export function useAplicarCambioEstado(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudCambioEstado) => aplicarCambioEstado(id, solicitud),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
   })
 }
