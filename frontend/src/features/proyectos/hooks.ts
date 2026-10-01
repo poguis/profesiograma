@@ -1,7 +1,24 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { clavesProyectos, listarProyectos, obtenerCatalogos, obtenerProyecto } from './api'
-import type { Catalogos, FiltrosProyectos } from './tipos'
+import {
+  buscarEmpleados,
+  clavesEmpleados,
+  clavesErp,
+  clavesProyectos,
+  listarActividadesErp,
+  listarCompaniasErp,
+  listarDimensionesErp,
+  listarHorariosErp,
+  listarProyectos,
+  listarProyectosErp,
+  obtenerCatalogos,
+  obtenerOpcionesFormulario,
+  obtenerProyecto,
+} from './api'
+import type { Catalogos, FiltroEmpleados, FiltrosProyectos } from './tipos'
+
+/** Datos del ERP y del formulario: cambian poco; el servidor ya los cachea 5–10 min. */
+const VIGENCIA_DATOS_FORMULARIO_MS = 5 * 60_000
 
 /** Listado paginado. Mientras llega la página nueva se conserva la anterior (sin parpadeo). */
 export function useProyectos(filtros: FiltrosProyectos) {
@@ -48,4 +65,68 @@ function crearNombres(catalogos: Catalogos | undefined) {
     grupo: (codigo: string) => grupos.get(codigo) ?? codigo,
     movimiento: (codigo: string) => movimientos.get(codigo) ?? codigo,
   }
+}
+
+// ------------------------------------------------------------------ Nuevo proyecto
+
+/** Departamentos del usuario, opciones de almuerzo y límites (GET /api/proyectos/opciones-formulario). */
+export function useOpcionesFormulario() {
+  return useQuery({
+    queryKey: clavesProyectos.opcionesFormulario,
+    queryFn: ({ signal }) => obtenerOpcionesFormulario(signal),
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+export function useCompaniasErp() {
+  return useQuery({
+    queryKey: clavesErp.companias,
+    queryFn: ({ signal }) => listarCompaniasErp(signal),
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+export function useProyectosErp(companiaId: number | null) {
+  return useQuery({
+    queryKey: clavesErp.proyectos(companiaId ?? 0),
+    queryFn: ({ signal }) => listarProyectosErp(companiaId!, signal),
+    enabled: companiaId !== null,
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+export function useDimensionesErp(companiaId: number | null) {
+  return useQuery({
+    queryKey: clavesErp.dimensiones(companiaId ?? 0),
+    queryFn: ({ signal }) => listarDimensionesErp(companiaId!, signal),
+    enabled: companiaId !== null,
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+export function useActividadesErp(companiaId: number | null, proyectoErpId: string | null) {
+  return useQuery({
+    queryKey: clavesErp.actividades(companiaId ?? 0, proyectoErpId ?? ''),
+    queryFn: ({ signal }) => listarActividadesErp(companiaId!, proyectoErpId!, signal),
+    enabled: companiaId !== null && proyectoErpId !== null,
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+export function useHorariosErp() {
+  return useQuery({
+    queryKey: clavesErp.horarios,
+    queryFn: ({ signal }) => listarHorariosErp(signal),
+    staleTime: VIGENCIA_DATOS_FORMULARIO_MS,
+  })
+}
+
+/** Búsqueda paginada de empleados. Mientras llega la página nueva se conserva la anterior. */
+export function useBusquedaEmpleados(filtro: FiltroEmpleados, habilitada: boolean) {
+  return useQuery({
+    queryKey: clavesEmpleados.busqueda(filtro),
+    queryFn: ({ signal }) => buscarEmpleados(filtro, signal),
+    enabled: habilitada,
+    placeholderData: keepPreviousData,
+  })
 }

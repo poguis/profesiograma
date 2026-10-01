@@ -10,6 +10,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
+import { Add20Regular } from '@fluentui/react-icons'
 import { useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
 import { EstadoError } from '../../../components/EstadoError'
@@ -28,7 +29,8 @@ const CAMPOS_EN_FILTROS = new Set(['desde', 'hasta'])
 
 const useEstilos = makeStyles({
   pagina: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL },
-  encabezado: { display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalM },
+  encabezado: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalM },
+  nuevo: { marginLeft: 'auto' },
   esqueleto: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalS },
 })
 
@@ -56,6 +58,14 @@ export function ListadoProyectos() {
           Control de proyectos
         </Text>
         {isFetching && !isPending && <Spinner size="tiny" label="Actualizando…" />}
+        <Button
+          className={estilos.nuevo}
+          appearance="primary"
+          icon={<Add20Regular />}
+          onClick={() => void navigate('/proyectos/nuevo')}
+        >
+          Nuevo proyecto
+        </Button>
       </div>
 
       <FiltrosProyectos

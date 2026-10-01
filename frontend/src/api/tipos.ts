@@ -8,6 +8,8 @@ export interface ProblemDetails {
   detail?: string
   instance?: string
   traceId?: string
+  /** Extensiones (p. ej. `cruces` del 409). */
+  [extension: string]: unknown
 }
 
 /** ValidationProblem de ASP.NET Core: errores por campo. */

@@ -9,5 +9,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 30_000,
     },
+    // Las mutaciones (POST) nunca se reintentan solas: un reintento podría registrar dos veces.
+    mutations: { retry: false },
   },
 })

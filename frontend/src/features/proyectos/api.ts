@@ -1,13 +1,41 @@
 import { apiGet } from '../../api/clienteHttp'
 import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
-import type { Catalogos, FiltrosProyectos, ProyectoDetalle, ProyectoResumen } from './tipos'
+import type {
+  ActividadErp,
+  Catalogos,
+  CompaniaErp,
+  DimensionErp,
+  EmpleadoBusqueda,
+  FiltroEmpleados,
+  FiltrosProyectos,
+  HorarioErp,
+  OpcionesFormularioProyecto,
+  ProyectoDetalle,
+  ProyectoErp,
+  ProyectoResumen,
+} from './tipos'
 
 export const clavesProyectos = {
   todos: ['proyectos'] as const,
   listado: (filtros: FiltrosProyectos) => ['proyectos', 'listado', filtros] as const,
   detalle: (id: number) => ['proyectos', 'detalle', id] as const,
   catalogos: ['catalogos'] as const,
+  opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
+}
+
+// Claves fuera de 'proyectos': invalidar el listado tras registrar no debe recargar el ERP ni los empleados.
+export const clavesErp = {
+  companias: ['erp', 'companias'] as const,
+  proyectos: (companiaId: number) => ['erp', 'companias', companiaId, 'proyectos'] as const,
+  dimensiones: (companiaId: number) => ['erp', 'companias', companiaId, 'dimensiones'] as const,
+  actividades: (companiaId: number, proyectoErpId: string) =>
+    ['erp', 'companias', companiaId, 'proyectos', proyectoErpId, 'actividades'] as const,
+  horarios: ['erp', 'horarios'] as const,
+}
+
+export const clavesEmpleados = {
+  busqueda: (filtro: FiltroEmpleados) => ['empleados', filtro] as const,
 }
 
 export function listarProyectos(filtros: FiltrosProyectos, signal?: AbortSignal) {
@@ -20,4 +48,43 @@ export function obtenerProyecto(id: number, signal?: AbortSignal) {
 
 export function obtenerCatalogos(signal?: AbortSignal) {
   return apiGet<Catalogos>('/catalogos', { signal })
+}
+
+export function obtenerOpcionesFormulario(signal?: AbortSignal) {
+  return apiGet<OpcionesFormularioProyecto>('/proyectos/opciones-formulario', { signal })
+}
+
+export function listarCompaniasErp(signal?: AbortSignal) {
+  return apiGet<CompaniaErp[]>('/erp/companias', { signal })
+}
+
+export function listarProyectosErp(companiaId: number, signal?: AbortSignal) {
+  return apiGet<ProyectoErp[]>(`/erp/companias/${companiaId}/proyectos`, { signal })
+}
+
+export function listarDimensionesErp(companiaId: number, signal?: AbortSignal) {
+  return apiGet<DimensionErp[]>(`/erp/companias/${companiaId}/dimensiones`, { signal })
+}
+
+export function listarActividadesErp(companiaId: number, proyectoErpId: string, signal?: AbortSignal) {
+  return apiGet<ActividadErp[]>(
+    `/erp/companias/${companiaId}/proyectos/${encodeURIComponent(proyectoErpId)}/actividades`,
+    { signal },
+  )
+}
+
+export function listarHorariosErp(signal?: AbortSignal) {
+  return apiGet<HorarioErp[]>('/erp/horarios', { signal })
+}
+
+export function buscarEmpleados(filtro: FiltroEmpleados, signal?: AbortSignal) {
+  const consulta = new URLSearchParams({
+    soloMisDepartamentos: String(filtro.soloMisDepartamentos),
+    pagina: String(filtro.pagina),
+    tamano: String(filtro.tamano),
+  })
+  if (filtro.texto) {
+    consulta.set('texto', filtro.texto)
+  }
+  return apiGet<PaginaResultado<EmpleadoBusqueda>>(`/empleados?${consulta.toString()}`, { signal })
 }

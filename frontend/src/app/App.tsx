@@ -17,6 +17,11 @@ const router = createBrowserRouter([
         path: 'proyectos',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/ListadoProyectos')).ListadoProyectos }),
       },
+      // Antes de ':id' para que "nuevo" no se tome como un id.
+      {
+        path: 'proyectos/nuevo',
+        lazy: async () => ({ Component: (await import('../features/proyectos/pages/NuevoProyecto')).NuevoProyecto }),
+      },
       {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),

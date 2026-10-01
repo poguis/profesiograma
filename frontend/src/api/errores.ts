@@ -3,6 +3,8 @@ export type TipoErrorApi =
   | 'noAutenticado' // 401
   | 'prohibido' // 403
   | 'noEncontrado' // 404
+  | 'conflicto' // 409 (conserva las extensiones del ProblemDetails, p. ej. cruces)
+  | 'noDisponible' // 503 (ERP no disponible o registro ocupado)
   | 'servidor' // 5xx u otro estado no esperado
   | 'red' // sin respuesta (fetch falló)
 
@@ -11,17 +13,23 @@ const TITULOS: Record<TipoErrorApi, string> = {
   noAutenticado: 'No autenticado.',
   prohibido: 'No tiene permisos para esta acción.',
   noEncontrado: 'El recurso solicitado no existe.',
+  conflicto: 'La operación entra en conflicto con datos existentes.',
+  noDisponible: 'El servicio no está disponible en este momento.',
   servidor: 'Error del servidor o la API no está disponible.',
   red: 'No se pudo conectar con la API.',
 }
 
-/** Error tipado de la API. `errores` solo viene en 400 (ValidationProblem). */
+/**
+ * Error tipado de la API. `errores` solo viene en 400 (ValidationProblem).
+ * `extensiones`: miembros adicionales del ProblemDetails (p. ej. `cruces` y `resumen` del 409).
+ */
 export class ErrorApi extends Error {
   readonly tipo: TipoErrorApi
   readonly estado: number | null
   readonly titulo: string
   readonly detalle?: string
   readonly errores?: Record<string, string[]>
+  readonly extensiones: Record<string, unknown>
 
   constructor(datos: {
     tipo: TipoErrorApi
@@ -29,6 +37,7 @@ export class ErrorApi extends Error {
     titulo?: string
     detalle?: string
     errores?: Record<string, string[]>
+    extensiones?: Record<string, unknown>
   }) {
     const titulo = datos.titulo ?? TITULOS[datos.tipo]
     super(titulo)
@@ -38,6 +47,7 @@ export class ErrorApi extends Error {
     this.titulo = titulo
     this.detalle = datos.detalle
     this.errores = datos.errores
+    this.extensiones = datos.extensiones ?? {}
   }
 }
 
@@ -51,6 +61,10 @@ export function tipoPorEstado(estado: number): TipoErrorApi {
       return 'prohibido'
     case 404:
       return 'noEncontrado'
+    case 409:
+      return 'conflicto'
+    case 503:
+      return 'noDisponible'
     default:
       return 'servidor'
   }
@@ -63,6 +77,7 @@ export function esErrorDefinitivo(error: unknown): boolean {
     (error.tipo === 'validacion' ||
       error.tipo === 'noAutenticado' ||
       error.tipo === 'prohibido' ||
-      error.tipo === 'noEncontrado')
+      error.tipo === 'noEncontrado' ||
+      error.tipo === 'conflicto')
   )
 }

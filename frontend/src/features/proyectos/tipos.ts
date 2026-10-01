@@ -104,10 +104,15 @@ export interface ItemCatalogo {
   orden: number
 }
 
+export type GrupoProyectoCatalogo = ItemCatalogo & { requiereProyectoErp: boolean; requiereDimension: boolean }
+
+export type JornadaCatalogo = ItemCatalogo & { diasTrabajo: number; diasDescanso: number }
+
 export interface Catalogos {
   estadosProyecto: (ItemCatalogo & { esVigente: boolean })[]
-  gruposProyecto: (ItemCatalogo & { requiereProyectoErp: boolean; requiereDimension: boolean })[]
+  gruposProyecto: GrupoProyectoCatalogo[]
   tiposMovimiento: ItemCatalogo[]
+  jornadas: JornadaCatalogo[]
 }
 
 /** Filtros del listado tal como viven en la URL y se envían a la API. */
@@ -121,4 +126,183 @@ export interface FiltrosProyectos {
   hasta?: string
   pagina: number
   tamano: number
+}
+
+// ------------------------------------------------------------------ Nuevo proyecto (TAREA-13)
+
+/** GET /api/proyectos/opciones-formulario. Horas "HH:mm". */
+export interface OpcionesFormularioProyecto {
+  /** Departamentos del usuario: 0 = no se muestra, 1 = automático, varios = elige. */
+  departamentos: { id: number; nombre: string }[]
+  almuerzoSalidaOpciones: string[]
+  almuerzoRegresoOpciones: string[]
+  maxPrincipales: number
+  maxBacks: number
+  backMaxDiasDescanso: number
+}
+
+/** GET /api/erp/companias */
+export interface CompaniaErp {
+  id: number
+  nombre: string
+  nombreCorto: string | null
+  ruc: string | null
+}
+
+/** GET /api/erp/companias/{id}/proyectos (solo "Activo"). */
+export interface ProyectoErp {
+  id: string
+  nombre: string
+  estado: string
+}
+
+/** GET /api/erp/companias/{id}/dimensiones. El identificador es `uegpId`. */
+export interface DimensionErp {
+  uegpId: string
+  descripcion: string
+}
+
+/** GET /api/erp/companias/{id}/proyectos/{pid}/actividades */
+export interface ActividadErp {
+  id: string
+  descripcion: string
+  tipo: string | null
+}
+
+/** GET /api/erp/horarios (solo activos). Horas "HH:mm:ss": mostrar con formatearHora, no mezclar con el formulario. */
+export interface HorarioErp {
+  codigo: number
+  descripcion: string
+  horaEntrada: string | null
+  horaSalida: string | null
+  minutosJornada: number | null
+  minutosTrabajados: number | null
+  tipo: string | null
+}
+
+/** Item de GET /api/empleados (sin cédula ni correo). */
+export interface EmpleadoBusqueda {
+  id: number
+  codigoEkon: string
+  nombreCompleto: string
+  cargo: string | null
+  departamento: string | null
+}
+
+export interface FiltroEmpleados {
+  texto?: string
+  soloMisDepartamentos: boolean
+  pagina: number
+  tamano: number
+}
+
+export type TipoRegistroBack = 'JORNADA' | 'DESCANSO'
+
+/** Cuerpo de POST /api/proyectos y /previsualizar (FASE_5 §7.1). Fechas "yyyy-MM-dd", horas "HH:mm". */
+export interface SolicitudCrearProyecto {
+  companiaId: number | null
+  grupo: string | null
+  proyectoErpId: string | null
+  actividadId: string | null
+  dimensionUegpId: string | null
+  fechaInicio: string | null
+  fechaFin: string | null
+  horarioCodigo: number | null
+  salidaAlmuerzo: string | null
+  regresoAlmuerzo: string | null
+  departamentoId: number | null
+  principales: PrincipalSolicitud[]
+  backs: BackSolicitud[]
+}
+
+export interface PrincipalSolicitud {
+  empleadoId: number | null
+  jornada: string | null
+  fechaInicio: string | null
+  fechaFin: string | null
+  cargo: string | null
+}
+
+export interface BackSolicitud {
+  empleadoId: number | null
+  tipoRegistro: TipoRegistroBack
+  diasDescanso: number
+  fechaInicio: string | null
+  fechaFin: string | null
+  /** Número (posición 1..n) del principal que cubre. */
+  principalRelacionado: number | null
+  observacion: string | null
+  /** Siempre null: el servidor usa el puesto del empleado (Δ3). */
+  cargo: null
+}
+
+export interface PersonaCronograma {
+  /** PRINCIPAL | BACK */
+  rol: string
+  numero: number
+}
+
+/** Tramo. rol = PRINCIPAL | BACK | DESCANSO; tipo = AUTO | MANUAL. */
+export interface TramoCronograma {
+  rol: string
+  tipo: string
+  bloque: number
+  persona: PersonaCronograma
+  empleadoId: number
+  codigoEkon: string
+  nombreEmpleado: string
+  inicio: string
+  fin: string
+  dias: number
+}
+
+export interface DiaCronograma {
+  fecha: string
+  rol: string
+  tipo: string
+  bloque: number
+}
+
+export interface DiasPersona {
+  persona: PersonaCronograma
+  empleadoId: number
+  codigoEkon: string
+  nombreEmpleado: string
+  dias: DiaCronograma[]
+}
+
+/** origen = INTERNO | EXTERNO. Del proyecto existente solo código, nombre y estado. */
+export interface CruceAsignacion {
+  origen: string
+  empleadoId: number
+  codigoEkon: string
+  nombreEmpleado: string
+  fecha: string
+  rol: string
+  proyecto: string
+  proyectoCodigo: string | null
+  estadoProyecto: string | null
+}
+
+/** Resumen de cruces: persona · rol · proyecto · mes ("diciembre 2026") · días ("5, 6, 7"). */
+export interface ResumenCruce {
+  nombreEmpleado: string
+  rol: string
+  proyecto: string
+  mes: string
+  dias: string
+}
+
+/** 200 de POST /api/proyectos/previsualizar. `resumen` es el resumen de CRUCES. */
+export interface Previsualizacion {
+  tramos: TramoCronograma[]
+  diasPorPersona: DiasPersona[]
+  cruces: CruceAsignacion[]
+  resumen: ResumenCruce[]
+}
+
+/** 201 de POST /api/proyectos */
+export interface ProyectoCreado {
+  id: number
+  codigo: string
 }
