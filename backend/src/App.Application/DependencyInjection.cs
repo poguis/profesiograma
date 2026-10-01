@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<CatalogoErpConsultaServicio>();
         services.AddScoped<CrearProyectoValidador>();
         services.AddScoped<CrearProyectoServicio>();
+        services.AddScoped<OpcionesFormularioProyectoServicio>();
         return services;
     }
 }

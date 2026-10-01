@@ -24,7 +24,11 @@ public static class ProyectoEndpoints
                 : TypedResults.ValidationProblem(resultado.Errores!, title: "Parámetros de consulta no válidos.");
         });
 
-        // Inexistente o no visible → 404 (nunca 403).
+        // Apoyo del formulario "Nuevo proyecto": departamentos del usuario, opciones de almuerzo y límites.
+        proyectos.MapGet("/opciones-formulario", async (OpcionesFormularioProyectoServicio servicio, CancellationToken ct) =>
+            TypedResults.Ok(await servicio.ObtenerAsync(ct)));
+
+        // Inexistente o no visible → 404 (nunca 403). La restricción :int evita que "opciones-formulario" se tome como id.
         proyectos.MapGet("/{id:int}", async Task<Results<Ok<ProyectoDetalleDto>, NotFound>> (
             int id, ProyectoConsultaServicio servicio, CancellationToken ct) =>
         {

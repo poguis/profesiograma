@@ -249,3 +249,19 @@ X-Dev-User: anonimo
 Content-Type: application/json
 
 {}
+
+### ---------------------------------------------------------------------------
+### TAREA-13 (B0) — Opciones del formulario "Nuevo proyecto"
+
+### F1. Gestor → 200 { departamentos: [UNIDAD SIG], almuerzoSalidaOpciones 11:00–14:00,
+###     almuerzoRegresoOpciones 12:00–15:00, maxPrincipales 20, maxBacks 20, backMaxDiasDescanso }
+GET {{base}}/api/proyectos/opciones-formulario
+X-Dev-User: gestor
+
+### F2. Sin identidad → 401
+GET {{base}}/api/proyectos/opciones-formulario
+X-Dev-User: anonimo
+
+### F3. Sin regresión de la ruta con id (restricción :int) → 200 PRY-20261001-4ede0f
+GET {{base}}/api/proyectos/4
+X-Dev-User: gestor

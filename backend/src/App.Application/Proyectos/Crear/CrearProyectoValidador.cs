@@ -24,9 +24,6 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
     public const int LargoMaximoCargo = 200;
     public const int LargoMaximoObservacion = 500;
 
-    // RN09 (coincide con CK_Proyecto_Almuerzo: regreso > salida).
-    private static readonly TimeOnly SalidaMinima = new(11, 0), SalidaMaxima = new(14, 0);
-    private static readonly TimeOnly RegresoMinimo = new(12, 0), RegresoMaximo = new(15, 0);
     private static readonly string[] FormatosHora = ["HH:mm", "HH:mm:ss"];
 
     public async Task<ResultadoValidacionProyecto> ValidarAsync(CrearProyectoSolicitud s, CancellationToken ct)
@@ -159,14 +156,17 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         var salida = LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", "La hora de salida a almuerzo es obligatoria.", e);
         var regreso = LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", "La hora de regreso de almuerzo es obligatoria.", e);
-        if (salida is TimeOnly sal && (sal < SalidaMinima || sal > SalidaMaxima))
+        // RN09: rangos en ReglasAlmuerzo (misma fuente que las opciones del formulario).
+        if (salida is TimeOnly sal && !ReglasAlmuerzo.SalidaEnRango(sal))
         {
-            Agregar(e, "salidaAlmuerzo", "La salida a almuerzo debe estar entre 11:00 y 14:00.");
+            Agregar(e, "salidaAlmuerzo",
+                $"La salida a almuerzo debe estar entre {ReglasAlmuerzo.Formato(ReglasAlmuerzo.SalidaMinima)} y {ReglasAlmuerzo.Formato(ReglasAlmuerzo.SalidaMaxima)}.");
         }
 
-        if (regreso is TimeOnly reg && (reg < RegresoMinimo || reg > RegresoMaximo))
+        if (regreso is TimeOnly reg && !ReglasAlmuerzo.RegresoEnRango(reg))
         {
-            Agregar(e, "regresoAlmuerzo", "El regreso de almuerzo debe estar entre 12:00 y 15:00.");
+            Agregar(e, "regresoAlmuerzo",
+                $"El regreso de almuerzo debe estar entre {ReglasAlmuerzo.Formato(ReglasAlmuerzo.RegresoMinimo)} y {ReglasAlmuerzo.Formato(ReglasAlmuerzo.RegresoMaximo)}.");
         }
 
         if (salida is TimeOnly s1 && regreso is TimeOnly r1 && r1 <= s1)

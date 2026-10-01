@@ -171,8 +171,26 @@ Ajuste durante la escritura de las pruebas: la primera versión de la prueba de 
 
 ## 9. Pendientes
 - **TAREA-13:** pantalla "Nuevo proyecto". El formulario debe limpiar los campos que no correspondan al grupo al cambiarlo (pendiente 14).
-- Repaso con curl de los GET tras el refactor de consultas, en el próximo reinicio de la API (sección 7).
+- ✅ Cerrado en TAREA-12b (§10): repaso con curl de los GET tras el refactor de consultas (sección 7).
 - Pruebas de traducción para `UsuarioProvisionamiento` y `DatosPruebaSembrador` (pendiente 15).
 - 400 genérico en inglés para un JSON mal formado (pendiente 16).
 - Largos reales de los Id del ERP frente a las columnas (pendiente 17).
 - `PRY-20261001-4ede0f` (Id 4) queda en `PROFESIOGRAMA_DEV`. Para retirarlo habría que borrarlo con SQL, lo que requiere aprobación. Se puede dejar como dato de prueba.
+
+## 10. TAREA-12b — Verificación de regresión de los GET (2026-10-01, solo lectura)
+API en ejecución con el código actual (incluye el refactor de consultas de la sección 7). Solo peticiones `GET` con `curl -k -sS -H "X-Dev-User: …" https://localhost:7180/api/…`. No se modificó código ni datos. Se considera el proyecto `PRY-20261001-4ede0f` (Id 4) creado en C2.
+
+| Prueba | Esperado | Obtenido | Resultado |
+|---|---|---|---|
+| P1 (TAREA-07) admin `GET /api/proyectos` | 200, total 4 (incluye PRY-20261001-4ede0f), orden `FechaInicio DESC` | 200, total 4: PRY-20261001-4ede0f (2026-12-01), PRY-DEV-0001 (09-20), PRY-DEV-0002 (08-31), PRY-DEV-0003 (08-01) | OK |
+| P2 (TAREA-07) gestor `GET /api/proyectos` | 200, total 3 (4ede0f, 0001, 0002) | 200, total 3: PRY-20261001-4ede0f, PRY-DEV-0001, PRY-DEV-0002 | OK |
+| P8 (TAREA-07) admin `?tamano=500` | 400 | 400 `tamano`: "El tamaño de página debe ser un número entero entre 1 y 100." | OK |
+| P10 (TAREA-07) admin `GET /api/proyectos/1` | 200; personal 3 (2 principales + 1 back), etapas y actividad vigente | 200. PRINCIPAL 1 DEV001 (TIPO_2), PRINCIPAL 2 DEV002 (TIPO_3), BACK 1 DEV003 (sin jornada, 2026-10-01..05). Etapas 1 (v1 CREACION/ACTIVO). Actividad vigente DEV.01 v1 (2026-09-20..11-19) | OK |
+| P11 (TAREA-07) gestor `GET /api/proyectos/3` (de admin) | 404 | 404 (cuerpo vacío) | OK |
+| E1 (TAREA-11) gestor `GET /api/erp/companias` | Incluye 9001 | 200 `[{id 9001, "COMPAÑÍA DE PRUEBA S.A.", "PRUEBA", ruc "0999999999001"}]` | OK |
+| E7 (TAREA-11) gestor `GET /api/empleados` | 200, total 8 (DEV001–DEV008) | 200, total 8, DEV001…DEV008 | OK |
+| E9 (TAREA-11) claves del item de E7 | Sin cédula ni correo | `cargo`, `codigoEkon`, `departamento`, `id`, `nombreCompleto` | OK |
+| E11 (TAREA-11) gestor `GET /api/empleados?tamano=500` | 400 | 400 `tamano`: "El tamaño de página debe ser un número entero entre 1 y 100." | OK |
+| gestor `GET /api/catalogos` | 200 con los conteos de la TAREA-05 (4/7/3/4/3/3/2/7/7) | 200: estadosProyecto 4, tiposMovimiento 7, gruposProyecto 3, jornadas 4, rolesAsignacion 3, tiposAplicacionNovedad 3, origenesNovedad 2, tiposNovedad 7, departamentos 7 | OK |
+
+**Resultado:** 10/10 OK. El refactor de `ProyectoConsultas`, `EmpleadoConsultas` y `CatalogoConsultas` no introdujo regresiones. Con esto queda cerrado el pendiente "Repaso con curl de los GET tras el refactor de consultas" (sección 9).
