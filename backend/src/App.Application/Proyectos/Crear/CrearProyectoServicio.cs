@@ -1,4 +1,3 @@
-using System.Text.Json;
 using App.Application.Comun;
 using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cronograma;
@@ -19,8 +18,6 @@ public sealed class CrearProyectoServicio(
 {
     /// <summary>Intentos de generar un código único (RN01).</summary>
     public const int IntentosCodigo = 3;
-
-    private static readonly JsonSerializerOptions JsonSnapshot = new(JsonSerializerDefaults.Web);
 
     public async Task<ResultadoCrearProyecto> PrevisualizarAsync(CrearProyectoSolicitud solicitud, CancellationToken ct)
     {
@@ -142,23 +139,19 @@ public sealed class CrearProyectoServicio(
         return CalculadorCruces.Externos(trabajo, existentes, empleados);
     }
 
-    /// <summary>Snapshot JSON de la etapa v1: número, rol, EKON, nombre, fechas, jornada, días y tipo. Sin cédula ni correo.</summary>
+    /// <summary>Snapshot JSON de la etapa v1 (formato común en SnapshotPersonal). Sin cédula ni correo.</summary>
     private static string CrearSnapshot(ProyectoValidado p) =>
-        JsonSerializer.Serialize(
-            p.Principales.Concat(p.Backs).Select(x => new
-            {
-                numero = x.Persona.Numero,
-                rol = CalculadorCruces.NombreRol(x.Persona.Rol),
-                ekon = x.Empleado.CodigoEkon,
-                nombre = x.Empleado.NombreCompleto,
-                fechaInicio = x.Inicio,
-                fechaFin = x.Fin,
-                jornada = x.Jornada?.Codigo,
-                diasTrabajo = x.Jornada?.DiasTrabajo,
-                diasDescanso = x.DiasDescanso,
-                tipoRegistro = x.TipoRegistro is { } t ? (t == TipoRegistroBack.Descanso ? "DESCANSO" : "JORNADA") : "JORNADA",
-            }),
-            JsonSnapshot);
+        SnapshotPersonal.Serializar(p.Principales.Concat(p.Backs).Select(x => new ElementoSnapshot(
+            x.Persona.Numero,
+            CalculadorCruces.NombreRol(x.Persona.Rol),
+            x.Empleado.CodigoEkon,
+            x.Empleado.NombreCompleto,
+            x.Inicio,
+            x.Fin,
+            x.Jornada?.Codigo,
+            x.Jornada?.DiasTrabajo,
+            x.DiasDescanso,
+            x.TipoRegistro == TipoRegistroBack.Descanso ? "DESCANSO" : "JORNADA")));
 
     private static PersonaDto Persona(PersonaProyecto p) => new(CalculadorCruces.NombreRol(p.Rol), p.Numero);
 

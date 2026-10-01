@@ -1,6 +1,7 @@
 using App.Application.Comun;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Crear;
+using App.Application.Proyectos.Estados;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -68,8 +69,41 @@ public static class ProyectoEndpoints
             };
         });
 
+        // Cambio de estado (TAREA-14): SUSPENSION y CIERRE. No visible o inexistente → 404.
+        proyectos.MapPost("/{id:int}/cambio-estado/previsualizar",
+            async Task<Results<Ok<CambioEstadoPrevisualizacionDto>, ValidationProblem, NotFound>> (
+                int id, CambioEstadoSolicitud solicitud, CambioEstadoServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.PrevisualizarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoCambio.Previsualizado => TypedResults.Ok(resultado.Previsualizacion!),
+                    EstadoCambio.Invalido => CambioEstadoInvalido(resultado),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
+        // Una transacción con applock. 200 { id, estado, version }; 400; 404; 409 si el estado cambió; 503 ocupado.
+        proyectos.MapPost("/{id:int}/cambio-estado",
+            async Task<Results<Ok<CambioEstadoRealizadoDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, CambioEstadoSolicitud solicitud, CambioEstadoServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.AplicarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoCambio.Realizado => TypedResults.Ok(resultado.Realizado!),
+                    EstadoCambio.Invalido => CambioEstadoInvalido(resultado),
+                    EstadoCambio.Conflicto => TypedResults.Problem(
+                        title: ResultadoCambioEstado.MensajeConflicto, statusCode: StatusCodes.Status409Conflict),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
         return app;
     }
+
+    private static ValidationProblem CambioEstadoInvalido(ResultadoCambioEstado resultado) =>
+        TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos del cambio de estado no son válidos.");
 
     private static ValidationProblem ValidacionFallida(ResultadoCrearProyecto resultado) =>
         TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos del proyecto no son válidos.");

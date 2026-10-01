@@ -265,3 +265,105 @@ X-Dev-User: anonimo
 ### F3. Sin regresión de la ruta con id (restricción :int) → 200 PRY-20261001-4ede0f
 GET {{base}}/api/proyectos/4
 X-Dev-User: gestor
+
+### ---------------------------------------------------------------------------
+### TAREA-14 — Cambio de estado (SUSPENSION / CIERRE). Solo proyectos de prueba Id 7 y 8 (2027).
+### Escriben SOLO S2 y S4b (Id 7). Id 8 recibe solo peticiones que terminan en 400. Id 5 (admin) solo 404.
+### Id 7 = PRY-20261001-454325: 01/03–30/04/2027, P1 DEV004 TIPO_3 (5/2), actividad DEV.01.
+
+### S1. Previsualizar suspensión Id 7 al 15/03 → 200, no guarda.
+###     DEV004: PRINCIPAL 34 (16/03–30/04) y DESCANSO 12 (20/03–25/04); DEV004 recortado 30/04 → 15/03;
+###     DEV.01 RECORTADA → 15/03; sin advertencias.
+POST {{base}}/api/proyectos/7/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-03-15" }
+
+### S2. Registrar la suspensión → 200 { id 7, estado "SUSPENDIDO", version 2 }
+POST {{base}}/api/proyectos/7/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-03-15" }
+
+### S2b. Detalle → SUSPENDIDO, fin 15/03, DEV004 hasta 15/03, etapa v2 SUSPENSION (corte 15/03), actividad hasta 15/03
+GET {{base}}/api/proyectos/7
+X-Dev-User: gestor
+
+### S3. Reactivar (SUSPENDIDO → ACTIVO) → 400 "La reactivación todavía no está disponible."
+POST {{base}}/api/proyectos/7/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "ACTIVO", "fecha": "2027-03-10" }
+
+### S4. Previsualizar cierre al 10/03 → 200 CIERRE SUSPENDIDO → TERMINADO; DEV004: PRINCIPAL 3 (11–15/03) y DESCANSO 2 (13–14/03)
+POST {{base}}/api/proyectos/7/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "TERMINADO", "fecha": "2027-03-10" }
+
+### S4b. Registrar el cierre → 200 { id 7, estado "TERMINADO", version 3 }
+POST {{base}}/api/proyectos/7/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "TERMINADO", "fecha": "2027-03-10" }
+
+### S5. Cambiar un TERMINADO → 400 "Este cambio de estado no está permitido desde el estado actual (TERMINADO → SUSPENDIDO)."
+POST {{base}}/api/proyectos/7/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-03-05" }
+
+### S6. Gestor sobre un proyecto ajeno (Id 5, del admin) → 404 (no cambia nada)
+POST {{base}}/api/proyectos/5/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2026-11-01" }
+
+### S7. Sin identidad → 401
+POST {{base}}/api/proyectos/8/cambio-estado/previsualizar
+X-Dev-User: anonimo
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-04-15" }
+
+### S8a. Fecha posterior al fin (Id 8: 01–30/04/2027) → 400 fecha "…mayor a la fecha fin del proyecto (30/04/2027)."
+POST {{base}}/api/proyectos/8/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-05-01" }
+
+### S8b. Fecha anterior al inicio → 400 fecha "…menor a la fecha de inicio del proyecto (01/04/2027)."
+POST {{base}}/api/proyectos/8/cambio-estado
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "SUSPENDIDO", "fecha": "2027-03-31" }
+
+### S8c. Destino INACTIVO → 400 no permitido (ACTIVO → INACTIVO)
+POST {{base}}/api/proyectos/8/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "INACTIVO", "fecha": "2027-04-15" }
+
+### S8d. Mismo estado → 400 "El proyecto ya está en estado ACTIVO."
+POST {{base}}/api/proyectos/8/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "ACTIVO", "fecha": "2027-04-15" }
+
+### S8e. Destino inexistente → 400 "El estado destino 'XYZ' no existe."
+POST {{base}}/api/proyectos/8/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "XYZ", "fecha": "2027-04-15" }

@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-01 (TAREA-13: pantalla "Nuevo proyecto")
+**Última actualización:** 2026-10-01 (TAREA-14: suspensión y cierre, backend)
 
 ## 1. Documentos del proyecto (en orden)
 
@@ -10,6 +10,8 @@
 | `docs/fases/FASE_1_Analisis_Funcional.md` | Análisis funcional del módulo Proyectos: pantallas, reglas RN01–RN18, roles, problemas, hallazgos C15–C28. |
 | `docs/fases/FASE_2_Modelo_Datos.md` | Mapeo lista → tabla, ER, justificación J1–J16, hallazgos C29–C31, respuestas (secc. 7), diagnóstico SQL (secc. 8) y entorno verificado (secc. 9). |
 | `docs/fases/FASE_2_modelo_profesiograma.sql` | Script de referencia del modelo (22 tablas + 2 vistas + semillas). EF Core debe generar un esquema equivalente. |
+| `docs/fases/FASE_5_Crear_Proyecto.md` | Diseño de "Crear proyecto": motor de cronograma, cruces, API y decisiones P1–P6. |
+| `docs/fases/FASE_5_Estados_Proyecto.md` | Máquina de estados, suspensión y cierre (E1–E6), hallazgos H1–H6 y diferencias D1–D8 con el original (TAREA-14). |
 
 ## 2. Alcance acordado (primera entrega)
 
@@ -85,9 +87,22 @@ Diferencias aceptadas frente a `FASE_2_modelo_profesiograma.sql`:
 
 Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database drop`: el login no puede crear bases).
 
-## 6. Siguiente paso
+## 6. Siguiente paso — hoja de ruta (desde la TAREA-14)
 
-Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (crear/listar/editar/estados) sobre esta base.
+| Tarea | Alcance |
+|---|---|
+| 14 | Suspensión y cierre — backend ✅ |
+| 15 | Suspensión y cierre — frontend |
+| 16 | Motor con fecha de corte (RN11) — Domain |
+| 17 | Edición backend: actualización de personal + reactivación (H4, H5) |
+| 18 | Edición backend: cabecera (fechas, horario, almuerzo) + cambio de actividad |
+| 19 | Edición — frontend |
+| 20–21 | Cronograma: consulta y vista |
+| 22 | Reporte Excel (ClosedXML; requiere la plantilla, pendiente 4) |
+| 23–24 | Novedades: backend y frontend |
+| 25 | Administración de permisos por departamento |
+| 26 | Sincronización de empleados (EvolutionEmployee) |
+| Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
 
 **Decisión del usuario (2026-09-29):** la migración de datos (Fase 3, carga masiva desde SharePoint) se hace **al final**, justo antes del corte a producción. Mientras tanto se desarrolla con datos de prueba. "Migración de EF Core" (crear tablas) ≠ "migración de datos".
 
@@ -114,6 +129,9 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
 20. [TAREA-13] Respuesta 503 (ERP no disponible / registro ocupado) y botón "Reintentar" sin prueba visual: el ERP Simulado no falla. Probar en QA con `ServiciosExternos:Modo = Http`.
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
+22. [TAREA-14 → TAREA-17, H4] Si el recorte de una suspensión o cierre elimina al principal inicial (`EsPrincipalInicial`, empieza después de la fecha), el proyecto queda sin principal inicial. La reactivación del original busca ese principal: resolver junto con H4.
+23. [TAREA-14 → TAREA-16] Al recortar un back, `DiasDescanso` no cambia (E3) aunque sus días de descanso posteriores a la fecha se eliminen. El motor con fecha de corte debe tenerlo en cuenta para no regenerarlos.
+24. [TAREA-14] La advertencia E6 ("Se eliminarán días ya transcurridos.") solo está cubierta por pruebas: los proyectos de prueba Id 7 y 8 son de 2027.
 
 ## 7.1 Reglas técnicas obligatorias
 
@@ -130,6 +148,7 @@ Paso 3 (propuesto): Fase 4 (mapeo de flujos) y luego Fase 5 módulo Proyectos (c
 | TAREA-12 (2026-10-01) | Crear proyecto: `POST /api/proyectos/previsualizar` (200 tramos/días/cruces/resumen, no guarda) y `POST /api/proyectos` (201 + Location; 400 validación en español; 409 cruces internos o externos; 503 ERP o registro ocupado). Validador RN02/RN08/RN09/RN18/P1/P5, datos ERP por Id, MotorCronograma, cruces externos (otros proyectos vigentes, rol ≠ DESCANSO), código RN01 `PRY-yyyyMMdd-xxxxxx` (Ecuador, reintento 3), registro en una transacción con `sp_getapplock`. Pruebas de traducción SQL para todas las consultas EF de Proyecto/Empleado/Catálogo/Crear. Proyecto creado en desarrollo: **PRY-20261001-4ede0f** (Id 4). | ✅ build 0/0; tests 217/217; C1–C9 + C5b OK (ver `docs/tareas/TAREA-12-reporte.md`) |
 | TAREA-12b (2026-10-01) | Verificación de regresión (solo lectura) de los GET tras el refactor de consultas de la TAREA-12: P1, P2, P8, P10, P11 (TAREA-07), E1, E7, E9, E11 (TAREA-11) y `GET /api/catalogos` (gestor), con PRY-20261001-4ede0f ya creado (gestor 3, admin 4). | ✅ 10/10 OK (ver `docs/tareas/TAREA-12-reporte.md` §10) |
 | TAREA-13 B0 (2026-10-01) | `GET /api/proyectos/opciones-formulario` (Gestor): departamentos del usuario, opciones de almuerzo y límites (`PROYECTO_MAX_PRINCIPALES`, `PROYECTO_MAX_BACKS`, `BACK_MAX_DIAS_DESCANSO`). Mismas fuentes que `CrearProyectoValidador`: `ObtenerDepartamentosDeUsuarioAsync`, `ObtenerLimitesAsync` y la clase nueva `ReglasAlmuerzo` (rangos RN09 y opciones cada hora, usada también por el validador sin cambiar su comportamiento). Sin consultas EF nuevas. | ✅ build 0/0; tests 232/232; has-pending-model-changes sin cambios; F1–F3 OK (usuario) |
+| TAREA-14 (2026-10-01) | Cambio de estado SUSPENSION (ACTIVO→SUSPENDIDO) y CIERRE (ACTIVO/SUSPENDIDO→TERMINADO): `POST /api/proyectos/{id}/cambio-estado/previsualizar` (200, no guarda) y `POST /api/proyectos/{id}/cambio-estado` (200 `{ id, estado, version }`; 400; 404; 409 si el estado cambió; 503 ocupado). Domain: `MaquinaEstadosProyecto` y `RecorteProyecto` (lógica pura). Recorte a la fecha F inclusiva (días > F, personal que empieza después, recorte de FechaFin, actividades H3, backs sin principal → referencia null + advertencia). Una transacción con `sp_getapplock`: relectura y 409, `ExecuteDelete` de días, entidades con seguimiento (auditoría), etapa versión máx + 1 con snapshot del personal resultante. REACTIVACION → 400 hasta la TAREA-17. `SnapshotPersonal` compartido con la creación (JSON idéntico, con prueba). Ver `docs/fases/FASE_5_Estados_Proyecto.md`. | ✅ build 0/0; tests 308/308; has-pending-model-changes sin cambios; S1–S8 del usuario OK. Dato de prueba: Id 7 PRY-20261001-454325 quedó **TERMINADO (versión 3)**, fin 10/03/2027; Id 8 sigue ACTIVO (ver `docs/tareas/TAREA-14-reporte.md` §6) |
 | Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
 
 Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).
