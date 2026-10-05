@@ -1,7 +1,7 @@
 # TAREA-17b — Reactivación (SUSPENDIDO → ACTIVO), backend
 
 **Fechas:** 2026-10-05 (Fase A y Fase B)
-**Resultado:** implementada. **Prueba manual pendiente** (`parte1.cmd` y `parte2.cmd`, sección 6): la ejecuta el usuario. La primera ejecución (05/10) se detuvo sin escribir por cruces de DEV008; los scripts ahora eligen el par de empleados (6.0).
+**Resultado:** ✅ terminada. Prueba manual del usuario del 05/10/2026 (`parte1.cmd` y `parte2.cmd`): todos los casos coinciden con lo esperado (6.2). La primera ejecución se detuvo sin escribir por cruces de DEV008; los scripts ahora eligen el par de empleados (6.0).
 - `dotnet build Profesiograma.slnx -c Release --no-incremental`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **413/413** (Domain 100, Application 217, Infrastructure 96). Antes: 375. Nuevas: 38. De las 375 anteriores solo cambiaron las 2 del mensaje de `cambio-estado` (autorizadas); las de la TAREA-17 pasan sin modificarse, también con H12.
 - `has-pending-model-changes`: sin cambios. Sin modelo ni migraciones nuevas.
@@ -76,34 +76,44 @@ El resto reutiliza consultas con prueba (cabecera, personal, días base y desde 
 1. Con la API corriendo: `backend\tests\manual\tarea17b\parte1.cmd` (selecciona el par, crea y suspende el proyecto B). Opcional: `parte1.cmd DEV003 DEV004` o `empleados.txt`.
 2. Después: `backend\tests\manual\tarea17b\parte2.cmd` (lee `valores-parte1.txt`; solo **g** escribe).
 - Fechas relativas al día en que se ejecuta `parte1.cmd` (H): INICIO = H−3, **F** = H−2, **R** = H−1, FIN = H+55. P1 = EMP_P1 TIPO_2 INICIO–FIN; Back 1 = EMP_BACK JORNADA solo el día F, 3 días de descanso, relacionado con P1. Grupo CAMPO, actividad DEV.01 (O3).
-- Con el par por defecto hace falta H ≥ 07/10/2026 (DEV008 trabaja en el Id 9 hasta el 04/10); antes de esa fecha la selección automática descarta DEV007/DEV008 y prueba los demás pares. Qué par queda libre depende de los datos: [PENDIENTE] hasta la ejecución.
+- Con el par por defecto hace falta H ≥ 07/10/2026 (DEV008 trabaja en el Id 9 hasta el 04/10); antes de esa fecha la selección automática descarta DEV007/DEV008 y prueba los demás pares. El 05/10/2026 quedó libre DEV007 / DEV001 (6.2).
 - La selección automática puede hacer hasta 42 vistas previas (en la simulación tardó unos 2 minutos cuando ninguno servía).
 - Protección: cada parte no se ejecuta si existe su `resultado-parteN.txt` (se crea justo antes del primer paso que escribe; si se detiene antes, la salida queda en `tmp\parteN-previo.txt`).
 - No tocan los Id 1–9: Id 2 solo GET (b); Id 5 solo GET como admin (O5).
 
-### 6.2 Resultados esperados
-Con H = 05/10/2026: INICIO 02/10, F 03/10, R 04/10, FIN 29/11. El par DEV007/DEV008 se descarta (DEV008 el 03/10 en el Id 9) y se usa el primer par libre. El ejemplo de la tabla usa **H = 09/10/2026** (INICIO 06/10, F 07/10, R 08/10, FIN 03/12) y el par por defecto; con otro par, cambian los códigos (EMP_P1 en lugar de DEV007 y EMP_BACK en lugar de DEV008).
+### 6.2 Resultados reales (usuario, 05/10/2026)
+Salidas: `backend/tests/manual/tarea17b/resultado-parte1.txt` y `resultado-parte2.txt`.
+- **Fechas:** H = 05/10/2026 → INICIO 02/10, **F 03/10**, **R 04/10**, FIN 29/11.
+- **Par elegido:** P1 **DEV007** (Id 7) / back **DEV001** (Id 1), con **31 pares descartados**. El primero fue DEV007/DEV008, con 1 cruce de DEV008 el 03/10 en PRY-20261005-da396e (Id 9). Los demás tuvieron entre 4 y 30 cruces, sobre todo con PRY-DEV-0001.
+- **Proyecto B = Id 10, PRY-20261005-98f053.** Una vez reactivado, queda ACTIVO en la **versión 3**, con dos principales iniciales.
 
-| Caso | Esperado (relativo) | Ejemplo H = 09/10/2026 | Resultado |
+| Caso | HTTP | Línea CONTROL (resumen) | ¿Coincide? |
 |---|---|---|---|
-| P0a | Par elegido: el primero sin cruces (DESCARTADO / ELEGIDO por par) | DEV007/DEV008 si H ≥ 07/10 | [PENDIENTE] |
-| P0 | 201 `{ id B }` | Id B (se espera 10) | [PENDIENTE] |
-| S1 | 200 `{ B, SUSPENDIDO, 2 }` | Suspendido el 07/10 | [PENDIENTE] |
-| S1b | SUSPENDIDO, fin F; P1 INICIO–F; Back 1 F–F, descanso 3 | Fin 07/10; P1 06/10–07/10 | [PENDIENTE] |
-| a | 200, `puedeReactivar` true, `fechaMinima` F+1, propuesta EMP_P1 TIPO_2 activo, sin advertencias | `fechaMinima` 08/10 | [PENDIENTE] |
-| b | 200 (Id 2 SUSPENDIDO) | — | [PENDIENTE] |
-| c | 400 `fecha` "…posterior a la fecha fin actual del proyecto (F)." | "(07/10/2026)" | [PENDIENTE] |
-| d | 200; corte R; advertencia "Se generarán días ya transcurridos."; EMP_BACK HISTORICO, 0 tramos desde R; P2 NUEVO número 2, PRINCIPAL desde R (11 días) y DESCANSO AUTO 4 días; actividad DEV.01 R–FIN; 0 cruces | PRINCIPAL 08/10–18/10, DESCANSO 19/10–22/10; actividad 08/10–03/12 | [PENDIENTE] |
-| i | 400 `estadoDestino` "La reactivación se registra con la opción Reactivar." | — | [PENDIENTE] |
-| O5 | GET Id 5 (admin): si DEV005 no es PRINCIPAL del Id 5 ACTIVO en R → e y f "OMITIDO (sin datos)" | DEV005 01/10–31/12 en el Id 5 → se ejecutan | [PENDIENTE] |
-| e | 200 con ≥ 1 cruce EXTERNO (si R es día de descanso de DEV005: "OMITIDO sin datos") | 08/10 es día PRINCIPAL de DEV005 (05–22/10) | [PENDIENTE] |
-| f | 409 "El proyecto tiene cruces de asignación." con cruces; no escribe | — | [PENDIENTE] |
-| g | 200 `{ B, ACTIVO, 3 }` | — | [PENDIENTE] |
-| h1 | ACTIVO, fin FIN; etapa v3 REACTIVACION ACTIVO R–FIN, corte R, DEV.01; actividad vigente v2 REACTIVACION DEV.01 R–FIN; P1 y P2 iniciales | v3 08/10–03/12 corte 08/10 | [PENDIENTE] |
-| h2 | `puedeReactivar` false, "Solo se puede reactivar un proyecto SUSPENDIDO (estado actual: ACTIVO)." | — | [PENDIENTE] |
-| h3 | GET edición: EMP_BACK **HISTORICO** (H12); se lee el Id de P2 | — | [PENDIENTE] |
-| h4 | Vista previa de personal sin cambios: 200; EMP_BACK HISTORICO; 0 tramos de EMP_BACK con fin ≥ corte; 0 cruces (O6) | — | [PENDIENTE] |
-| j | 400 `proyecto` "Solo se puede reactivar un proyecto SUSPENDIDO (estado actual: ACTIVO)." (O4) | — | [PENDIENTE] |
+| P0a | — | Par elegido P1 DEV007 Id 7, back DEV001 Id 1; 31 descartados | Sí |
+| P0 | 201 | `{"id":10,"codigo":"PRY-20261005-98f053"}` | Sí |
+| S1 | 200 | id 10, SUSPENDIDO, versión 2 | Sí |
+| S1b | 200 | SUSPENDIDO, fin 03/10; P1 DEV007 02/10–03/10 (descanso 4, inicial); Back 1 DEV001 03/10–03/10 (descanso 3) | Sí |
+| a | 200 | `puedeReactivar` True, `fechaMinima` 04/10, propuesta DEV007 TIPO_2 activo, 0 advertencias | Sí |
+| b | 200 | GET reactivación del Id 2 (solo lectura) | Sí |
+| c | 400 | `fecha`: "La fecha de reactivación debe ser posterior a la fecha fin actual del proyecto (03/10/2026)." | Sí |
+| d | 200 | Corte 04/10; "Se generarán días ya transcurridos."; DEV001 HISTORICO, 0 tramos desde R; P2 NUEVO número 2, PRINCIPAL desde 04/10 (04–14/10) y DESCANSO AUTO 15–18/10; actividad DEV.01 04/10–29/11; 0 cruces | Sí |
+| i | 400 | `estadoDestino`: "La reactivación se registra con la opción Reactivar." (además un error en `fecha`, observación 1) | Sí |
+| O5 | 200 | DEV005 (Id 5) PRINCIPAL del Id 5 ACTIVO en R: 1 → se ejecutan e y f | Sí |
+| e | 200 | 1 cruce EXTERNO: DEV005 04/10 contra PRY-20261001-4c34f3 | Sí |
+| f | 409 | "El proyecto tiene cruces de asignación.", 1 cruce; no escribe | Sí |
+| g | 200 | id 10, ACTIVO, versión 3 | Sí |
+| h1 | 200 | ACTIVO, fin 29/11; etapa v3 REACTIVACION ACTIVO 04/10–29/11, corte 04/10, DEV.01; actividad vigente v2 REACTIVACION DEV.01 04/10–29/11; principales 1 DEV007 02/10–03/10 inicial y 2 DEV007 04/10–29/11 inicial (H4, R6) | Sí |
+| h2 | 200 | `puedeReactivar` False, "Solo se puede reactivar un proyecto SUSPENDIDO (estado actual: ACTIVO)." | Sí |
+| h3 | 200 | Principal nuevo Id 20; DEV001 **HISTORICO** (H12) | Sí |
+| h4 | 200 | Corte 05/10; DEV001 HISTORICO; 0 tramos de DEV001 desde el corte; 0 cruces (O6, H12) | Sí |
+| j | 400 | `proyecto`: "Solo se puede reactivar un proyecto SUSPENDIDO (estado actual: ACTIVO)." (O4) | Sí |
+
+**Todos los casos coinciden con lo esperado.**
+
+### 6.2.1 Observaciones
+1. **Caso i:** además del error esperado en `estadoDestino`, el 400 trae otro en `fecha`: "La fecha del movimiento no puede ser mayor a la fecha fin del proyecto (03/10/2026).". `CambioEstadoValidador` valida la fecha aunque el movimiento sea inválido. **Pendiente 29** (→ TAREA-18): no validar `fecha` cuando el movimiento es SIN_CAMBIO, NO_PERMITIDO, REACTIVACION o un estado desconocido.
+2. **Tramos partidos en el corte:** el motor devuelve la base (días < corte) y lo regenerado como tramos separados. En h4 (corte 05/10), el primer bloque de P2 sale como PRINCIPAL 04/10–04/10 (base) y PRINCIPAL 05/10–14/10 (regenerado), con el mismo bloque 1. Es correcto (R8 del motor: base continua + regenerados), pero al mostrarlo conviene unir los tramos contiguos del mismo empleado, rol, tipo y bloque. Va a la TAREA-19 (nota en el pendiente 26).
+3. **`resumen[].dias`** (lectura del código y de las pruebas de la TAREA-12; no se consultó la API): es la **lista de días del mes**, no una cantidad. `CalculadorCruces.Resumen` (`CalculadorCruces.cs:66`) agrupa por persona, rol, proyecto y mes, y arma `string.Join(", ", días distintos ordenados)`. Las pruebas `Resumen_DiasOrdenadosSinRepetir_YMesEnEspanol` y `Resumen_AgrupaPorMesRolYProyecto` esperan "5, 6, 7", "1, 2", "30". El "4" de los casos e y f es el día 04/10. **No hace falta el pendiente 30.**
 
 ### 6.3 Prueba de los scripts con `SIMULAR=1` (Claude Code)
 **Después del ajuste de 6.0** (H = 09/10/2026, PATH sin `curl.exe`, respuestas simuladas):
@@ -160,6 +170,6 @@ Con H = 05/10/2026: INICIO 02/10, F 03/10, R 04/10, FIN 29/11. El par DEV007/DEV
 - **Frontend:** "Reactivar" sigue deshabilitado ("Disponible próximamente"); pendiente 26 → TAREA-19.
 
 ## 10. Pendientes
-- Ejecutar `parte1.cmd` y `parte2.cmd` (usuario) y registrar sus controles; después, marcar la TAREA-17b como ✅.
+- **Pendiente 29** (→ TAREA-18): `CambioEstadoValidador` no debe validar `fecha` cuando el movimiento es inválido (observación 1 de 6.2.1).
 - TAREA-18: cabecera y cambio de actividad (incluido R10).
-- TAREA-19: frontend de edición y de reactivación (pendientes 25 y 26).
+- TAREA-19: frontend de edición y de reactivación (pendientes 25 y 26; unir tramos contiguos al mostrarlos, observación 2 de 6.2.1).

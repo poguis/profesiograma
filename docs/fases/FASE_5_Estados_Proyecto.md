@@ -1,6 +1,6 @@
 # FASE 5 — Diseño: Estados del proyecto (suspensión y cierre)
 
-**Fecha:** 2026-10-01 (TAREA-14). **Implementado:** SUSPENSION y CIERRE (backend, TAREA-14; frontend, TAREA-15); REACTIVACION (backend, TAREA-17b, §8). **Pendiente:** frontend de la reactivación (TAREA-19).
+**Fecha:** 2026-10-01 (TAREA-14). **Implementado:** SUSPENSION y CIERRE (backend, TAREA-14; frontend, TAREA-15); REACTIVACION (backend, TAREA-17b, §8; verificado en prueba manual el 05/10/2026). **Pendiente:** frontend de la reactivación (TAREA-19).
 **Origen:** `docs/origen/powerapps/ConfigurarProyecto_1.pa.yaml`:
 - `estadoEdit_1.OnChange` (l. 446);
 - `fechaMovimientoEstadoEdit_1.OnChange` (l. 491);
@@ -119,6 +119,8 @@ stateDiagram-v2
 | Api | `Endpoints/ProyectoEndpoints.cs` (dos `POST`) |
 
 ## 8. Reactivación (SUSPENDIDO → ACTIVO) — TAREA-17b
+
+**Estado:** implementado y **verificado en prueba manual (05/10/2026)**: proyecto de prueba Id 10 (PRY-20261005-98f053), casos a–j y h1–h4 OK (`docs/tareas/TAREA-17b-reporte.md` §6.2). Observación pendiente: el 400 de `cambio-estado` a ACTIVO trae además un error en `fecha` (pendiente 29, TAREA-18).
 
 **Origen** (`ConfigurarProyecto_1.pa.yaml`): `fechaMovimientoEstadoEdit_1.OnChange` (l. 491–549), `Aplicar estado_1` (l. 580–766), Regenerar (cadena de la l. 1910, R‑797–805), Registrar (l. 2275–2291 y 2590–2616).
 Reutiliza la TAREA-17: núcleo de `EdicionPersonalValidador`, `CalculoPersonal` (motor `Regenerar`, cruces), `ITransaccionAsignaciones`, la escritura D7 de `EdicionPersonalRepositorio` y `SnapshotPersonal`.
