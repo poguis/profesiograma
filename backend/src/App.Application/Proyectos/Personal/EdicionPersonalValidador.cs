@@ -31,12 +31,20 @@ public sealed record PlanEdicion(
 public sealed record ResultadoValidacionEdicion(PlanEdicion? Plan, IReadOnlyDictionary<string, string[]> Errores, bool Cambiado);
 
 /// <summary>
+/// Diferencias entre la edición (TAREA-17) y la reactivación (TAREA-17b) en el núcleo común de validación.
+/// Reactivacion: todas las personas del cuerpo son nuevas (sin id), todo el personal guardado es histórico (R5) y
+/// las nuevas empiezan en el corte R o después.
+/// </summary>
+internal sealed record ReglasValidacionPersonal(DateOnly Corte, (DateOnly Inicio, DateOnly Fin) Rango, bool Reactivacion);
+
+/// <summary>
 /// Validación de "Actualizar personal" (TAREA-17: E1–E4, D2–D5). Lógica pura sobre los datos ya leídos.
 /// Las reglas comunes con la creación están en ReglasPersonal (mismos mensajes).
 /// </summary>
 public sealed class EdicionPersonalValidador
 {
     public const string SinCambio = "SIN_CAMBIO", Modificado = "MODIFICADO", Eliminado = "ELIMINADO", Nuevo = "NUEVO";
+    public const string MensajeIdReactivacion = "En la reactivación todas las personas son nuevas; no envíe id.";
 
     public ResultadoValidacionEdicion Validar(
         ActualizarPersonalSolicitud s,
@@ -48,27 +56,56 @@ public sealed class EdicionPersonalValidador
     {
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(proyecto);
-        var e = new Dictionary<string, List<string>>();
 
         // E1: proyecto ACTIVO y no terminado.
         if (MotivoNoEditable(proyecto, corte) is { } motivo)
         {
+            var e = new Dictionary<string, List<string>>();
             Agregar(e, "proyecto", motivo);
             return Invalido(e);
         }
 
+        return ValidarPersonal(s, proyecto, new ReglasValidacionPersonal(corte, (proyecto.FechaInicio, proyecto.FechaFin), Reactivacion: false),
+            jornadas, limites, empleadosActivos);
+    }
+
+    /// <summary>
+    /// Núcleo común (TAREA-17 y TAREA-17b): identidad, claves, empleado, jornada, fechas (RN08), relación del back,
+    /// numeración máx + 1 por rol, personas omitidas y máximos. Lógica pura.
+    /// </summary>
+    internal ResultadoValidacionEdicion ValidarPersonal(
+        ActualizarPersonalSolicitud s,
+        DatosEdicion proyecto,
+        ReglasValidacionPersonal reglas,
+        IReadOnlyDictionary<string, JornadaRef> jornadas,
+        LimitesProyecto limites,
+        IReadOnlyDictionary<int, EmpleadoRef> empleadosActivos)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        ArgumentNullException.ThrowIfNull(proyecto);
+        ArgumentNullException.ThrowIfNull(reglas);
+        var e = new Dictionary<string, List<string>>();
+
         var principales = s.Principales ?? [];
         var backs = s.Backs ?? [];
         var guardadas = proyecto.Personal.ToDictionary(p => p.Id);
-        var rango = (proyecto.FechaInicio, proyecto.FechaFin);
+        var corte = reglas.Corte;
+        var rango = reglas.Rango;
         var corteMenosUno = corte.AddDays(-1);
+        DateOnly? inicioMinimoNuevas = reglas.Reactivacion ? corte : null;
 
-        // Ids: deben existir (si no, el proyecto cambió → 409), en su lista y sin repetirse.
-        foreach (var id in principales.Select(p => p.Id).Concat(backs.Select(b => b.Id)).OfType<int>())
+        // R5 (reactivación): todo el personal guardado es histórico. Edición: R2 del motor + H12.
+        bool EsHistorica(PersonaGuardada p) => reglas.Reactivacion || p.EsHistorica(corte);
+
+        // Ids (edición): deben existir (si no, el proyecto cambió → 409), en su lista y sin repetirse.
+        if (!reglas.Reactivacion)
         {
-            if (!guardadas.ContainsKey(id))
+            foreach (var id in principales.Select(p => p.Id).Concat(backs.Select(b => b.Id)).OfType<int>())
             {
-                return new ResultadoValidacionEdicion(null, Congelar(e), Cambiado: true);
+                if (!guardadas.ContainsKey(id))
+                {
+                    return new ResultadoValidacionEdicion(null, Congelar(e), Cambiado: true);
+                }
             }
         }
 
@@ -90,14 +127,15 @@ public sealed class EdicionPersonalValidador
         {
             var p = principales[i];
             var clave = $"principales[{i}]";
-            if (!ValidarIdentidad(p.Id, RolCronograma.Principal, clave, guardadas, idsEnviados, corte, e, out var guardada))
+            if (!ValidarIdentidad(p.Id, RolCronograma.Principal, clave, guardadas, idsEnviados, reglas.Reactivacion, EsHistorica, e,
+                    out var guardada))
             {
                 continue; // Id inválido: no se valida el resto de la fila (un solo error, en "id")
             }
 
             var empleado = ResolverEmpleado(p.EmpleadoId, guardada, clave, empleadosActivos, e);
             var jornada = ValidarJornada(p.Jornada, clave, jornadas, e);
-            var fechas = ValidarFechas(p.FechaInicio, p.FechaFin, guardada, clave, rango, corte, corteMenosUno, e);
+            var fechas = ValidarFechas(p.FechaInicio, p.FechaFin, guardada, clave, rango, corte, corteMenosUno, inicioMinimoNuevas, e);
             var cargo = guardada is not null && p.Cargo is null
                 ? guardada.Cargo
                 : ValidarLargo(p.Cargo, $"{clave}.cargo", CrearProyectoValidador.LargoMaximoCargo, "El cargo", e) ?? empleado?.Puesto;
@@ -121,7 +159,8 @@ public sealed class EdicionPersonalValidador
         {
             var b = backs[i];
             var clave = $"backs[{i}]";
-            if (!ValidarIdentidad(b.Id, RolCronograma.Back, clave, guardadas, idsEnviados, corte, e, out var guardada))
+            if (!ValidarIdentidad(b.Id, RolCronograma.Back, clave, guardadas, idsEnviados, reglas.Reactivacion, EsHistorica, e,
+                    out var guardada))
             {
                 continue; // Id inválido: no se valida el resto de la fila (un solo error, en "id")
             }
@@ -129,9 +168,9 @@ public sealed class EdicionPersonalValidador
             var empleado = ResolverEmpleado(b.EmpleadoId, guardada, clave, empleadosActivos, e);
             var tipo = ValidarTipoRegistro(b.TipoRegistro, clave, e);
             var dias = ValidarDiasDescanso(b.DiasDescanso, clave, limites.MaxDiasDescansoBack, e);
-            var fechas = ValidarFechas(b.FechaInicio, b.FechaFin, guardada, clave, rango, corte, corteMenosUno, e);
+            var fechas = ValidarFechas(b.FechaInicio, b.FechaFin, guardada, clave, rango, corte, corteMenosUno, inicioMinimoNuevas, e);
             var observacion = ValidarLargo(b.Observacion, $"{clave}.observacion", CrearProyectoValidador.LargoMaximoObservacion, "La observación", e);
-            var relacion = ResolverRelacion(b, clave, clavesPrincipales, principalesPorClave, guardadas, corte, e);
+            var relacion = ResolverRelacion(b, clave, clavesPrincipales, principalesPorClave, guardadas, EsHistorica, e);
 
             if (empleado is not null && tipo is TipoRegistroBack t && fechas is (DateOnly inicio, DateOnly fin) && relacion is not null
                 && !string.IsNullOrWhiteSpace(b.Clave))
@@ -149,9 +188,9 @@ public sealed class EdicionPersonalValidador
         }
 
         // E3: las vigentes que ya empezaron son obligatorias; las que aún no empiezan se eliminan si se omiten.
-        var historicas = proyecto.Personal.Where(p => p.EsHistorica(corte)).ToList();
+        var historicas = proyecto.Personal.Where(EsHistorica).ToList();
         var eliminadas = new List<PersonaGuardada>();
-        foreach (var vigente in proyecto.Personal.Where(p => !p.EsHistorica(corte) && !idsEnviados.Contains(p.Id)))
+        foreach (var vigente in proyecto.Personal.Where(p => !EsHistorica(p) && !idsEnviados.Contains(p.Id)))
         {
             if (vigente.FechaInicio < corte)
             {
@@ -218,16 +257,24 @@ public sealed class EdicionPersonalValidador
     }
 
     /// <summary>
-    /// Persona guardada que corresponde al Id (null = nueva). false = Id inválido (otra lista, repetido o histórico):
-    /// el error queda en "{clave}.id" y el resto de la fila no se valida. Un Id inexistente ya se resolvió como 409.
+    /// Persona guardada que corresponde al Id (null = nueva). false = Id inválido (otra lista, repetido o histórico;
+    /// en la reactivación, cualquier id): el error queda en "{clave}.id" y el resto de la fila no se valida.
+    /// Un Id inexistente (edición) ya se resolvió como 409.
     /// </summary>
     private static bool ValidarIdentidad(int? id, RolCronograma rol, string clave, IReadOnlyDictionary<int, PersonaGuardada> guardadas,
-        HashSet<int> enviados, DateOnly corte, Dictionary<string, List<string>> e, out PersonaGuardada? guardada)
+        HashSet<int> enviados, bool reactivacion, Func<PersonaGuardada, bool> esHistorica, Dictionary<string, List<string>> e,
+        out PersonaGuardada? guardada)
     {
         guardada = null;
         if (id is not int personaId)
         {
             return true;
+        }
+
+        if (reactivacion)
+        {
+            Agregar(e, $"{clave}.id", MensajeIdReactivacion);
+            return false;
         }
 
         var encontrada = guardadas[personaId];
@@ -243,7 +290,7 @@ public sealed class EdicionPersonalValidador
             return false;
         }
 
-        if (encontrada.EsHistorica(corte))
+        if (esHistorica(encontrada))
         {
             Agregar(e, $"{clave}.id", $"La persona {Etiqueta(encontrada)} es histórica (terminó el {Formato(encontrada.FechaFin)}) y no se puede modificar.");
             return false;
@@ -272,11 +319,19 @@ public sealed class EdicionPersonalValidador
         return new EmpleadoRef(guardada.EmpleadoId, guardada.CodigoEkon, guardada.NombreCompleto, guardada.Cargo);
     }
 
-    /// <summary>RN08 + E3 (vigentes): inicio fijo si ya empezó; si aún no empieza, inicio ≥ corte (D2); fin ≥ corte − 1 si cambia (D5).</summary>
+    /// <summary>
+    /// RN08 + E3 (vigentes): inicio fijo si ya empezó; si aún no empieza, inicio ≥ corte (D2); fin ≥ corte − 1 si cambia (D5).
+    /// Reactivación (inicioMinimoNuevas = R): las nuevas no pueden empezar antes de R (R5).
+    /// </summary>
     private static (DateOnly Inicio, DateOnly Fin)? ValidarFechas(DateOnly? inicio, DateOnly? fin, PersonaGuardada? guardada, string clave,
-        (DateOnly, DateOnly) rango, DateOnly corte, DateOnly corteMenosUno, Dictionary<string, List<string>> e)
+        (DateOnly, DateOnly) rango, DateOnly corte, DateOnly corteMenosUno, DateOnly? inicioMinimoNuevas, Dictionary<string, List<string>> e)
     {
         var errores = e.Count;
+        if (guardada is null && inicioMinimoNuevas is DateOnly minimo && inicio is DateOnly inicioNueva && inicioNueva < minimo)
+        {
+            Agregar(e, $"{clave}.fechaInicio", $"La fecha de inicio no puede ser anterior a la fecha de reactivación ({Formato(minimo)}).");
+        }
+
         if (guardada is not null && inicio is DateOnly i)
         {
             if (guardada.FechaInicio < corte && i != guardada.FechaInicio)
@@ -302,8 +357,8 @@ public sealed class EdicionPersonalValidador
 
     /// <summary>Relación del back: clave de un principal del cuerpo o Id de un principal HISTÓRICO (D3). null = inválida.</summary>
     private static RelacionPlan? ResolverRelacion(BackEdicionSolicitud b, string clave, HashSet<string> clavesPrincipales,
-        IReadOnlyDictionary<string, PersonaPlan> principales, IReadOnlyDictionary<int, PersonaGuardada> guardadas, DateOnly corte,
-        Dictionary<string, List<string>> e)
+        IReadOnlyDictionary<string, PersonaPlan> principales, IReadOnlyDictionary<int, PersonaGuardada> guardadas,
+        Func<PersonaGuardada, bool> esHistorica, Dictionary<string, List<string>> e)
     {
         var principalClave = b.PrincipalClave?.Trim();
         if (!string.IsNullOrEmpty(principalClave) && b.PrincipalId is not null)
@@ -328,7 +383,7 @@ public sealed class EdicionPersonalValidador
 
         if (b.PrincipalId is int principalId)
         {
-            if (!guardadas.TryGetValue(principalId, out var guardada) || guardada.Rol != RolCronograma.Principal || !guardada.EsHistorica(corte))
+            if (!guardadas.TryGetValue(principalId, out var guardada) || guardada.Rol != RolCronograma.Principal || !esHistorica(guardada))
             {
                 Agregar(e, $"{clave}.principalId", $"El principal {principalId} no es un principal histórico de este proyecto.");
                 return null;

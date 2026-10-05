@@ -544,3 +544,90 @@ Content-Type: application/json
 { "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
   "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
                "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }
+
+###############################################################################
+### TAREA-17b — Reactivar (SUSPENDIDO → ACTIVO). Corte = R. NO EJECUTAR desde Claude Code (lo ejecuta el usuario).
+### Ejemplo con H = 09/10/2026: proyecto B 06/10–03/12, P1 DEV007 TIPO_2, Back 1 DEV008 solo el 07/10 + 3 días de descanso,
+### suspendido el 07/10 (F); R = 08/10. Completar @idB y @idP2B con los Id reales (la prueba guiada está en
+### backend/tests/manual/tarea17b/parte1.cmd y parte2.cmd). No se tocan los Id 1–9 (el Id 2 solo con GET y vistas previas).
+@idB = 0
+@idP2B = 0
+
+### X1. Datos del formulario → 200: puedeReactivar true, fechaMinima 2026-10-08, principalPropuesto DEV007 TIPO_2 (activo), sin advertencias
+GET {{base}}/api/proyectos/{{idB}}/reactivacion
+X-Dev-User: gestor
+
+### X2. R = F → 400 fecha "La fecha de reactivación debe ser posterior a la fecha fin actual del proyecto (07/10/2026)."
+POST {{base}}/api/proyectos/{{idB}}/reactivacion/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-07", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-07", "fechaFin": "2026-12-03" } ], "backs": [] }
+
+### X3. Vista previa con R = 08/10 → 200: advertencia "Se generarán días ya transcurridos." (si hoy > 08/10); Back 1 DEV008
+###     HISTORICO sin descanso (pendiente 23); P2 nuevo DEV007 desde el 08/10; actividad DEV.01 08/10–03/12
+POST {{base}}/api/proyectos/{{idB}}/reactivacion/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-08", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ], "backs": [] }
+
+### X4. Con id → 400 principales[0].id "En la reactivación todas las personas son nuevas; no envíe id."
+POST {{base}}/api/proyectos/{{idB}}/reactivacion/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-08", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "id": 1, "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ], "backs": [] }
+
+### X5. Cruce externo (back nuevo DEV005 el 08/10; en el Id 5 es día PRINCIPAL) → 200 con cruce EXTERNO
+POST {{base}}/api/proyectos/{{idB}}/reactivacion/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-08", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ],
+  "backs": [ { "clave": "k2", "empleadoId": 5, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-08", "fechaFin": "2026-10-08", "diasDescanso": 0,
+               "principalClave": "p1" } ] }
+
+### X6. cambio-estado a ACTIVO → 400 estadoDestino "La reactivación se registra con la opción Reactivar."
+POST {{base}}/api/proyectos/{{idB}}/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "ACTIVO", "fecha": "2026-10-08" }
+
+### X7. REACTIVAR (escribe) → 200 { id: idB, estado: "ACTIVO", version: 3 }
+POST {{base}}/api/proyectos/{{idB}}/reactivacion
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-08", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ], "backs": [] }
+
+### X8. Detalle → ACTIVO, fin 03/12; etapa v3 REACTIVACION 08/10–03/12 corte 08/10 DEV.01; actividad v2 REACTIVACION 08/10–03/12;
+###     P1 y P2 con esPrincipalInicial true (H4, R6)
+GET {{base}}/api/proyectos/{{idB}}
+X-Dev-User: gestor
+
+### X9. Edición después de reactivar (H12) → Back 1 DEV008 HISTORICO; vista previa sin cambios sin días de DEV008 desde el corte
+GET {{base}}/api/proyectos/{{idB}}/edicion
+X-Dev-User: gestor
+
+###
+POST {{base}}/api/proyectos/{{idB}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p2", "id": {{idP2B}}, "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ],
+  "backs": [] }
+
+### X10. Repetir X7 → 400 proyecto "Solo se puede reactivar un proyecto SUSPENDIDO (estado actual: ACTIVO)."
+POST {{base}}/api/proyectos/{{idB}}/reactivacion
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fecha": "2026-10-08", "fechaFin": "2026-12-03",
+  "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ], "backs": [] }

@@ -1,0 +1,10 @@
+{
+  "fecha": "__R__",
+  "fechaFin": "__FIN__",
+  "principales": [
+    { "clave": "p1", "empleadoId": __EMP_P1__, "jornada": "TIPO_2", "fechaInicio": "__R__", "fechaFin": "__FIN__" }
+  ],
+  "backs": [
+    { "clave": "k2", "empleadoId": 5, "tipoRegistro": "JORNADA", "fechaInicio": "__R__", "fechaFin": "__R__", "diasDescanso": 0, "principalClave": "p1" }
+  ]
+}

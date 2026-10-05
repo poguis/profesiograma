@@ -88,7 +88,7 @@ public class CambioEstadoServicioTests
         var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("ACTIVO", new DateOnly(2027, 3, 15)), Ct);
 
         Assert.Equal(EstadoCambio.Invalido, r.Estado);
-        Assert.Equal(["La reactivación todavía no está disponible."], r.Errores!["estadoDestino"]);
+        Assert.Equal(["La reactivación se registra con la opción Reactivar."], r.Errores!["estadoDestino"]);
         Assert.Equal(0, e.Tx.Iniciadas);
     }
 

@@ -37,7 +37,7 @@ public class CambioEstadoValidadorTests
     [InlineData("  ", "ACTIVO", "El estado destino es obligatorio.")]
     [InlineData("xyz", "ACTIVO", "El estado destino 'XYZ' no existe.")]
     [InlineData("ACTIVO", "ACTIVO", "El proyecto ya está en estado ACTIVO.")]
-    [InlineData("ACTIVO", "SUSPENDIDO", "La reactivación todavía no está disponible.")]
+    [InlineData("ACTIVO", "SUSPENDIDO", "La reactivación se registra con la opción Reactivar.")]
     [InlineData("INACTIVO", "ACTIVO", "Este cambio de estado no está permitido desde el estado actual (ACTIVO → INACTIVO).")]
     [InlineData("SUSPENDIDO", "TERMINADO", "Este cambio de estado no está permitido desde el estado actual (TERMINADO → SUSPENDIDO).")]
     [InlineData("ACTIVO", "TERMINADO", "Este cambio de estado no está permitido desde el estado actual (TERMINADO → ACTIVO).")]

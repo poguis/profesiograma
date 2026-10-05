@@ -30,9 +30,21 @@ public sealed record PersonaGuardada(
     DateOnly FechaInicio, DateOnly FechaFin, string? JornadaCodigo, byte? DiasTrabajo, byte DiasDescanso,
     string TipoRegistro, int? PrincipalRelacionadoId, string? Cargo, string? Observacion, bool EsPrincipalInicial)
 {
-    /// <summary>R2 del motor: principal con fin &lt; corte; back con fin + descanso &lt; corte.</summary>
+    /// <summary>
+    /// Back sin días DESCANSO guardados después de su FechaFin: su descanso posterior se borró (recorte de una
+    /// suspensión). Lo calcula Infrastructure; false en los principales.
+    /// </summary>
+    public bool SinDescansoPosterior { get; init; }
+
+    /// <summary>
+    /// R2 del motor: principal con fin &lt; corte; back con fin + descanso &lt; corte.
+    /// H12 (TAREA-17b): un back con fin &lt; corte cuyo descanso posterior se borró también es histórico
+    /// (ForzarHistorica): no se regenera el descanso que la suspensión eliminó.
+    /// </summary>
     public bool EsHistorica(DateOnly corte) =>
-        Rol == RolCronograma.Principal ? FechaFin < corte : FechaFin.AddDays(DiasDescanso) < corte;
+        Rol == RolCronograma.Principal
+            ? FechaFin < corte
+            : FechaFin.AddDays(DiasDescanso) < corte || (SinDescansoPosterior && FechaFin < corte);
 }
 
 /// <summary>Día guardado anterior al corte (base del motor).</summary>
@@ -64,7 +76,21 @@ public sealed record PersonaNueva(
 /// <summary>Día a insertar: de una persona guardada (PersonalId) o de una nueva (ClaveNueva).</summary>
 public sealed record DiaParaInsertar(int? PersonalId, string? ClaveNueva, DiaAsignado Dia);
 
-/// <summary>Todo lo que se escribe en la transacción (recalculado dentro del applock).</summary>
+/// <summary>Fila nueva de ProyectoActividad (R8 de la reactivación): misma actividad, de R a la nueva fecha fin.</summary>
+public sealed record ActividadNueva(
+    int Version, string Codigo, string? Descripcion, string? Tipo, DateOnly FechaInicio, DateOnly FechaFin);
+
+/// <summary>
+/// Parte propia de la REACTIVACION (TAREA-17b): principal inicial nuevo (R6), proyecto ACTIVO con la nueva fecha fin
+/// (R4, H5) y la actividad nueva (R8, null si no había actividad vigente en la fecha de suspensión).
+/// </summary>
+public sealed record ReactivacionAplicar(string ClavePrincipalInicial, DateOnly FechaFinProyecto, ActividadNueva? Actividad);
+
+/// <summary>
+/// Todo lo que se escribe en la transacción (recalculado dentro del applock).
+/// FechaInicioProyecto / FechaFinProyecto son las fechas de la etapa (en la reactivación: R y la nueva fecha fin).
+/// Reactivacion = null en ACTUALIZACION_PERSONAL.
+/// </summary>
 public sealed record CambioPersonal(
     int ProyectoId,
     DateOnly Corte,
@@ -77,7 +103,8 @@ public sealed record CambioPersonal(
     IReadOnlyList<PersonaVigenteActualizada> Vigentes,
     IReadOnlyList<PersonaNueva> Nuevas,
     IReadOnlyList<int> Eliminadas,
-    IReadOnlyList<DiaParaInsertar> Dias);
+    IReadOnlyList<DiaParaInsertar> Dias,
+    ReactivacionAplicar? Reactivacion = null);
 
 public interface IEdicionPersonalRepositorio
 {

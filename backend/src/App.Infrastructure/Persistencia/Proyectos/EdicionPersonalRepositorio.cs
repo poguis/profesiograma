@@ -1,5 +1,6 @@
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
+using App.Application.Proyectos.Reactivacion;
 using App.Domain.Catalogos;
 using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cronograma;
@@ -10,15 +11,16 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Infrastructure.Persistencia.Proyectos;
 
 /// <summary>
-/// Lectura y escritura de "Actualizar personal" (TAREA-17). AplicarAsync debe ejecutarse dentro de ITransaccionAsignaciones.
-/// Orden (D7, por la FK compuesta y la autorreferenciada, ambas Restrict):
+/// Lectura y escritura de "Actualizar personal" (TAREA-17) y "Reactivar" (TAREA-17b). AplicarAsync debe ejecutarse
+/// dentro de ITransaccionAsignaciones. Orden (D7, por la FK compuesta y la autorreferenciada, ambas Restrict):
 ///  1) ExecuteDelete de los días con Fecha ≥ corte;
-///  2) SaveChanges 1: vigentes actualizadas (relaciones con principales guardados) + nuevas;
+///  2) SaveChanges 1: vigentes actualizadas (relaciones con principales guardados) + nuevas
+///     (reactivación: el principal inicial nuevo y el proyecto ACTIVO con la nueva FechaFin, con su RowVer);
 ///  3) SaveChanges 2: relaciones con principales nuevos (ya tienen Id), referencias a omitidas en null, omitidas eliminadas;
-///  4) SaveChanges 3: días regenerados (clave → ProyectoPersonalId) y etapa ACTUALIZACION_PERSONAL.
-/// Personal y etapa con seguimiento: AuditoriaInterceptor llena la auditoría.
+///  4) SaveChanges 3: días regenerados (clave → ProyectoPersonalId), actividad REACTIVACION (si aplica) y etapa.
+/// Personal, proyecto, actividad y etapa con seguimiento: AuditoriaInterceptor llena la auditoría.
 /// </summary>
-internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IEdicionPersonalRepositorio
+internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IEdicionPersonalRepositorio, IReactivacionRepositorio
 {
     private static readonly int[] ErroresUnicos = [2601, 2627];
 
@@ -31,6 +33,7 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
         }
 
         var personal = await ConsultaPersonalEdicion(db, proyectoId).ToListAsync(ct);
+        var conDescansoPosterior = (await ConsultaBacksConDescansoPosterior(db, proyectoId).ToListAsync(ct)).ToHashSet();
         var dias = await ConsultaDiasBase(db, proyectoId, corte).ToListAsync(ct);
         var actividades = await CambioEstadoRepositorio.ConsultaActividades(db, proyectoId).ToListAsync(ct);
 
@@ -41,7 +44,11 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
             personal.Select(p => new PersonaGuardada(
                 p.Id, (RolCronograma)p.RolAsignacionId, p.Numero, p.EmpleadoId, p.CodigoEkon, p.NombreCompleto,
                 p.FechaInicio, p.FechaFin, p.JornadaCodigo, p.DiasTrabajo, p.DiasDescanso, p.TipoRegistro,
-                p.PrincipalRelacionadoId, p.CargoAsignado, p.Observacion, p.EsPrincipalInicial)).ToList(),
+                p.PrincipalRelacionadoId, p.CargoAsignado, p.Observacion, p.EsPrincipalInicial)
+            {
+                // H12: back sin días DESCANSO guardados después de su FechaFin (la suspensión los borró).
+                SinDescansoPosterior = p.RolAsignacionId == (byte)RolCronograma.Back && !conDescansoPosterior.Contains(p.Id),
+            }).ToList(),
             dias.Select(d => new DiaGuardado(d.PersonalId, new DiaAsignado(
                 d.EmpleadoId, d.Fecha, (RolCronograma)d.RolAsignacionId,
                 d.TipoAsignacion == ProyectoAsignacionDia.TipoAuto ? TipoAsignacionCronograma.Auto : TipoAsignacionCronograma.Manual,
@@ -51,6 +58,12 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
 
     public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct) =>
         CambioEstadoRepositorio.ConsultaUltimaVersion(db, proyectoId).FirstOrDefaultAsync(ct);
+
+    public async Task<ActividadParaReactivar?> ObtenerActividadVigenteAsync(int proyectoId, DateOnly fecha, CancellationToken ct)
+    {
+        var fila = await ConsultaActividadParaReactivar(db, proyectoId, fecha).FirstOrDefaultAsync(ct);
+        return fila is null ? null : new ActividadParaReactivar(fila.ActividadCodigo, fila.ActividadDescripcion, fila.ActividadTipo);
+    }
 
     public async Task AplicarAsync(CambioPersonal cambio, CancellationToken ct)
     {
@@ -90,12 +103,21 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
             JornadaId = n.JornadaId,
             DiasTrabajo = n.DiasTrabajo,
             DiasDescanso = n.DiasDescanso,
-            EsPrincipalInicial = false, // D6 (H4 en la TAREA-17b)
+            EsPrincipalInicial = cambio.Reactivacion?.ClavePrincipalInicial == n.Clave, // D6; reactivación: R6 (H4)
             TipoRegistro = n.TipoRegistro,
             Observacion = n.Observacion,
             PrincipalRelacionadoId = n.Relacion.Id,
         });
         db.ProyectoPersonal.AddRange(nuevas.Values);
+
+        // Reactivación (R4, H5): proyecto ACTIVO con la nueva fecha fin. Se actualiza con su RowVer (concurrencia).
+        if (cambio.Reactivacion is { } reactivacion)
+        {
+            var proyecto = await CambioEstadoRepositorio.ConsultaProyectoSeguimiento(db, idProyecto).FirstAsync(ct);
+            proyecto.EstadoProyectoId = CatalogoIds.EstadoProyecto.Activo;
+            proyecto.FechaFin = reactivacion.FechaFinProyecto;
+        }
+
         await GuardarAsync(ct);
 
         // 3) Relaciones con principales nuevos; referencias a omitidas en null (por defensa); eliminar omitidas.
@@ -134,12 +156,28 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
             };
         }));
 
+        // R8: actividad nueva de la reactivación (misma actividad, de R a la nueva fecha fin). Las existentes no cambian.
+        if (cambio.Reactivacion?.Actividad is { } actividad)
+        {
+            db.ProyectoActividades.Add(new ProyectoActividad
+            {
+                ProyectoId = idProyecto,
+                Version = actividad.Version,
+                TipoMovimientoId = tipoMovimientoId,
+                FechaInicio = actividad.FechaInicio,
+                FechaFin = actividad.FechaFin,
+                ActividadCodigo = actividad.Codigo,
+                ActividadDescripcion = actividad.Descripcion,
+                ActividadTipo = actividad.Tipo,
+            });
+        }
+
         db.ProyectoEtapas.Add(new ProyectoEtapa
         {
             ProyectoId = idProyecto,
             Version = cambio.Version,
             TipoMovimientoId = tipoMovimientoId,
-            EstadoProyectoId = CatalogoIds.EstadoProyecto.Activo, // el estado no cambia (solo proyectos ACTIVO)
+            EstadoProyectoId = CatalogoIds.EstadoProyecto.Activo, // edición: el estado no cambia; reactivación: queda ACTIVO
             FechaInicio = cambio.FechaInicioProyecto,
             FechaFin = cambio.FechaFinProyecto,
             FechaCorte = cambio.Corte,
@@ -188,6 +226,13 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
         public bool EsPrincipalInicial { get; init; }
     }
 
+    internal sealed class FilaActividadReactivar
+    {
+        public string ActividadCodigo { get; init; } = string.Empty;
+        public string? ActividadDescripcion { get; init; }
+        public string? ActividadTipo { get; init; }
+    }
+
     internal sealed class FilaDiaBase
     {
         public int PersonalId { get; init; }
@@ -221,6 +266,31 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
                 CargoAsignado = pp.CargoAsignado,
                 Observacion = pp.Observacion,
                 EsPrincipalInicial = pp.EsPrincipalInicial,
+            });
+
+    /// <summary>
+    /// H12: backs con al menos un día DESCANSO guardado después de su FechaFin. Un back recortado por una suspensión
+    /// no aparece (sus días posteriores a la fecha de suspensión se borraron).
+    /// </summary>
+    internal static IQueryable<int> ConsultaBacksConDescansoPosterior(ProfesiogramaDbContext db, int proyectoId) =>
+        db.ProyectoAsignacionesDia.AsNoTracking()
+            .Where(d => d.ProyectoId == proyectoId
+                        && d.RolAsignacionId == (byte)RolCronograma.Descanso
+                        && d.ProyectoPersonal.RolAsignacionId == (byte)RolCronograma.Back
+                        && d.Fecha > d.ProyectoPersonal.FechaFin)
+            .Select(d => d.ProyectoPersonalId)
+            .Distinct();
+
+    /// <summary>R8: actividad vigente en la fecha (la de mayor versión si se solapan), con descripción y tipo.</summary>
+    internal static IQueryable<FilaActividadReactivar> ConsultaActividadParaReactivar(ProfesiogramaDbContext db, int proyectoId, DateOnly fecha) =>
+        db.ProyectoActividades.AsNoTracking()
+            .Where(a => a.ProyectoId == proyectoId && a.FechaInicio <= fecha && a.FechaFin >= fecha)
+            .OrderByDescending(a => a.Version)
+            .Select(a => new FilaActividadReactivar
+            {
+                ActividadCodigo = a.ActividadCodigo,
+                ActividadDescripcion = a.ActividadDescripcion,
+                ActividadTipo = a.ActividadTipo,
             });
 
     /// <summary>Base del motor: días con Fecha &lt; corte.</summary>

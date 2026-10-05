@@ -1,0 +1,6 @@
+{
+  "principales": [
+    { "clave": "p2", "id": __ID_P2__, "empleadoId": __EMP_P1__, "jornada": "TIPO_2", "fechaInicio": "__R__", "fechaFin": "__FIN__" }
+  ],
+  "backs": []
+}

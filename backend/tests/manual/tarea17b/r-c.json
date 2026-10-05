@@ -1,0 +1,8 @@
+{
+  "fecha": "__F__",
+  "fechaFin": "__FIN__",
+  "principales": [
+    { "clave": "p1", "empleadoId": __EMP_P1__, "jornada": "TIPO_2", "fechaInicio": "__F__", "fechaFin": "__FIN__" }
+  ],
+  "backs": []
+}

@@ -3,6 +3,7 @@ using App.Application.Proyectos;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
+using App.Application.Proyectos.Reactivacion;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -143,8 +144,56 @@ public static class ProyectoEndpoints
                 };
             });
 
+        // ---------------------------------------------------------- reactivación (TAREA-17b)
+
+        proyectos.MapGet("/{id:int}/reactivacion", async Task<Results<Ok<ReactivacionDto>, NotFound>> (
+            int id, ReactivacionServicio servicio, CancellationToken ct) =>
+            await servicio.ObtenerAsync(id, ct) is { } reactivacion ? TypedResults.Ok(reactivacion) : TypedResults.NotFound());
+
+        // Vista previa: cronograma + cruces + actividad que se creará. No guarda nada (200 aunque haya cruces).
+        proyectos.MapPost("/{id:int}/reactivacion/previsualizar",
+            async Task<Results<Ok<PrevisualizacionReactivacionDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, ReactivarProyectoSolicitud solicitud, ReactivacionServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.PrevisualizarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Previsualizado => TypedResults.Ok(resultado.Previsualizacion!),
+                    EstadoEdicion.Invalido => ReactivacionInvalida(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
+        // Una transacción con applock. 200 { id, estado, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503.
+        proyectos.MapPost("/{id:int}/reactivacion",
+            async Task<Results<Ok<ProyectoReactivadoDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, ReactivarProyectoSolicitud solicitud, ReactivacionServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.RegistrarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Realizado => TypedResults.Ok(resultado.Realizado!),
+                    EstadoEdicion.Invalido => ReactivacionInvalida(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    EstadoEdicion.ConCruces => TypedResults.Problem(
+                        title: ResultadoEdicionPersonal.MensajeCruces,
+                        detail: "No se reactivó el proyecto. Revise los cruces y ajuste el personal o las fechas.",
+                        statusCode: StatusCodes.Status409Conflict,
+                        extensions: new Dictionary<string, object?>
+                        {
+                            ["cruces"] = resultado.Previsualizacion!.Cruces,
+                            ["resumen"] = resultado.Previsualizacion.Resumen,
+                        }),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
         return app;
     }
+
+    private static ValidationProblem ReactivacionInvalida(ResultadoReactivacion resultado) =>
+        TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos de la reactivación no son válidos.");
 
     private static ValidationProblem PersonalInvalido(ResultadoEdicionPersonal resultado) =>
         TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos del personal no son válidos.");

@@ -50,7 +50,7 @@ public sealed class EdicionPersonalServicio(
             {
                 var historica = p.EsHistorica(corte);
                 return new PersonaEdicionDto(
-                    p.Id, CalculadorCruces.NombreRol(p.Rol), p.Numero, Empleado(p), historica ? "HISTORICO" : "VIGENTE",
+                    p.Id, CalculadorCruces.NombreRol(p.Rol), p.Numero, CalculoPersonal.Empleado(p), historica ? "HISTORICO" : "VIGENTE",
                     p.JornadaCodigo, p.FechaInicio, p.FechaFin, p.TipoRegistro, p.DiasDescanso, p.PrincipalRelacionadoId,
                     p.Cargo, p.Observacion,
                     historica
@@ -115,8 +115,7 @@ public sealed class EdicionPersonalServicio(
     // ------------------------------------------------------------------ cálculo común
 
     private sealed record Calculo(
-        DatosEdicion Datos, DateOnly Corte, PlanEdicion Plan, ResultadoRegeneracion Regeneracion,
-        IReadOnlyDictionary<string, int> ClavesGuardadas, PrevisualizacionPersonalDto Previsualizacion);
+        DatosEdicion Datos, DateOnly Corte, PlanEdicion Plan, CalculoRegeneracion Regeneracion, PrevisualizacionPersonalDto Previsualizacion);
 
     private sealed record Resultado(ResultadoEdicionPersonal? Error, Calculo? Calculo);
 
@@ -156,119 +155,35 @@ public sealed class EdicionPersonalServicio(
             return new Resultado(ResultadoEdicionPersonal.Invalido(validacion.Errores), null);
         }
 
-        // Motor (TAREA-16): vigentes y nuevas por su clave; la base trae la clave de su persona (históricas: "h{Id}").
-        var clavesGuardadas = plan.Principales.Concat(plan.Backs).Where(p => p.Id is not null)
-            .ToDictionary(p => p.Clave, p => p.Id!.Value, StringComparer.Ordinal);
-        var clavePorId = clavesGuardadas.ToDictionary(kv => kv.Value, kv => kv.Key);
-
-        var regeneracion = MotorCronograma.Regenerar(new SolicitudRegeneracion(
-            proyecto.FechaInicio, proyecto.FechaFin, corte,
-            plan.Principales.Select(p => new PrincipalEdicion(p.Clave, p.Numero, p.Empleado.Id, p.Inicio, p.Fin,
-                p.Jornada!.DiasTrabajo, p.Jornada.DiasDescanso, p.EsNueva)).ToList(),
-            plan.Backs.Select(b => new BackEdicion(b.Clave, b.Numero, b.Empleado.Id, b.Inicio, b.Fin, b.TipoRegistro,
-                b.DiasDescanso, b.EsNueva)).ToList(),
-            proyecto.DiasBase.Select(d => new DiaExistente(clavePorId.GetValueOrDefault(d.PersonalId, $"h{d.PersonalId}"), d.Dia)).ToList()));
-
-        // Empleados de todo el proyecto (guardados + nuevos) para nombres y cruces.
-        var empleados = proyecto.Personal
-            .Select(p => new EmpleadoRef(p.EmpleadoId, p.CodigoEkon, p.NombreCompleto, p.Cargo))
-            .Concat(plan.Principales.Concat(plan.Backs).Select(p => p.Empleado))
-            .DistinctBy(x => x.Id)
-            .ToDictionary(x => x.Id);
-
-        // E6: internos + históricos propios (motor) + externos (otros proyectos vigentes, excluyendo este).
-        var cruces = CalculadorCruces.Internos(regeneracion.CrucesInternos, empleados)
-            .Concat(CalculadorCruces.Historicos(regeneracion.CrucesHistoricos, empleados))
-            .Concat(await BuscarExternosAsync(proyecto.Id, regeneracion.DiasTrabajoRegenerados, empleados, ct))
-            .ToList();
+        // Motor (TAREA-16) y cruces: cálculo común con la reactivación (CalculoPersonal).
+        var calculo = await CalculoPersonal.RegenerarAsync(proyecto, plan, corte, proyecto.FechaFin, crucesExternos, ct);
 
         var advertencias = new List<string>();
-        if (regeneracion.HayDiasAnterioresAlCorte)
+        if (calculo.Regeneracion.HayDiasAnterioresAlCorte)
         {
             advertencias.Add($"Se generarán días anteriores al corte ({ReglasPersonal.Formato(corte)}) para el personal nuevo."); // E5 (M1)
         }
 
         var previsualizacion = new PrevisualizacionPersonalDto(
             corte,
-            Personas(plan),
-            regeneracion.Tramos.Select(t => new TramoDto(
-                CalculadorCruces.NombreRol(t.Rol), t.Tipo == TipoAsignacionCronograma.Auto ? "AUTO" : "MANUAL", t.Bloque,
-                new PersonaDto(CalculadorCruces.NombreRol(t.Persona.Rol), t.Persona.Numero),
-                t.EmpleadoId, empleados[t.EmpleadoId].CodigoEkon, empleados[t.EmpleadoId].NombreCompleto, t.Inicio, t.Fin, t.Dias)).ToList(),
-            cruces,
-            CalculadorCruces.Resumen(cruces),
+            CalculoPersonal.Personas(plan),
+            calculo.Tramos,
+            calculo.Cruces,
+            CalculadorCruces.Resumen(calculo.Cruces),
             advertencias);
 
-        return new Resultado(null, new Calculo(proyecto, corte, plan, regeneracion, clavesGuardadas, previsualizacion));
+        return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion));
     }
-
-    private async Task<IReadOnlyList<CruceDto>> BuscarExternosAsync(int proyectoId, IReadOnlyList<DiaAsignado> trabajo,
-        IReadOnlyDictionary<int, EmpleadoRef> empleados, CancellationToken ct)
-    {
-        if (trabajo.Count == 0)
-        {
-            return [];
-        }
-
-        var existentes = await crucesExternos.BuscarAsync(
-            trabajo.Select(d => d.EmpleadoId).Distinct().ToList(), trabajo.Min(d => d.Fecha), trabajo.Max(d => d.Fecha),
-            excluirProyectoId: proyectoId, ct);
-        return CalculadorCruces.Externos(trabajo, existentes, empleados);
-    }
-
-    private static List<PersonaCambioDto> Personas(PlanEdicion plan) =>
-    [
-        .. plan.Historicas.Select(h => new PersonaCambioDto($"h{h.Id}", h.Id, CalculadorCruces.NombreRol(h.Rol), h.Numero, Empleado(h),
-            "HISTORICO", EdicionPersonalValidador.SinCambio)),
-        .. plan.Principales.Concat(plan.Backs).Select(p => new PersonaCambioDto(p.Clave, p.Id, CalculadorCruces.NombreRol(p.Rol), p.Numero,
-            new EmpleadoEdicionDto(p.Empleado.Id, p.Empleado.CodigoEkon, p.Empleado.NombreCompleto),
-            p.EsNueva ? "NUEVO" : "VIGENTE", p.Accion)),
-        .. plan.Eliminadas.Select(x => new PersonaCambioDto($"e{x.Id}", x.Id, CalculadorCruces.NombreRol(x.Rol), x.Numero, Empleado(x),
-            "VIGENTE", EdicionPersonalValidador.Eliminado)),
-    ];
 
     // ------------------------------------------------------------------ escritura
 
     private static CambioPersonal CrearCambio(Calculo c, int version)
     {
-        var plan = c.Plan;
-
-        RelacionPrincipal Relacion(PersonaPlan p) => new(p.Relacion.PrincipalId, p.Relacion.PrincipalClaveNueva);
-        static string Tipo(PersonaPlan p) =>
-            p.TipoRegistro == TipoRegistroBack.Descanso ? ProyectoPersonal.TipoRegistroDescanso : ProyectoPersonal.TipoRegistroJornada;
-
-        var vigentes = plan.Principales.Concat(plan.Backs).Where(p => !p.EsNueva).Select(p => new PersonaVigenteActualizada(
-            p.Id!.Value, p.Jornada?.Id, p.Jornada?.DiasTrabajo, p.DiasDescanso, p.Inicio, p.Fin, Tipo(p), p.Cargo, p.Observacion,
-            Relacion(p))).ToList();
-
-        var nuevas = plan.Principales.Concat(plan.Backs).Where(p => p.EsNueva).Select(p => new PersonaNueva(
-            p.Clave, p.Rol, p.Numero, p.Empleado.Id, p.Jornada?.Id, p.Jornada?.DiasTrabajo, p.DiasDescanso, p.Inicio, p.Fin,
-            Tipo(p), p.Cargo, p.Observacion, Relacion(p))).ToList();
-
-        var dias = c.Regeneracion.DiasAInsertar.Select(d => c.ClavesGuardadas.TryGetValue(d.Clave, out var id)
-            ? new DiaParaInsertar(id, null, d.Dia)
-            : new DiaParaInsertar(null, d.Clave, d.Dia)).ToList();
-
-        // Actividad vigente en el corte (la de mayor versión si se solapan).
-        var actividad = c.Datos.Actividades
-            .Where(a => a.FechaInicio <= c.Corte && a.FechaFin >= c.Corte)
-            .OrderByDescending(a => a.Version)
-            .FirstOrDefault()?.Codigo;
-
-        // D8: snapshot del personal RESULTANTE (históricas + vigentes + nuevas), formato común.
-        var snapshot = SnapshotPersonal.Serializar(
-            plan.Historicas.Select(h => new ElementoSnapshot(h.Numero, CalculadorCruces.NombreRol(h.Rol), h.CodigoEkon, h.NombreCompleto,
-                    h.FechaInicio, h.FechaFin, h.JornadaCodigo, h.DiasTrabajo, h.DiasDescanso, h.TipoRegistro))
-                .Concat(plan.Principales.Concat(plan.Backs).Select(p => new ElementoSnapshot(p.Numero, CalculadorCruces.NombreRol(p.Rol),
-                    p.Empleado.CodigoEkon, p.Empleado.NombreCompleto, p.Inicio, p.Fin, p.Jornada?.Codigo, p.Jornada?.DiasTrabajo,
-                    p.DiasDescanso, Tipo(p))))
-                .OrderBy(x => x.Rol == "PRINCIPAL" ? 0 : 1).ThenBy(x => x.Numero));
-
-        return new CambioPersonal(c.Datos.Id, c.Corte, version, TipoMovimiento, c.Datos.FechaInicio, c.Datos.FechaFin, actividad,
-            snapshot, vigentes, nuevas, plan.Eliminadas.Select(x => x.Id).ToList(), dias);
+        var (vigentes, nuevas) = CalculoPersonal.PersonalParaEscribir(c.Plan);
+        return new CambioPersonal(c.Datos.Id, c.Corte, version, TipoMovimiento, c.Datos.FechaInicio, c.Datos.FechaFin,
+            CalculoPersonal.ActividadVigente(c.Datos.Actividades, c.Corte), CalculoPersonal.Snapshot(c.Plan),
+            vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion));
     }
-
-    private static EmpleadoEdicionDto Empleado(PersonaGuardada p) => new(p.EmpleadoId, p.CodigoEkon, p.NombreCompleto);
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>
     private bool TryObtenerVisibilidad(out int? propietarioUsuarioId)

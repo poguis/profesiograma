@@ -13,11 +13,11 @@ public sealed record ResultadoValidacionCambio(
 
 /// <summary>
 /// Validación del cambio de estado (E1, E2). Lógica pura sobre los datos ya leídos del proyecto.
-/// Alcance TAREA-14: SUSPENSION y CIERRE; la REACTIVACION responde 400 hasta la TAREA-17.
+/// Alcance TAREA-14: SUSPENSION y CIERRE. La REACTIVACION responde 400: se registra con POST …/reactivacion (TAREA-17b).
 /// </summary>
 public sealed class CambioEstadoValidador
 {
-    public const string MensajeReactivacion = "La reactivación todavía no está disponible.";
+    public const string MensajeReactivacion = "La reactivación se registra con la opción Reactivar.";
     public const string MensajeFechaObligatoria = "La fecha del movimiento es obligatoria.";
 
     public ResultadoValidacionCambio Validar(CambioEstadoSolicitud s, string estadoActual, DateOnly inicioProyecto, DateOnly finProyecto)

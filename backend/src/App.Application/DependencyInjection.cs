@@ -4,6 +4,7 @@ using App.Application.Proyectos;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
+using App.Application.Proyectos.Reactivacion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -25,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<CambioEstadoServicio>();
         services.AddScoped<EdicionPersonalValidador>();
         services.AddScoped<EdicionPersonalServicio>();
+        services.AddScoped<ReactivacionValidador>();
+        services.AddScoped<ReactivacionServicio>();
         return services;
     }
 }

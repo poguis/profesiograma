@@ -1,6 +1,6 @@
 # FASE 5 — Diseño: Edición del cronograma con fecha de corte (RN11)
 
-**Fecha:** 2026-10-01 (TAREA-16: motor en Domain). **Uso:** TAREA-17 (actualización de personal y reactivación).
+**Fecha:** 2026-10-01 (TAREA-16: motor en Domain). **Uso:** TAREA-17 (actualización de personal, §8) y TAREA-17b (reactivación, `FASE_5_Estados_Proyecto.md` §8).
 
 **Origen** (`docs/origen/powerapps/`):
 - `ConfigurarProyecto_1.pa.yaml`:
@@ -73,10 +73,8 @@
    - insertar `DiasAInsertar` (clave → `ProyectoPersonalId`);
    - guardar el personal;
    - etapa ACTUALIZACION_PERSONAL o REACTIVACION con `FechaCorte = C` y snapshot.
-10. **H4 / pendiente 22:** principal inicial duplicado o eliminado.
-11. **Pendiente 23 (decisión en la TAREA-17):** un back recortado por una suspensión conserva `DiasDescanso`. Al reactivar con `FechaFin < C ≤ FechaFin + DiasDescanso`, el motor lo considera vigente y regeneraría el descanso que la suspensión borró.
-    - **Recomendación preliminar:** en la REACTIVACION, Application marca ese back con `ForzarHistorica = true` y su descanso no se regenera (prueba X17).
-    - Alternativa: poner `DiasDescanso = 0` al recortar en la suspensión.
+10. **H4 / pendiente 22 — resuelto (TAREA-17b):** un inicial por periodo (R6: el primer principal de la reactivación es inicial y no se desmarca el anterior). El recorte puede eliminar al inicial original o a todos los principales; la propuesta del GET de reactivación lo cubre con R7 (respaldo: último principal, o null con advertencia). Ver `FASE_5_Estados_Proyecto.md` §8.
+11. **Pendiente 23 — resuelto (TAREA-17b):** en la REACTIVACION todo el personal guardado entra al motor con `ForzarHistorica = true` (R5), así que no se regenera el descanso que la suspensión borró (prueba X17 en el motor; `Pendiente23_BackRecortado_QuedaHistorico_SinRegenerarSuDescanso` en Application). El mismo caso en la edición posterior se resuelve con **H12** (§8.4). `DiasDescanso` no se modifica al recortar.
 
 ## 7. Ubicación
 
@@ -121,4 +119,11 @@ Cuerpo: `{ principales: [{ clave, id?, empleadoId, jornada, fechaInicio, fechaFi
 3. Relaciones con principales **nuevos** (ya tienen Id); referencias a personas omitidas en `null` (por defensa); omitidas eliminadas. → SaveChanges 2.
 4. `DiasAInsertar` (clave → `ProyectoPersonalId`) + etapa **ACTUALIZACION_PERSONAL** con versión máx + 1, `FechaCorte = C`, la actividad vigente en C y el snapshot del personal resultante, históricas incluidas (D8). → SaveChanges 3.
 
-El estado y las fechas del proyecto no cambian. `EsPrincipalInicial` de las nuevas es `false` (D6, H4 en la TAREA-17b).
+El estado y las fechas del proyecto no cambian. `EsPrincipalInicial` de las nuevas es `false` (D6; en la reactivación, el primer principal es inicial: R6, TAREA-17b).
+
+### 8.4 H12 (TAREA-17b): back recortado por una suspensión
+Después de reactivar, la clasificación R2 (back vigente si `FechaFin + DiasDescanso ≥ C`) regeneraba el descanso que la suspensión borró.
+- **Regla:** un back existente con `FechaFin < C` sin días DESCANSO guardados después de su `FechaFin` es **histórico** (equivale a `ForzarHistorica = true`). Si tiene esos días, nada cambia.
+- **Implementación:** `PersonaGuardada.SinDescansoPosterior` (lo llena `EdicionPersonalRepositorio` con la consulta `ConsultaBacksConDescansoPosterior`, prueba `ToQueryString`) y `PersonaGuardada.EsHistorica`. Las históricas entran al motor con `ForzarHistorica = true` (`CalculoPersonal`).
+- **Pruebas:** `EdicionPersonalH12Tests` (recortado → histórico y sin descanso; con descanso guardado → vigente y se regenera como antes). Las pruebas de la TAREA-17 pasan sin modificarse.
+- **Riesgo:** datos migrados (Fase 3) de backs sin días de descanso guardados se tratarían como recortados. [PENDIENTE DE CONFIRMAR en la Fase 3]
