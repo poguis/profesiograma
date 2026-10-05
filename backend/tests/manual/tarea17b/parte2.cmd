@@ -5,10 +5,11 @@ chcp 65001 > nul
 rem ==========================================================================
 rem TAREA-17b - Parte 2: reactivacion del proyecto B (lee valores-parte1.txt).
 rem Solo g) escribe (reactivar). Ejecutar UNA sola vez.
-rem   a) GET reactivacion de B - 200, puedeReactivar, propuesta DEV007, fechaMinima F+1.
+rem Empleados: los que eligio parte1.cmd (EMP_P1, EMP_BACK e Id en valores-parte1.txt); DEV005 para e) y f).
+rem   a) GET reactivacion de B - 200, puedeReactivar, propuesta EMP_P1, fechaMinima F+1.
 rem   b) GET reactivacion del Id 2 (SUSPENDIDO; solo lectura).
 rem   c) Vista previa con R = F - 400 fecha (H9).
-rem   d) Vista previa con R = H-1 - 200: advertencia de dias transcurridos (R3), Back 1 DEV008 HISTORICO sin
+rem   d) Vista previa con R = H-1 - 200: advertencia de dias transcurridos (R3), Back 1 EMP_BACK HISTORICO sin
 rem      descanso (pendiente 23), actividad DEV.01 de R a FIN (R8), principal nuevo numero 2 desde R.
 rem   i) cambio-estado/previsualizar a ACTIVO - 400 "La reactivacion se registra con la opcion Reactivar."
 rem   O5) GET detalle del Id 5 (admin): si DEV005 no trabaja en R, e) y f) quedan OMITIDO (sin datos).
@@ -38,7 +39,7 @@ if not exist "%VALORES%" (
   exit /b 1
 )
 for /f "usebackq tokens=1,2 delims==" %%a in ("%VALORES%") do set %%a=%%b
-for %%v in (ID_B F R FIN EMP_P1 EMP_BACK) do if not defined %%v (
+for %%v in (ID_B F R FIN EMP_P1 EMP_BACK ID_EMP_P1) do if not defined %%v (
   echo %VALORES% no tiene %%v.
   exit /b 1
 )
@@ -49,12 +50,12 @@ if not exist tmp mkdir tmp
 rem Hasta el registro g), la salida va a %PREVIO%.
 set "SALIDA=%PREVIO%"
 > "%SALIDA%" echo TAREA-17b parte 2 - %date% %time% - SIMULAR=%SIMULAR%
->> "%SALIDA%" echo Valores: ID_B=%ID_B% F=%F% R=%R% FIN=%FIN% EMP_P1=%EMP_P1% EMP_BACK=%EMP_BACK%
-echo Valores: ID_B=%ID_B% F=%F% R=%R% FIN=%FIN%
+>> "%SALIDA%" echo Valores: ID_B=%ID_B% F=%F% R=%R% FIN=%FIN% EMP_P1=%EMP_P1% Id %ID_EMP_P1% EMP_BACK=%EMP_BACK% Id %ID_EMP_BACK% DEV005 Id %ID_DEV005%
+echo Valores: ID_B=%ID_B% F=%F% R=%R% FIN=%FIN% P1=%EMP_P1% back=%EMP_BACK%
 
 rem --- a) GET reactivacion de B --------------------------------------------
-call :http a "GET reactivacion de B - esperado 200, puedeReactivar true, propuesta DEV007" GET "proyectos/%ID_B%/reactivacion" gestor || exit /b 1
-powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\a.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL a - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; $p=$j.principalPropuesto; 'CONTROL a - puedeReactivar ' + $j.puedeReactivar + ', fechaMinima ' + $j.fechaMinima + ', propuesta ' + $p.empleado.codigoEkon + ' ' + $p.jornada + ' activo ' + $p.empleado.activo + ', advertencias ' + @($j.advertencias).Count + ' (esperado True, F+1, DEV007 TIPO_2 activo True, 0)'">> "%SALIDA%"
+call :http a "GET reactivacion de B - esperado 200, puedeReactivar true, propuesta %EMP_P1%" GET "proyectos/%ID_B%/reactivacion" gestor || exit /b 1
+powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\a.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL a - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; $p=$j.principalPropuesto; 'CONTROL a - puedeReactivar ' + $j.puedeReactivar + ', fechaMinima ' + $j.fechaMinima + ', propuesta ' + $p.empleado.codigoEkon + ' ' + $p.jornada + ' activo ' + $p.empleado.activo + ', advertencias ' + @($j.advertencias).Count + ' (esperado True, F+1, ' + $env:EMP_P1 + ' TIPO_2 activo True, 0)'">> "%SALIDA%"
 
 rem --- b) GET reactivacion del Id 2 (solo lectura) -------------------------
 call :http b "GET reactivacion del Id 2 (SUSPENDIDO) - esperado 200" GET "proyectos/2/reactivacion" gestor || exit /b 1
@@ -67,7 +68,7 @@ call :control_errores c
 rem --- d) R = H-1 ----------------------------------------------------------
 call :preparar r-d.json || exit /b 1
 call :http d "Vista previa con R = %R% - esperado 200 con advertencia R3, Back 1 historico y actividad nueva" POST "proyectos/%ID_B%/reactivacion/previsualizar" gestor r-d.json || exit /b 1
-powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\d.txt'); $s=$t.Split([char]10)[0].Trim(); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL d - ' + $s + ' - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; $r=[datetime]$env:R; $k=$j.personal | Where-Object { $_.empleado.codigoEkon -eq 'DEV008' }; $n=$j.personal | Where-Object { $_.clave -eq 'p1' }; $pt=@($j.tramos | Where-Object { $_.codigoEkon -eq 'DEV007' -and $_.rol -eq 'PRINCIPAL' -and [datetime]$_.inicio -ge $r } | Sort-Object inicio); $a=$j.actividad; 'CONTROL d - ' + $s + '; corte ' + $j.corte + '; advertencias: ' + (@($j.advertencias) -join ' | ') + '; DEV008 ' + $k.clase + ', tramos DEV008 desde R: ' + @($j.tramos | Where-Object { $_.codigoEkon -eq 'DEV008' -and [datetime]$_.fin -ge $r }).Count + '; nuevo ' + $n.clase + ' numero ' + $n.numero + ', primer PRINCIPAL desde ' + $pt[0].inicio + '; actividad ' + $a.codigo + ' ' + $a.fechaInicio + '..' + $a.fechaFin + '; cruces ' + @($j.cruces).Count + ' (esperado 200; R; Se generaran dias ya transcurridos.; HISTORICO, 0; NUEVO 2, R; DEV.01 R..FIN; 0)'">> "%SALIDA%"
+powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\d.txt'); $s=$t.Split([char]10)[0].Trim(); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL d - ' + $s + ' - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; $r=[datetime]$env:R; $k=$j.personal | Where-Object { $_.empleado.codigoEkon -eq $env:EMP_BACK }; $n=$j.personal | Where-Object { $_.clave -eq 'p1' }; $pt=@($j.tramos | Where-Object { $_.codigoEkon -eq $env:EMP_P1 -and $_.rol -eq 'PRINCIPAL' -and [datetime]$_.inicio -ge $r } | Sort-Object inicio); $a=$j.actividad; 'CONTROL d - ' + $s + '; corte ' + $j.corte + '; advertencias: ' + (@($j.advertencias) -join ' | ') + '; ' + $env:EMP_BACK + ' ' + $k.clase + ', tramos ' + $env:EMP_BACK + ' desde R: ' + @($j.tramos | Where-Object { $_.codigoEkon -eq $env:EMP_BACK -and [datetime]$_.fin -ge $r }).Count + '; nuevo ' + $n.clase + ' numero ' + $n.numero + ', primer PRINCIPAL desde ' + $pt[0].inicio + '; actividad ' + $a.codigo + ' ' + $a.fechaInicio + '..' + $a.fechaFin + '; cruces ' + @($j.cruces).Count + ' (esperado 200; R; Se generaran dias ya transcurridos.; HISTORICO, 0; NUEVO 2, R; DEV.01 R..FIN; 0)'">> "%SALIDA%"
 
 rem --- i) cambio-estado a ACTIVO (vista previa, no escribe) ----------------
 call :preparar i-cambio.json || exit /b 1
@@ -78,7 +79,8 @@ rem --- O5) DEV005 en el Id 5 ----------------------------------------------
 call :http P5d "GET detalle del Id 5 (admin) - para decidir e) y f)" GET "proyectos/5" admin || exit /b 1
 set DEV005_EN_R=
 for /f "usebackq delims=" %%c in (`powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\P5d.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { '0'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; $r=[datetime]$env:R; $x=@($j.personal | Where-Object { $_.empleado.codigoEkon -eq 'DEV005' -and $_.rol -eq 'PRINCIPAL' -and [datetime]$_.fechaInicio -le $r -and [datetime]$_.fechaFin -ge $r }); if ($j.estado.codigo -eq 'ACTIVO' -and $x.Count -gt 0) { '1' } else { '0' }"`) do set DEV005_EN_R=%%c
->> "%SALIDA%" echo CONTROL O5 - DEV005 asignado como PRINCIPAL en el Id 5 ACTIVO en R=%R%: %DEV005_EN_R% (1 = se ejecutan e y f)
+if not defined ID_DEV005 set DEV005_EN_R=0
+>> "%SALIDA%" echo CONTROL O5 - Id de DEV005: %ID_DEV005% - DEV005 asignado como PRINCIPAL en el Id 5 ACTIVO en R=%R%: %DEV005_EN_R% (1 = se ejecutan e y f)
 if not "%DEV005_EN_R%"=="1" goto :omitir_ef
 
 rem --- e) cruce externo (vista previa) -------------------------------------
@@ -119,19 +121,19 @@ powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h1.txt'); $i=$t.I
 call :http h2 "GET reactivacion de B - esperado puedeReactivar false" GET "proyectos/%ID_B%/reactivacion" gestor || exit /b 1
 powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h2.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL h2 - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; 'CONTROL h2 - puedeReactivar ' + $j.puedeReactivar + ' - ' + $j.motivo">> "%SALIDA%"
 
-call :http h3 "GET edicion de B - esperado Back 1 DEV008 HISTORICO (H12)" GET "proyectos/%ID_B%/edicion" gestor || exit /b 1
+call :http h3 "GET edicion de B - esperado Back 1 %EMP_BACK% HISTORICO (H12)" GET "proyectos/%ID_B%/edicion" gestor || exit /b 1
 set ID_P2=
 set CLASE_K1=
-for /f "usebackq tokens=1,2 delims==" %%a in (`powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h3.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { exit }; $j=$t.Substring($i) | ConvertFrom-Json; 'ID_P2=' + ($j.personal | Where-Object { $_.rol -eq 'PRINCIPAL' -and $_.numero -eq 2 }).id; 'CLASE_K1=' + ($j.personal | Where-Object { $_.empleado.codigoEkon -eq 'DEV008' }).clase"`) do set %%a=%%b
->> "%SALIDA%" echo CONTROL h3 - Id del principal nuevo: %ID_P2%; clase de DEV008: %CLASE_K1% (esperado HISTORICO)
+for /f "usebackq tokens=1,2 delims==" %%a in (`powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h3.txt'); $i=$t.IndexOf('{'); if ($i -lt 0) { exit }; $j=$t.Substring($i) | ConvertFrom-Json; 'ID_P2=' + ($j.personal | Where-Object { $_.rol -eq 'PRINCIPAL' -and $_.numero -eq 2 }).id; 'CLASE_K1=' + ($j.personal | Where-Object { $_.empleado.codigoEkon -eq $env:EMP_BACK }).clase"`) do set %%a=%%b
+>> "%SALIDA%" echo CONTROL h3 - Id del principal nuevo: %ID_P2%; clase de %EMP_BACK%: %CLASE_K1% (esperado HISTORICO)
 if not defined ID_P2 (
   echo No se pudo leer el principal nuevo del GET edicion. Revise %SALIDA%.
   exit /b 1
 )
 
 call :preparar h-personal.json || exit /b 1
-call :http h4 "POST personal/previsualizar sin cambios - esperado 200, DEV008 HISTORICO, sin dias de DEV008 desde el corte" POST "proyectos/%ID_B%/personal/previsualizar" gestor h-personal.json || exit /b 1
-powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h4.txt'); $s=$t.Split([char]10)[0].Trim(); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL h4 - ' + $s + ' - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; if (-not $j.tramos) { 'CONTROL h4 - ' + $s + ' - no es una vista previa: ' + $j.title + ' ' + ($j.errors | ConvertTo-Json -Compress); exit }; $c=[datetime]$j.corte; $k=$j.personal | Where-Object { $_.empleado.codigoEkon -eq 'DEV008' }; 'CONTROL h4 - ' + $s + '; corte ' + $j.corte + '; DEV008 ' + $k.clase + '; tramos de DEV008 con fin desde el corte: ' + @($j.tramos | Where-Object { $_.codigoEkon -eq 'DEV008' -and [datetime]$_.fin -ge $c }).Count + '; cruces ' + @($j.cruces).Count + ' (esperado 200, HISTORICO, 0, 0)'">> "%SALIDA%"
+call :http h4 "POST personal/previsualizar sin cambios - esperado 200, %EMP_BACK% HISTORICO, sin dias de %EMP_BACK% desde el corte" POST "proyectos/%ID_B%/personal/previsualizar" gestor h-personal.json || exit /b 1
+powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('tmp\h4.txt'); $s=$t.Split([char]10)[0].Trim(); $i=$t.IndexOf('{'); if ($i -lt 0) { 'CONTROL h4 - ' + $s + ' - sin cuerpo JSON'; exit }; $j=$t.Substring($i) | ConvertFrom-Json; if (-not $j.tramos) { 'CONTROL h4 - ' + $s + ' - no es una vista previa: ' + $j.title + ' ' + ($j.errors | ConvertTo-Json -Compress); exit }; $c=[datetime]$j.corte; $k=$j.personal | Where-Object { $_.empleado.codigoEkon -eq $env:EMP_BACK }; 'CONTROL h4 - ' + $s + '; corte ' + $j.corte + '; ' + $env:EMP_BACK + ' ' + $k.clase + '; tramos de ' + $env:EMP_BACK + ' con fin desde el corte: ' + @($j.tramos | Where-Object { $_.codigoEkon -eq $env:EMP_BACK -and [datetime]$_.fin -ge $c }).Count + '; cruces ' + @($j.cruces).Count + ' (esperado 200, HISTORICO, 0, 0)'">> "%SALIDA%"
 
 rem --- j) Repetir g) -------------------------------------------------------
 call :http j "Repetir el registro g - esperado 400 proyecto, ya esta ACTIVO" POST "proyectos/%ID_B%/reactivacion" gestor r-d.json || exit /b 1
@@ -173,7 +175,7 @@ exit /b 0
 
 rem :preparar plantilla.json -> tmp\plantilla.json con los marcadores reemplazados (UTF-8 sin BOM)
 :preparar
-powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('%~1'); foreach ($v in 'FIN','F','R','EMP_P1','EMP_BACK','ID_P2') { $t=$t.Replace('__' + $v + '__', [Environment]::GetEnvironmentVariable($v)) }; [IO.File]::WriteAllText((Join-Path (Get-Location) 'tmp\%~1'), $t)"
+powershell -NoProfile -Command "$t=[IO.File]::ReadAllText('%~1'); foreach ($v in 'FIN','F','R','ID_EMP_P1','ID_DEV005','ID_P2') { $t=$t.Replace('__' + $v + '__', [Environment]::GetEnvironmentVariable($v)) }; [IO.File]::WriteAllText((Join-Path (Get-Location) 'tmp\%~1'), $t)"
 if errorlevel 1 (
   echo No se pudo preparar %~1.
   exit /b 1

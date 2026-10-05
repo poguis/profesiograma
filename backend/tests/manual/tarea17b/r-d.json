@@ -2,7 +2,7 @@
   "fecha": "__R__",
   "fechaFin": "__FIN__",
   "principales": [
-    { "clave": "p1", "empleadoId": __EMP_P1__, "jornada": "TIPO_2", "fechaInicio": "__R__", "fechaFin": "__FIN__" }
+    { "clave": "p1", "empleadoId": __ID_EMP_P1__, "jornada": "TIPO_2", "fechaInicio": "__R__", "fechaFin": "__FIN__" }
   ],
   "backs": []
 }

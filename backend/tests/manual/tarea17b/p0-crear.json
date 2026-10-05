@@ -11,7 +11,7 @@
   "regresoAlmuerzo": "14:00",
   "principales": [
     {
-      "empleadoId": __EMP_P1__,
+      "empleadoId": __ID_EMP_P1__,
       "jornada": "TIPO_2",
       "fechaInicio": "__INICIO__",
       "fechaFin": "__FIN__"
@@ -19,7 +19,7 @@
   ],
   "backs": [
     {
-      "empleadoId": __EMP_BACK__,
+      "empleadoId": __ID_EMP_BACK__,
       "tipoRegistro": "JORNADA",
       "diasDescanso": 3,
       "fechaInicio": "__F__",
