@@ -1,0 +1,37 @@
+{
+  "companiaId": 9001,
+  "grupo": "CAMPO",
+  "proyectoErpId": "DEV-ERP-001",
+  "actividadId": "DEV.01",
+  "dimensionUegpId": null,
+  "fechaInicio": "2026-09-21",
+  "fechaFin": "2026-11-29",
+  "horarioCodigo": 1,
+  "salidaAlmuerzo": "13:00",
+  "regresoAlmuerzo": "14:00",
+  "principales": [
+    {
+      "empleadoId": 6,
+      "jornada": "TIPO_3",
+      "fechaInicio": "2026-09-21",
+      "fechaFin": "2026-11-29"
+    },
+    {
+      "empleadoId": 7,
+      "jornada": "TIPO_2",
+      "fechaInicio": "2026-09-21",
+      "fechaFin": "2026-09-30"
+    }
+  ],
+  "backs": [
+    {
+      "empleadoId": 7,
+      "tipoRegistro": "JORNADA",
+      "diasDescanso": 2,
+      "fechaInicio": "2026-10-20",
+      "fechaFin": "2026-10-23",
+      "principalRelacionado": 1,
+      "observacion": "Back de prueba"
+    }
+  ]
+}

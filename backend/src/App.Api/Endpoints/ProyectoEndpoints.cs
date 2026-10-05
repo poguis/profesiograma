@@ -2,6 +2,7 @@ using App.Application.Comun;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
+using App.Application.Proyectos.Personal;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -99,8 +100,57 @@ public static class ProyectoEndpoints
                 };
             });
 
+        // Actualización de personal (TAREA-17): datos del formulario, vista previa y registro.
+        proyectos.MapGet("/{id:int}/edicion", async Task<Results<Ok<EdicionPersonalDto>, NotFound>> (
+            int id, EdicionPersonalServicio servicio, CancellationToken ct) =>
+            await servicio.ObtenerEdicionAsync(id, ct) is { } edicion ? TypedResults.Ok(edicion) : TypedResults.NotFound());
+
+        proyectos.MapPost("/{id:int}/personal/previsualizar",
+            async Task<Results<Ok<PrevisualizacionPersonalDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, ActualizarPersonalSolicitud solicitud, EdicionPersonalServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.PrevisualizarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Previsualizado => TypedResults.Ok(resultado.Previsualizacion!),
+                    EstadoEdicion.Invalido => PersonalInvalido(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
+        // Una transacción con applock. 200 { id, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503.
+        proyectos.MapPost("/{id:int}/personal",
+            async Task<Results<Ok<PersonalActualizadoDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, ActualizarPersonalSolicitud solicitud, EdicionPersonalServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.RegistrarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Realizado => TypedResults.Ok(resultado.Realizado!),
+                    EstadoEdicion.Invalido => PersonalInvalido(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    EstadoEdicion.ConCruces => TypedResults.Problem(
+                        title: ResultadoEdicionPersonal.MensajeCruces,
+                        detail: "No se guardó el personal. Revise los cruces y ajuste el personal o las fechas.",
+                        statusCode: StatusCodes.Status409Conflict,
+                        extensions: new Dictionary<string, object?>
+                        {
+                            ["cruces"] = resultado.Previsualizacion!.Cruces,
+                            ["resumen"] = resultado.Previsualizacion.Resumen,
+                        }),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
         return app;
     }
+
+    private static ValidationProblem PersonalInvalido(ResultadoEdicionPersonal resultado) =>
+        TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos del personal no son válidos.");
+
+    private static ProblemHttpResult ProyectoCambiado() =>
+        TypedResults.Problem(title: ResultadoEdicionPersonal.MensajeCambiado, statusCode: StatusCodes.Status409Conflict);
 
     private static ValidationProblem CambioEstadoInvalido(ResultadoCambioEstado resultado) =>
         TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos del cambio de estado no son válidos.");

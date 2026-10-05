@@ -42,11 +42,12 @@ public static partial class MotorCronograma
         // §5.3 Descansos automáticos del principal (P4): solo si el PRIMER día siguiente al bloque está libre
         // (ningún día de la persona en los días base, cualquier rol) y hasta la fecha fin de ese principal (D3).
         var ocupados = diasBase.Select(d => (d.EmpleadoId, d.Fecha)).ToHashSet();
+        var diasTrabajo = diasBase.Where(d => d.Rol != RolCronograma.Descanso).Select(d => (d.EmpleadoId, d.Fecha)).ToHashSet(); // M4
         var diasAutomaticos = new List<DiaAsignado>();
 
         foreach (var (bloque, principal) in bloquesPrincipales)
         {
-            if (ReglasCronograma.DescansoAutomatico(bloque, principal.Fin, principal.DiasDescanso, ocupados) is { } descanso)
+            if (ReglasCronograma.DescansoAutomatico(bloque, principal.Fin, principal.DiasDescanso, ocupados, diasTrabajo) is { } descanso)
             {
                 Agregar(descanso, tramos, diasAutomaticos);
             }

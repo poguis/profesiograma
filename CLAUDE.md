@@ -54,6 +54,16 @@ dotnet test --solution Profesiograma.slnx -c Release   (pruebas: xUnit v3 sobre 
   Las pruebas con dobles no detectan consultas que EF no puede traducir a SQL.
   (Patrón: la consulta se expone como método `internal static IQueryable<…>` y se prueba con la base `Consultas/BaseSql.cs`.)
 
+## Reglas de seguridad para pruebas
+- Nunca ejecutar scripts, curl, Invoke-RestMethod ni ningún cliente HTTP contra la API, ni siquiera "simulando"
+  respuestas. Los scripts de pruebas manuales se escriben, no se ejecutan (los ejecuta el usuario).
+- Para probar la lógica de un script sin la API, usar un modo de simulación explícito que nunca invoque curl
+  (p. ej. variable `SIMULAR=1` que lea las respuestas de archivos) o una URL base inválida (`https://localhost:1`).
+  Nunca depender del orden de búsqueda de ejecutables (en este equipo `NoDefaultCurrentDirectoryInExePath=1`:
+  un `curl.cmd` en la carpeta actual NO reemplaza a `curl.exe`).
+- Si una prueba local pudo haber tocado la API real, detenerse y reportarlo de inmediato.
+  (Origen: incidente de la TAREA-17, 05/10/2026, ver `docs/tareas/TAREA-17-reporte.md` §6.5.)
+
 ## Frontend (desde frontend/)
 npm install
 npm run dev        (lo ejecuta el usuario; no ejecutarlo)

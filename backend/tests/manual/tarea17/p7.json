@@ -1,0 +1,33 @@
+{
+  "principales": [
+    {
+      "clave": "p1",
+      "id": __ID_P1__,
+      "empleadoId": 6,
+      "jornada": "TIPO_3",
+      "fechaInicio": "2026-09-21",
+      "fechaFin": "2026-11-29"
+    }
+  ],
+  "backs": [
+    {
+      "clave": "k1",
+      "id": __ID_K1__,
+      "empleadoId": 7,
+      "tipoRegistro": "JORNADA",
+      "fechaInicio": "2026-10-20",
+      "fechaFin": "2026-10-23",
+      "diasDescanso": 2,
+      "principalClave": "p1",
+      "observacion": "Back de prueba"
+    },
+    {
+      "clave": "k2",
+      "empleadoId": 5,
+      "tipoRegistro": "JORNADA",
+      "fechaInicio": "2026-10-05",
+      "fechaFin": "2026-10-06",
+      "diasDescanso": 0
+    }
+  ]
+}

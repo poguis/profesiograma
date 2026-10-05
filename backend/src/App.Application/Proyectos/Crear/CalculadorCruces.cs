@@ -11,15 +11,27 @@ public static class CalculadorCruces
 {
     public const string OrigenInterno = "INTERNO";
     public const string OrigenExterno = "EXTERNO";
+    /// <summary>Edición: día regenerado que repite persona y fecha con un día ya guardado del mismo proyecto (TAREA-17).</summary>
+    public const string OrigenHistorico = "HISTORICO";
     public const string MismoProyecto = "MISMO PROYECTO";
 
     /// <summary>Cultura fija para el mes ("diciembre 2026"); nunca la del servidor.</summary>
     private static readonly CultureInfo CulturaEcuador = CultureInfo.GetCultureInfo("es-EC");
 
     public static IReadOnlyList<CruceDto> Internos(ResultadoCronograma cronograma, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
-        cronograma.CrucesInternos
+        Internos(cronograma.CrucesInternos, empleados);
+
+    /// <summary>Un cruce por persona involucrada (rol de cada una), como en la creación.</summary>
+    public static IReadOnlyList<CruceDto> Internos(IEnumerable<CruceInterno> cruces, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
+        cruces
             .SelectMany(c => c.Involucrados.Select(persona => Crear(
                 OrigenInterno, empleados[c.EmpleadoId], c.Fecha, persona.Rol, MismoProyecto, null, null)))
+            .ToList();
+
+    /// <summary>HISTORICO_PROPIO (edición): un cruce por día regenerado, con el rol del día regenerado.</summary>
+    public static IReadOnlyList<CruceDto> Historicos(IEnumerable<CruceHistorico> cruces, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
+        cruces
+            .Select(c => Crear(OrigenHistorico, empleados[c.EmpleadoId], c.Fecha, c.Regenerada.Rol, MismoProyecto, null, null))
             .ToList();
 
     /// <summary>

@@ -319,4 +319,26 @@ public class RegeneracionCronogramaTests
         Assert.Equal(ClasePersona.Historica, forzado.Clases["K1"]);
         Assert.Empty(forzado.DiasAInsertar);
     }
+
+    [Fact]
+    public void X18_M4_CambioDeJornadaConCorte05_ElDescansoNoSeSuperponeConElPrimerBloqueRegenerado()
+    {
+        // Caso real de la TAREA-17 (Id 9, 05/10/2026): P1 guardado TIPO_3 desde el 21/09 (proyecto 21/09–29/11);
+        // ahora TIPO_2. Base < 05/10: P 21–25/09, D 26–27/09, P 28/09–02/10, D AUTO 03–04/10.
+        // Sin M4 el descanso del tramo base 28/09–02/10 (4 días: 03–06/10) llegaba al PRINCIPAL regenerado del 06/10.
+        var inicio = F("2026-09-21");
+        var fin = F("2026-11-29");
+        var guardado = MotorCronograma.Generar(new SolicitudCronograma(inicio, fin, [new PrincipalEntrada(1, 6, inicio, fin, T3, D3)], []))
+            .DiasFinales.Select(d => new DiaExistente("P1", d)).ToList();
+
+        var r = MotorCronograma.Regenerar(new SolicitudRegeneracion(inicio, fin, F("2026-10-05"),
+            [new PrincipalEdicion("P1", 1, 6, inicio, fin, T2, D2, EsNuevo: false)], [], guardado));
+
+        var insertar = Insertar(r);
+        Assert.Equal([F("2026-10-05")], insertar.Where(d => d.Rol == Des && d.Fecha <= F("2026-10-06")).Select(d => d.Fecha));
+        Assert.Equal(F("2026-10-06"), insertar.Where(d => d.Rol == Pri).Min(d => d.Fecha));
+        Assert.Contains(T(Des, Auto, 2, P1, 6, "2026-10-05", "2026-10-05"), r.Tramos);
+        Assert.Contains(T(Pri, Auto, 2, P1, 6, "2026-10-06", "2026-10-16"), r.Tramos);
+        Assert.DoesNotContain(insertar.GroupBy(d => (d.EmpleadoId, d.Fecha)), g => g.Select(d => d.Rol).Distinct().Count() > 1);
+    }
 }

@@ -14,3 +14,9 @@ docs/origen/sharepoint/muestras/
 
 # Secretos locales
 appsettings.*.local.json
+
+# Pruebas manuales (scripts en backend/tests/manual): salidas locales
+backend/tests/manual/**/resultado-*.txt
+backend/tests/manual/**/valores-*.txt
+backend/tests/manual/**/tmp/
+backend/tests/manual/**/*-respuesta.txt

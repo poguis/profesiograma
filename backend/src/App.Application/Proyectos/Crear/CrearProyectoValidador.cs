@@ -3,6 +3,7 @@ using App.Application.Comun;
 using App.Application.Erp;
 using App.Application.Seguridad;
 using App.Domain.Proyectos.Cronograma;
+using static App.Application.Proyectos.Crear.ReglasPersonal;
 
 namespace App.Application.Proyectos.Crear;
 
@@ -213,16 +214,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
             var clave = $"principales[{i}]";
             var empleado = ValidarEmpleado(p.EmpleadoId, clave, empleados, e);
 
-            JornadaRef? jornada = null;
-            var codigoJornada = LectorParametros.Normalizar(p.Jornada);
-            if (codigoJornada is null)
-            {
-                Agregar(e, $"{clave}.jornada", "La jornada es obligatoria.");
-            }
-            else if (!jornadas.TryGetValue(codigoJornada, out jornada))
-            {
-                Agregar(e, $"{clave}.jornada", $"La jornada '{codigoJornada}' no existe.");
-            }
+            var jornada = ValidarJornada(p.Jornada, clave, jornadas, e);
 
             var fechas = ValidarFechasPersona(p.FechaInicio, p.FechaFin, clave, rango, e);
             var cargo = ValidarLargo(p.Cargo, $"{clave}.cargo", LargoMaximoCargo, "El cargo", e);
@@ -243,22 +235,8 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
             var clave = $"backs[{i}]";
             var empleado = ValidarEmpleado(b.EmpleadoId, clave, empleados, e);
 
-            TipoRegistroBack? tipo = LectorParametros.Normalizar(b.TipoRegistro)?.ToUpperInvariant() switch
-            {
-                "JORNADA" => TipoRegistroBack.Jornada,
-                "DESCANSO" => TipoRegistroBack.Descanso,
-                _ => null,
-            };
-            if (tipo is null)
-            {
-                Agregar(e, $"{clave}.tipoRegistro", "El tipo de registro debe ser JORNADA o DESCANSO.");
-            }
-
-            var diasDescanso = b.DiasDescanso ?? 0;
-            if (diasDescanso < 0 || diasDescanso > limites.MaxDiasDescansoBack)
-            {
-                Agregar(e, $"{clave}.diasDescanso", $"Los días de descanso deben estar entre 0 y {limites.MaxDiasDescansoBack}.");
-            }
+            var tipo = ValidarTipoRegistro(b.TipoRegistro, clave, e);
+            var diasDescanso = ValidarDiasDescanso(b.DiasDescanso, clave, limites.MaxDiasDescansoBack, e);
 
             if (b.PrincipalRelacionado is int relacionado && (relacionado < 1 || relacionado > principales.Count))
             {
@@ -319,70 +297,6 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         }
     }
 
-    private static EmpleadoRef? ValidarEmpleado(int? id, string clave, IReadOnlyDictionary<int, EmpleadoRef> empleados,
-        Dictionary<string, List<string>> e)
-    {
-        if (id is not int empleadoId)
-        {
-            Agregar(e, $"{clave}.empleadoId", "El empleado es obligatorio.");
-            return null;
-        }
-
-        if (!empleados.TryGetValue(empleadoId, out var empleado))
-        {
-            Agregar(e, $"{clave}.empleadoId", $"El empleado {empleadoId} no existe o no está activo.");
-            return null;
-        }
-
-        return empleado;
-    }
-
-    /// <summary>RN08: fechas obligatorias, fin ≥ inicio y dentro del rango del proyecto.</summary>
-    private static (DateOnly Inicio, DateOnly Fin)? ValidarFechasPersona(DateOnly? inicio, DateOnly? fin, string clave,
-        (DateOnly Inicio, DateOnly Fin)? proyecto, Dictionary<string, List<string>> e)
-    {
-        if (inicio is null)
-        {
-            Agregar(e, $"{clave}.fechaInicio", "La fecha de inicio es obligatoria.");
-        }
-
-        if (fin is null)
-        {
-            Agregar(e, $"{clave}.fechaFin", "La fecha fin es obligatoria.");
-        }
-
-        if (inicio is not DateOnly i || fin is not DateOnly f)
-        {
-            return null;
-        }
-
-        if (f < i)
-        {
-            Agregar(e, $"{clave}.fechaFin", "La fecha fin debe ser mayor o igual a la fecha de inicio.");
-            return null;
-        }
-
-        if (proyecto is (DateOnly pi, DateOnly pf) && (i < pi || f > pf))
-        {
-            var mensaje = $"Las fechas deben estar dentro del rango del proyecto ({Formato(pi)} – {Formato(pf)}).";
-            Agregar(e, i < pi ? $"{clave}.fechaInicio" : $"{clave}.fechaFin", mensaje);
-            return null;
-        }
-
-        return (i, f);
-    }
-
-    private static string? ValidarLargo(string? valor, string clave, int maximo, string nombre, Dictionary<string, List<string>> e)
-    {
-        var texto = LectorParametros.Normalizar(valor);
-        if (texto is not null && texto.Length > maximo)
-        {
-            Agregar(e, clave, $"{nombre} admite como máximo {maximo} caracteres.");
-        }
-
-        return texto;
-    }
-
     private static TimeOnly? LeerHora(string? valor, string clave, string mensajeObligatorio, Dictionary<string, List<string>> e)
     {
         var texto = LectorParametros.Normalizar(valor);
@@ -399,18 +313,6 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         Agregar(e, clave, "Use el formato HH:mm.");
         return null;
-    }
-
-    private static string Formato(DateOnly fecha) => fecha.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-
-    private static void Agregar(Dictionary<string, List<string>> e, string clave, string mensaje)
-    {
-        if (!e.TryGetValue(clave, out var lista))
-        {
-            e[clave] = lista = [];
-        }
-
-        lista.Add(mensaje);
     }
 
     private static ResultadoValidacionProyecto Invalido(Dictionary<string, List<string>> e) =>

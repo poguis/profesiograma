@@ -140,12 +140,18 @@ public static partial class MotorCronograma
             .Concat(regenerados.Select(d => (d.Dia.EmpleadoId, d.Dia.Fecha)))
             .ToHashSet();
 
+        // M4: el descanso AUTO se corta en el primer día de trabajo (≠ DESCANSO) del mismo empleado, en la base o regenerado.
+        var diasTrabajo = baseDias.Select(d => d.Dia).Concat(regenerados.Select(d => d.Dia))
+            .Where(d => d.Rol != RolCronograma.Descanso)
+            .Select(d => (d.EmpleadoId, d.Fecha))
+            .ToHashSet();
+
         var automaticos = new List<DiaRegenerado>();
         foreach (var p in solicitud.Principales.Where(p => clases[p.Clave] != ClasePersona.Historica))
         {
             foreach (var bloque in BloquesParaDescanso(p, baseDias, regenerados))
             {
-                if (ReglasCronograma.DescansoAutomatico(bloque, p.Fin, p.DiasDescanso, ocupados) is { } descanso)
+                if (ReglasCronograma.DescansoAutomatico(bloque, p.Fin, p.DiasDescanso, ocupados, diasTrabajo) is { } descanso)
                 {
                     AgregarRecortado(descanso, p.Clave, clases[p.Clave], corte, tramos, automaticos);
                 }

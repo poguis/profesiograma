@@ -17,7 +17,7 @@
 | R3 | **Principal:** bloques como en `Generar`, con el ciclo anclado a SU inicio y la jornada actual (M3).<br>• Vigente: inicio del bloque = `max(inicio, C)`; se incluye si `inicio ≤ fin` y `fin ≥ C`.<br>• Nueva: bloques completos (M1) | R‑964–997 |
 | R4 | **Back:**<br>• Vigente: inicio = `max(Inicio, C)`.<br>• Nuevo: conserva su inicio.<br>• JORNADA con `DiasDescanso`: descanso posterior `Fin+1 .. Fin+DiasDescanso`, recortado igual.<br>• DESCANSO: rol DESCANSO/MANUAL | R‑1085–1100, R‑1170–1187 |
 | R5 | **Cruces** sobre los días regenerados con rol ≠ DESCANSO, antes de los descansos AUTO:<br>• **INTERNO:** regenerado contra regenerado;<br>• **HISTORICO_PROPIO:** regenerado contra la base, misma persona y fecha.<br>Los cruces con otros proyectos los consulta Infrastructure con `DiasTrabajoRegenerados` | R‑1245–1307 (internos e histórico), R‑1310–1389 (otros proyectos) |
-| R6 | **Descansos AUTO** sobre base + regenerados, con la regla de `Generar` (solo si el **primer** día después del bloque está libre, cualquier rol: prueba E6 de la TAREA-10).<br>• Los bloques son tramos **continuos** de días PRINCIPAL por bloque, uniendo base y regenerados.<br>• **M2:** al revisar el primer día libre se excluyen **todos** los descansos AUTO de principales de la base.<br>• Solo se emiten días ≥ C, salvo para las personas nuevas (M1) | Registrar l. 2341–2395; exclusión de los AUTO: ResumenProyectos l. 1150–1153 |
+| R6 | **Descansos AUTO** sobre base + regenerados, con la regla de `Generar` (y el corte M4, §2) (solo si el **primer** día después del bloque está libre, cualquier rol: prueba E6 de la TAREA-10).<br>• Los bloques son tramos **continuos** de días PRINCIPAL por bloque, uniendo base y regenerados.<br>• **M2:** al revisar el primer día libre se excluyen **todos** los descansos AUTO de principales de la base.<br>• Solo se emiten días ≥ C, salvo para las personas nuevas (M1) | Registrar l. 2341–2395; exclusión de los AUTO: ResumenProyectos l. 1150–1153 |
 | R7 | **Deduplicación** por (EmpleadoId, Fecha, Rol), con la base primero: nunca se inserta una clave que ya existe (`UQ_ProyectoAsignacionDia_Clave`) | Registrar l. 2442–2448 |
 | R8 | **Salida:**<br>• `DiasAInsertar` (con clave);<br>• `HayDiasAnterioresAlCorte` (M1);<br>• `Tramos` (base continua + regenerados como en `Generar`);<br>• cruces internos e históricos;<br>• `DiasTrabajoRegenerados`;<br>• `Clases`.<br>**Contrato:** Infrastructure borra los días con `Fecha ≥ C` e inserta `DiasAInsertar` en la misma transacción con applock | Registrar l. 2454–2456 |
 
@@ -28,6 +28,7 @@
 | M1 | Los días anteriores al corte de una persona nueva se previsualizan y revisan, pero **no se guardan** (H7) | Se insertan; `HayDiasAnterioresAlCorte` permite advertirlo |
 | M2 | Al cargar se excluyen todos los descansos AUTO de principales (ResumenProyectos l. 1150–1153), así que el "primer día libre" no los ve | La base sí trae los AUTO (están en `ProyectoAsignacionDia`): se excluyen en la revisión del primer día libre (D‑A1: todos, como el original). Siguen en la base y en `Tramos` |
 | M3 | El ciclo de un principal se ancla a su `FechaInicio` (R‑964–968), también si cambia la jornada | Igual |
+| M4 | El descanso AUTO se emite completo (`DiasDescanso` días o hasta el fin del principal), aunque choque con un día de trabajo de la misma persona | **Corrección (TAREA-17, 05/10/2026):** el descanso AUTO se corta en el primer día en que el mismo empleado ya tiene un día que **no es DESCANSO** en el proyecto (base o regenerado); ese día y los siguientes no se emiten. Está en `ReglasCronograma.DescansoAutomatico`, compartida por `Generar` y `Regenerar`. **Causa: M3.** Al cambiar la jornada, el descanso del último bloque de la base se calcula con los días de la jornada nueva y puede llegar al primer bloque regenerado. Caso real: P1 TIPO_3 desde el 21/09 pasa a TIPO_2 con corte 05/10; el tramo base 28/09–02/10 daba DESCANSO 03–06/10 y el 06/10 quedaba con PRINCIPAL y DESCANSO. Con M4: DESCANSO AUTO solo el 05/10 y PRINCIPAL desde el 06/10 (prueba X18). Con ciclos coherentes (sin cambio de jornada) no cambia nada: E1–E10, B1–B7 y X1–X17 pasan sin modificarse |
 
 ## 3. Hallazgos
 
@@ -85,3 +86,39 @@
 | `App.Domain/Proyectos/Cronograma/MotorCronograma.cs` | `Generar` (sin cambio de comportamiento; `partial`) |
 | `App.Domain/Proyectos/Cronograma/RegeneracionCronograma.cs` | Entradas, salidas y `Regenerar` |
 | `App.Domain.Tests/Proyectos/Cronograma/RegeneracionCronogramaTests.cs` | X1 (invariante, 18 casos) y X2–X17 |
+
+## 8. TAREA-17 — Actualización de personal (implementado, backend)
+
+Alcance: **ACTUALIZACION_PERSONAL** sobre proyectos **ACTIVO**. La reactivación (H4, H5, pendientes 22 y 23) va en la **TAREA-17b**; la cabecera y el cambio de actividad, en la TAREA-18.
+
+### 8.1 API
+| Endpoint | Respuesta |
+|---|---|
+| `GET /api/proyectos/{id:int}/edicion` | 200 `EdicionPersonalDto`: corte (hoy en Ecuador), `puedeEditar` + `motivo` (D1), personal HISTORICO / VIGENTE con `permisos` (`fechaInicio`, `fechaFinMinima` = C − 1, `jornada`, `eliminable`), límites. 404 si no es visible |
+| `POST /api/proyectos/{id:int}/personal/previsualizar` | 200 `PrevisualizacionPersonalDto` (`corte`, `personal` con clase y acción, `tramos`, `cruces` INTERNO / HISTORICO / EXTERNO, `resumen`, `advertencias`). 400 / 404 / 409 (cambiado). No guarda |
+| `POST /api/proyectos/{id:int}/personal` | 200 `{ id, version }`. 400; 404; 409 con extensiones `cruces` y `resumen` (cruces) o "El proyecto cambió; vuelve a cargarlo."; 503 (applock) |
+
+Cuerpo: `{ principales: [{ clave, id?, empleadoId, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, id?, empleadoId, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`.
+- `id` presente: persona vigente; ausente: persona nueva.
+- `principalClave` apunta a un principal del cuerpo; `principalId`, a un principal **histórico** (D3). Son excluyentes.
+- `cargo` null en una vigente: se conserva.
+
+### 8.2 Reglas aplicadas
+| Id | Regla |
+|---|---|
+| E1 | Corte C = hoy en Ecuador (`FechaNegocio`). Solo proyectos ACTIVO con `FechaFin ≥ C` (si no, 400 `proyecto`) |
+| E2 | Clasificación igual que el motor. Una persona histórica enviada → 400 |
+| E3 | Persona vigente: no cambia el empleado; `FechaInicio` fija si es < C; si es ≥ C, puede cambiar pero ≥ C (D2); `FechaFin ≥ C − 1` solo si cambia (D5); la jornada se puede cambiar (M3). Las que ya empezaron son obligatorias; las que aún no empiezan se eliminan si se omiten |
+| E4 | Personas nuevas: número máx + 1 por rol sobre **todo** el personal guardado (sin reutilizar huecos), en el orden del arreglo; empleado activo (solo nuevas, D4). Las reglas de la creación se reutilizan con `ReglasPersonal` (mismos mensajes): RN08, jornada, tipo de registro, días de descanso, largos. Máximos sobre vigentes + nuevas |
+| E5 | Advertencia M1 si el motor inserta días anteriores al corte |
+| E6 | Cruces: internos e históricos (motor) + externos (`IConsultaCrucesExternos` con `excluirProyectoId`). Vista previa: 200 con la lista. Registro: 409 |
+| E7 | Dentro del applock se vuelve a leer y recalcular todo. Un Id que ya no existe → 409 (también fuera). Lo que era válido fuera y ya no lo es dentro → 409 "El proyecto cambió" |
+| E8 | Política Gestor + visibilidad R1 (404) |
+
+### 8.3 Escritura (D7, reemplaza el orden de E7 del enunciado)
+1. `ExecuteDelete` de los días con `Fecha ≥ C`.
+2. Personas vigentes actualizadas (relaciones con principales guardados) + nuevas. → SaveChanges 1.
+3. Relaciones con principales **nuevos** (ya tienen Id); referencias a personas omitidas en `null` (por defensa); omitidas eliminadas. → SaveChanges 2.
+4. `DiasAInsertar` (clave → `ProyectoPersonalId`) + etapa **ACTUALIZACION_PERSONAL** con versión máx + 1, `FechaCorte = C`, la actividad vigente en C y el snapshot del personal resultante, históricas incluidas (D8). → SaveChanges 3.
+
+El estado y las fechas del proyecto no cambian. `EsPrincipalInicial` de las nuevas es `false` (D6, H4 en la TAREA-17b).

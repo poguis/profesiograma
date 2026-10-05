@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-01 (TAREA-16: motor con fecha de corte)
+**Última actualización:** 2026-10-05 (TAREA-17 ✅: actualización de personal, backend)
 
 ## 1. Documentos del proyecto (en orden)
 
@@ -12,7 +12,7 @@
 | `docs/fases/FASE_2_modelo_profesiograma.sql` | Script de referencia del modelo (22 tablas + 2 vistas + semillas). EF Core debe generar un esquema equivalente. |
 | `docs/fases/FASE_5_Crear_Proyecto.md` | Diseño de "Crear proyecto": motor de cronograma, cruces, API y decisiones P1–P6. |
 | `docs/fases/FASE_5_Estados_Proyecto.md` | Máquina de estados, suspensión y cierre (E1–E6), hallazgos H1–H6 y diferencias D1–D8 con el original (TAREA-14). |
-| `docs/fases/FASE_5_Edicion_Cronograma.md` | Motor con fecha de corte (RN11): reglas R1–R8, M1–M3, hallazgos H7–H8, invariante y reglas para la TAREA-17. |
+| `docs/fases/FASE_5_Edicion_Cronograma.md` | Motor con fecha de corte (RN11): reglas R1–R8, M1–M3, hallazgos H7–H8, invariante y reglas de edición; §8: actualización de personal (TAREA-17). |
 
 ## 2. Alcance acordado (primera entrega)
 
@@ -95,7 +95,8 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 | 14 | Suspensión y cierre — backend ✅ |
 | 15 | Suspensión y cierre — frontend ✅ |
 | 16 | Motor con fecha de corte (RN11) — Domain ✅ |
-| 17 | Edición backend: actualización de personal + reactivación (H4, H5) |
+| 17 | Edición backend: actualización de personal ✅ |
+| 17b | Reactivación backend (H4, H5; pendientes 22 y 23) |
 | 18 | Edición backend: cabecera (fechas, horario, almuerzo) + cambio de actividad |
 | 19 | Edición — frontend |
 | 20–21 | Cronograma: consulta y vista |
@@ -130,9 +131,10 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
 20. [TAREA-13] Respuesta 503 (ERP no disponible / registro ocupado) y botón "Reintentar" sin prueba visual: el ERP Simulado no falla. Probar en QA con `ServiciosExternos:Modo = Http`.
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
-22. [TAREA-14 → TAREA-17, H4] Si el recorte de una suspensión o cierre elimina al principal inicial (`EsPrincipalInicial`, empieza después de la fecha), el proyecto queda sin principal inicial. La reactivación del original busca ese principal: resolver junto con H4.
-23. [TAREA-14 → TAREA-17] Un back recortado por una suspensión conserva `DiasDescanso` (E3). Con el motor de la TAREA-16, al reactivar con `FechaFin < C ≤ FechaFin + DiasDescanso` el back es vigente y se regeneraría el descanso que la suspensión borró. **Decidir en la TAREA-17.** Recomendación preliminar: marcarlo `ForzarHistorica` en la REACTIVACION (el motor ya lo admite, prueba X17); alternativa: `DiasDescanso = 0` al recortar. Ver `FASE_5_Edicion_Cronograma.md` §6.
+22. [TAREA-14 → TAREA-17b, H4] Si el recorte de una suspensión o cierre elimina al principal inicial (`EsPrincipalInicial`, empieza después de la fecha), el proyecto queda sin principal inicial. La reactivación del original busca ese principal: resolver junto con H4.
+23. [TAREA-14 → TAREA-17b] Un back recortado por una suspensión conserva `DiasDescanso` (E3). Con el motor de la TAREA-16, al reactivar con `FechaFin < C ≤ FechaFin + DiasDescanso` el back es vigente y se regeneraría el descanso que la suspensión borró. **Decidir en la TAREA-17b.** Recomendación preliminar: marcarlo `ForzarHistorica` en la REACTIVACION (el motor ya lo admite, prueba X17); alternativa: `DiasDescanso = 0` al recortar. Ver `FASE_5_Edicion_Cronograma.md` §6.
 24. [TAREA-14] La advertencia E6 ("Se eliminarán días ya transcurridos.") solo está cubierta por pruebas: los proyectos de prueba Id 7 y 8 son de 2027.
+25. [TAREA-17 → TAREA-19] Registrar sin cambios crea igualmente una etapa nueva (igual que el original). Evaluar en la TAREA-19 si el frontend debe deshabilitar Registrar cuando la vista previa no tiene cambios.
 
 ## 7.1 Reglas técnicas obligatorias
 
@@ -151,6 +153,7 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 | TAREA-13 B0 (2026-10-01) | `GET /api/proyectos/opciones-formulario` (Gestor): departamentos del usuario, opciones de almuerzo y límites (`PROYECTO_MAX_PRINCIPALES`, `PROYECTO_MAX_BACKS`, `BACK_MAX_DIAS_DESCANSO`). Mismas fuentes que `CrearProyectoValidador`: `ObtenerDepartamentosDeUsuarioAsync`, `ObtenerLimitesAsync` y la clase nueva `ReglasAlmuerzo` (rangos RN09 y opciones cada hora, usada también por el validador sin cambiar su comportamiento). Sin consultas EF nuevas. | ✅ build 0/0; tests 232/232; has-pending-model-changes sin cambios; F1–F3 OK (usuario) |
 | TAREA-14 (2026-10-01) | Cambio de estado SUSPENSION (ACTIVO→SUSPENDIDO) y CIERRE (ACTIVO/SUSPENDIDO→TERMINADO): `POST /api/proyectos/{id}/cambio-estado/previsualizar` (200, no guarda) y `POST /api/proyectos/{id}/cambio-estado` (200 `{ id, estado, version }`; 400; 404; 409 si el estado cambió; 503 ocupado). Domain: `MaquinaEstadosProyecto` y `RecorteProyecto` (lógica pura). Recorte a la fecha F inclusiva (días > F, personal que empieza después, recorte de FechaFin, actividades H3, backs sin principal → referencia null + advertencia). Una transacción con `sp_getapplock`: relectura y 409, `ExecuteDelete` de días, entidades con seguimiento (auditoría), etapa versión máx + 1 con snapshot del personal resultante. REACTIVACION → 400 hasta la TAREA-17. `SnapshotPersonal` compartido con la creación (JSON idéntico, con prueba). Ver `docs/fases/FASE_5_Estados_Proyecto.md`. | ✅ build 0/0; tests 308/308; has-pending-model-changes sin cambios; S1–S8 del usuario OK. Dato de prueba: Id 7 PRY-20261001-454325 quedó **TERMINADO (versión 3)**, fin 10/03/2027; Id 8 sigue ACTIVO (ver `docs/tareas/TAREA-14-reporte.md` §6) |
 | TAREA-16 (2026-10-01) | Motor con fecha de corte (RN11) en Domain: `MotorCronograma.Regenerar` (base = días < corte; clasificación histórica/vigente/nueva con `ForzarHistorica`; principales con ciclo anclado a su inicio (M3) y recortados al corte; backs y su descanso posterior; cruces INTERNO e HISTORICO_PROPIO; descansos AUTO con M2 (como el original); días a insertar ≥ corte + todos los de personas nuevas (M1, con indicador); deduplicación contra la base; tramos; días de trabajo para cruces externos). Reglas comunes extraídas a `ReglasCronograma` sin cambiar `Generar`. H7 confirmado, H8 refutado para el original. Ver `docs/fases/FASE_5_Edicion_Cronograma.md`. | ✅ build 0/0; tests 342/342 (E1–E10 y B1–B7 sin modificar; invariante sobre 18 casos; X2–X17) (ver `docs/tareas/TAREA-16-reporte.md`) |
+| TAREA-17 (2026-10-02) | Actualización de personal (ACTUALIZACION_PERSONAL, solo ACTIVO): `GET /api/proyectos/{id}/edicion` (corte, personal HISTORICO / VIGENTE con permisos, límites, `puedeEditar`), `POST …/personal/previsualizar` y `POST …/personal` (200 `{ id, version }`; 400; 404; 409 por cruces o por cambio; 503). Corte = hoy en Ecuador; validación E1–E4 (D2–D5) con `ReglasPersonal` extraído de la creación (mismos mensajes); `MotorCronograma.Regenerar`; cruces internos, históricos y externos (`excluirProyectoId`); escritura en el applock con relectura (D7): días ≥ corte → vigentes + nuevas → relaciones y omitidas → días + etapa v máx + 1. Ver `docs/fases/FASE_5_Edicion_Cronograma.md` §8. | ✅ build 0/0; tests 375/375; has-pending-model-changes sin cambios. Prueba HTTP del 05/10/2026 (P0–P15 y `parte3.cmd`) según lo esperado tras las correcciones P8 (validador) y M4 (motor). Dato de prueba: Id 9 PRY-20261005-da396e ACTIVO, **versión 5** (v3–v5: registros sin cambios del incidente aceptado por el usuario, ver `docs/tareas/TAREA-17-reporte.md` §6.5) |
 | Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
 
 Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).

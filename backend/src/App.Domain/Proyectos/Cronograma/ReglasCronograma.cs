@@ -46,8 +46,12 @@ internal static class ReglasCronograma
     /// <summary>
     /// §5.3 Descanso automático después de un bloque (P4): solo si el PRIMER día siguiente está libre (ningún día de la
     /// persona en <paramref name="ocupados"/>, cualquier rol) y hasta la fecha fin de ese principal (D3). null si no hay.
+    /// M4 (TAREA-17): el descanso se corta en el primer día en que el mismo empleado ya tiene un día que no es DESCANSO
+    /// (<paramref name="diasTrabajo"/>): ese día y los siguientes no se emiten. Evita PRINCIPAL + DESCANSO el mismo día
+    /// cuando la jornada cambió (M3) y el descanso del último bloque de la base llega al primer bloque regenerado.
     /// </summary>
-    internal static Tramo? DescansoAutomatico(Tramo bloque, DateOnly finPrincipal, byte diasDescanso, ISet<(int, DateOnly)> ocupados)
+    internal static Tramo? DescansoAutomatico(Tramo bloque, DateOnly finPrincipal, byte diasDescanso,
+        ISet<(int, DateOnly)> ocupados, ISet<(int, DateOnly)> diasTrabajo)
     {
         var siguiente = bloque.Fin.AddDays(1);
         if (diasDescanso == 0 || siguiente > finPrincipal || ocupados.Contains((bloque.EmpleadoId, siguiente)))
@@ -56,6 +60,15 @@ internal static class ReglasCronograma
         }
 
         var finDescanso = Minimo(bloque.Fin.AddDays(diasDescanso), finPrincipal);
+        for (var fecha = siguiente.AddDays(1); fecha <= finDescanso; fecha = fecha.AddDays(1))
+        {
+            if (diasTrabajo.Contains((bloque.EmpleadoId, fecha)))
+            {
+                finDescanso = fecha.AddDays(-1); // M4
+                break;
+            }
+        }
+
         return new Tramo(RolCronograma.Descanso, TipoAsignacionCronograma.Auto, bloque.Bloque, bloque.Persona,
             bloque.EmpleadoId, siguiente, finDescanso);
     }

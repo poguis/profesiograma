@@ -367,3 +367,180 @@ X-Dev-User: gestor
 Content-Type: application/json
 
 { "estadoDestino": "XYZ", "fecha": "2027-04-15" }
+
+### ---------------------------------------------------------------------------
+### TAREA-17 — Actualizar personal (ACTUALIZACION_PERSONAL). Corte = hoy en Ecuador.
+### Resultados esperados calculados con corte 02/10/2026: si se ejecuta otro día, recalcular con el corte de ese día.
+### No se tocan PRY-DEV-0001..0003, Id 4 ni Id 6–8. Id 2 (SUSPENDIDO) y Id 5 (admin) solo reciben peticiones que no escriben.
+
+### P0. Crear el "Proyecto A" (gestor) → 201. Anotar el id devuelto en @idA (se espera 9).
+###     P1 DEV006 TIPO_3 21/09–29/11 (vigente); P2 DEV007 TIPO_2 21/09–30/09 (histórico con corte 02/10);
+###     K1 DEV007 JORNADA 20/10–23/10 + 2 días, relacionado con P1 (vigente que aún no empieza).
+POST {{base}}/api/proyectos
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "companiaId": 9001, "grupo": "CAMPO", "proyectoErpId": "DEV-ERP-001", "actividadId": "DEV.01", "dimensionUegpId": null,
+  "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [
+    { "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" },
+    { "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-09-30" } ],
+  "backs": [ { "empleadoId": 7, "tipoRegistro": "JORNADA", "diasDescanso": 2, "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "principalRelacionado": 1, "observacion": "Back de prueba" } ] }
+
+### Completar con los Id que devuelve P1 (GET edicion): personal P1, P2 y K1.
+@idA = 9
+@idP1 = 0
+@idP2 = 0
+@idK1 = 0
+
+### P1. Datos del formulario → 200: corte 2026-10-02; P1 VIGENTE (fechaInicio false, fechaFinMinima 2026-10-01, jornada true,
+###     eliminable false); P2 HISTORICO; K1 VIGENTE (fechaInicio true, eliminable true); límites 20/20/20; puedeEditar true
+GET {{base}}/api/proyectos/{{idA}}/edicion
+X-Dev-User: gestor
+
+### P2. Cambiar la jornada de P1 a TIPO_2 (M3) → 200 sin cruces ni advertencias. DEV006: DESCANSO AUTO 02–05/10,
+###     PRINCIPAL 06–16/10, 21–31/10, 05–15/11, 20–29/11; DESCANSO 17–20/10, 01–04/11, 16–19/11. K1 sin cambios.
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }
+
+### P3. Acortar P1 al 01/10 (corte − 1) → 200: ningún tramo de DEV006 desde el 02/10; P1 MODIFICADO
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-10-01" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }
+
+### P3b. Fin 30/09 → 400 principales[0].fechaFin "La fecha fin no puede ser anterior al 01/10/2026 (día anterior al corte)."
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-09-30" } ],
+  "backs": [] }
+
+### P4. Omitir K1 → 200: K1 ELIMINADO; DEV006 PRINCIPAL 02/10 y DESCANSO 03–04/10 (ciclo TIPO_3 sin cambios)
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [] }
+
+### P5. Back nuevo DEV008 28/09–04/10 (M1) → 200 con advertencia "Se generarán días anteriores al corte (02/10/2026)…";
+###     BACK 28/09–04/10; nuevo con número 2; sin cruces
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" },
+             { "clave": "k2", "empleadoId": 8, "tipoRegistro": "JORNADA", "fechaInicio": "2026-09-28", "fechaFin": "2026-10-04", "diasDescanso": 0 } ] }
+
+### P6a. Cruce histórico propio (back nuevo DEV006 29–30/09) → 200 con 2 cruces HISTORICO (29 y 30/09, MISMO PROYECTO) + advertencia M1
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" },
+             { "clave": "k2", "empleadoId": 6, "tipoRegistro": "JORNADA", "fechaInicio": "2026-09-29", "fechaFin": "2026-09-30", "diasDescanso": 0 } ] }
+
+### P6b. Registrar lo mismo → 409 "El proyecto tiene cruces de asignación." con extensiones cruces y resumen
+POST {{base}}/api/proyectos/{{idA}}/personal
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" },
+             { "clave": "k2", "empleadoId": 6, "tipoRegistro": "JORNADA", "fechaInicio": "2026-09-29", "fechaFin": "2026-09-30", "diasDescanso": 0 } ] }
+
+### P7a. Cruce externo (back nuevo DEV005 05–06/10; en el Id 5 son días PRINCIPAL) → 200 con 2 cruces EXTERNO contra PRY-20261001-4c34f3
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" },
+             { "clave": "k2", "empleadoId": 5, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-05", "fechaFin": "2026-10-06", "diasDescanso": 0 } ] }
+
+### P7b. Registrar lo mismo → 409 con cruces EXTERNO
+POST {{base}}/api/proyectos/{{idA}}/personal
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" },
+             { "clave": "k2", "empleadoId": 5, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-05", "fechaFin": "2026-10-06", "diasDescanso": 0 } ] }
+
+### P8. Enviar el histórico P2 → 400 principales[1].id "La persona P2 es histórica (terminó el 30/09/2026) y no se puede modificar."
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" },
+                   { "clave": "p2", "id": {{idP2}}, "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-09-30" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }
+
+### P9. Cambiar el empleado de P1 → 400 principales[0].empleadoId "No se puede cambiar el empleado de una persona vigente…"
+POST {{base}}/api/proyectos/{{idA}}/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 7, "jornada": "TIPO_3", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }
+
+### P10. Proyecto SUSPENDIDO (PRY-DEV-0002, Id 2) → 400 proyecto "Solo se puede modificar el personal de un proyecto ACTIVO (estado actual: SUSPENDIDO)."
+POST {{base}}/api/proyectos/2/personal/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [], "backs": [] }
+
+### P10b. GET edicion del Id 2 → 200 con puedeEditar false y el motivo (D1)
+GET {{base}}/api/proyectos/2/edicion
+X-Dev-User: gestor
+
+### P11. Gestor sobre un proyecto ajeno (Id 5, del admin) → 404
+GET {{base}}/api/proyectos/5/edicion
+X-Dev-User: gestor
+
+### P12. Sin identidad → 401
+GET {{base}}/api/proyectos/{{idA}}/edicion
+X-Dev-User: anonimo
+
+### P13. Registrar válido: P1 a TIPO_2 + omitir K1 + back nuevo DEV008 28/09–04/10 → 200 { id: idA, version: 2 }.
+###      Detalle: P1 TIPO_2; K1 eliminado; Back 2 DEV008; etapa v2 ACTUALIZACION_PERSONAL corte 02/10, actividad DEV.01; estado y fechas iguales
+POST {{base}}/api/proyectos/{{idA}}/personal
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k2", "empleadoId": 8, "tipoRegistro": "JORNADA", "fechaInicio": "2026-09-28", "fechaFin": "2026-10-04", "diasDescanso": 0 } ] }
+
+### P13b. Detalle después del registro
+GET {{base}}/api/proyectos/{{idA}}
+X-Dev-User: gestor
+
+### P14. Datos desactualizados: reenviar con el id de K1 (ya eliminado) → 409 "El proyecto cambió; vuelve a cargarlo."
+POST {{base}}/api/proyectos/{{idA}}/personal
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "principales": [ { "clave": "p1", "id": {{idP1}}, "empleadoId": 6, "jornada": "TIPO_2", "fechaInicio": "2026-09-21", "fechaFin": "2026-11-29" } ],
+  "backs": [ { "clave": "k1", "id": {{idK1}}, "empleadoId": 7, "tipoRegistro": "JORNADA", "fechaInicio": "2026-10-20", "fechaFin": "2026-10-23",
+               "diasDescanso": 2, "principalClave": "p1", "observacion": "Back de prueba" } ] }

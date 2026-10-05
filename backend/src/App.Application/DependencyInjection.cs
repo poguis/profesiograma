@@ -3,6 +3,7 @@ using App.Application.Erp;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
+using App.Application.Proyectos.Personal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -22,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<OpcionesFormularioProyectoServicio>();
         services.AddScoped<CambioEstadoValidador>();
         services.AddScoped<CambioEstadoServicio>();
+        services.AddScoped<EdicionPersonalValidador>();
+        services.AddScoped<EdicionPersonalServicio>();
         return services;
     }
 }

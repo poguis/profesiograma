@@ -1,0 +1,13 @@
+{
+  "principales": [
+    {
+      "clave": "p1",
+      "id": __ID_P1__,
+      "empleadoId": 6,
+      "jornada": "TIPO_2",
+      "fechaInicio": "2026-09-21",
+      "fechaFin": "__FIN_MINIMA__"
+    }
+  ],
+  "backs": []
+}
