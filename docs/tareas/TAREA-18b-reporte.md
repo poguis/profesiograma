@@ -1,11 +1,11 @@
 # TAREA-18b — Correcciones H15, O2 y O3 tras la prueba manual de la TAREA-18
 
 **Fechas:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada. **Prueba manual pendiente** (`backend/tests/manual/tarea18/parte3.cmd` y `parte4.cmd`, sección 6). **Migración `ActividadVigenteVista` pendiente de aplicar** por el usuario (`dotnet ef database update`).
+**Resultado:** ✅ terminada. Migración `ActividadVigenteVista` aplicada por el usuario en PROFESIOGRAMA_DEV; prueba manual del 06/10/2026 (`parte3.cmd`, `parte4.cmd`, `parte3-vista.sql`, `parte4-descansos.sql`): todos los casos OK (sección 6.2).
 - `dotnet build Profesiograma.slnx -c Release --no-incremental`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **486/486** (Domain 115, Application 270, Infrastructure 101). Antes: 468. Nuevas: 18. De las 468 anteriores solo cambiaron las **2 aprobadas** (sección 5); ninguna otra.
 - `has-pending-model-changes`: sin cambios.
-- `dotnet ef migrations list --configuration Release`: `20260930161754_Inicial`, `20260930161822_Vistas`, `20261006125310_ActividadVigenteVista` **(Pending)**.
+- `dotnet ef migrations list --configuration Release`: `20260930161754_Inicial`, `20260930161822_Vistas`, `20261006125310_ActividadVigenteVista` **(Pending)** al terminar la Fase B; aplicada después por el usuario.
 
 Sin `dotnet run`, sin `dotnet ef database update`, sin SQL que modifique datos, sin cambios en `frontend/`, sin comandos git que modifiquen el repositorio y **sin ningún cliente HTTP contra la API** (scripts probados solo con `SIMULAR=1` y sin `curl.exe` en el `PATH`).
 
@@ -77,18 +77,26 @@ Sin `dotnet run`, sin `dotnet ef database update`, sin SQL que modifique datos, 
 - F se elige del GET de edición: F = max(hoy, inicio del back, inicio del proyecto), con F < fin del back y F < fin del proyecto. Con el Id 11 (back DEV001 16–17/10) da **F = 16/10** si se ejecuta hasta el 16/10; después no hay F válida: `parte3` marca "OMITIDO (sin datos)" y `parte4` termina sin escribir.
 - `parte4` valida antes de escribir: vista previa del cambio de actividad (200 CAMBIO_ACTIVIDAD) y de acortar (200, back recortado y `diasAgregados`). Si alguna no es válida, termina sin escribir.
 
-### 6.2 Resultados esperados (ejemplo con hoy entre el 07/10 y el 13/10/2026)
-| Caso | Esperado | Resultado |
-|---|---|---|
-| t3a / t3b (O3) | Cabecera y detalle con la **misma** actividad vigente: DEV.01 v1 (referencia 11/10; del 14 al 16/10 sería DEV.02 v2) | [PENDIENTE] |
-| t3c (listado) | El listado no expone la actividad; `parte3-vista.sql` (con la migración aplicada) debe dar la misma actividad | [PENDIENTE] |
-| t3d / t3e (H15) | F = 16/10; DEV003 y DEV001 recortados a 16/10; `diasAgregados` DEV001 DESCANSO 17/10–18/10 (2) | [PENDIENTE] |
-| u4a–u4d | F = 16/10; vigente en F DEV.02, nueva DEV.01; vistas previas válidas (1) | [PENDIENTE] |
-| u4e | 200 versión 5; etapa CAMBIO_ACTIVIDAD con DEV.01 (O2) | [PENDIENTE] |
-| u4f | 200 versión 6 (EDICION_CABECERA, fin 16/10) | [PENDIENTE] |
-| u4g / u4h | Etapas v5 CAMBIO_ACTIVIDAD (DEV.01) y v6 EDICION_CABECERA; cabecera y detalle con la misma actividad vigente | [PENDIENTE] |
-| `parte4-descansos.sql` | DEV001 (Back 1, fin 16/10, descanso 2): DESCANSO MANUAL 17/10 y 18/10, bloque 1 | [PENDIENTE] |
-| `parte3-vista.sql` | `ActividadCodigo` del Id 11 igual al de la cabecera y el detalle | [PENDIENTE] |
+### 6.2 Resultados reales (usuario, 06/10/2026)
+Antes de ejecutar los scripts, el usuario aplicó la migración `ActividadVigenteVista` (`dotnet ef database update`). Salidas: `backend/tests/manual/tarea18/resultado-parte3.txt` y `resultado-parte4.txt`. Hoy = 06/10/2026; F elegida = **16/10** (back DEV001 16–17/10, 2 días de descanso).
+
+| Caso | HTTP | Resultado real (línea CONTROL resumida) | ¿Coincide? |
+|---|---|---|---|
+| t3a / t3b (O3) | 200 / 200 | Cabecera: DEV.01 v1; detalle: DEV.01 v1 → **IGUALES**. Proyecto 11/10–17/10; v1 DEV.01 11–13/10, v2 DEV.02 14–17/10 | Sí |
+| t3c (listado) | 200 | El listado no expone la actividad: se verificó con `parte3-vista.sql` | Sí |
+| t3d / t3e (H15) | 200 / 200 | F = 16/10; DEV003 y DEV001 recortados 17/10 → 16/10; `diasAgregados` DEV001 DESCANSO 17/10–18/10 (2) | Sí |
+| u4a / u4b | 200 / 200 | F = 16/10; vigente en F: DEV.02; nueva: DEV.01 | Sí |
+| u4c / u4d | 200 / 200 | Vistas previas válidas (1): CAMBIO_ACTIVIDAD; DEV001 recortado 17→16/10 con `diasAgregados` DESCANSO 17–18/10 | Sí |
+| u4e | 200 | Versión 5: etapa **CAMBIO_ACTIVIDAD con DEV.01** (la actividad nueva, O2), 11/10–17/10, corte 06/10 | Sí (ver nota) |
+| u4f | 200 | Versión 6: EDICION_CABECERA, 11/10–16/10, corte 06/10, actividad DEV.01; fin del proyecto 16/10 | Sí |
+| u4g | 200 | Etapas nuevas v5 y v6; actividades v1 DEV.01 11–13/10, v2 DEV.02 14–15/10, v3 DEV.01 16–16/10 | Sí |
+| u4h (O3) | 200 | Cabecera: DEV.01 v1; detalle: DEV.01 v1 → **IGUALES** | Sí |
+| `parte3-vista.sql` | — | `vwProyectoResumen` del Id 11 con **DEV.01** (la misma que la cabecera y el detalle) | Sí |
+| `parte4-descansos.sql` | — | DEV001 (Back 1, fin 16/10, descanso 2): **DESCANSO MANUAL el 17/10 y el 18/10, bloque 1** | Sí |
+
+**Todos los casos coinciden con lo esperado.**
+
+**Nota O2:** en este caso la actividad nueva (DEV.01) coincide con la que daría la regla P3 anterior (vigente en max(hoy, inicio) = 11/10 → DEV.01), así que la prueba manual no distingue ambas reglas. La distinción la cubre la prueba automática aprobada `EdicionCabeceraServicioTests.Registrar_SoloActividad_CambioActividad_YActividadDeLaEtapaP3` (DEV.02 en la etapa).
 
 ### 6.3 Prueba de los scripts con `SIMULAR=1` (Claude Code)
 - `BASE=https://localhost:1`; el helper `:http` copia `%SIMULACION%\NOMBRE.txt` y nunca llama a curl; el lanzador dejó en el `PATH` solo PowerShell y una copia de `chcp.com`. Respuestas simuladas a mano con el estado del Id 11 tras la prueba del 06/10 y HOY = 07/10.
@@ -121,5 +129,4 @@ Sin `dotnet run`, sin `dotnet ef database update`, sin SQL que modifique datos, 
 - **Etapas ya guardadas:** no se modifican (en el Id 11, la v3 CAMBIO_ACTIVIDAD sigue con DEV.01).
 
 ## 10. Pendientes
-- Aplicar la migración `ActividadVigenteVista` (usuario; pendiente 31).
-- Ejecutar `parte3.cmd` (y, si se desea, `parte4.cmd` y los `.sql`) y registrar los resultados; después, marcar la TAREA-18 y la 18b como ✅.
+- Ninguno de esta tarea: migración aplicada (pendiente 31 resuelto) y prueba manual OK. Frontend de la edición en la TAREA-19.

@@ -1,6 +1,6 @@
 # FASE 5 — Diseño: Edición de cabecera y cambio de actividad
 
-**Fecha:** 2026-10-06 (TAREA-18, backend; prueba manual del usuario OK el 06/10). **TAREA-18b:** H15, O2 y O3 (§7). **Pendiente:** frontend en la TAREA-19.
+**Fecha:** 2026-10-06 (TAREA-18, backend). **TAREA-18b:** H15, O2 y O3 (§7). **Verificado en prueba manual (06/10/2026):** TAREA-18 (27 casos) y TAREA-18b (O3, H15, O2; migración `ActividadVigenteVista` aplicada). **Pendiente:** frontend en la TAREA-19.
 
 **Origen** (`docs/origen/powerapps/ConfigurarProyecto_1.pa.yaml`):
 - controles: `cmbActividadEdit_1` (l. 269–297), `fechaActividadDesdeEdit_1` (l. 313–326), `inicioProyectoEdit_1` (l. 363–375), `finProyectoEdit_1` (l. 395–408);
@@ -79,7 +79,7 @@ Título del `ValidationProblem`: "Los datos de la cabecera no son válidos.".
 | Infrastructure | `Persistencia/Proyectos/EdicionCabeceraRepositorio.cs` (consultas `ConsultaCabeceraEdicion` y `ConsultaActividadesEdicion`), `Persistencia/Proyectos/EscrituraRecorte.cs` |
 | Api | `Endpoints/ProyectoEndpoints.cs` (GET + dos POST) |
 
-## 7. Correcciones de la TAREA-18b (tras la prueba manual del 06/10/2026)
+## 7. Correcciones de la TAREA-18b (tras la prueba manual del 06/10/2026; verificado en prueba manual (06/10/2026))
 
 ### 7.1 H15 — Descanso de los backs al acortar (C4)
 - **Evidencia (prueba de la TAREA-18, Id 11):** h y q borraron el descanso de DEV001 (19–20/10) y recortaron el back al 17/10 con `DiasDescanso` 2. La vista previa s1 (personal sin cambios) regeneraba DESCANSO MANUAL 18–19/10: el descanso posterior del back se guarda completo aunque pase de la fecha fin del proyecto (P3 de la creación), así que la próxima actualización de personal lo habría insertado. Además, cuando hoy pasara la fecha fin del back, H12 lo trataría como histórico (sin descanso guardado): el resultado dependía del día.
