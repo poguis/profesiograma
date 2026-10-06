@@ -4,6 +4,7 @@ import {
   type EstadoDialogo,
   type VistaCambio,
   aSolicitudCambio,
+  aSolicitudRegistroCambio,
   crearEstadoDialogo,
   fechaPorDefecto,
   interpretarErrorCambio,
@@ -41,6 +42,7 @@ const datos = (): PrevisualizacionCambioEstado => ({
   personalRecortado: [],
   actividadesAfectadas: [],
   advertencias: [],
+  versionProyecto: 1,
 })
 
 describe('R1/R2: máquina de estados (solo interfaz)', () => {
@@ -206,5 +208,30 @@ describe('R5: respuestas', () => {
       noEncontrado: true,
       generales: ['El proyecto no existe o no tiene acceso.'],
     })
+  })
+})
+
+describe('TAREA-19x: token de concurrencia', () => {
+  it('el registro lleva la versionProyecto de la vista previa; la vista previa no la envía', () => {
+    const estado = aplicar(crearEstadoDialogo(), elegir('SUSPENDIDO'), { tipo: 'fecha', fecha: '2027-04-20' })
+    const vista: VistaCambio = { revision: estado.revision, datos: { ...datos(), versionProyecto: 7 } }
+    expect(aSolicitudRegistroCambio(estado, vista)).toEqual({ estadoDestino: 'SUSPENDIDO', fecha: '2027-04-20', versionProyecto: 7 })
+    expect(aSolicitudCambio(estado)).toEqual({ estadoDestino: 'SUSPENDIDO', fecha: '2027-04-20' })
+  })
+
+  it('409 por token viejo: mensaje y recarga', () => {
+    expect(interpretarErrorCambio({ tipo: 'conflicto', titulo: 'El proyecto cambió; vuelve a cargarlo.' })).toMatchObject({
+      generales: ['El proyecto cambió; vuelve a cargarlo.'],
+      ofrecerRecarga: true,
+    })
+  })
+
+  it('400 sin token: mensaje arriba y recarga', () => {
+    const r = interpretarErrorCambio({
+      tipo: 'validacion',
+      titulo: 'x',
+      errores: { versionProyecto: ['Falta la versión del proyecto; vuelve a cargarlo.'] },
+    })
+    expect(r).toMatchObject({ generales: ['Falta la versión del proyecto; vuelve a cargarlo.'], ofrecerRecarga: true })
   })
 })

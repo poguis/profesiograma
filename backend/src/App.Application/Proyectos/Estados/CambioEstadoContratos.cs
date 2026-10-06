@@ -3,7 +3,8 @@ using App.Domain.Proyectos.Estados;
 namespace App.Application.Proyectos.Estados;
 
 /// <summary>Cuerpo de POST /api/proyectos/{id}/cambio-estado[/previsualizar]. EstadoDestino = código (SUSPENDIDO | TERMINADO).</summary>
-public sealed record CambioEstadoSolicitud(string? EstadoDestino, DateOnly? Fecha);
+/// <param name="VersionProyecto">Token de concurrencia (TAREA-19x): obligatorio al registrar (400 si falta, 409 si no es la versión actual); la vista previa lo ignora.</param>
+public sealed record CambioEstadoSolicitud(string? EstadoDestino, DateOnly? Fecha, int? VersionProyecto = null);
 
 /// <summary>Persona del proyecto con los datos que muestran la vista previa y el snapshot (sin cédula ni correo).</summary>
 public sealed record PersonalCambio(

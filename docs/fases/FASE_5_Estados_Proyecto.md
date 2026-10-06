@@ -198,3 +198,34 @@ Título del `ValidationProblem`: "Los datos de la reactivación no son válidos.
 | Application | `Proyectos/Reactivacion/` (`ReactivacionContratos`, `ReactivacionDtos`, `ReactivacionValidador`, `ReactivacionServicio`); `Proyectos/Personal/CalculoPersonal.cs` (extraído de `EdicionPersonalServicio`) y núcleo `ValidarPersonal` de `EdicionPersonalValidador` |
 | Infrastructure | `Persistencia/Proyectos/EdicionPersonalRepositorio.cs` (`IReactivacionRepositorio`, `AplicarAsync` con `Reactivacion`, consultas `ConsultaActividadParaReactivar` y `ConsultaBacksConDescansoPosterior`) |
 | Api | `Endpoints/ProyectoEndpoints.cs` (GET + dos POST) |
+
+## 9. Token de concurrencia `versionProyecto` (TAREA-19x, pendiente 32)
+
+Origen: V15 de la TAREA-19a (06/10/2026). Una pestaña con una vista previa vieja registraba sobre los datos de otra sin
+409, porque el cliente no indicaba sobre qué versión decidió; la relectura en el applock solo detecta carreras dentro
+de la misma petición.
+
+- **Token:** `versionProyecto` (entero) = última versión de etapa del proyecto (`ProyectoEtapa.Version` máxima; 0 si no
+  tiene etapas). Sirve porque toda escritura de un proyecto crea una etapa (`00_ESTADO_ACTUAL.md` §7.1, regla 3). El
+  `RowVer` de `Proyecto` no sirve: la actualización de personal no modifica esa fila.
+- **Orden en el registro** (`VersionProyecto.cs`, mismos pasos en los 4 servicios):
+  1. `versionProyecto` ausente → **400** `versionProyecto` "Falta la versión del proyecto; vuelve a cargarlo.", antes de
+     comprobar la visibilidad, sin leer la base ni abrir la transacción;
+  2. lectura y cálculo de fuera (404 si no existe o no es visible);
+  3. **comprobación previa:** token ≠ versión actual → **409** "El proyecto cambió; vuelve a cargarlo.", ANTES de
+     cualquier 400 de validación, "No hay cambios para registrar." (C9) o cruces;
+  4. dentro del applock: las relecturas existentes y, antes de calcular la versión nueva (actual + 1), la
+     **comprobación definitiva** del token → 409 si otro registro entró antes del bloqueo.
+- **Vistas previas y GET:** devuelven `versionProyecto` leído **antes** que los datos: si alguien escribe en medio, el
+  token queda más viejo que los datos y el registro da 409 (el error cae del lado seguro). Las vistas previas no
+  exigen el token (son de lectura) y lo ignoran si llega.
+- **Frontend:** el diálogo registra con el `versionProyecto` de la vista previa vigente (`aSolicitudRegistroCambio`,
+  `aSolicitudRegistroCabecera`); con 409 o con 400 `versionProyecto` ofrece "Recargar datos del proyecto".
+- La creación no aplica (no hay versión previa). El GET del detalle no devuelve el token (P4).
+
+**En este documento:**
+- `POST …/cambio-estado/previsualizar` devuelve `versionProyecto`; `POST …/cambio-estado` lo exige. Token viejo → 409
+  "El proyecto cambió; vuelve a cargarlo." (`EstadoCambio.Cambiado`). La relectura existente dentro del applock (el
+  estado cambió) conserva su 409 "El proyecto cambió de estado; vuelve a cargarlo." (`EstadoCambio.Conflicto`).
+- Reactivación (§8): `GET …/reactivacion` y `POST …/reactivacion/previsualizar` devuelven `versionProyecto`;
+  `POST …/reactivacion` lo exige (409 `Cambiado`; el 409 con `extensions.cruces` sigue siendo el de cruces).

@@ -56,7 +56,7 @@ public class ActividadVigenteTests
         var servicio = new CambioEstadoServicio(repo, new CambioEstadoValidador(), new TransaccionFalsa(), new UsuarioFalso(),
             new RelojFijo(new DateTimeOffset(2026, 10, 1, 15, 0, 0, TimeSpan.Zero)));
 
-        await servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("SUSPENDIDO", D("2027-03-15")), Ct);
+        await servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("SUSPENDIDO", D("2027-03-15")).ConVersion(repo), Ct);
 
         Assert.Equal("DEV.01", repo.Aplicado!.ActividadCodigo);
         Assert.Equal(repo.Aplicado.Plan.ActividadVigenteEnF, repo.Aplicado.ActividadCodigo);
@@ -71,7 +71,7 @@ public class ActividadVigenteTests
         var servicio = new EdicionPersonalServicio(repo, new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(),
             new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(new DateTimeOffset(2026, 9, 15, 15, 0, 0, TimeSpan.Zero)));
 
-        var r = await servicio.RegistrarAsync(DoblesPersonal.ProyectoId, new ActualizarPersonalSolicitud([DoblesPersonal.SolP1("TIPO_2")], []), Ct);
+        var r = await servicio.RegistrarAsync(DoblesPersonal.ProyectoId, new ActualizarPersonalSolicitud([DoblesPersonal.SolP1("TIPO_2")], []).ConVersion(repo), Ct);
 
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         Assert.Equal((corte, "DEV.01"), (repo.Aplicado!.Corte, repo.Aplicado.ActividadCodigo));

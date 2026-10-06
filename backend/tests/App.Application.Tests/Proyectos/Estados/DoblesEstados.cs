@@ -48,17 +48,27 @@ internal sealed class RepositorioCambioFalso(params DatosCambioEstado?[] respues
 {
     public List<(int Id, int? Propietario, DateOnly Fecha)> Lecturas { get; } = [];
     public int UltimaVersion { get; set; } = 1;
+    /// <summary>TAREA-19x: versiones que devuelven las próximas lecturas de la versión (después, UltimaVersion).</summary>
+    public Queue<int> Versiones { get; } = new();
+
+    /// <summary>TAREA-19x: orden de las lecturas ("version" / "datos").</summary>
+    public List<string> Orden { get; } = [];
     public bool LanzarConflicto { get; set; }
     public CambioEstadoAplicar? Aplicado { get; private set; }
 
     public Task<DatosCambioEstado?> ObtenerAsync(int proyectoId, int? propietarioUsuarioId, DateOnly fecha, CancellationToken ct)
     {
         Lecturas.Add((proyectoId, propietarioUsuarioId, fecha));
+        Orden.Add("datos");
         var respuesta = respuestas.Length == 0 ? null : respuestas[Math.Min(Lecturas.Count - 1, respuestas.Length - 1)];
         return Task.FromResult(respuesta);
     }
 
-    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct) => Task.FromResult(UltimaVersion);
+    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct)
+    {
+        Orden.Add("version");
+        return Task.FromResult(Versiones.Count > 0 ? Versiones.Dequeue() : UltimaVersion);
+    }
 
     public Task AplicarAsync(CambioEstadoAplicar cambio, CancellationToken ct)
     {
@@ -79,4 +89,11 @@ internal sealed class AdminFalso : IUsuarioActual
     public IReadOnlyCollection<string> Roles => [RolesApp.Admin];
     public bool EstaAutenticado => true;
     public bool TieneRol(string rol) => Roles.Contains(rol);
+}
+
+/// <summary>TAREA-19x: solicitudes de registro con el token de concurrencia (versión del repositorio falso o explícita).</summary>
+internal static class ConVersionEstados
+{
+    public static CambioEstadoSolicitud ConVersion(this CambioEstadoSolicitud s, RepositorioCambioFalso repo) => s with { VersionProyecto = repo.UltimaVersion };
+    public static CambioEstadoSolicitud ConVersion(this CambioEstadoSolicitud s, int version) => s with { VersionProyecto = version };
 }

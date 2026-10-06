@@ -40,6 +40,8 @@ public sealed class ReactivacionServicio(
             return null;
         }
 
+        // TAREA-19x: el token se lee ANTES que los datos (si alguien escribe en medio, queda viejo y el registro da 409).
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct);
         // Sin días: el GET no los necesita (corte mínimo = base vacía).
         var proyecto = await repositorio.ObtenerAsync(proyectoId, propietario, DateOnly.MinValue, ct);
         if (proyecto is null)
@@ -59,7 +61,8 @@ public sealed class ReactivacionServicio(
                 p.Id, CalculadorCruces.NombreRol(p.Rol), p.Numero, CalculoPersonal.Empleado(p), p.JornadaCodigo, p.FechaInicio, p.FechaFin,
                 p.TipoRegistro, p.DiasDescanso, p.EsPrincipalInicial)).ToList(),
             new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack),
-            advertencias);
+            advertencias,
+            version);
     }
 
     /// <summary>
@@ -99,14 +102,33 @@ public sealed class ReactivacionServicio(
 
     public async Task<ResultadoReactivacion> PrevisualizarAsync(int proyectoId, ReactivarProyectoSolicitud s, CancellationToken ct)
     {
-        var r = await CalcularAsync(proyectoId, s, ct);
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct); // TAREA-19x: antes que los datos
+        var r = await CalcularAsync(proyectoId, s, version, ct);
         return r.Error ?? ResultadoReactivacion.Previsualizado(r.Calculo!.Previsualizacion);
     }
 
     public async Task<ResultadoReactivacion> RegistrarAsync(int proyectoId, ReactivarProyectoSolicitud s, CancellationToken ct)
     {
+        // TAREA-19x (P3): sin token → 400, sin leer la base ni abrir la transacción.
+        ArgumentNullException.ThrowIfNull(s);
+        if (s.VersionProyecto is not int token)
+        {
+            return ResultadoReactivacion.Invalido(VersionProyecto.ErroresFalta());
+        }
+
         // Verificación previa fuera de la transacción: no se abre el bloqueo si la solicitud no es válida o tiene cruces.
-        var previo = await CalcularAsync(proyectoId, s, ct);
+        var previo = await CalcularAsync(proyectoId, s, token, ct);
+        if (previo.Error is { Estado: EstadoEdicion.NoEncontrado } noEncontrado)
+        {
+            return noEncontrado;
+        }
+
+        // TAREA-19x (P1): token viejo → 409 antes de cualquier 400 o cruces.
+        if (await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct) != token)
+        {
+            return ResultadoReactivacion.Cambiado();
+        }
+
         if (previo.Error is { } error)
         {
             return error;
@@ -121,7 +143,7 @@ public sealed class ReactivacionServicio(
         {
             // Dentro del applock se vuelve a leer y a recalcular todo. Lo que era válido fuera y ya no lo es dentro
             // (p. ej. el proyecto ya no está SUSPENDIDO), o una FechaFin distinta, significa que el proyecto cambió.
-            var r = await CalcularAsync(proyectoId, s, ctTx);
+            var r = await CalcularAsync(proyectoId, s, token, ctTx);
             if (r.Error is { } errorTx)
             {
                 return errorTx.Estado == EstadoEdicion.Invalido ? ResultadoReactivacion.Cambiado() : errorTx;
@@ -138,9 +160,16 @@ public sealed class ReactivacionServicio(
                 return ResultadoReactivacion.ConCruces(c.Previsualizacion);
             }
 
+            // TAREA-19x: comprobación definitiva del token dentro del applock, antes de calcular la versión nueva.
+            var actual = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx);
+            if (actual != token)
+            {
+                return ResultadoReactivacion.Cambiado();
+            }
+
             try
             {
-                var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx) + 1;
+                var version = actual + 1;
                 await repositorio.AplicarAsync(CrearCambio(c, version), ctTx);
                 return ResultadoReactivacion.Hecho(new ProyectoReactivadoDto(proyectoId, CodigosEstadoProyecto.Activo, version));
             }
@@ -159,7 +188,8 @@ public sealed class ReactivacionServicio(
 
     private sealed record Resultado(ResultadoReactivacion? Error, Calculo? Calculo);
 
-    private async Task<Resultado> CalcularAsync(int proyectoId, ReactivarProyectoSolicitud s, CancellationToken ct)
+    /// <param name="versionProyecto">Token que lleva la vista previa (leído antes que los datos, o el del registro).</param>
+    private async Task<Resultado> CalcularAsync(int proyectoId, ReactivarProyectoSolicitud s, int versionProyecto, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(s);
         if (!TryObtenerVisibilidad(out var propietario))
@@ -207,7 +237,8 @@ public sealed class ReactivacionServicio(
 
         var previsualizacion = new PrevisualizacionReactivacionDto(
             reactivacion, proyecto.FechaFin, fechaFin, actividad,
-            CalculoPersonal.Personas(plan), calculo.Tramos, calculo.Cruces, CalculadorCruces.Resumen(calculo.Cruces), advertencias);
+            CalculoPersonal.Personas(plan), calculo.Tramos, calculo.Cruces, CalculadorCruces.Resumen(calculo.Cruces), advertencias,
+            versionProyecto);
 
         return new Resultado(null, new Calculo(proyecto, reactivacion, fechaFin, plan, calculo, actividad, previsualizacion));
     }

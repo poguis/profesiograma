@@ -59,17 +59,27 @@ internal sealed class RepositorioCabeceraFalso(params DatosCabecera?[] respuesta
 {
     public List<(int Id, int? Propietario, DateOnly FechaDias)> Lecturas { get; } = [];
     public int UltimaVersion { get; set; } = 1;
+    /// <summary>TAREA-19x: versiones que devuelven las próximas lecturas de la versión (después, UltimaVersion).</summary>
+    public Queue<int> Versiones { get; } = new();
+
+    /// <summary>TAREA-19x: orden de las lecturas ("version" / "datos").</summary>
+    public List<string> Orden { get; } = [];
     public bool LanzarConflicto { get; set; }
     public CambioCabeceraAplicar? Aplicado { get; private set; }
 
     public Task<DatosCabecera?> ObtenerAsync(int proyectoId, int? propietarioUsuarioId, DateOnly fechaDias, CancellationToken ct)
     {
         Lecturas.Add((proyectoId, propietarioUsuarioId, fechaDias));
+        Orden.Add("datos");
         var d = respuestas.Length == 0 ? null : respuestas[Math.Min(Lecturas.Count - 1, respuestas.Length - 1)];
         return Task.FromResult(d is null ? null : d with { DiasPosteriores = d.DiasPosteriores.Where(x => x.Fecha > fechaDias).ToList() });
     }
 
-    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct) => Task.FromResult(UltimaVersion);
+    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct)
+    {
+        Orden.Add("version");
+        return Task.FromResult(Versiones.Count > 0 ? Versiones.Dequeue() : UltimaVersion);
+    }
 
     public Task AplicarAsync(CambioCabeceraAplicar cambio, CancellationToken ct)
     {
@@ -115,4 +125,11 @@ internal sealed class ErpCabeceraFalso : ICatalogoErp
     public Task<ProyectoErp?> ObtenerProyectoAsync(int companiaId, string proyectoErpId, CancellationToken ct) => throw new NotSupportedException();
     public Task<IReadOnlyList<DimensionErp>> ListarDimensionesAsync(int companiaId, CancellationToken ct) => throw new NotSupportedException();
     public Task<DimensionErp?> ObtenerDimensionAsync(int companiaId, string uegpId, CancellationToken ct) => throw new NotSupportedException();
+}
+
+/// <summary>TAREA-19x: solicitudes de registro con el token de concurrencia (versión del repositorio falso o explícita).</summary>
+internal static class ConVersionCabecera
+{
+    public static EditarCabeceraSolicitud ConVersion(this EditarCabeceraSolicitud s, RepositorioCabeceraFalso repo) => s with { VersionProyecto = repo.UltimaVersion };
+    public static EditarCabeceraSolicitud ConVersion(this EditarCabeceraSolicitud s, int version) => s with { VersionProyecto = version };
 }

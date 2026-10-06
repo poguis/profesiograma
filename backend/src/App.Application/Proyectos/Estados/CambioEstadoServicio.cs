@@ -22,14 +22,34 @@ public sealed class CambioEstadoServicio(
 
     public async Task<ResultadoCambioEstado> PrevisualizarAsync(int proyectoId, CambioEstadoSolicitud solicitud, CancellationToken ct)
     {
+        // TAREA-19x: el token se lee ANTES que los datos (si alguien escribe en medio, queda viejo y el registro da 409).
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct);
         var preparado = await PrepararAsync(proyectoId, solicitud, ct);
-        return preparado.Error ?? ResultadoCambioEstado.Previsualizado(CrearPrevisualizacion(preparado.Calculo!));
+        return preparado.Error ?? ResultadoCambioEstado.Previsualizado(CrearPrevisualizacion(preparado.Calculo!, version));
     }
 
     public async Task<ResultadoCambioEstado> AplicarAsync(int proyectoId, CambioEstadoSolicitud solicitud, CancellationToken ct)
     {
+        // TAREA-19x (P3): sin token → 400, sin leer la base ni abrir la transacción.
+        ArgumentNullException.ThrowIfNull(solicitud);
+        if (solicitud.VersionProyecto is not int token)
+        {
+            return ResultadoCambioEstado.Invalido(VersionProyecto.ErroresFalta());
+        }
+
         // 1. Validación y plan fuera de la transacción (rápido; evita abrir el bloqueo si la solicitud no es válida).
         var preparado = await PrepararAsync(proyectoId, solicitud, ct);
+        if (preparado.Error is { Estado: EstadoCambio.NoEncontrado } noEncontrado)
+        {
+            return noEncontrado;
+        }
+
+        // TAREA-19x (P1): token viejo → 409 antes de cualquier 400 (el usuario decidió sobre datos que ya cambiaron).
+        if (await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct) != token)
+        {
+            return ResultadoCambioEstado.Cambiado();
+        }
+
         if (preparado.Error is { } error)
         {
             return error;
@@ -56,11 +76,18 @@ public sealed class CambioEstadoServicio(
                 return ResultadoCambioEstado.Conflicto();
             }
 
+            // TAREA-19x: comprobación definitiva del token dentro del applock, antes de calcular la versión nueva.
+            var actual = await repositorio.ObtenerUltimaVersionEtapaAsync(datos.Id, ctTx);
+            if (actual != token)
+            {
+                return ResultadoCambioEstado.Cambiado();
+            }
+
             var calculo = previo with { Datos = datos, Plan = Recortar(datos, previo.Fecha) };
             try
             {
                 // E4: versión = máx + 1 dentro del applock (UQ_ProyectoEtapa_Version es la red de seguridad).
-                var version = await repositorio.ObtenerUltimaVersionEtapaAsync(datos.Id, ctTx) + 1;
+                var version = actual + 1;
                 await repositorio.AplicarAsync(new CambioEstadoAplicar(
                     datos.Id,
                     version,
@@ -131,7 +158,7 @@ public sealed class CambioEstadoServicio(
 
     // ------------------------------------------------------------------ vista previa
 
-    private CambioEstadoPrevisualizacionDto CrearPrevisualizacion(Calculo c)
+    private CambioEstadoPrevisualizacionDto CrearPrevisualizacion(Calculo c, int versionProyecto)
     {
         var impacto = VistaRecorte.Crear(c.Datos.Personal, c.Datos.Actividades, c.Plan);
 
@@ -153,7 +180,8 @@ public sealed class CambioEstadoServicio(
             impacto.PersonalEliminado,
             impacto.PersonalRecortado,
             impacto.ActividadesAfectadas,
-            advertencias);
+            advertencias,
+            versionProyecto);
     }
 
     /// <summary>

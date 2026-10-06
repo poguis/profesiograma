@@ -30,6 +30,7 @@ import {
   SIN_ERRORES_CAMBIO,
   type VistaCambio,
   aSolicitudCambio,
+  aSolicitudRegistroCambio,
   crearEstadoDialogo,
   interpretarErrorCambio,
   opcionesDestino,
@@ -125,7 +126,7 @@ export function DialogoCambioEstado({ proyecto, rutaListado, onCerrar, onRealiza
     enviandoRef.current = true
     setUltimaOperacion('confirmar')
     setErrores(SIN_ERRORES_CAMBIO)
-    aplicar.mutate(aSolicitudCambio(estado), {
+    aplicar.mutate(aSolicitudRegistroCambio(estado, vista!), {
       onSuccess: onRealizado,
       onError: registrarError,
       onSettled: () => {

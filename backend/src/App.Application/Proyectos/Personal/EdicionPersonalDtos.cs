@@ -20,10 +20,13 @@ public sealed record PersonaEdicionDto(
     string? Jornada, DateOnly FechaInicio, DateOnly FechaFin, string TipoRegistro, byte DiasDescanso,
     int? PrincipalRelacionadoId, string? Cargo, string? Observacion, PermisosEdicionDto Permisos);
 
-/// <summary>Datos del formulario de edición. PuedeEditar = false (con Motivo) si no es ACTIVO o ya terminó (D1).</summary>
+/// <summary>
+/// Datos del formulario de edición. PuedeEditar = false (con Motivo) si no es ACTIVO o ya terminó (D1).
+/// VersionProyecto = token de concurrencia (TAREA-19x).
+/// </summary>
 public sealed record EdicionPersonalDto(
     int Id, string Codigo, string Estado, DateOnly FechaInicio, DateOnly FechaFin, DateOnly Corte,
-    bool PuedeEditar, string? Motivo, IReadOnlyList<PersonaEdicionDto> Personal, LimitesEdicionDto Limites);
+    bool PuedeEditar, string? Motivo, IReadOnlyList<PersonaEdicionDto> Personal, LimitesEdicionDto Limites, int VersionProyecto);
 
 // ------------------------------------------------------------------ vista previa y resultado
 
@@ -34,13 +37,15 @@ public sealed record PersonaCambioDto(
 /// <summary>200 de POST /api/proyectos/{id}/personal/previsualizar (no guarda).</summary>
 /// <param name="Cruces">Origen INTERNO | HISTORICO | EXTERNO.</param>
 /// <param name="Resumen">Resumen de cruces (persona / rol / proyecto / mes / días), como en la creación.</param>
+/// <param name="VersionProyecto">Token de concurrencia (TAREA-19x) que el cliente envía al registrar.</param>
 public sealed record PrevisualizacionPersonalDto(
     DateOnly Corte,
     IReadOnlyList<PersonaCambioDto> Personal,
     IReadOnlyList<TramoDto> Tramos,
     IReadOnlyList<CruceDto> Cruces,
     IReadOnlyList<ResumenCruceDto> Resumen,
-    IReadOnlyList<string> Advertencias);
+    IReadOnlyList<string> Advertencias,
+    int VersionProyecto);
 
 /// <summary>200 de POST /api/proyectos/{id}/personal.</summary>
 public sealed record PersonalActualizadoDto(int Id, int Version);

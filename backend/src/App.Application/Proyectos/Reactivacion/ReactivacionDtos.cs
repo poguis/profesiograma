@@ -18,12 +18,13 @@ public sealed record PersonaReactivacionDto(
 
 /// <summary>
 /// Datos del formulario de reactivación. PuedeReactivar = false (con Motivo) si el proyecto no está SUSPENDIDO;
-/// en ese caso no hay propuesta ni advertencias. FechaMinima = FechaFinActual + 1.
+/// en ese caso no hay propuesta ni advertencias. FechaMinima = FechaFinActual + 1. VersionProyecto = token (TAREA-19x).
 /// </summary>
 public sealed record ReactivacionDto(
     int Id, string Codigo, string EstadoActual, DateOnly FechaInicio, DateOnly FechaFinActual, DateOnly FechaMinima,
     bool PuedeReactivar, string? Motivo, PrincipalPropuestoDto? PrincipalPropuesto,
-    IReadOnlyList<PersonaReactivacionDto> Personal, LimitesEdicionDto Limites, IReadOnlyList<string> Advertencias);
+    IReadOnlyList<PersonaReactivacionDto> Personal, LimitesEdicionDto Limites, IReadOnlyList<string> Advertencias,
+    int VersionProyecto);
 
 // ------------------------------------------------------------------ vista previa y resultado
 
@@ -33,6 +34,7 @@ public sealed record ActividadReactivacionDto(string Codigo, string? Descripcion
 /// <summary>
 /// 200 de POST /api/proyectos/{id}/reactivacion/previsualizar (no guarda). Mismos campos que la vista previa de la
 /// TAREA-17 (Corte = R) más FechaFinActual, FechaFinNueva y la actividad que se creará (null si no hay).
+/// VersionProyecto = token de concurrencia (TAREA-19x).
 /// </summary>
 public sealed record PrevisualizacionReactivacionDto(
     DateOnly Corte,
@@ -43,7 +45,8 @@ public sealed record PrevisualizacionReactivacionDto(
     IReadOnlyList<TramoDto> Tramos,
     IReadOnlyList<CruceDto> Cruces,
     IReadOnlyList<ResumenCruceDto> Resumen,
-    IReadOnlyList<string> Advertencias);
+    IReadOnlyList<string> Advertencias,
+    int VersionProyecto);
 
 /// <summary>200 de POST /api/proyectos/{id}/reactivacion.</summary>
 public sealed record ProyectoReactivadoDto(int Id, string Estado, int Version);

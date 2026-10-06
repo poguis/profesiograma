@@ -155,7 +155,7 @@ public class EdicionPersonalServicioTests
             r.Previsualizacion!.Cruces.Where(c => c.Origen == CalculadorCruces.OrigenHistorico).Select(c => c.Fecha));
         Assert.All(r.Previsualizacion.Cruces, c => Assert.Equal(CalculadorCruces.MismoProyecto, c.Proyecto));
 
-        var registro = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var registro = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
         Assert.Equal(EstadoEdicion.ConCruces, registro.Estado);
         Assert.NotEmpty(registro.Previsualizacion!.Resumen);
         Assert.Equal(0, e.Tx.Iniciadas);
@@ -174,7 +174,7 @@ public class EdicionPersonalServicioTests
         Assert.Equal(2, externos.Count);
         Assert.All(externos, c => Assert.Equal("PRY-20261001-4c34f3", c.ProyectoCodigo));
 
-        Assert.Equal(EstadoEdicion.ConCruces, (await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct)).Estado);
+        Assert.Equal(EstadoEdicion.ConCruces, (await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct)).Estado);
         Assert.Equal(0, e.Tx.Iniciadas);
     }
 
@@ -231,7 +231,7 @@ public class EdicionPersonalServicioTests
     {
         var e = Crear(new RepositorioEdicionFalso());
         Assert.Equal(EstadoEdicion.NoEncontrado, (await e.Servicio.PrevisualizarAsync(5, Cuerpo(), Ct)).Estado);
-        Assert.Equal(EstadoEdicion.NoEncontrado, (await e.Servicio.RegistrarAsync(5, Cuerpo(), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.NoEncontrado, (await e.Servicio.RegistrarAsync(5, Cuerpo().ConVersion(e.Repo), Ct)).Estado);
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public class EdicionPersonalServicioTests
             [SolK1(), BackNuevo("k2", 8, "2026-11-02", "2026-11-03", principalClave: "p3"), BackNuevo("k3", 3, "2026-11-04", "2026-11-04", principalId: 92)]);
 
         // DEV004 (P3 nuevo) sin cruces externos en los dobles; se registra para ver las relaciones.
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         var nuevas = e.Repo.Aplicado!.Nuevas.ToDictionary(n => n.Clave);
@@ -323,7 +323,7 @@ public class EdicionPersonalServicioTests
         e.Repo.UltimaVersion = 1;
         var cuerpo = Cuerpo([SolP1("TIPO_2")], [BackNuevo("k2", 8, "2026-09-28", "2026-10-04")]);
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         Assert.Equal(new PersonalActualizadoDto(ProyectoId, 2), r.Realizado);
         Assert.Equal((1, 1, 0), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
@@ -355,7 +355,7 @@ public class EdicionPersonalServicioTests
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), sinK1));
 
         // Con un cambio real (P1 a TIPO_2): sin cambios respondería 400 antes de la transacción (C9, TAREA-18).
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]).ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Cambiado, r.Estado);
         Assert.Equal("El proyecto cambió; vuelve a cargarlo.", ResultadoEdicionPersonal.MensajeCambiado);
@@ -367,7 +367,7 @@ public class EdicionPersonalServicioTests
     public async Task DentroDeLaTransaccion_EstadoCambio_409()
     {
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), Proyecto("SUSPENDIDO")));
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct)).Estado); // C9
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]).ConVersion(e.Repo), Ct)).Estado); // C9
         Assert.Null(e.Repo.Aplicado);
     }
 
@@ -378,7 +378,7 @@ public class EdicionPersonalServicioTests
         var e = Crear(cruces: new CrucesEdicionFalsos([], [Dia8(3)])); // la 2.ª consulta (dentro) ya tiene el cruce
         var cuerpo = Cuerpo(backs: [SolK1(), BackNuevo("k2", 8, "2026-10-02", "2026-10-04")]);
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.ConCruces, r.Estado);
         Assert.Null(e.Repo.Aplicado);
@@ -391,7 +391,7 @@ public class EdicionPersonalServicioTests
         var repo = new RepositorioEdicionFalso(Proyecto()) { LanzarConflicto = true };
         var e = Crear(repo);
 
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct)).Estado); // C9
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]).ConVersion(e.Repo), Ct)).Estado); // C9
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
     }
 

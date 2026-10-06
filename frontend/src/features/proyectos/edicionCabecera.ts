@@ -91,6 +91,14 @@ export function aSolicitudCabecera(estado: EstadoEdicion): SolicitudEditarCabece
   }
 }
 
+/**
+ * Cuerpo del registro (TAREA-19x): el de la vista previa más su `versionProyecto`. Si el proyecto cambió desde la vista
+ * previa, el servidor responde 409 y el diálogo ofrece "Recargar datos del proyecto".
+ */
+export function aSolicitudRegistroCabecera(estado: EstadoEdicion, vista: VistaCabecera): SolicitudEditarCabecera {
+  return { ...aSolicitudCabecera(estado), versionProyecto: vista.datos.versionProyecto }
+}
+
 // ------------------------------------------------------------------ rangos y ayudas
 
 export interface Rango {
@@ -271,8 +279,9 @@ const CAMPOS_ERROR: readonly CampoEdicion[] = Object.values(CLAVE_ERROR)
 
 /**
  * 400: claves de campo en su Field; `general` (p. ej. C9) y las desconocidas arriba. Solo `proyecto` (dejó de ser
- * ACTIVO) ofrece "Recargar datos del proyecto"; 409 siempre; 503/red "Reintentar"; 404 enlace al listado.
+ * ACTIVO) y `versionProyecto` (falta el token, TAREA-19x) ofrecen "Recargar datos del proyecto"; 409 siempre;
+ * 503/red "Reintentar"; 404 enlace al listado.
  */
 export function interpretarErrorCabecera(error: ErrorRespuesta): ErroresCabecera {
-  return interpretarErrorDialogo(error, { campos: CAMPOS_ERROR, clavesRecarga: ['proyecto'] })
+  return interpretarErrorDialogo(error, { campos: CAMPOS_ERROR, clavesRecarga: ['proyecto', 'versionProyecto'] })
 }

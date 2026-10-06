@@ -310,7 +310,7 @@ public class EdicionCabeceraServicioTests
     {
         var e = Crear(new RepositorioCabeceraFalso(Proyecto()) { UltimaVersion = 2 });
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, S(actividad: "DEV.02", desde: "2026-11-15"), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, S(actividad: "DEV.02", desde: "2026-11-15").ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         Assert.Equal(new CabeceraActualizadaDto(ProyectoId, 3), r.Realizado);
@@ -329,7 +329,7 @@ public class EdicionCabeceraServicioTests
     public async Task Registrar_P3_ActividadNuevaDesdeElInicio_EsLaDeLaEtapa()
     {
         var e = Crear();
-        await e.Servicio.RegistrarAsync(ProyectoId, S(actividad: "DEV.02", desde: "2026-11-01"), Ct);
+        await e.Servicio.RegistrarAsync(ProyectoId, S(actividad: "DEV.02", desde: "2026-11-01").ConVersion(e.Repo), Ct);
 
         Assert.Equal("DEV.02", e.Repo.Aplicado!.ActividadCodigo);
         Assert.Equal([1], e.Repo.Aplicado.ActividadesEliminadas);
@@ -339,7 +339,7 @@ public class EdicionCabeceraServicioTests
     public async Task Registrar_AcortarYHorario_EdicionCabecera_ConRecorteYSnapshot()
     {
         var e = Crear();
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, S(fin: "2026-11-11", horario: 2), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, S(fin: "2026-11-11", horario: 2).ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         var c = e.Repo.Aplicado!;
@@ -356,7 +356,7 @@ public class EdicionCabeceraServicioTests
     public async Task Relectura_EstadoCambiado_409()
     {
         var e = Crear(new RepositorioCabeceraFalso(Proyecto(), Proyecto("SUSPENDIDO")));
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, S(horario: 2), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, S(horario: 2).ConVersion(e.Repo), Ct)).Estado);
         Assert.Null(e.Repo.Aplicado);
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
     }
@@ -365,10 +365,10 @@ public class EdicionCabeceraServicioTests
     public async Task Relectura_RowVerOFechasCambiadas_409()
     {
         var rowVer = Crear(new RepositorioCabeceraFalso(Proyecto(), Proyecto(rowVer: 2)));
-        Assert.Equal(EstadoEdicion.Cambiado, (await rowVer.Servicio.RegistrarAsync(ProyectoId, S(horario: 2), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await rowVer.Servicio.RegistrarAsync(ProyectoId, S(horario: 2).ConVersion(rowVer.Repo), Ct)).Estado);
 
         var fechas = Crear(new RepositorioCabeceraFalso(Proyecto(), Proyecto(fin: D("2026-12-15"))));
-        Assert.Equal(EstadoEdicion.Cambiado, (await fechas.Servicio.RegistrarAsync(ProyectoId, S(horario: 2), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await fechas.Servicio.RegistrarAsync(ProyectoId, S(horario: 2).ConVersion(fechas.Repo), Ct)).Estado);
         Assert.Null(fechas.Repo.Aplicado);
     }
 
@@ -376,7 +376,7 @@ public class EdicionCabeceraServicioTests
     public async Task ConflictoAlGuardar_409_YRevierte()
     {
         var e = Crear(new RepositorioCabeceraFalso(Proyecto()) { LanzarConflicto = true });
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, S(horario: 2), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, S(horario: 2).ConVersion(e.Repo), Ct)).Estado);
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
     }
 
@@ -386,7 +386,7 @@ public class EdicionCabeceraServicioTests
         var e = await Errores(S(horario: 2), Proyecto("TERMINADO"));
         Assert.Equal(["Solo se puede editar la cabecera de un proyecto ACTIVO (estado actual: TERMINADO)."], e["proyecto"]);
 
-        var r = await Crear(new RepositorioCabeceraFalso()).Servicio.RegistrarAsync(5, S(horario: 2), Ct);
+        var r = await Crear(new RepositorioCabeceraFalso()).Servicio.RegistrarAsync(5, S(horario: 2).ConVersion(1), Ct);
         Assert.Equal(EstadoEdicion.NoEncontrado, r.Estado);
 
         var admin = Crear(usuario: new AdminFalso());
@@ -406,7 +406,7 @@ public class EdicionCabeceraServicioTests
         Assert.Equal(["No hay cambios."], p.Advertencias);
 
         var e = Crear();
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, mismos, Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, mismos.ConVersion(e.Repo), Ct);
         Assert.Equal(EstadoEdicion.Invalido, r.Estado);
         Assert.Equal(["No hay cambios para registrar."], r.Errores!["general"]);
         Assert.Equal(0, e.Tx.Iniciadas);

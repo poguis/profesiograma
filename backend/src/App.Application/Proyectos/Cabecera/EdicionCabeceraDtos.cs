@@ -20,12 +20,13 @@ public sealed record OpcionesAlmuerzoDto(IReadOnlyList<string> Salida, IReadOnly
 /// <summary>
 /// Datos del formulario de cabecera. PuedeEditar = false (con Motivo) si el proyecto no es ACTIVO.
 /// ActividadVigente = regla común ActividadVigente con hoy (O3, TAREA-18b). Corte = hoy en Ecuador.
+/// VersionProyecto = token de concurrencia (TAREA-19x).
 /// </summary>
 public sealed record CabeceraDto(
     int Id, string Codigo, string Estado, bool PuedeEditar, string? Motivo, string Grupo,
     DateOnly FechaInicio, DateOnly FechaFin, HorarioCabeceraDto Horario, string? SalidaAlmuerzo, string? RegresoAlmuerzo,
     ActividadCabeceraDto? ActividadVigente, IReadOnlyList<ActividadCabeceraDto> Actividades,
-    PermisosCabeceraDto Permisos, OpcionesAlmuerzoDto OpcionesAlmuerzo, DateOnly Corte);
+    PermisosCabeceraDto Permisos, OpcionesAlmuerzoDto OpcionesAlmuerzo, DateOnly Corte, int VersionProyecto);
 
 // ------------------------------------------------------------------ vista previa y resultado
 
@@ -45,7 +46,7 @@ public sealed record ActividadResultanteDto(
 
 /// <summary>
 /// 200 de POST /api/proyectos/{id}/cabecera/previsualizar (no guarda). Impacto del recorte (C4) con los DTO de la vista
-/// previa del cambio de estado. TipoEtapa = EDICION_CABECERA | CAMBIO_ACTIVIDAD (C7).
+/// previa del cambio de estado. TipoEtapa = EDICION_CABECERA | CAMBIO_ACTIVIDAD (C7). VersionProyecto = token (TAREA-19x).
 /// </summary>
 public sealed record PrevisualizacionCabeceraDto(
     DateOnly Corte,
@@ -58,7 +59,8 @@ public sealed record PrevisualizacionCabeceraDto(
     IReadOnlyList<PersonaRecortadaDto> PersonalRecortado,
     IReadOnlyList<DiasAgregadosDto> DiasAgregados,
     IReadOnlyList<ActividadResultanteDto> Actividades,
-    IReadOnlyList<string> Advertencias);
+    IReadOnlyList<string> Advertencias,
+    int VersionProyecto);
 
 /// <summary>200 de POST /api/proyectos/{id}/cabecera.</summary>
 public sealed record CabeceraActualizadaDto(int Id, int Version);

@@ -31,7 +31,7 @@ public class EdicionPersonalC9Tests
     {
         var (servicio, repo, tx) = Crear();
 
-        var r = await servicio.RegistrarAsync(ProyectoId, new ActualizarPersonalSolicitud([SolP1()], [SolK1()]), Ct);
+        var r = await servicio.RegistrarAsync(ProyectoId, new ActualizarPersonalSolicitud([SolP1()], [SolK1()]).ConVersion(repo), Ct);
 
         Assert.Equal(EstadoEdicion.Invalido, r.Estado);
         Assert.Equal(["No hay cambios para registrar."], r.Errores!["general"]);

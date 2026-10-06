@@ -312,10 +312,14 @@ export interface ProyectoCreado {
 /** Destinos que la interfaz permite elegir (REACTIVACION llega en la TAREA-17). */
 export type DestinoCambioEstado = 'SUSPENDIDO' | 'TERMINADO'
 
-/** Cuerpo de POST /api/proyectos/{id}/cambio-estado[/previsualizar]. Fecha "yyyy-MM-dd". */
+/**
+ * Cuerpo de POST /api/proyectos/{id}/cambio-estado[/previsualizar]. Fecha "yyyy-MM-dd".
+ * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al aplicar (el de la vista previa vigente).
+ */
 export interface SolicitudCambioEstado {
   estadoDestino: string | null
   fecha: string | null
+  versionProyecto?: number | null
 }
 
 /** `id` es el Id del EMPLEADO (no el de la fila de personal). Sin cédula ni correo. */
@@ -374,6 +378,8 @@ export interface PrevisualizacionCambioEstado {
   personalRecortado: PersonaRecortadaCambio[]
   actividadesAfectadas: ActividadAfectadaCambio[]
   advertencias: string[]
+  /** Token de concurrencia (TAREA-19x): se envía al aplicar. */
+  versionProyecto: number
 }
 
 /** 200 de POST /api/proyectos/{id}/cambio-estado. `estado` es el código del estado nuevo. */
@@ -427,9 +433,14 @@ export interface CabeceraEdicion {
   permisos: PermisosCabecera
   opcionesAlmuerzo: { salida: string[]; regreso: string[] }
   corte: string
+  /** Token de concurrencia (TAREA-19x): última versión de etapa (0 si no hay). */
+  versionProyecto: number
 }
 
-/** Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar] (EditarCabeceraSolicitud). null = no cambia. */
+/**
+ * Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar] (EditarCabeceraSolicitud). null = no cambia.
+ * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al registrar (el de la vista previa vigente).
+ */
 export interface SolicitudEditarCabecera {
   fechaInicio: string | null
   fechaFin: string | null
@@ -437,6 +448,7 @@ export interface SolicitudEditarCabecera {
   salidaAlmuerzo: string | null
   regresoAlmuerzo: string | null
   actividad: { actividadId: string | null; desde: string | null } | null
+  versionProyecto?: number | null
 }
 
 /** CambioCampoDto. campo = fechaInicio | fechaFin | horario | salidaAlmuerzo | regresoAlmuerzo | actividad. */
@@ -482,10 +494,223 @@ export interface PrevisualizacionCabecera {
   diasAgregados: DiasAgregadosCabecera[]
   actividades: ActividadResultante[]
   advertencias: string[]
+  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  versionProyecto: number
 }
 
 /** 200 de POST /api/proyectos/{id}/cabecera (CabeceraActualizadaDto). */
 export interface CabeceraActualizada {
   id: number
+  version: number
+}
+
+// ------------------------------------------------------------------ Actualización de personal (contrato TAREA-17; pantalla en la TAREA-19b)
+// Origen: backend/src/App.Application/Proyectos/Personal/EdicionPersonalDtos.cs y EdicionPersonalContratos.cs.
+
+export interface EmpleadoEdicion {
+  id: number
+  codigoEkon: string
+  nombreCompleto: string
+}
+
+export interface LimitesEdicion {
+  maxPrincipales: number
+  maxBacks: number
+  backMaxDiasDescanso: number
+}
+
+/** PermisosEdicionDto. Históricos: todo false / null. */
+export interface PermisosEdicionPersona {
+  /** Solo vigentes que aún no empiezan (inicio ≥ corte). */
+  fechaInicio: boolean
+  /** Corte − 1 para vigentes (se exige si la fecha fin cambia). */
+  fechaFinMinima: string | null
+  jornada: boolean
+  /** Vigentes que aún no empiezan: se eliminan omitiéndolas del cuerpo. */
+  eliminable: boolean
+}
+
+/** PersonaEdicionDto. rol = PRINCIPAL | BACK; clase = HISTORICO | VIGENTE. */
+export interface PersonaEdicion {
+  id: number
+  rol: string
+  numero: number
+  empleado: EmpleadoEdicion
+  clase: string
+  jornada: string | null
+  fechaInicio: string
+  fechaFin: string
+  tipoRegistro: string
+  diasDescanso: number
+  principalRelacionadoId: number | null
+  cargo: string | null
+  observacion: string | null
+  permisos: PermisosEdicionPersona
+}
+
+/** GET /api/proyectos/{id}/edicion (EdicionPersonalDto). */
+export interface EdicionPersonal {
+  id: number
+  codigo: string
+  estado: string
+  fechaInicio: string
+  fechaFin: string
+  corte: string
+  puedeEditar: boolean
+  motivo: string | null
+  personal: PersonaEdicion[]
+  limites: LimitesEdicion
+  /** Token de concurrencia (TAREA-19x). */
+  versionProyecto: number
+}
+
+/** PrincipalEdicionSolicitud. id presente = vigente existente; ausente = nuevo. cargo null en un vigente = se conserva. */
+export interface PrincipalEdicionSolicitud {
+  clave: string | null
+  id: number | null
+  empleadoId: number | null
+  jornada: string | null
+  fechaInicio: string | null
+  fechaFin: string | null
+  cargo: string | null
+}
+
+/** BackEdicionSolicitud. principalClave (principal del cuerpo) y principalId (principal HISTÓRICO) son excluyentes. */
+export interface BackEdicionSolicitud {
+  clave: string | null
+  id: number | null
+  empleadoId: number | null
+  tipoRegistro: string | null
+  fechaInicio: string | null
+  fechaFin: string | null
+  diasDescanso: number | null
+  principalClave: string | null
+  principalId: number | null
+  observacion: string | null
+}
+
+/** Cuerpo de POST /api/proyectos/{id}/personal[/previsualizar]. versionProyecto: obligatorio al registrar (TAREA-19x). */
+export interface SolicitudActualizarPersonal {
+  principales: PrincipalEdicionSolicitud[] | null
+  backs: BackEdicionSolicitud[] | null
+  versionProyecto?: number | null
+}
+
+/** PersonaCambioDto. clase = HISTORICO | VIGENTE | NUEVO; accion = SIN_CAMBIO | MODIFICADO | ELIMINADO | NUEVO. */
+export interface PersonaCambioEdicion {
+  clave: string
+  id: number | null
+  rol: string
+  numero: number
+  empleado: EmpleadoEdicion
+  clase: string
+  accion: string
+}
+
+/** 200 de POST /api/proyectos/{id}/personal/previsualizar. Cruces con origen INTERNO | HISTORICO | EXTERNO. */
+export interface PrevisualizacionPersonal {
+  corte: string
+  personal: PersonaCambioEdicion[]
+  tramos: TramoCronograma[]
+  cruces: CruceAsignacion[]
+  resumen: ResumenCruce[]
+  advertencias: string[]
+  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  versionProyecto: number
+}
+
+/** 200 de POST /api/proyectos/{id}/personal. 409 con `extensions.cruces` = cruces; 409 sin ellas = proyecto cambiado. */
+export interface PersonalActualizado {
+  id: number
+  version: number
+}
+
+// ------------------------------------------------------------------ Reactivación (contrato TAREA-17b; pantalla en la TAREA-19c)
+// Origen: backend/src/App.Application/Proyectos/Reactivacion/ReactivacionDtos.cs y ReactivacionContratos.cs.
+
+/** activo = false: se propone con advertencia y el registro lo rechazará. */
+export interface EmpleadoPropuesto {
+  id: number
+  codigoEkon: string
+  nombreCompleto: string
+  activo: boolean
+}
+
+/** Principal propuesto (R7): mismo empleado, jornada y cargo; las fechas las pone el formulario. */
+export interface PrincipalPropuesto {
+  empleado: EmpleadoPropuesto
+  jornada: string | null
+  cargo: string | null
+}
+
+/** PersonaReactivacionDto: todas quedan históricas al reactivar. */
+export interface PersonaReactivacion {
+  id: number
+  rol: string
+  numero: number
+  empleado: EmpleadoEdicion
+  jornada: string | null
+  fechaInicio: string
+  fechaFin: string
+  tipoRegistro: string
+  diasDescanso: number
+  esPrincipalInicial: boolean
+}
+
+/** GET /api/proyectos/{id}/reactivacion (ReactivacionDto). fechaMinima = fechaFinActual + 1. */
+export interface Reactivacion {
+  id: number
+  codigo: string
+  estadoActual: string
+  fechaInicio: string
+  fechaFinActual: string
+  fechaMinima: string
+  puedeReactivar: boolean
+  motivo: string | null
+  principalPropuesto: PrincipalPropuesto | null
+  personal: PersonaReactivacion[]
+  limites: LimitesEdicion
+  advertencias: string[]
+  /** Token de concurrencia (TAREA-19x). */
+  versionProyecto: number
+}
+
+/** Cuerpo de POST /api/proyectos/{id}/reactivacion[/previsualizar]. fecha = R; todas las personas son nuevas (sin id). */
+export interface SolicitudReactivar {
+  fecha: string | null
+  fechaFin: string | null
+  principales: PrincipalEdicionSolicitud[] | null
+  backs: BackEdicionSolicitud[] | null
+  versionProyecto?: number | null
+}
+
+/** ActividadReactivacionDto: fila REACTIVACION que se creará, de R a la nueva fecha fin. */
+export interface ActividadReactivacion {
+  codigo: string
+  descripcion: string | null
+  tipo: string | null
+  fechaInicio: string
+  fechaFin: string
+}
+
+/** 200 de POST /api/proyectos/{id}/reactivacion/previsualizar. corte = R. */
+export interface PrevisualizacionReactivacion {
+  corte: string
+  fechaFinActual: string
+  fechaFinNueva: string
+  actividad: ActividadReactivacion | null
+  personal: PersonaCambioEdicion[]
+  tramos: TramoCronograma[]
+  cruces: CruceAsignacion[]
+  resumen: ResumenCruce[]
+  advertencias: string[]
+  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  versionProyecto: number
+}
+
+/** 200 de POST /api/proyectos/{id}/reactivacion. */
+export interface ProyectoReactivado {
+  id: number
+  estado: string
   version: number
 }

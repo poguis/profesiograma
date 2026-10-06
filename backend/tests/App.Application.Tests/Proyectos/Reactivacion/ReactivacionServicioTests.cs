@@ -287,7 +287,7 @@ public class ReactivacionServicioTests
         var p = (await e.Servicio.PrevisualizarAsync(ProyectoId, Cuerpo(), Ct)).Previsualizacion!;
         Assert.Null(p.Actividad);
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo().ConVersion(e.Repo), Ct);
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         Assert.Null(e.Repo.Aplicado!.Reactivacion!.Actividad);
         Assert.Null(e.Repo.Aplicado.ActividadCodigo);
@@ -306,7 +306,7 @@ public class ReactivacionServicioTests
         Assert.Equal("EXTERNO", cruce.Origen);
         Assert.Equal(ProyectoId, e.Cruces.Excluidos[0]); // excluirProyectoId
 
-        var registro = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var registro = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
         Assert.Equal(EstadoEdicion.ConCruces, registro.Estado);
         Assert.Equal(0, e.Tx.Iniciadas);
         Assert.Null(e.Repo.Aplicado);
@@ -320,7 +320,7 @@ public class ReactivacionServicioTests
         var e = Crear(new RepositorioEdicionFalso(Proyecto()) { UltimaVersion = 2 });
         var cuerpo = Cuerpo(backs: [Back("k2", 8, D("2026-10-20"), D("2026-10-23"), principalClave: "p1", diasDescanso: 2)]);
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         Assert.Equal(new ProyectoReactivadoDto(ProyectoId, "ACTIVO", 3), r.Realizado);
@@ -345,7 +345,7 @@ public class ReactivacionServicioTests
         var e = Crear();
         var cuerpo = Cuerpo(principales: [Principal("a"), Principal("b", empleado: 6, inicio: D("2026-10-15"))]);
 
-        await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         var c = e.Repo.Aplicado!;
         Assert.Equal("a", c.Reactivacion!.ClavePrincipalInicial);
@@ -363,7 +363,7 @@ public class ReactivacionServicioTests
             Back("k3", 6, D("2026-10-24"), D("2026-10-25"), principalId: 101),
         ]);
 
-        await e.Servicio.RegistrarAsync(ProyectoId, cuerpo, Ct);
+        await e.Servicio.RegistrarAsync(ProyectoId, cuerpo.ConVersion(e.Repo), Ct);
 
         var nuevas = e.Repo.Aplicado!.Nuevas.ToDictionary(n => n.Clave);
         Assert.Equal(new RelacionPrincipal(null, "p1"), nuevas["k2"].Relacion);
@@ -374,7 +374,7 @@ public class ReactivacionServicioTests
     public async Task Registrar_SnapshotConHistoricasYNuevas()
     {
         var e = Crear();
-        await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo().ConVersion(e.Repo), Ct);
 
         var snapshot = e.Repo.Aplicado!.SnapshotPersonal;
         Assert.Contains("DEV007", snapshot);
@@ -387,7 +387,7 @@ public class ReactivacionServicioTests
     {
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), Proyecto("ACTIVO", fin: FinNueva)));
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo().ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Cambiado, r.Estado);
         Assert.Null(e.Repo.Aplicado);
@@ -399,7 +399,7 @@ public class ReactivacionServicioTests
     {
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), Proyecto(fin: D("2026-10-08"))));
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo().ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Cambiado, r.Estado);
         Assert.Null(e.Repo.Aplicado);
@@ -410,7 +410,7 @@ public class ReactivacionServicioTests
     {
         var e = Crear(new RepositorioEdicionFalso(Proyecto()) { LanzarConflicto = true });
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo().ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoEdicion.Cambiado, r.Estado);
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
@@ -419,7 +419,7 @@ public class ReactivacionServicioTests
     [Fact]
     public async Task NoVisible_404()
     {
-        var r = await Crear(new RepositorioEdicionFalso()).Servicio.RegistrarAsync(5, Cuerpo(), Ct);
+        var r = await Crear(new RepositorioEdicionFalso()).Servicio.RegistrarAsync(5, Cuerpo().ConVersion(1), Ct);
         Assert.Equal(EstadoEdicion.NoEncontrado, r.Estado);
     }
 }

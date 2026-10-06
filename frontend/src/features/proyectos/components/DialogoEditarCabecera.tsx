@@ -38,6 +38,7 @@ import {
   type ValoresCabecera,
   type VistaCabecera,
   aSolicitudCabecera,
+  aSolicitudRegistroCabecera,
   crearEstadoEdicion,
   interpretarErrorCabecera,
   mensajeExitoCabecera,
@@ -213,7 +214,7 @@ export function DialogoEditarCabecera({
     const tipoEtapa = vista!.datos.tipoEtapa
     setUltimaOperacion('registrar')
     setErrores(SIN_ERRORES_CABECERA)
-    registrar.mutate(aSolicitudCabecera(estado), {
+    registrar.mutate(aSolicitudRegistroCabecera(estado, vista!), {
       onSuccess: (r) => {
         registradoRef.current = true // desactiva la confirmación al salir
         onRealizado(mensajeExitoCabecera(tipoEtapa, r.version))

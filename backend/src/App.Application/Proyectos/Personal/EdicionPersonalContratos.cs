@@ -6,9 +6,11 @@ namespace App.Application.Proyectos.Personal;
 // ------------------------------------------------------------------ solicitud (TAREA-17)
 
 /// <summary>Cuerpo de POST /api/proyectos/{id}/personal[/previsualizar]: estado deseado del personal vigente y nuevo.</summary>
+/// <param name="VersionProyecto">Token de concurrencia (TAREA-19x): obligatorio al registrar (400 si falta, 409 si no es la versión actual); la vista previa lo ignora.</param>
 public sealed record ActualizarPersonalSolicitud(
     IReadOnlyList<PrincipalEdicionSolicitud>? Principales,
-    IReadOnlyList<BackEdicionSolicitud>? Backs);
+    IReadOnlyList<BackEdicionSolicitud>? Backs,
+    int? VersionProyecto = null);
 
 /// <summary>Principal. Id presente = vigente existente; ausente = nuevo. Cargo null en un vigente = se conserva.</summary>
 public sealed record PrincipalEdicionSolicitud(

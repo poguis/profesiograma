@@ -85,7 +85,7 @@ public class CambioEstadoServicioTests
     {
         var e = Crear(new RepositorioCambioFalso(DoblesEstados.Proyecto("SUSPENDIDO")));
 
-        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("ACTIVO", new DateOnly(2027, 3, 15)), Ct);
+        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("ACTIVO", new DateOnly(2027, 3, 15)).ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoCambio.Invalido, r.Estado);
         Assert.Equal(["La reactivación se registra con la opción Reactivar."], r.Errores!["estadoDestino"]);
@@ -98,7 +98,7 @@ public class CambioEstadoServicioTests
         var e = Crear(new RepositorioCambioFalso());
 
         Assert.Equal(EstadoCambio.NoEncontrado, (await e.Servicio.PrevisualizarAsync(99, Suspender15, Ct)).Estado);
-        Assert.Equal(EstadoCambio.NoEncontrado, (await e.Servicio.AplicarAsync(99, Suspender15, Ct)).Estado);
+        Assert.Equal(EstadoCambio.NoEncontrado, (await e.Servicio.AplicarAsync(99, Suspender15.ConVersion(e.Repo), Ct)).Estado);
         Assert.Equal(0, e.Tx.Iniciadas);
     }
 
@@ -133,7 +133,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto()) { UltimaVersion = 3 };
         var e = Crear(repo);
 
-        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15, Ct);
+        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoCambio.Realizado, r.Estado);
         Assert.Equal(new CambioEstadoRealizadoDto(DoblesEstados.ProyectoId, "SUSPENDIDO", 4), r.Realizado);
@@ -161,7 +161,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto("SUSPENDIDO"));
         var e = Crear(repo);
 
-        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("TERMINADO", new DateOnly(2027, 3, 15)), Ct);
+        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, new CambioEstadoSolicitud("TERMINADO", new DateOnly(2027, 3, 15)).ConVersion(e.Repo), Ct);
 
         Assert.Equal(new CambioEstadoRealizadoDto(DoblesEstados.ProyectoId, "TERMINADO", 2), r.Realizado);
         Assert.Equal("CIERRE", repo.Aplicado!.TipoMovimiento);
@@ -174,7 +174,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto("ACTIVO"), DoblesEstados.Proyecto("SUSPENDIDO"));
         var e = Crear(repo);
 
-        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15, Ct);
+        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoCambio.Conflicto, r.Estado);
         Assert.Equal("El proyecto cambió de estado; vuelve a cargarlo.", ResultadoCambioEstado.MensajeConflicto);
@@ -189,7 +189,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto(), DoblesEstados.Proyecto(fin: new DateOnly(2027, 3, 10)));
         var e = Crear(repo);
 
-        Assert.Equal(EstadoCambio.Conflicto, (await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15, Ct)).Estado);
+        Assert.Equal(EstadoCambio.Conflicto, (await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15.ConVersion(e.Repo), Ct)).Estado);
         Assert.Null(repo.Aplicado);
     }
 
@@ -199,7 +199,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto()) { LanzarConflicto = true };
         var e = Crear(repo);
 
-        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15, Ct);
+        var r = await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15.ConVersion(e.Repo), Ct);
 
         Assert.Equal(EstadoCambio.Conflicto, r.Estado);
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
@@ -211,7 +211,7 @@ public class CambioEstadoServicioTests
         var repo = new RepositorioCambioFalso(DoblesEstados.Proyecto(), null);
         var e = Crear(repo);
 
-        Assert.Equal(EstadoCambio.NoEncontrado, (await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15, Ct)).Estado);
+        Assert.Equal(EstadoCambio.NoEncontrado, (await e.Servicio.AplicarAsync(DoblesEstados.ProyectoId, Suspender15.ConVersion(e.Repo), Ct)).Estado);
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
     }
 }

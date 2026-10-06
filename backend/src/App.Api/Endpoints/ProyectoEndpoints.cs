@@ -86,7 +86,8 @@ public static class ProyectoEndpoints
                 };
             });
 
-        // Una transacción con applock. 200 { id, estado, version }; 400; 404; 409 si el estado cambió; 503 ocupado.
+        // Una transacción con applock. 200 { id, estado, version }; 400 (también sin versionProyecto); 404; 409 si el estado
+        // cambió o si versionProyecto no es la actual (TAREA-19x); 503 ocupado.
         proyectos.MapPost("/{id:int}/cambio-estado",
             async Task<Results<Ok<CambioEstadoRealizadoDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
                 int id, CambioEstadoSolicitud solicitud, CambioEstadoServicio servicio, CancellationToken ct) =>
@@ -98,6 +99,7 @@ public static class ProyectoEndpoints
                     EstadoCambio.Invalido => CambioEstadoInvalido(resultado),
                     EstadoCambio.Conflicto => TypedResults.Problem(
                         title: ResultadoCambioEstado.MensajeConflicto, statusCode: StatusCodes.Status409Conflict),
+                    EstadoCambio.Cambiado => ProyectoCambiado(), // TAREA-19x: token de concurrencia viejo
                     _ => TypedResults.NotFound(),
                 };
             });

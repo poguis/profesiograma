@@ -16,7 +16,10 @@ public sealed record PersonaRecortadaDto(
 public sealed record ActividadAfectadaDto(
     string ActividadCodigo, int Version, DateOnly FechaInicio, DateOnly FechaFinAnterior, DateOnly? FechaFinNueva, string Accion);
 
-/// <summary>200 de POST /api/proyectos/{id}/cambio-estado/previsualizar (no guarda nada).</summary>
+/// <summary>
+/// 200 de POST /api/proyectos/{id}/cambio-estado/previsualizar (no guarda nada). VersionProyecto = token de concurrencia
+/// (TAREA-19x) que el cliente envía al aplicar.
+/// </summary>
 public sealed record CambioEstadoPrevisualizacionDto(
     string Movimiento,
     string EstadoActual,
@@ -28,7 +31,8 @@ public sealed record CambioEstadoPrevisualizacionDto(
     IReadOnlyList<PersonaEliminadaDto> PersonalEliminado,
     IReadOnlyList<PersonaRecortadaDto> PersonalRecortado,
     IReadOnlyList<ActividadAfectadaDto> ActividadesAfectadas,
-    IReadOnlyList<string> Advertencias);
+    IReadOnlyList<string> Advertencias,
+    int VersionProyecto);
 
 /// <summary>200 de POST /api/proyectos/{id}/cambio-estado.</summary>
 public sealed record CambioEstadoRealizadoDto(int Id, string Estado, int Version);
@@ -38,6 +42,8 @@ public enum EstadoCambio
     Invalido,
     NoEncontrado,
     Conflicto,
+    /// <summary>Token de concurrencia viejo (TAREA-19x): 409 "El proyecto cambió; vuelve a cargarlo.".</summary>
+    Cambiado,
     Previsualizado,
     Realizado,
 }
@@ -53,6 +59,7 @@ public sealed record ResultadoCambioEstado(
     public static ResultadoCambioEstado Invalido(IReadOnlyDictionary<string, string[]> errores) => new(EstadoCambio.Invalido, errores);
     public static ResultadoCambioEstado NoEncontrado() => new(EstadoCambio.NoEncontrado);
     public static ResultadoCambioEstado Conflicto() => new(EstadoCambio.Conflicto);
+    public static ResultadoCambioEstado Cambiado() => new(EstadoCambio.Cambiado);
     public static ResultadoCambioEstado Previsualizado(CambioEstadoPrevisualizacionDto p) => new(EstadoCambio.Previsualizado, Previsualizacion: p);
     public static ResultadoCambioEstado Hecho(CambioEstadoRealizadoDto r) => new(EstadoCambio.Realizado, Realizado: r);
 }

@@ -10,13 +10,15 @@ namespace App.Application.Proyectos.Cabecera;
 public sealed record ActividadCabeceraSolicitud(string? ActividadId, DateOnly? Desde);
 
 /// <summary>Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar]. Un campo ausente (null) no cambia.</summary>
+/// <param name="VersionProyecto">Token de concurrencia (TAREA-19x): obligatorio al registrar (400 si falta, 409 si no es la versión actual); la vista previa lo ignora.</param>
 public sealed record EditarCabeceraSolicitud(
     DateOnly? FechaInicio,
     DateOnly? FechaFin,
     int? HorarioCodigo,
     string? SalidaAlmuerzo,
     string? RegresoAlmuerzo,
-    ActividadCabeceraSolicitud? Actividad);
+    ActividadCabeceraSolicitud? Actividad,
+    int? VersionProyecto = null);
 
 // ------------------------------------------------------------------ lectura
 

@@ -112,3 +112,29 @@ Título del `ValidationProblem`: "Los datos de la cabecera no son válidos.".
 | Etapa REACTIVACION | La actividad nueva (vigente en R) | Regla con corte = R sobre las actividades + la nueva: **mismo resultado** |
 | Etapa CREACION | La actividad de la creación | Sin cambios (la v1 cubre todo el rango: mismo resultado) |
 | Copia de la actividad al reactivar (R8) | Vigente en la fecha de suspensión | Sin cambios: no es una "actividad vigente" de vista ni de etapa, sino la fila que continúa desde R |
+
+## 8. Token de concurrencia `versionProyecto` (TAREA-19x, pendiente 32)
+
+- **Token:** `versionProyecto` (entero) = última versión de etapa del proyecto (`ProyectoEtapa.Version` máxima; 0 si no
+  tiene etapas). Sirve porque toda escritura de un proyecto crea una etapa (`00_ESTADO_ACTUAL.md` §7.1, regla 3). El
+  `RowVer` de `Proyecto` no sirve: la actualización de personal no modifica esa fila.
+- **Orden en el registro** (`VersionProyecto.cs`, mismos pasos en los 4 servicios):
+  1. `versionProyecto` ausente → **400** `versionProyecto` "Falta la versión del proyecto; vuelve a cargarlo.", antes de
+     comprobar la visibilidad, sin leer la base ni abrir la transacción;
+  2. lectura y cálculo de fuera (404 si no existe o no es visible);
+  3. **comprobación previa:** token ≠ versión actual → **409** "El proyecto cambió; vuelve a cargarlo.", ANTES de
+     cualquier 400 de validación, "No hay cambios para registrar." (C9) o cruces;
+  4. dentro del applock: las relecturas existentes y, antes de calcular la versión nueva (actual + 1), la
+     **comprobación definitiva** del token → 409 si otro registro entró antes del bloqueo.
+- **Vistas previas y GET:** devuelven `versionProyecto` leído **antes** que los datos: si alguien escribe en medio, el
+  token queda más viejo que los datos y el registro da 409 (el error cae del lado seguro). Las vistas previas no
+  exigen el token (son de lectura) y lo ignoran si llega.
+- **Frontend:** el diálogo registra con el `versionProyecto` de la vista previa vigente (`aSolicitudRegistroCambio`,
+  `aSolicitudRegistroCabecera`); con 409 o con 400 `versionProyecto` ofrece "Recargar datos del proyecto".
+- La creación no aplica (no hay versión previa). El GET del detalle no devuelve el token (P4).
+
+**En este documento:** `GET …/cabecera` y `POST …/cabecera/previsualizar` devuelven `versionProyecto`;
+`POST …/cabecera` lo exige. Token viejo → 409 "El proyecto cambió; vuelve a cargarlo.". Caso V15 de la TAREA-19a:
+la pestaña B, con el mismo cambio que ya registró A, recibe ahora 409 en lugar de 400 "No hay cambios para
+registrar.". La relectura con `RowVer` (C8) se conserva, pero no detecta una actualización de personal intermedia; el
+token sí.

@@ -1,6 +1,7 @@
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
+using App.Application.Proyectos.Reactivacion;
 using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
 
@@ -63,16 +64,26 @@ internal sealed class RepositorioEdicionFalso(params DatosEdicion?[] respuestas)
 {
     public List<(int Id, int? Propietario, DateOnly Corte)> Lecturas { get; } = [];
     public int UltimaVersion { get; set; } = 1;
+    /// <summary>TAREA-19x: versiones que devuelven las próximas lecturas de la versión (después, UltimaVersion).</summary>
+    public Queue<int> Versiones { get; } = new();
+
+    /// <summary>TAREA-19x: orden de las lecturas ("version" / "datos").</summary>
+    public List<string> Orden { get; } = [];
     public bool LanzarConflicto { get; set; }
     public CambioPersonal? Aplicado { get; private set; }
 
     public Task<DatosEdicion?> ObtenerAsync(int proyectoId, int? propietarioUsuarioId, DateOnly corte, CancellationToken ct)
     {
         Lecturas.Add((proyectoId, propietarioUsuarioId, corte));
+        Orden.Add("datos");
         return Task.FromResult(respuestas.Length == 0 ? null : respuestas[Math.Min(Lecturas.Count - 1, respuestas.Length - 1)]);
     }
 
-    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct) => Task.FromResult(UltimaVersion);
+    public Task<int> ObtenerUltimaVersionEtapaAsync(int proyectoId, CancellationToken ct)
+    {
+        Orden.Add("version");
+        return Task.FromResult(Versiones.Count > 0 ? Versiones.Dequeue() : UltimaVersion);
+    }
 
     public Task AplicarAsync(CambioPersonal cambio, CancellationToken ct)
     {
@@ -98,4 +109,13 @@ internal sealed class CrucesEdicionFalsos(params IReadOnlyList<AsignacionExisten
         return Task.FromResult<IReadOnlyList<AsignacionExistente>>(
             respuesta.Where(a => empleadoIds.Contains(a.EmpleadoId) && a.Fecha >= desde && a.Fecha <= hasta).ToList());
     }
+}
+
+/// <summary>TAREA-19x: solicitudes de registro con el token de concurrencia (versión del repositorio falso o explícita).</summary>
+internal static class ConVersionPersonal
+{
+    public static ActualizarPersonalSolicitud ConVersion(this ActualizarPersonalSolicitud s, RepositorioEdicionFalso repo) => s with { VersionProyecto = repo.UltimaVersion };
+    public static ActualizarPersonalSolicitud ConVersion(this ActualizarPersonalSolicitud s, int version) => s with { VersionProyecto = version };
+    public static ReactivarProyectoSolicitud ConVersion(this ReactivarProyectoSolicitud s, RepositorioEdicionFalso repo) => s with { VersionProyecto = repo.UltimaVersion };
+    public static ReactivarProyectoSolicitud ConVersion(this ReactivarProyectoSolicitud s, int version) => s with { VersionProyecto = version };
 }

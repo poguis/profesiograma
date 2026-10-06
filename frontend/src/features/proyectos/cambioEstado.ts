@@ -87,6 +87,14 @@ export function aSolicitudCambio(estado: EstadoDialogo): SolicitudCambioEstado {
   return { estadoDestino: estado.destino, fecha: estado.fecha }
 }
 
+/**
+ * Cuerpo del registro (TAREA-19x): el de la vista previa más su `versionProyecto`. Si el proyecto cambió desde la vista
+ * previa, el servidor responde 409 y el diálogo ofrece "Recargar datos del proyecto".
+ */
+export function aSolicitudRegistroCambio(estado: EstadoDialogo, vista: VistaCambio): SolicitudCambioEstado {
+  return { ...aSolicitudCambio(estado), versionProyecto: vista.datos.versionProyecto }
+}
+
 // ------------------------------------------------------------------ vista previa y confirmación
 
 export interface VistaCambio {

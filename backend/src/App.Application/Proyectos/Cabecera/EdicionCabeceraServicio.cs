@@ -30,6 +30,8 @@ public sealed class EdicionCabeceraServicio(
             return null;
         }
 
+        // TAREA-19x: el token se lee ANTES que los datos (si alguien escribe en medio, queda viejo y el registro da 409).
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct);
         var datos = await repositorio.ObtenerAsync(proyectoId, propietario, DateOnly.MaxValue, ct);
         if (datos is null)
         {
@@ -50,20 +52,40 @@ public sealed class EdicionCabeceraServicio(
             datos.Actividades.OrderBy(a => a.Version).Select(Actividad).ToList(),
             new PermisosCabeceraDto(motivo is null && motivoInicio is null, motivoInicio, hoy, motivo is null && c.RequiereProyectoErp),
             new OpcionesAlmuerzoDto(ReglasAlmuerzo.OpcionesSalida, ReglasAlmuerzo.OpcionesRegreso),
-            hoy);
+            hoy,
+            version);
     }
 
     // ------------------------------------------------------------------ previsualizar / registrar
 
     public async Task<ResultadoCabecera> PrevisualizarAsync(int proyectoId, EditarCabeceraSolicitud s, CancellationToken ct)
     {
-        var r = await CalcularAsync(proyectoId, s, ct);
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct); // TAREA-19x: antes que los datos
+        var r = await CalcularAsync(proyectoId, s, version, ct);
         return r.Error ?? ResultadoCabecera.Previsualizado(r.Calculo!.Previsualizacion);
     }
 
     public async Task<ResultadoCabecera> RegistrarAsync(int proyectoId, EditarCabeceraSolicitud s, CancellationToken ct)
     {
-        var previo = await CalcularAsync(proyectoId, s, ct);
+        // TAREA-19x (P3): sin token → 400, sin leer la base ni abrir la transacción.
+        ArgumentNullException.ThrowIfNull(s);
+        if (s.VersionProyecto is not int token)
+        {
+            return ResultadoCabecera.Invalido(VersionProyecto.ErroresFalta());
+        }
+
+        var previo = await CalcularAsync(proyectoId, s, token, ct);
+        if (previo.Error is { Estado: EstadoEdicion.NoEncontrado } noEncontrado)
+        {
+            return noEncontrado;
+        }
+
+        // TAREA-19x (P1): token viejo → 409 antes de cualquier 400 o "No hay cambios" (V15 de la TAREA-19a).
+        if (await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct) != token)
+        {
+            return ResultadoCabecera.Cambiado();
+        }
+
         if (previo.Error is { } error)
         {
             return error;
@@ -78,7 +100,7 @@ public sealed class EdicionCabeceraServicio(
         {
             // C8: dentro del applock se vuelve a leer y a calcular. Si ya no es válido, o cambiaron el estado, las fechas
             // o el RowVer del proyecto desde la lectura de fuera, el proyecto cambió (409).
-            var r = await CalcularAsync(proyectoId, s, ctTx);
+            var r = await CalcularAsync(proyectoId, s, token, ctTx);
             if (r.Error is { } errorTx)
             {
                 return errorTx.Estado == EstadoEdicion.Invalido ? ResultadoCabecera.Cambiado() : errorTx;
@@ -93,9 +115,16 @@ public sealed class EdicionCabeceraServicio(
                 return ResultadoCabecera.Cambiado();
             }
 
+            // TAREA-19x: comprobación definitiva del token dentro del applock, antes de calcular la versión nueva.
+            var actual = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx);
+            if (actual != token)
+            {
+                return ResultadoCabecera.Cambiado();
+            }
+
             try
             {
-                var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx) + 1;
+                var version = actual + 1;
                 await repositorio.AplicarAsync(CrearCambio(r.Calculo, version), ctTx);
                 return ResultadoCabecera.Hecho(new CabeceraActualizadaDto(proyectoId, version));
             }
@@ -112,7 +141,8 @@ public sealed class EdicionCabeceraServicio(
 
     private sealed record Resultado(ResultadoCabecera? Error, Calculo? Calculo);
 
-    private async Task<Resultado> CalcularAsync(int proyectoId, EditarCabeceraSolicitud s, CancellationToken ct)
+    /// <param name="versionProyecto">Token que lleva la vista previa (leído antes que los datos, o el del registro).</param>
+    private async Task<Resultado> CalcularAsync(int proyectoId, EditarCabeceraSolicitud s, int versionProyecto, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(s);
         if (!TryObtenerVisibilidad(out var propietario))
@@ -134,10 +164,10 @@ public sealed class EdicionCabeceraServicio(
             return new Resultado(ResultadoCabecera.Invalido(validacion.Errores), null);
         }
 
-        return new Resultado(null, new Calculo(datos, hoy, plan, CrearPrevisualizacion(datos, hoy, plan)));
+        return new Resultado(null, new Calculo(datos, hoy, plan, CrearPrevisualizacion(datos, hoy, plan, versionProyecto)));
     }
 
-    private static PrevisualizacionCabeceraDto CrearPrevisualizacion(DatosCabecera datos, DateOnly hoy, PlanCabecera plan)
+    private static PrevisualizacionCabeceraDto CrearPrevisualizacion(DatosCabecera datos, DateOnly hoy, PlanCabecera plan, int versionProyecto)
     {
         var c = datos.Cabecera;
         var cambios = new List<CambioCampoDto>();
@@ -186,7 +216,7 @@ public sealed class EdicionCabeceraServicio(
         return new PrevisualizacionCabeceraDto(
             hoy, plan.TipoEtapa, plan.FechaInicio, plan.FechaFin, cambios,
             impacto?.DiasEliminados ?? [], impacto?.PersonalEliminado ?? [], impacto?.PersonalRecortado ?? [],
-            DiasAgregados(datos, plan), ActividadesResultantes(datos, plan), advertencias);
+            DiasAgregados(datos, plan), ActividadesResultantes(datos, plan), advertencias, versionProyecto);
     }
 
     /// <summary>H15: días agregados por persona (desde / hasta / cantidad).</summary>

@@ -5,6 +5,7 @@ import {
   type ValoresCabecera,
   type VistaCabecera,
   aSolicitudCabecera,
+  aSolicitudRegistroCabecera,
   crearEstadoEdicion,
   etiquetaCampo,
   interpretarErrorCabecera,
@@ -42,6 +43,7 @@ const cabecera = (cambios: Partial<CabeceraEdicion> = {}): CabeceraEdicion => ({
   permisos: { fechaInicioEditable: true, motivoFechaInicio: null, fechaFinMinima: '2026-10-06', actividadEditable: true },
   opcionesAlmuerzo: { salida: ['12:00', '12:30'], regreso: ['13:00', '13:30'] },
   corte: '2026-10-06',
+  versionProyecto: 1,
   ...cambios,
 })
 
@@ -63,6 +65,7 @@ const datos = (cambios: Partial<PrevisualizacionCabecera> = {}): Previsualizacio
   diasAgregados: [],
   actividades: [],
   advertencias: [],
+  versionProyecto: 1,
   ...cambios,
 })
 
@@ -369,5 +372,30 @@ describe('interpretarErrorCabecera', () => {
       noEncontrado: true,
       generales: ['El proyecto no existe o no tiene acceso.'],
     })
+  })
+})
+
+describe('TAREA-19x: token de concurrencia', () => {
+  it('el registro lleva la versionProyecto de la vista previa; la vista previa no la envía', () => {
+    const e = aplicar(crearEstadoEdicion(cabecera()), campos({ fechaFin: '2026-10-20' }))
+    const vista: VistaCabecera = { revision: e.revision, datos: datos({ versionProyecto: 7 }) }
+    expect(aSolicitudRegistroCabecera(e, vista)).toEqual({ ...aSolicitudCabecera(e), versionProyecto: 7 })
+    expect(aSolicitudCabecera(e)).not.toHaveProperty('versionProyecto')
+  })
+
+  it('409 por token viejo: mensaje y recarga', () => {
+    expect(interpretarErrorCabecera({ tipo: 'conflicto', titulo: 'El proyecto cambió; vuelve a cargarlo.' })).toMatchObject({
+      generales: ['El proyecto cambió; vuelve a cargarlo.'],
+      ofrecerRecarga: true,
+    })
+  })
+
+  it('400 sin token (versionProyecto): mensaje arriba y recarga', () => {
+    const r = interpretarErrorCabecera({
+      tipo: 'validacion',
+      titulo: 'x',
+      errores: { versionProyecto: ['Falta la versión del proyecto; vuelve a cargarlo.'] },
+    })
+    expect(r).toMatchObject({ generales: ['Falta la versión del proyecto; vuelve a cargarlo.'], ofrecerRecarga: true, campos: {} })
   })
 })

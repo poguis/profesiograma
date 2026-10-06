@@ -34,6 +34,8 @@ public sealed class EdicionPersonalServicio(
         }
 
         var corte = FechaNegocio.Hoy(reloj);
+        // TAREA-19x: el token se lee ANTES que los datos (si alguien escribe en medio, queda viejo y el registro da 409).
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct);
         var proyecto = await repositorio.ObtenerAsync(proyectoId, propietario, corte, ct);
         if (proyecto is null)
         {
@@ -58,21 +60,41 @@ public sealed class EdicionPersonalServicio(
                         : new PermisosEdicionDto(p.FechaInicio >= corte, corte.AddDays(-1), p.Rol == RolCronograma.Principal,
                             p.FechaInicio >= corte));
             }).ToList(),
-            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack));
+            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack),
+            version);
     }
 
     // ------------------------------------------------------------------ previsualizar / registrar
 
     public async Task<ResultadoEdicionPersonal> PrevisualizarAsync(int proyectoId, ActualizarPersonalSolicitud s, CancellationToken ct)
     {
-        var r = await CalcularAsync(proyectoId, s, ct);
+        var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct); // TAREA-19x: antes que los datos
+        var r = await CalcularAsync(proyectoId, s, version, ct);
         return r.Error ?? ResultadoEdicionPersonal.Previsualizado(r.Calculo!.Previsualizacion);
     }
 
     public async Task<ResultadoEdicionPersonal> RegistrarAsync(int proyectoId, ActualizarPersonalSolicitud s, CancellationToken ct)
     {
+        // TAREA-19x (P3): sin token → 400, sin leer la base ni abrir la transacción.
+        ArgumentNullException.ThrowIfNull(s);
+        if (s.VersionProyecto is not int token)
+        {
+            return ResultadoEdicionPersonal.Invalido(VersionProyecto.ErroresFalta());
+        }
+
         // Verificación previa fuera de la transacción: no se abre el bloqueo si la solicitud no es válida o tiene cruces.
-        var previo = await CalcularAsync(proyectoId, s, ct);
+        var previo = await CalcularAsync(proyectoId, s, token, ct);
+        if (previo.Error is { Estado: EstadoEdicion.NoEncontrado } noEncontrado)
+        {
+            return noEncontrado;
+        }
+
+        // TAREA-19x (P1): token viejo → 409 antes de cualquier 400, "No hay cambios" o cruces.
+        if (await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct) != token)
+        {
+            return ResultadoEdicionPersonal.Cambiado();
+        }
+
         if (previo.Error is { } error)
         {
             return error;
@@ -91,7 +113,7 @@ public sealed class EdicionPersonalServicio(
         return await transaccion.EjecutarAsync(async ctTx =>
         {
             // E7: dentro del applock se vuelve a leer y a recalcular todo (estado, personal, base y cruces externos).
-            var r = await CalcularAsync(proyectoId, s, ctTx);
+            var r = await CalcularAsync(proyectoId, s, token, ctTx);
             if (r.Error is { } errorTx)
             {
                 // Lo que era válido fuera y ya no lo es dentro: los datos cambiaron entre la lectura y el bloqueo.
@@ -104,9 +126,16 @@ public sealed class EdicionPersonalServicio(
                 return ResultadoEdicionPersonal.ConCruces(c.Previsualizacion);
             }
 
+            // TAREA-19x: comprobación definitiva del token dentro del applock, antes de calcular la versión nueva.
+            var actual = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx);
+            if (actual != token)
+            {
+                return ResultadoEdicionPersonal.Cambiado();
+            }
+
             try
             {
-                var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ctTx) + 1;
+                var version = actual + 1;
                 await repositorio.AplicarAsync(CrearCambio(c, version), ctTx);
                 return ResultadoEdicionPersonal.Hecho(new PersonalActualizadoDto(proyectoId, version));
             }
@@ -125,7 +154,8 @@ public sealed class EdicionPersonalServicio(
 
     private sealed record Resultado(ResultadoEdicionPersonal? Error, Calculo? Calculo);
 
-    private async Task<Resultado> CalcularAsync(int proyectoId, ActualizarPersonalSolicitud s, CancellationToken ct)
+    /// <param name="versionProyecto">Token que lleva la vista previa (leído antes que los datos, o el del registro).</param>
+    private async Task<Resultado> CalcularAsync(int proyectoId, ActualizarPersonalSolicitud s, int versionProyecto, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(s);
         if (!TryObtenerVisibilidad(out var propietario))
@@ -184,7 +214,8 @@ public sealed class EdicionPersonalServicio(
             calculo.Tramos,
             calculo.Cruces,
             CalculadorCruces.Resumen(calculo.Cruces),
-            advertencias);
+            advertencias,
+            versionProyecto);
 
         return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion, sinCambios));
     }

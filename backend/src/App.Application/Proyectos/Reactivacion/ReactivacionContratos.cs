@@ -9,11 +9,13 @@ namespace App.Application.Proyectos.Reactivacion;
 /// Fecha = R (FechaFin actual &lt; R ≤ FechaFin); FechaFin = nueva fecha fin del proyecto (H5).
 /// Personas con la forma de la TAREA-17, pero todas nuevas: sin id (R1). El primer principal empieza en R (R6).
 /// </summary>
+/// <param name="VersionProyecto">Token de concurrencia (TAREA-19x): obligatorio al registrar (400 si falta, 409 si no es la versión actual); la vista previa lo ignora.</param>
 public sealed record ReactivarProyectoSolicitud(
     DateOnly? Fecha,
     DateOnly? FechaFin,
     IReadOnlyList<PrincipalEdicionSolicitud>? Principales,
-    IReadOnlyList<BackEdicionSolicitud>? Backs);
+    IReadOnlyList<BackEdicionSolicitud>? Backs,
+    int? VersionProyecto = null);
 
 // ------------------------------------------------------------------ lectura
 

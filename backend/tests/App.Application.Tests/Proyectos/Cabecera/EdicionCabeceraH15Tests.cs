@@ -52,7 +52,7 @@ public class EdicionCabeceraH15Tests
     public async Task Registro_DescansosAgregadosEnElCambio_YSinRecorteNoHay()
     {
         var (servicio, repo) = Crear();
-        await servicio.RegistrarAsync(ProyectoId, Fin("2026-11-11"), Ct);
+        await servicio.RegistrarAsync(ProyectoId, Fin("2026-11-11").ConVersion(repo), Ct);
 
         Assert.Equal(
             [(202, 1, D("2026-11-12"), RolCronograma.Descanso, TipoAsignacionCronograma.Manual, (short)1),
@@ -60,7 +60,7 @@ public class EdicionCabeceraH15Tests
             repo.Aplicado!.DescansosAgregados.Select(d => (d.PersonalId, d.Dia.EmpleadoId, d.Dia.Fecha, d.Dia.Rol, d.Dia.Tipo, d.Dia.Bloque)));
 
         var (otro, repoOtro) = Crear();
-        var r = await otro.RegistrarAsync(ProyectoId, Fin("2026-12-20"), Ct); // ampliar: sin recorte
+        var r = await otro.RegistrarAsync(ProyectoId, Fin("2026-12-20").ConVersion(repoOtro), Ct); // ampliar: sin recorte
         Assert.Equal(EstadoEdicion.Realizado, r.Estado);
         Assert.Empty(repoOtro.Aplicado!.DescansosAgregados);
     }
