@@ -1,7 +1,7 @@
 # TAREA-19y — Principal opcional (pendiente 33)
 
 **Fecha:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada; **prueba manual (sección 6) y verificación visual (sección 7) pendientes**. La migración `20261006173252_ParametroExigePrincipal` está **pendiente de aplicar** (pendiente 34).
+**Resultado:** ✅ completada. El usuario aplicó la migración `20261006173252_ParametroExigePrincipal` (Id 10, valor 0) y el 06/10/2026 ejecutó `parte1.cmd` y `parte2.cmd` y la verificación visual Y1–Y5: todo OK (secciones 6 y 7). Dato de prueba: **Id 13 PRY-20261006-758598**, ACTIVO, versión 2, solo backs (DEV003 / DEV004).
 
 **Backend**
 - `dotnet build Profesiograma.slnx -c Release --no-incremental`: 0 advertencias y 0 errores.
@@ -133,8 +133,8 @@ Ninguna otra prueba cambió de resultado. Al cambiar el código, solo fallaron (
   - en una prueba de reactivación usé un proyecto doble con días base de un principal que había quitado del personal (KeyNotFound): se usó P1 sin la marca de inicial.
 - Hubo 1 advertencia CS8602 en una prueba nueva: corregida.
 
-## 6. Prueba manual (la ejecuta el usuario) — [PENDIENTE]
-**Antes de empezar**
+## 6. Prueba manual (usuario, 06/10/2026) — todo OK
+**Cómo se ejecutó** (el usuario aplicó antes la migración: parámetro Id 10 con valor 0; después de la parte 2 lo devolvió a 0)
 1. Aplicar la migración (pendiente 34), desde `backend/`:
 
 ```
@@ -160,23 +160,23 @@ Fechas relativas a hoy (H): E de H+20 a H+40; back 1 de H+20 a H+25; back 2 de H
 
 | Paso | Solicitud | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|
-| a | Vistas previas de creación solo con 2 backs (por par) | 200, sin cruces y con "El proyecto no tendrá principal: el responsable quedará vacío." | No | [PENDIENTE] |
-| b | Vista previa de creación sin nadie | 400 `personal` "Se requiere al menos 1 persona (principal o back)." | No | [PENDIENTE] |
-| c | **Crear E** solo con backs ("Sin relación") | 201 | **Sí (crea E)** | [PENDIENTE] |
-| d1 / d2 | GET detalle de E; GET listado con el código de E | 2 BACK y ningún PRINCIPAL (ningún inicial); `responsable` null | No | [PENDIENTE] |
-| e2 | Vista previa de personal quitando a todos | 400 `personal` | No | [PENDIENTE] |
-| e3 | Vista previa: el back 2 termina un día antes | 200 sin cruces, con `versionProyecto` | No | [PENDIENTE] |
-| e4 | **Registrar** e3 con el token | 200, versión 2 | **Sí (E)** | [PENDIENTE] |
-| f | GET detalle de E | Back 2 acortado; etapas v1 CREACION y v2 ACTUALIZACION_PERSONAL | No | [PENDIENTE] |
-| g2 | Reactivación del Id 2: vista previa solo con un back (empleado del back 1) desde R = `fechaMinima` | 200 sin errores | No | [PENDIENTE] |
-| g3 | Ídem con el back desde R+1 | 400 `backs` "Al menos un back debe empezar en la fecha de reactivación (…)." | No | [PENDIENTE] |
+| a | Vistas previas de creación solo con 2 backs (por par) | 200, sin cruces y con "El proyecto no tendrá principal: el responsable quedará vacío." | No | OK: par elegido backs **DEV003 / DEV004**; vista previa con la advertencia |
+| b | Vista previa de creación sin nadie | 400 `personal` "Se requiere al menos 1 persona (principal o back)." | No | OK: 400 `personal` |
+| c | **Crear E** solo con backs ("Sin relación") | 201 | **Sí (crea E)** | OK: 201, **E = Id 13, PRY-20261006-758598**, solo backs |
+| d1 / d2 | GET detalle de E; GET listado con el código de E | 2 BACK y ningún PRINCIPAL (ningún inicial); `responsable` null | No | OK: 2 BACK sin principal; `responsable` null |
+| e2 | Vista previa de personal quitando a todos | 400 `personal` | No | OK: 400 `personal` |
+| e3 | Vista previa: el back 2 termina un día antes | 200 sin cruces, con `versionProyecto` | No | OK: 200 con `versionProyecto` 1 y la advertencia |
+| e4 | **Registrar** e3 con el token | 200, versión 2 | **Sí (E)** | OK: 200, versión 2 |
+| f | GET detalle de E | Back 2 acortado; etapas v1 CREACION y v2 ACTUALIZACION_PERSONAL | No | OK: back 2 hasta 09/11; etapas v1 CREACION y v2 ACTUALIZACION_PERSONAL |
+| g2 | Reactivación del Id 2: vista previa solo con un back (empleado del back 1) desde R = `fechaMinima` | 200 sin errores | No | OK: 200 sin advertencia (el Id 2 conserva su inicial histórico); 3 cruces EXTERNOS reales de DEV003 (la vista previa no los bloquea; no escribe) |
+| g3 | Ídem con el back desde R+1 | 400 `backs` "Al menos un back debe empezar en la fecha de reactivación (…)." | No | OK: 400 `backs` |
 
 ### 6.2 `parte2.cmd` (parámetro en 1; no escribe; se puede repetir)
 | Paso | Solicitud | Esperado | Resultado |
 |---|---|---|---|
-| h0 | GET `opciones-formulario` | `exigePrincipal` true. Si no: termina sin enviar nada más | [PENDIENTE] |
-| h1 | Vista previa de creación solo con los backs de la parte 1 | 400 `principales` "Se requiere al menos 1 principal(es)." | [PENDIENTE] |
-| h2 | Vista previa de reactivación del Id 2 solo con un back desde R | 400 `principales` | [PENDIENTE] |
+| h0 | GET `opciones-formulario` | `exigePrincipal` true. Si no: termina sin enviar nada más | OK: `exigePrincipal` true |
+| h1 | Vista previa de creación solo con los backs de la parte 1 | 400 `principales` "Se requiere al menos 1 principal(es)." | OK: 400 `principales` |
+| h2 | Vista previa de reactivación del Id 2 solo con un back desde R | 400 `principales` | OK: 400 `principales` |
 
 ### 6.3 SQL del parámetro (`parametro-exige-principal.sql`, lo ejecuta el usuario en SSMS)
 Para poner el parámetro en 1 antes de `parte2.cmd`:
@@ -209,14 +209,14 @@ La API lee el parámetro en cada petición, así que no hace falta reiniciarla.
 
 **Cuerpos JSON generados:** se revisaron. La creación lleva `principales: []` y los backs con `principalRelacionado: null`; e4 lleva el token `versionProyecto`; g2 y g3 llevan `principales: []` y el back desde R o desde R+1.
 
-## 7. Verificación visual (usuario) — [PENDIENTE]
+## 7. Verificación visual (usuario, 06/10/2026) — Y1–Y5 OK
 | # | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|
-| Y1 | "Nuevo proyecto" con el parámetro en 0, sin nadie | "Generar vista previa" deshabilitado; ayuda neutra "Agrega al menos 1 persona (principal o back) para generar la vista previa." bajo Principales y en la barra | No | [PENDIENTE] |
-| Y2 | Ídem, agregando solo un back (relación "Sin relación") | La ayuda desaparece; la vista previa muestra la advertencia "El proyecto no tendrá principal: el responsable quedará vacío." | No | [PENDIENTE] |
-| Y3 | Registrar Y2 | 201 y detalle; en el listado, la columna Responsable muestra "Sin responsable" en gris | **Sí (proyecto nuevo)** | [PENDIENTE] |
-| Y4 | Con el parámetro en 1 (bloque 1 del SQL), "Nuevo proyecto" con solo un back | Botón deshabilitado y ayuda "Agrega al menos 1 principal para generar la vista previa."; luego volver a 0 | No | [PENDIENTE] |
-| Y5 | Listado: proyecto E de la parte 1 | "Sin responsable" | No | [PENDIENTE] |
+| Y1 | "Nuevo proyecto" con el parámetro en 0, sin nadie | "Generar vista previa" deshabilitado; ayuda neutra "Agrega al menos 1 persona (principal o back) para generar la vista previa." bajo Principales y en la barra | No | OK |
+| Y2 | Ídem, agregando solo un back (relación "Sin relación") | La ayuda desaparece; la vista previa muestra la advertencia "El proyecto no tendrá principal: el responsable quedará vacío." | No | OK |
+| Y3 | Registrar Y2 | 201 y detalle; en el listado, la columna Responsable muestra "Sin responsable" en gris | **Sí (proyecto nuevo)** | OK |
+| Y4 | Con el parámetro en 1 (bloque 1 del SQL), "Nuevo proyecto" con solo un back | Botón deshabilitado y ayuda "Agrega al menos 1 principal para generar la vista previa."; luego volver a 0 | No | OK (parámetro devuelto a 0) |
+| Y5 | Listado: proyecto E de la parte 1 | "Sin responsable" | No | OK |
 
 ## 8. Contradicciones y observaciones
 1. **C10 / pendiente 28 se revierte en parte** por decisión del negocio. Queda documentado en `CrearProyectoValidador`, `MinimoPersonal`, `FASE_5_Crear_Proyecto.md` §11–§12 y `00_ESTADO_ACTUAL.md`.
@@ -227,6 +227,4 @@ La API lee el parámetro en cada petición, así que no hace falta reiniciarla.
 6. **Id 10 de la migración.** La migración inserta el parámetro con Id 10. Si alguien hubiera agregado a mano un parámetro con ese Id en PROFESIOGRAMA_DEV, la migración fallaría. Las semillas actuales llegan al Id 9.
 
 ## 9. Pendientes
-- **Pendiente 34:** aplicar la migración `ParametroExigePrincipal` (la aplica el usuario).
-- Prueba manual (sección 6) y verificación visual Y1–Y5 (sección 7).
 - La 19b (personal) y la 19c (reactivación) deben usar `limites.exigePrincipal`, la clave `personal`, P3 y la advertencia en sus pantallas.
