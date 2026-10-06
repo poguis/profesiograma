@@ -195,7 +195,8 @@ public sealed class EdicionPersonalServicio(
     {
         var (vigentes, nuevas) = CalculoPersonal.PersonalParaEscribir(c.Plan);
         return new CambioPersonal(c.Datos.Id, c.Corte, version, TipoMovimiento, c.Datos.FechaInicio, c.Datos.FechaFin,
-            CalculoPersonal.ActividadVigente(c.Datos.Actividades, c.Corte), CalculoPersonal.Snapshot(c.Plan),
+            ActividadVigente.Elegir(c.Datos.Actividades, c.Datos.FechaInicio, c.Datos.FechaFin, c.Corte)?.Codigo, // O3: regla de etapas
+            CalculoPersonal.Snapshot(c.Plan),
             vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion));
     }
 

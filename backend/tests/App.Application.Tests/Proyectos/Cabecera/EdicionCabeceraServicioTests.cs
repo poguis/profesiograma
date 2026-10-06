@@ -316,7 +316,7 @@ public class EdicionCabeceraServicioTests
         Assert.Equal(new CabeceraActualizadaDto(ProyectoId, 3), r.Realizado);
         var c = e.Repo.Aplicado!;
         Assert.Equal(("CAMBIO_ACTIVIDAD", 3, Inicio, Fin, Hoy), (c.TipoMovimiento, c.Version, c.FechaInicio, c.FechaFin, c.FechaCorte));
-        Assert.Equal("DEV.01", c.ActividadCodigo); // vigente el 01/11 = max(hoy, inicio)
+        Assert.Equal("DEV.02", c.ActividadCodigo); // O2 (TAREA-18b): la etapa CAMBIO_ACTIVIDAD lleva la actividad nueva
         Assert.Equal([new ActividadModificada(1, Inicio, D("2026-11-14"))], c.ActividadesModificadas);
         Assert.Empty(c.ActividadesEliminadas);
         Assert.Equal(new ActividadNueva(2, "DEV.02", "ACTIVIDAD DE PRUEBA 2", "PRUEBA", D("2026-11-15"), Fin), c.ActividadNueva);

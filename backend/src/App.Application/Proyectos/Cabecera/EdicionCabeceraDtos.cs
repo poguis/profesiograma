@@ -19,7 +19,7 @@ public sealed record OpcionesAlmuerzoDto(IReadOnlyList<string> Salida, IReadOnly
 
 /// <summary>
 /// Datos del formulario de cabecera. PuedeEditar = false (con Motivo) si el proyecto no es ACTIVO.
-/// ActividadVigente = la vigente en max(hoy, inicio) (P3). Corte = hoy en Ecuador.
+/// ActividadVigente = regla común ActividadVigente con hoy (O3, TAREA-18b). Corte = hoy en Ecuador.
 /// </summary>
 public sealed record CabeceraDto(
     int Id, string Codigo, string Estado, bool PuedeEditar, string? Motivo, string Grupo,
@@ -31,6 +31,9 @@ public sealed record CabeceraDto(
 
 /// <summary>Campo que cambia: fechaInicio | fechaFin | horario | salidaAlmuerzo | regresoAlmuerzo | actividad.</summary>
 public sealed record CambioCampoDto(string Campo, string? Anterior, string? Nuevo);
+
+/// <summary>H15: días DESCANSO MANUAL que se vuelven a insertar para un back después del recorte (C4).</summary>
+public sealed record DiasAgregadosDto(EmpleadoCambioDto Empleado, string Rol, int Cantidad, DateOnly Desde, DateOnly Hasta);
 
 /// <summary>
 /// Actividad resultante. Accion = SIN_CAMBIO | MODIFICADA | ELIMINADA | NUEVA. Las fechas son las resultantes
@@ -53,6 +56,7 @@ public sealed record PrevisualizacionCabeceraDto(
     IReadOnlyList<DiasEliminadosDto> DiasEliminados,
     IReadOnlyList<PersonaEliminadaDto> PersonalEliminado,
     IReadOnlyList<PersonaRecortadaDto> PersonalRecortado,
+    IReadOnlyList<DiasAgregadosDto> DiasAgregados,
     IReadOnlyList<ActividadResultanteDto> Actividades,
     IReadOnlyList<string> Advertencias);
 

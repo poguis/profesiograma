@@ -50,7 +50,15 @@ public class ProyectoConsultasSqlTests(ITestOutputHelper salida) : BaseSql(salid
     public void Detalle_Etapas_SinSnapshot() => Assert.DoesNotContain("SnapshotPersonal", Sql(ProyectoConsultas.ConsultaEtapas(Db, 1)));
 
     [Fact]
-    public void Detalle_ActividadVigente() => Assert.Contains("CASE", Sql(ProyectoConsultas.ConsultaActividadVigente(Db, 1, new DateOnly(2026, 10, 1))));
+    public void Detalle_ActividadVigente()
+    {
+        // O3 (TAREA-18b): filtro de cobertura de la fecha de referencia y mayor versión; sin CASE ni respaldo.
+        var sql = Sql(ProyectoConsultas.ConsultaActividadVigente(Db, 1, new DateOnly(2026, 10, 1)));
+        Assert.Contains("[p].[FechaInicio] <= @", sql);
+        Assert.Contains("[p].[FechaFin] >= @", sql);
+        Assert.Contains("ORDER BY [p].[Version] DESC", sql);
+        Assert.DoesNotContain("CASE", sql);
+    }
 }
 
 /// <summary>Traducción a SQL de EmpleadoConsultas (TAREA-11).</summary>

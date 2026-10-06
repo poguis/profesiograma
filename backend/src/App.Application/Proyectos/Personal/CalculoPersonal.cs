@@ -104,13 +104,6 @@ internal static class CalculoPersonal
             ? new DiaParaInsertar(id, null, d.Dia)
             : new DiaParaInsertar(null, d.Clave, d.Dia)).ToList();
 
-    /// <summary>Actividad vigente en la fecha (la de mayor versión si se solapan); null si no hay.</summary>
-    public static string? ActividadVigente(IEnumerable<ActividadCorte> actividades, DateOnly fecha) =>
-        actividades
-            .Where(a => a.FechaInicio <= fecha && a.FechaFin >= fecha)
-            .OrderByDescending(a => a.Version)
-            .FirstOrDefault()?.Codigo;
-
     /// <summary>D8: snapshot del personal RESULTANTE (históricas + vigentes + nuevas), formato común.</summary>
     public static string Snapshot(PlanEdicion plan) =>
         SnapshotPersonal.Serializar(

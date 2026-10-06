@@ -56,6 +56,7 @@ public sealed record ActividadModificada(int Id, DateOnly FechaInicio, DateOnly 
 
 /// <summary>Todo lo que se escribe en la transacción (recalculado dentro del applock).</summary>
 /// <param name="Recorte">Plan de RecorteProyecto si se acorta la fecha fin (C4); null si no.</param>
+/// <param name="DescansosAgregados">H15: descanso posterior de los backs que quedan, a insertar después del recorte.</param>
 /// <param name="Horario">null = el horario no cambia.</param>
 public sealed record CambioCabeceraAplicar(
     int ProyectoId,
@@ -70,6 +71,7 @@ public sealed record CambioCabeceraAplicar(
     TimeOnly? SalidaAlmuerzo,
     TimeOnly? RegresoAlmuerzo,
     PlanRecorte? Recorte,
+    IReadOnlyList<DescansoAgregado> DescansosAgregados,
     IReadOnlyList<int> ActividadesEliminadas,
     IReadOnlyList<ActividadModificada> ActividadesModificadas,
     ActividadNueva? ActividadNueva);

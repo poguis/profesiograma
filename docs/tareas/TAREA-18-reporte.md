@@ -1,7 +1,7 @@
 # TAREA-18 — Edición de cabecera (fechas, horario, almuerzo) y cambio de actividad, backend
 
 **Fechas:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada. **Prueba manual pendiente** (`backend/tests/manual/tarea18/parte1.cmd` y `parte2.cmd`, sección 6): la ejecuta el usuario. DEV.02 agregado al ERP simulado (pendiente 30 resuelto, sección 9); hay que **reiniciar la API** antes de la prueba manual.
+**Resultado:** implementada; **prueba manual del usuario del 06/10/2026: 27 casos OK** (sección 6.4). Proyecto C = Id 11 (PRY-20261006-c96578), versión 4, par DEV003 / DEV001. Tres observaciones (H15, O2, O3) se corrigen en la TAREA-18b.
 - `dotnet build Profesiograma.slnx -c Release --no-incremental`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **468/468** (Domain 110, Application 259, Infrastructure 99). Antes: 413. Nuevas: 55. De las 413 anteriores solo cambiaron las **5 aprobadas** (sección 5) y, con DEV.02, `CatalogoErpSimuladoTests.Actividades_DevErp001` (aprobada).
 - `has-pending-model-changes`: sin cambios. Sin modelo ni migraciones nuevas (EDICION_CABECERA y CAMBIO_ACTIVIDAD ya estaban en la semilla; C10 con una constante).
@@ -95,32 +95,32 @@ Ejemplo con **H = 06/10/2026**: INICIO 11/10, P1 14/10–15/11, back 16/10–18/
 
 | Caso | Esperado | Ejemplo H = 06/10/2026 | Resultado |
 |---|---|---|---|
-| P0a | Par elegido, sin cruces | — | [PENDIENTE] |
-| P0 / P0b / P0c | 201; ACTIVO INICIO–FIN; cabecera con todo editable, `fechaFinMinima` = H, v1 DEV.01 | 11/10–15/11 | [PENDIENTE] |
-| a | GET cabecera de C: `puedeEditar`, inicio editable, `fechaFinMinima` H, actividad editable | — | [PENDIENTE] |
-| b1 | GET cabecera del Id 10: inicio no editable con motivo | "…el proyecto empezó el 02/10/2026." | [PENDIENTE] |
-| b2 | GET cabecera del Id 2: `puedeEditar` false (SUSPENDIDO) | — | [PENDIENTE] |
-| c | 400 `fechaInicio` "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal." | inicio 15/10 | [PENDIENTE] |
-| d | 200; actividad v1 MODIFICADA desde INICIO_ANTES (P1) | 09/10 | [PENDIENTE] |
-| e | 200; actividad v1 MODIFICADA desde H+8 (P1, atrasar) | 14/10 | [PENDIENTE] |
-| f | 400 `fechaInicio` "La nueva fecha de inicio no puede ser anterior a hoy (…)." | — | [PENDIENTE] |
-| g | 400 `fechaFin` "La fecha fin no puede ser anterior a hoy (…)." | — | [PENDIENTE] |
-| h | 200; P1 y back recortados a CORTO; días de P1 y del back posteriores eliminados (incluido el descanso del back); actividad v1 hasta CORTO | 17/10 | [PENDIENTE] |
-| i | 200; actividad v1 MODIFICADA hasta LARGO (C3, H14); sin recortes | 05/12 | [PENDIENTE] |
-| j1 / j2 | 400 `salidaAlmuerzo` (rango) / 400 `horarioCodigo` (horario 3 inactivo) | — | [PENDIENTE] |
-| k | 200 EDICION_CABECERA; cambios horario, salida y regreso; actividad SIN_CAMBIO | — | [PENDIENTE] |
-| l | 400 `actividad.actividadId` "La actividad DEV.01 ya está vigente el (DESDE)." | 14/10/2026 | [PENDIENTE] |
-| m | 200 con "No hay cambios." | — | [PENDIENTE] |
-| pv | 200 CAMBIO_ACTIVIDAD (v1 hasta DESDE − 1, NUEVA v2 DEV.02). Si la API no se reinició tras agregar DEV.02: 400 "La actividad no existe en el proyecto ERP." | v1 11/10–13/10; v2 14/10– | [PENDIENTE] |
-| n | 400 `general` "No hay cambios para registrar." | — | [PENDIENTE] |
-| o | 200 `{ C, 2 }` (ampliar + horario 2 + almuerzo 12:00–13:00) | — | [PENDIENTE] |
-| p | 200 `{ C, 3 }` CAMBIO_ACTIVIDAD (OMITIDO solo si pv dio 400) | — | [PENDIENTE] |
-| q | 200 `{ C, 4 }` (o `{ C, 3 }` si p se omitió) acortar a CORTO | — | [PENDIENTE] |
-| r1 | Cabecera: INICIO–CORTO, horario 2, almuerzo 12:00–13:00; actividades v1 DEV.01 INICIO–DESDE−1 y v2 DEV.02 DESDE–CORTO (sin DEV.02: v1 INICIO–CORTO) | 11/10–17/10; v1 11–13/10, v2 14–17/10 | [PENDIENTE] |
-| r2 | Detalle: etapas v1 CREACION, v2 EDICION_CABECERA (INICIO–LARGO, corte H), v3 CAMBIO_ACTIVIDAD, v4 EDICION_CABECERA (INICIO–CORTO, corte H); actividad de las etapas DEV.01 (vigente en INICIO, P3); P1 y back hasta CORTO | — | [PENDIENTE] |
-| s1 / s2 | Personal sin cambios: 200 con "No hay cambios." / 400 `general` (C9) | — | [PENDIENTE] |
-| t | 400 `principales` "Se requiere al menos 1 principal(es)." (C10) | — | [PENDIENTE] |
-| u | 400 con **solo** `estadoDestino` "La reactivación se registra con la opción Reactivar." (C11) | — | [PENDIENTE] |
+| P0a | Par elegido, sin cruces | — | OK |
+| P0 / P0b / P0c | 201; ACTIVO INICIO–FIN; cabecera con todo editable, `fechaFinMinima` = H, v1 DEV.01 | 11/10–15/11 | OK |
+| a | GET cabecera de C: `puedeEditar`, inicio editable, `fechaFinMinima` H, actividad editable | — | OK |
+| b1 | GET cabecera del Id 10: inicio no editable con motivo | "…el proyecto empezó el 02/10/2026." | OK |
+| b2 | GET cabecera del Id 2: `puedeEditar` false (SUSPENDIDO) | — | OK |
+| c | 400 `fechaInicio` "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal." | inicio 15/10 | OK |
+| d | 200; actividad v1 MODIFICADA desde INICIO_ANTES (P1) | 09/10 | OK |
+| e | 200; actividad v1 MODIFICADA desde H+8 (P1, atrasar) | 14/10 | OK |
+| f | 400 `fechaInicio` "La nueva fecha de inicio no puede ser anterior a hoy (…)." | — | OK |
+| g | 400 `fechaFin` "La fecha fin no puede ser anterior a hoy (…)." | — | OK |
+| h | 200; P1 y back recortados a CORTO; días de P1 y del back posteriores eliminados (incluido el descanso del back); actividad v1 hasta CORTO | 17/10 | OK |
+| i | 200; actividad v1 MODIFICADA hasta LARGO (C3, H14); sin recortes | 05/12 | OK |
+| j1 / j2 | 400 `salidaAlmuerzo` (rango) / 400 `horarioCodigo` (horario 3 inactivo) | — | OK |
+| k | 200 EDICION_CABECERA; cambios horario, salida y regreso; actividad SIN_CAMBIO | — | OK |
+| l | 400 `actividad.actividadId` "La actividad DEV.01 ya está vigente el (DESDE)." | 14/10/2026 | OK |
+| m | 200 con "No hay cambios." | — | OK |
+| pv | 200 CAMBIO_ACTIVIDAD (v1 hasta DESDE − 1, NUEVA v2 DEV.02). Si la API no se reinició tras agregar DEV.02: 400 "La actividad no existe en el proyecto ERP." | v1 11/10–13/10; v2 14/10– | OK |
+| n | 400 `general` "No hay cambios para registrar." | — | OK |
+| o | 200 `{ C, 2 }` (ampliar + horario 2 + almuerzo 12:00–13:00) | — | OK |
+| p | 200 `{ C, 3 }` CAMBIO_ACTIVIDAD (OMITIDO solo si pv dio 400) | — | OK |
+| q | 200 `{ C, 4 }` (o `{ C, 3 }` si p se omitió) acortar a CORTO | — | OK |
+| r1 | Cabecera: INICIO–CORTO, horario 2, almuerzo 12:00–13:00; actividades v1 DEV.01 INICIO–DESDE−1 y v2 DEV.02 DESDE–CORTO (sin DEV.02: v1 INICIO–CORTO) | 11/10–17/10; v1 11–13/10, v2 14–17/10 | OK |
+| r2 | Detalle: etapas v1 CREACION, v2 EDICION_CABECERA (INICIO–LARGO, corte H), v3 CAMBIO_ACTIVIDAD, v4 EDICION_CABECERA (INICIO–CORTO, corte H); actividad de las etapas DEV.01 (vigente en INICIO, P3); P1 y back hasta CORTO | — | OK |
+| s1 / s2 | Personal sin cambios: 200 con "No hay cambios." / 400 `general` (C9) | — | OK |
+| t | 400 `principales` "Se requiere al menos 1 principal(es)." (C10) | — | OK |
+| u | 400 con **solo** `estadoDestino` "La reactivación se registra con la opción Reactivar." (C11) | — | OK |
 
 ### 6.3 Prueba de los scripts con `SIMULAR=1` (Claude Code)
 - `SIMULAR=1` → `BASE=https://localhost:1`; el helper `:http` copia `%SIMULACION%\NOMBRE.txt` y **nunca** llama a curl. El lanzador dejó en el `PATH` solo PowerShell y una copia de `chcp.com`.
@@ -130,6 +130,44 @@ Ejemplo con **H = 06/10/2026**: INICIO 11/10, P1 14/10–15/11, back 16/10–18/
   - segunda ejecución: las dos protecciones se activan.
 - Se corrigió una colisión de nombres: Windows no distingue mayúsculas y el caso `p0` de la parte 2 pisaba el `P0` de la parte 1 en `simulacion\` y `tmp\`; ahora se llama `pv`.
 - **Ninguna prueba tocó la API real.**
+
+### 6.4 Resultados reales (usuario, 06/10/2026)
+Salidas: `backend/tests/manual/tarea18/resultado-parte1.txt` y `resultado-parte2.txt`. H = 06/10/2026 (fechas del ejemplo de 6.2).
+- **Par elegido:** P1 **DEV003** (Id 3) / back **DEV001** (Id 1), tras 13 pares descartados (el primero, DEV007 / DEV008).
+- **Proyecto C = Id 11, PRY-20261006-c96578**, 11/10–15/11; al final, 11/10–17/10, horario 2, almuerzo 12:00–13:00, **versión 4**.
+
+| Caso | HTTP | Resultado real (línea CONTROL resumida) |
+|---|---|---|
+| P0a / P0 / P0b / P0c | — / 201 / 200 / 200 | Par DEV003 / DEV001; Id 11; ACTIVO 11/10–15/11, P1 14/10–15/11, back 16/10–18/10; cabecera con todo editable, `fechaFinMinima` 06/10, v1 DEV.01 11/10–15/11 |
+| a | 200 | Cabecera de C: `puedeEditar`, inicio editable, `fechaFinMinima` 06/10, actividad editable |
+| b1 | 200 | Id 10: inicio no editable, "…el proyecto empezó el 02/10/2026." |
+| b2 | 200 | Id 2 (PRY-DEV-0002): `puedeEditar` false, SUSPENDIDO |
+| c | 400 | `fechaInicio`: "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal." |
+| d | 200 | Inicio 11/10 → 09/10; v1 DEV.01 MODIFICADA 09/10–15/11 (P1) |
+| e | 200 | Inicio 11/10 → 14/10; v1 DEV.01 MODIFICADA 14/10–15/11 (P1) |
+| f / g | 400 / 400 | "La nueva fecha de inicio no puede ser anterior a hoy (06/10/2026)." / "La fecha fin no puede ser anterior a hoy (06/10/2026)." |
+| h | 200 | Fin 15/11 → 17/10; DEV003 15/11→17/10 y DEV001 18/10→17/10; 32 días eliminados (incluido el descanso de DEV001 19–20/10); v1 hasta 17/10 |
+| i | 200 | Fin → 05/12; v1 DEV.01 MODIFICADA hasta 05/12 (C3, H14) |
+| j1 / j2 | 400 / 400 | Salida fuera de rango / "El horario no existe o no está activo." |
+| k | 200 | Horario 1 → 2, salida 13:00 → 12:00, regreso 14:00 → 13:00; actividad SIN_CAMBIO |
+| l | 400 | "La actividad DEV.01 ya está vigente el 14/10/2026." |
+| m | 200 | "No hay cambios." |
+| pv | 200 | CAMBIO_ACTIVIDAD: v1 DEV.01 hasta 13/10, NUEVA v2 DEV.02 desde 14/10 |
+| n | 400 | `general`: "No hay cambios para registrar." |
+| o / p / q | 200 / 200 / 200 | Versiones 2, 3 y 4 |
+| r1 / r2 | 200 / 200 | 11/10–17/10, horario 2, almuerzo 12:00–13:00; v1 DEV.01 11–13/10, v2 DEV.02 14–17/10; etapas v1 CREACION, v2 EDICION_CABECERA, v3 CAMBIO_ACTIVIDAD, v4 EDICION_CABECERA |
+| s1 / s2 | 200 / 400 | "No hay cambios." / `general` "No hay cambios para registrar." (C9) |
+| t | 400 | `principales`: "Se requiere al menos 1 principal(es)." (C10) |
+| u | 400 | Solo `estadoDestino`: "La reactivación se registra con la opción Reactivar." (C11) |
+
+**Todos los casos coinciden con lo esperado.**
+
+### 6.5 Observaciones (se corrigen en la TAREA-18b)
+1. **H15:** h y q borraron el descanso de DEV001 (19–20/10) y recortaron el back al 17/10 con `DiasDescanso` 2; la vista previa s1 regeneraba DESCANSO MANUAL 18–19/10, que la próxima actualización de personal habría insertado.
+2. **O2:** la etapa v3 CAMBIO_ACTIVIDAD quedó con `actividadCodigo` DEV.01 (vigente en `max(hoy, inicio)`), no con la nueva DEV.02.
+3. **O3:** r1 (cabecera) devolvía DEV.01 v1 y r2 (detalle) DEV.02 v2 para el mismo proyecto y momento (definiciones distintas de actividad vigente).
+
+Ver `docs/tareas/TAREA-18b-reporte.md`.
 
 ## 7. Comandos ejecutados y resultado
 | Comando | Resultado |
@@ -161,6 +199,6 @@ Ejemplo con **H = 06/10/2026**: INICIO 11/10, P1 14/10–15/11, back 16/10–18/
 - **Actividad vigente del GET:** se usa `max(hoy, inicio)` como en P3 (un proyecto que aún no empieza no tiene actividad vigente hoy).
 
 ## 10. Pendientes
-- Ejecutar `parte1.cmd` y `parte2.cmd` (usuario) y registrar sus controles; después, marcar la TAREA-18 como ✅.
+- Prueba manual: hecha (06/10, 27 casos OK). Correcciones H15, O2 y O3 en la TAREA-18b.
 - Reiniciar la API antes de la prueba manual (DEV.02 en el simulador).
 - TAREA-19: frontend de edición (personal, cabecera, reactivación) y mínimo de 1 principal en la creación (pendiente 26).

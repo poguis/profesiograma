@@ -42,7 +42,9 @@ internal sealed class ProyectoConsultas(ProfesiogramaDbContext db) : IProyectoCo
 
         var personal = await ConsultaPersonal(db, id).ToListAsync(ct);
         var etapas = await ConsultaEtapas(db, id).ToListAsync(ct);
-        var actividad = await ConsultaActividadVigente(db, id, hoy).FirstOrDefaultAsync(ct);
+        // O3 (TAREA-18b): regla común ActividadVigente; referencia = max(inicio, min(hoy, fin)).
+        var referencia = ActividadVigente.FechaReferencia(cabecera.FechaInicio, cabecera.FechaFin, hoy);
+        var actividad = await ConsultaActividadVigente(db, id, referencia).FirstOrDefaultAsync(ct);
 
         return new ProyectoDetalleDto(
             cabecera.Id, cabecera.Uid, cabecera.Codigo, cabecera.NombreVisual,
@@ -150,8 +152,14 @@ internal sealed class ProyectoConsultas(ProfesiogramaDbContext db) : IProyectoCo
                 e.Version, e.TipoMovimiento.Codigo, e.EstadoProyecto.Codigo,
                 e.FechaInicio, e.FechaFin, e.FechaCorte, e.ActividadCodigo, e.FechaCreacion));
 
-    internal static IQueryable<ProyectoActividadDto> ConsultaActividadVigente(ProfesiogramaDbContext db, int id, DateOnly hoy) =>
-        OrdenarPorVigencia(db.ProyectoActividades.AsNoTracking().Where(a => a.ProyectoId == id), hoy)
+    /// <summary>
+    /// Actividad vigente (regla ActividadVigente, O3): la que cubre la fecha de referencia; si hay varias, la de mayor
+    /// versión; si ninguna, ninguna fila (sin el respaldo anterior "la de mayor versión").
+    /// </summary>
+    internal static IQueryable<ProyectoActividadDto> ConsultaActividadVigente(ProfesiogramaDbContext db, int id, DateOnly referencia) =>
+        db.ProyectoActividades.AsNoTracking()
+            .Where(a => a.ProyectoId == id && a.FechaInicio <= referencia && a.FechaFin >= referencia)
+            .OrderByDescending(a => a.Version)
             .Select(a => new ProyectoActividadDto(
                 a.Version, a.TipoMovimiento.Codigo, a.ActividadCodigo, a.ActividadDescripcion,
                 a.ActividadTipo, a.FechaInicio, a.FechaFin));
@@ -162,15 +170,6 @@ internal sealed class ProyectoConsultas(ProfesiogramaDbContext db) : IProyectoCo
         CompaniaResumenDto Compania, CodigoNombreDto Grupo, CodigoNombreDto Estado,
         DateOnly FechaInicio, DateOnly FechaFin, ProyectoErpDto Erp, string? Departamento,
         HorarioDto Horario, AlmuerzoDto Almuerzo, PropietarioDto Propietario);
-
-    /// <summary>
-    /// Actividad vigente: primero la que cubre <paramref name="hoy"/>; si ninguna, la de mayor versión.
-    /// Es el mismo criterio que el OUTER APPLY "act" de dbo.vwProyectoResumen (VistasSql.VwProyectoResumen_V1).
-    /// </summary>
-    private static IQueryable<ProyectoActividad> OrdenarPorVigencia(IQueryable<ProyectoActividad> actividades, DateOnly hoy)
-        => actividades
-            .OrderBy(a => a.FechaInicio <= hoy && a.FechaFin >= hoy ? 0 : 1)
-            .ThenByDescending(a => a.Version);
 
     private static IReadOnlyList<string> SepararBacks(string? nombres)
         => string.IsNullOrWhiteSpace(nombres)

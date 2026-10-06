@@ -14,7 +14,8 @@ namespace App.Infrastructure.Persistencia.Proyectos;
 /// Orden (el de la TAREA-14, EscrituraRecorte):
 ///  1) si se acorta la fecha fin: ExecuteDelete de los días &gt; F, referencias a principales eliminados en null y recorte
 ///     de FechaFin del personal → SaveChanges 1;
-///  2) personal eliminado, actividades (eliminadas, con fechas nuevas y la nueva CAMBIO_ACTIVIDAD), proyecto (fechas,
+///  2) personal eliminado, descanso posterior de los backs que quedan (H15), actividades (eliminadas, con fechas nuevas y
+///     la nueva CAMBIO_ACTIVIDAD), proyecto (fechas,
 ///     horario, almuerzo; RowVer) y etapa → SaveChanges 2.
 /// Proyecto, personal, actividades y etapa con seguimiento: AuditoriaInterceptor llena la auditoría.
 /// </summary>
@@ -99,6 +100,18 @@ internal sealed class EdicionCabeceraRepositorio(ProfesiogramaDbContext db) : IC
                 ActividadTipo = nueva.Tipo,
             });
         }
+
+        // H15: descanso posterior de los backs que quedan (los días > F ya se borraron en el paso 1: sin choque con la UQ).
+        db.ProyectoAsignacionesDia.AddRange(cambio.DescansosAgregados.Select(d => new ProyectoAsignacionDia
+        {
+            ProyectoId = idProyecto,
+            ProyectoPersonalId = d.PersonalId,
+            EmpleadoId = d.Dia.EmpleadoId,
+            Fecha = d.Dia.Fecha,
+            RolAsignacionId = (byte)d.Dia.Rol,
+            TipoAsignacion = ProyectoAsignacionDia.TipoManual,
+            Bloque = d.Dia.Bloque,
+        }));
 
         // Proyecto (H13: aquí sí se guarda FechaInicio). Almuerzo: valores resultantes. Horario: solo si cambia.
         proyecto.FechaInicio = cambio.FechaInicio;

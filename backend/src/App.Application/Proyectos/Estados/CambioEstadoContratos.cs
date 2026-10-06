@@ -34,7 +34,8 @@ public sealed record CambioEstadoAplicar(
     string TipoMovimiento,
     DateOnly FechaInicioProyecto,
     PlanRecorte Plan,
-    string SnapshotPersonal);
+    string SnapshotPersonal,
+    string? ActividadCodigo);
 
 public interface ICambioEstadoRepositorio
 {

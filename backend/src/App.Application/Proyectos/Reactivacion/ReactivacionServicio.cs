@@ -224,9 +224,16 @@ public sealed class ReactivacionServicio(
                 a.FechaInicio, a.FechaFin)
             : null;
 
-        // R9: etapa REACTIVACION, de R a la nueva fecha fin, corte = R, actividad vigente en R (la nueva) y snapshot del
-        // personal resultante (históricas + nuevas).
-        return new CambioPersonal(c.Datos.Id, c.Reactivacion, version, TipoMovimiento, c.Reactivacion, c.FechaFin, actividad?.Codigo,
+        // R9: etapa REACTIVACION, de R a la nueva fecha fin, corte = R y snapshot del personal resultante (históricas + nuevas).
+        // Actividad: regla común de etapas (O3) con corte R sobre las actividades resultantes (la nueva cubre R).
+        var actividades = c.Datos.Actividades.ToList();
+        if (actividad is not null)
+        {
+            actividades.Add(new ActividadCorte(0, actividad.Version, actividad.Codigo, actividad.FechaInicio, actividad.FechaFin));
+        }
+
+        var actividadEtapa = ActividadVigente.Elegir(actividades, c.Datos.FechaInicio, c.FechaFin, c.Reactivacion)?.Codigo;
+        return new CambioPersonal(c.Datos.Id, c.Reactivacion, version, TipoMovimiento, c.Reactivacion, c.FechaFin, actividadEtapa,
             CalculoPersonal.Snapshot(c.Plan), vigentes, nuevas, [], CalculoPersonal.Dias(c.Regeneracion),
             new ReactivacionAplicar(c.Plan.Principales[0].Clave, c.FechaFin, actividad));
     }

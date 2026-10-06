@@ -2,7 +2,9 @@ using App.Application.Comun;
 using App.Application.Erp;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Personal;
+using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cabecera;
+using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
 using static App.Application.Proyectos.Crear.ReglasPersonal;
 
@@ -19,6 +21,7 @@ public sealed record PlanCabecera(
     TimeOnly? RegresoAlmuerzo,
     bool CambiaAlmuerzo,
     PlanRecorte? Recorte,
+    IReadOnlyList<DescansoAgregado> DescansosAgregados,
     IReadOnlyList<ActividadCorte> ActividadesFinales,
     IReadOnlyList<int> ActividadesEliminadas,
     ActividadNueva? ActividadNueva,
@@ -142,6 +145,7 @@ public sealed class EdicionCabeceraValidador(ICatalogoErp erp)
         // --- Fecha fin: ampliar (C3) o acortar con RecorteProyecto (C4).
         var advertencias = new List<string>();
         PlanRecorte? recorte = null;
+        IReadOnlyList<DescansoAgregado> descansos = [];
         if (fin > c.FechaFin)
         {
             actividades = [.. AmpliacionProyecto.Calcular(actividades, c.FechaFin, fin)];
@@ -155,6 +159,18 @@ public sealed class EdicionCabeceraValidador(ICatalogoErp erp)
             actividades = actividades.Where(a => !eliminadas.Contains(a.Id))
                 .Select(a => recortadas.TryGetValue(a.Id, out var nuevoFin) ? a with { FechaFin = nuevoFin } : a)
                 .ToList();
+
+            // H15 (TAREA-18b): el descanso posterior de los backs que quedan (recortados o no) se vuelve a insertar, como lo
+            // generaría el motor; el recorte lo borró por estar después de F.
+            var eliminados = recorte.PersonalEliminado.ToHashSet();
+            var nuevosFines = recorte.PersonalRecortado.ToDictionary(r => r.Id, r => r.FinNuevo);
+            descansos = DescansoBacksTrasRecorte.Calcular(fin, datos.Personal
+                .Where(p => p.Corte.Rol == RolCronograma.Back && !eliminados.Contains(p.Corte.Id))
+                .Select(p => new BackTrasRecorte(p.Corte.Id, p.Corte.Numero, p.Corte.EmpleadoId, p.Corte.FechaInicio,
+                    nuevosFines.GetValueOrDefault(p.Corte.Id, p.Corte.FechaFin),
+                    p.TipoRegistro == ProyectoPersonal.TipoRegistroDescanso ? TipoRegistroBack.Descanso : TipoRegistroBack.Jornada,
+                    p.DiasDescanso))
+                .ToList());
 
             // C4: el recorte elimina a todos los principales iniciales (no bloquea).
             if (datos.PrincipalesIniciales.Count > 0 && datos.PrincipalesIniciales.All(recorte.PersonalEliminado.Contains))
@@ -189,7 +205,7 @@ public sealed class EdicionCabeceraValidador(ICatalogoErp erp)
         var finales = actividades.Select(a => a.Id).ToHashSet();
         var actividadesEliminadas = datos.Actividades.Where(a => !finales.Contains(a.Id)).Select(a => a.Id).ToList();
 
-        var plan = new PlanCabecera(inicio, fin, cambiaInicio, cambiaFin, horarioNuevo, salida, regreso, cambiaAlmuerzo, recorte,
+        var plan = new PlanCabecera(inicio, fin, cambiaInicio, cambiaFin, horarioNuevo, salida, regreso, cambiaAlmuerzo, recorte, descansos,
             actividades, actividadesEliminadas, actividadNueva, advertencias);
         if (plan.SinCambios)
         {

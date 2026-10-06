@@ -40,7 +40,7 @@ public sealed class EdicionCabeceraServicio(
         var hoy = FechaNegocio.Hoy(reloj);
         var motivo = EdicionCabeceraValidador.MotivoNoEditable(c);
         var motivoInicio = EdicionCabeceraValidador.MotivoInicioNoEditable(c, hoy);
-        var vigente = ActividadVigente(datos.Actividades.Select(a => a.Corte), Maximo(hoy, c.FechaInicio));
+        var vigente = ActividadVigente.Elegir(datos.Actividades.Select(a => a.Corte), c.FechaInicio, c.FechaFin, hoy); // O3
 
         return new CabeceraDto(
             c.Id, c.Codigo, c.EstadoCodigo, motivo is null, motivo, c.GrupoCodigo, c.FechaInicio, c.FechaFin,
@@ -169,7 +169,7 @@ public sealed class EdicionCabeceraServicio(
 
         if (plan.ActividadNueva is { } nueva)
         {
-            var anterior = ActividadVigente(datos.Actividades.Select(a => a.Corte), nueva.FechaInicio);
+            var anterior = ActividadVigente.Elegir(datos.Actividades.Select(a => a.Corte), nueva.FechaInicio); // la vigente en "desde"
             cambios.Add(new CambioCampoDto("actividad", anterior?.Codigo, $"{nueva.Codigo} desde {Fecha(nueva.FechaInicio)}"));
         }
 
@@ -186,7 +186,18 @@ public sealed class EdicionCabeceraServicio(
         return new PrevisualizacionCabeceraDto(
             hoy, plan.TipoEtapa, plan.FechaInicio, plan.FechaFin, cambios,
             impacto?.DiasEliminados ?? [], impacto?.PersonalEliminado ?? [], impacto?.PersonalRecortado ?? [],
-            ActividadesResultantes(datos, plan), advertencias);
+            DiasAgregados(datos, plan), ActividadesResultantes(datos, plan), advertencias);
+    }
+
+    /// <summary>H15: días agregados por persona (desde / hasta / cantidad).</summary>
+    private static List<DiasAgregadosDto> DiasAgregados(DatosCabecera datos, PlanCabecera plan)
+    {
+        var personas = datos.Personal.ToDictionary(p => p.Corte.Id);
+        return plan.DescansosAgregados
+            .GroupBy(d => d.PersonalId)
+            .Select(g => new DiasAgregadosDto(VistaRecorte.Empleado(personas[g.Key]), "DESCANSO", g.Count(),
+                g.Min(d => d.Dia.Fecha), g.Max(d => d.Dia.Fecha)))
+            .ToList();
     }
 
     private static List<ActividadResultanteDto> ActividadesResultantes(DatosCabecera datos, PlanCabecera plan)
@@ -218,14 +229,23 @@ public sealed class EdicionCabeceraServicio(
             .Select(f => new ActividadModificada(f.Id, f.FechaInicio, f.FechaFin))
             .ToList();
 
-        // P3: actividad de la etapa = la vigente en max(hoy, inicio resultante), contando la nueva.
-        var finales = plan.ActividadesFinales.ToList();
-        if (plan.ActividadNueva is { } n)
+        // O2: la etapa CAMBIO_ACTIVIDAD lleva la actividad nueva. Las demás (EDICION_CABECERA), la regla común de etapas
+        // (O3): vigente en max(inicio, min(FechaCorte = hoy, fin)) con las fechas resultantes, contando la nueva.
+        string? actividadEtapa;
+        if (plan.TipoEtapa == EdicionCabeceraValidador.TipoCambioActividad)
         {
-            finales.Add(new ActividadCorte(0, n.Version, n.Codigo, n.FechaInicio, n.FechaFin));
+            actividadEtapa = plan.ActividadNueva!.Codigo;
         }
+        else
+        {
+            var finales = plan.ActividadesFinales.ToList();
+            if (plan.ActividadNueva is { } n)
+            {
+                finales.Add(new ActividadCorte(0, n.Version, n.Codigo, n.FechaInicio, n.FechaFin));
+            }
 
-        var actividadEtapa = ActividadVigente(finales, Maximo(c.Hoy, plan.FechaInicio))?.Codigo;
+            actividadEtapa = ActividadVigente.Elegir(finales, plan.FechaInicio, plan.FechaFin, c.Hoy)?.Codigo;
+        }
 
         var horario = plan.HorarioNuevo is { } h
             ? new HorarioNuevo(h.Codigo, Truncar(h.Descripcion, 200), h.HoraEntrada, h.HoraSalida, h.MinutosJornada, h.MinutosTrabajados,
@@ -235,19 +255,13 @@ public sealed class EdicionCabeceraServicio(
         // C7: estado sin cambios; fechas resultantes; corte = hoy; snapshot del personal resultante.
         return new CambioCabeceraAplicar(c.Datos.Cabecera.Id, version, plan.TipoEtapa, plan.FechaInicio, plan.FechaFin, c.Hoy,
             actividadEtapa, VistaRecorte.Snapshot(c.Datos.Personal, plan.Recorte), horario, plan.SalidaAlmuerzo, plan.RegresoAlmuerzo,
-            plan.Recorte, plan.ActividadesEliminadas, modificadas, plan.ActividadNueva);
+            plan.Recorte, plan.DescansosAgregados, plan.ActividadesEliminadas, modificadas, plan.ActividadNueva);
     }
 
     // ------------------------------------------------------------------ utilidades
 
-    /// <summary>Actividad vigente en la fecha: inicio ≤ fecha ≤ fin; si se solapan, la de mayor versión.</summary>
-    private static ActividadCorte? ActividadVigente(IEnumerable<ActividadCorte> actividades, DateOnly fecha) =>
-        actividades.Where(a => a.FechaInicio <= fecha && a.FechaFin >= fecha).OrderByDescending(a => a.Version).FirstOrDefault();
-
     private static ActividadCabeceraDto Actividad(ActividadGuardada a) =>
         new(a.Version, a.Codigo, a.Descripcion, a.Tipo, a.TipoMovimiento, a.FechaInicio, a.FechaFin);
-
-    private static DateOnly Maximo(DateOnly a, DateOnly b) => a >= b ? a : b;
 
     private static string Fecha(DateOnly fecha) => fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 

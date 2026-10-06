@@ -81,7 +81,7 @@ internal sealed class CambioEstadoRepositorio(ProfesiogramaDbContext db) : ICamb
             FechaInicio = cambio.FechaInicioProyecto,
             FechaFin = plan.Fecha,
             FechaCorte = plan.Fecha,
-            ActividadCodigo = plan.ActividadVigenteEnF,
+            ActividadCodigo = cambio.ActividadCodigo, // regla común ActividadVigente (O3), calculada por el servicio
             SnapshotPersonal = cambio.SnapshotPersonal,
         });
 

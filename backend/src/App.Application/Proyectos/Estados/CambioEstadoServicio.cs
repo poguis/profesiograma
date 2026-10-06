@@ -68,7 +68,8 @@ public sealed class CambioEstadoServicio(
                     MaquinaEstadosProyecto.CodigoTipoMovimiento(previo.Movimiento),
                     datos.FechaInicio,
                     calculo.Plan,
-                    CrearSnapshot(calculo)), ctTx);
+                    CrearSnapshot(calculo),
+                    ActividadEtapa(calculo)), ctTx);
 
                 return ResultadoCambioEstado.Hecho(new CambioEstadoRealizadoDto(datos.Id, previo.EstadoDestino, version));
             }
@@ -153,6 +154,19 @@ public sealed class CambioEstadoServicio(
             impacto.PersonalRecortado,
             impacto.ActividadesAfectadas,
             advertencias);
+    }
+
+    /// <summary>
+    /// E4 / O3 (TAREA-18b): actividad de la etapa con la regla común de etapas: vigente en max(inicio, min(F, F)) = F sobre
+    /// las actividades resultantes del recorte. Da lo mismo que RecorteProyecto.ActividadVigenteEnF (que se conserva).
+    /// </summary>
+    private static string? ActividadEtapa(Calculo c)
+    {
+        var eliminadas = c.Plan.ActividadesEliminadas.ToHashSet();
+        var recortadas = c.Plan.ActividadesRecortadas.ToDictionary(r => r.Id, r => r.FinNuevo);
+        var resultantes = c.Datos.Actividades.Where(a => !eliminadas.Contains(a.Id))
+            .Select(a => recortadas.TryGetValue(a.Id, out var fin) ? a with { FechaFin = fin } : a);
+        return ActividadVigente.Elegir(resultantes, c.Datos.FechaInicio, c.Fecha, c.Fecha)?.Codigo;
     }
 
     /// <summary>E4: snapshot del personal RESULTANTE (sin eliminados, fechas recortadas). Mismo formato que la creación.</summary>
