@@ -6,11 +6,12 @@ import {
   Spinner,
   Tab,
   TabList,
+  Text,
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { ArrowLeft20Regular, ArrowSwap20Regular } from '@fluentui/react-icons'
-import { useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft20Regular, ArrowSwap20Regular, Edit20Regular } from '@fluentui/react-icons'
+import { type UseQueryResult, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
@@ -19,9 +20,11 @@ import { mensajeExito, puedeCambiarEstado } from '../cambioEstado'
 import { clavesProyectos } from '../api'
 import { CabeceraProyecto } from '../components/CabeceraProyecto'
 import { DialogoCambioEstado } from '../components/DialogoCambioEstado'
+import { DialogoEditarCabecera } from '../components/DialogoEditarCabecera'
 import { TablaHistorial } from '../components/TablaHistorial'
 import { TablaPersonal } from '../components/TablaPersonal'
-import { useProyecto } from '../hooks'
+import { useCabecera, useProyecto } from '../hooks'
+import type { CabeceraEdicion } from '../tipos'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
 
 type Pestana = 'personal' | 'historial'
@@ -30,7 +33,11 @@ const useEstilos = makeStyles({
   pagina: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL },
   volver: { alignSelf: 'flex-start' },
   panel: { overflowX: 'auto' },
+  accion: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalS },
+  secundario: { color: tokens.colorNeutralForeground3 },
 })
+
+type Dialogo = 'estado' | 'cabecera' | null
 
 export function DetalleProyecto() {
   const estilos = useEstilos()
@@ -40,8 +47,10 @@ export function DetalleProyecto() {
   const numero = Number(id)
   const idValido = Number.isInteger(numero) && numero > 0
   const { data: proyecto, error, isPending } = useProyecto(numero)
+  // P3: la cabecera se consulta con el detalle para decidir "Editar datos generales"; su error no bloquea la página.
+  const cabecera = useCabecera(numero)
   const [pestana, setPestana] = useState<Pestana>('personal')
-  const [dialogoAbierto, setDialogoAbierto] = useState(false)
+  const [dialogo, setDialogo] = useState<Dialogo>(null)
   const [avisoCambio, setAvisoCambio] = useState<string>()
   const queryClient = useQueryClient()
 
@@ -52,6 +61,17 @@ export function DetalleProyecto() {
   const rutaListado = `/proyectos${busqueda}`
 
   const noEncontrado = !idValido || (error instanceof ErrorApi && error.tipo === 'noEncontrado')
+
+  const recargar = () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos })
+  const abrir = (cual: Dialogo) => {
+    setAvisoCambio(undefined)
+    setDialogo(cual)
+  }
+  const alRealizar = (mensaje: string) => {
+    setDialogo(null)
+    setAvisoCambio(mensaje)
+    setPestana('historial') // D2: la etapa nueva queda a la vista
+  }
 
   return (
     <section className={estilos.pagina}>
@@ -93,21 +113,18 @@ export function DetalleProyecto() {
             <CabeceraProyecto
               proyecto={proyecto}
               acciones={
-                puedeCambiarEstado(proyecto.estado.codigo) && (
-                  <Button
-                    icon={<ArrowSwap20Regular />}
-                    onClick={() => {
-                      setAvisoCambio(undefined)
-                      setDialogoAbierto(true)
-                    }}
-                  >
-                    Cambiar estado
-                  </Button>
-                )
+                <>
+                  <AccionEditarCabecera consulta={cabecera} onAbrir={() => abrir('cabecera')} />
+                  {puedeCambiarEstado(proyecto.estado.codigo) && (
+                    <Button icon={<ArrowSwap20Regular />} onClick={() => abrir('estado')}>
+                      Cambiar estado
+                    </Button>
+                  )}
+                </>
               }
             />
             {/* Si el estado deja de admitir cambios (p. ej. tras "Recargar"), el diálogo se cierra solo. */}
-            {dialogoAbierto && puedeCambiarEstado(proyecto.estado.codigo) && (
+            {dialogo === 'estado' && puedeCambiarEstado(proyecto.estado.codigo) && (
               <DialogoCambioEstado
                 proyecto={{
                   id: proyecto.id,
@@ -116,13 +133,27 @@ export function DetalleProyecto() {
                   fechaFin: proyecto.fechaFin,
                 }}
                 rutaListado={rutaListado}
-                onCerrar={() => setDialogoAbierto(false)}
-                onRealizado={(r) => {
-                  setDialogoAbierto(false)
-                  setAvisoCambio(mensajeExito(r.estado, r.version))
-                  setPestana('historial') // D2: la etapa nueva queda a la vista
+                onCerrar={() => setDialogo(null)}
+                onRealizado={(r) => alRealizar(mensajeExito(r.estado, r.version))}
+                onRecargar={recargar}
+              />
+            )}
+            {/* Igual: si tras "Recargar" el proyecto ya no se puede editar, el diálogo se cierra. */}
+            {dialogo === 'cabecera' && cabecera.data?.puedeEditar && (
+              <DialogoEditarCabecera
+                proyecto={{
+                  id: proyecto.id,
+                  companiaId: proyecto.compania.id,
+                  proyectoErpId: proyecto.erp.proyectoErpId,
                 }}
-                onRecargar={() => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos })}
+                cabecera={cabecera.data}
+                rutaListado={rutaListado}
+                onCerrar={() => setDialogo(null)}
+                onRealizado={alRealizar}
+                onRecargar={async () => {
+                  await recargar()
+                  return queryClient.getQueryData<CabeceraEdicion>(clavesProyectos.cabecera(proyecto.id))
+                }}
               />
             )}
             <TabList selectedValue={pestana} onTabSelect={(_, datos) => setPestana(datos.value as Pestana)}>
@@ -141,4 +172,45 @@ export function DetalleProyecto() {
       )}
     </section>
   )
+}
+
+/**
+ * P3: "Editar datos generales" habilitado si la cabecera dice puedeEditar; si no, deshabilitado con el motivo.
+ * Si la consulta falla, deshabilitado con aviso y "Reintentar" (el detalle se muestra igual).
+ */
+function AccionEditarCabecera({ consulta, onAbrir }: { consulta: UseQueryResult<CabeceraEdicion>; onAbrir: () => void }) {
+  const estilos = useEstilos()
+  const boton = (habilitado: boolean) => (
+    <Button icon={<Edit20Regular />} disabled={!habilitado} onClick={onAbrir}>
+      Editar datos generales
+    </Button>
+  )
+
+  if (consulta.isPending) {
+    return boton(false)
+  }
+  if (consulta.isError) {
+    return (
+      <span className={estilos.accion}>
+        {boton(false)}
+        <Text size={200} className={estilos.secundario}>
+          No se pudo verificar si el proyecto se puede editar.
+        </Text>
+        <Button size="small" disabled={consulta.isFetching} onClick={() => void consulta.refetch()}>
+          Reintentar
+        </Button>
+      </span>
+    )
+  }
+  if (!consulta.data.puedeEditar) {
+    return (
+      <span className={estilos.accion}>
+        {boton(false)}
+        <Text size={200} className={estilos.secundario}>
+          {consulta.data.motivo}
+        </Text>
+      </span>
+    )
+  }
+  return boton(true)
 }

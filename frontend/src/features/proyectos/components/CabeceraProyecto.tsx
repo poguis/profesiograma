@@ -107,7 +107,8 @@ export function CabeceraProyecto({ proyecto, acciones }: CabeceraProyectoProps) 
               <Dato etiqueta="Versión">{actividad.version}</Dato>
             </div>
           ) : (
-            <Text>Sin actividad registrada.</Text>
+            // O3: null = ninguna actividad cubre hoy (puede haber actividades fuera de esa fecha).
+            <Text>Sin actividad vigente.</Text>
           )}
         </Card>
 

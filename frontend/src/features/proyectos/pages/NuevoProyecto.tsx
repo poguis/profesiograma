@@ -34,6 +34,7 @@ import {
   SIN_ERRORES_SERVIDOR,
   type VistaPreviaFormulario,
   aSolicitud,
+  ayudaPrincipales,
   advertenciasFechas,
   clavesDelEnvio,
   crearEstadoInicial,
@@ -41,6 +42,7 @@ import {
   distribuirErrores,
   etiquetasPorEmpleado,
   limpiarErroresServidor,
+  puedeGenerarVistaPrevia,
   puedeRegistrar,
   reducerFormulario,
   tieneRangoProyecto,
@@ -254,6 +256,9 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
 
   const enviando = previsualizar.isPending || crear.isPending
   const vigente = vistaVigente(vista, estado.revision)
+  const habilitadoVistaPrevia = puedeGenerarVistaPrevia(estado, enviando)
+  // P6: ayuda neutra mientras falten principales; el error rojo solo con un 400 del servidor en `principales`.
+  const ayudaMinimo = ayudaPrincipales(estado)
 
   const puedeAgregar =
     buscador === 'principal'
@@ -297,6 +302,7 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
         advertencias={advertencias}
         errores={erroresFilas}
         errorSeccion={erroresServidor.secciones.principales}
+        ayuda={ayudaMinimo}
         onAgregar={() => setBuscador('principal')}
       />
 
@@ -362,7 +368,7 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
       )}
 
       <div className={estilos.barra}>
-        <Button icon={<Eye20Regular />} disabled={enviando} onClick={generarVistaPrevia}>
+        <Button icon={<Eye20Regular />} disabled={!habilitadoVistaPrevia} onClick={generarVistaPrevia}>
           {previsualizar.isPending ? 'Generando…' : 'Generar vista previa'}
         </Button>
         <Button
@@ -373,7 +379,9 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
         >
           {crear.isPending ? 'Registrando…' : 'Registrar'}
         </Button>
-        <Text size={200}>{motivoSinRegistro(vista, vigente, crear.isPending)}</Text>
+        <Text size={200}>
+          {ayudaMinimo !== undefined && !enviando ? ayudaMinimo : motivoSinRegistro(vista, vigente, crear.isPending)}
+        </Text>
       </div>
 
       <BuscadorEmpleados

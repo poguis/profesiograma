@@ -8,6 +8,8 @@ import {
   crearEstadoInicial,
   etiquetasPorEmpleado,
   numeroPrincipal,
+  ayudaPrincipales,
+  puedeGenerarVistaPrevia,
   reducerFormulario,
   validarCliente,
 } from './formularioProyecto'
@@ -287,5 +289,29 @@ describe('R4: validación del cliente (ayuda)', () => {
       { tipo: 'actualizarPrincipal', clave: 'p1', cambios: { fechaInicio: '2026-12-20', fechaFin: '2026-12-10' } },
     )
     expect(validarCliente(estado).filas.p1?.fechaFin).toBeDefined()
+  })
+})
+
+describe('P6: mínimo de principales (C10)', () => {
+  it('sin principales no se genera la vista previa', () => {
+    expect(puedeGenerarVistaPrevia(conCabeceraCampo(), false)).toBe(false)
+  })
+
+  it('con 1 principal sí, salvo durante un envío', () => {
+    const estado = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
+    expect(puedeGenerarVistaPrevia(estado, false)).toBe(true)
+    expect(puedeGenerarVistaPrevia(estado, true)).toBe(false)
+  })
+
+  it('ayuda neutra solo mientras falten principales', () => {
+    expect(ayudaPrincipales(conCabeceraCampo())).toBe('Agrega al menos 1 principal para generar la vista previa.')
+    const conUno = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
+    expect(ayudaPrincipales(conUno)).toBeUndefined()
+  })
+
+  it('al eliminar el único principal vuelve a bloquearse', () => {
+    const conUno = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
+    const sinNinguno = aplicar(conUno, { tipo: 'eliminarPrincipal', clave: conUno.principales[0].clave })
+    expect(puedeGenerarVistaPrevia(sinNinguno, false)).toBe(false)
   })
 })

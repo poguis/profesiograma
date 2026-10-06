@@ -40,6 +40,8 @@ export interface ListaPrincipalesProps {
   errores: Record<string, ErroresFila>
   /** Error de la lista completa (p. ej. máximo superado). */
   errorSeccion?: string
+  /** Ayuda neutra bajo la sección (P6: mínimo de principales). */
+  ayuda?: string
   onAgregar: () => void
 }
 
@@ -52,6 +54,7 @@ export function ListaPrincipales({
   advertencias,
   errores,
   errorSeccion,
+  ayuda,
   onAgregar,
 }: ListaPrincipalesProps) {
   const estilos = useEstilos()
@@ -75,7 +78,8 @@ export function ListaPrincipales({
         </MessageBar>
       )}
 
-      {principales.length === 0 && <Text size={200}>Sin principales (no son obligatorios).</Text>}
+      {principales.length === 0 && <Text size={200}>Sin principales.</Text>}
+      {ayuda && <Text size={200}>{ayuda}</Text>}
 
       {principales.map((p, i) => (
         <TarjetaPrincipal

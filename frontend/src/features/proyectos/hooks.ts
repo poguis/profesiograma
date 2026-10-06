@@ -13,13 +13,22 @@ import {
   listarHorariosErp,
   listarProyectos,
   listarProyectosErp,
+  obtenerCabecera,
   obtenerCatalogos,
   obtenerOpcionesFormulario,
   obtenerProyecto,
+  previsualizarCabecera,
   previsualizarCambioEstado,
   previsualizarProyecto,
+  registrarCabecera,
 } from './api'
-import type { Catalogos, FiltroEmpleados, FiltrosProyectos, SolicitudCambioEstado } from './tipos'
+import type {
+  Catalogos,
+  FiltroEmpleados,
+  FiltrosProyectos,
+  SolicitudCambioEstado,
+  SolicitudEditarCabecera,
+} from './tipos'
 
 /** Datos del ERP y del formulario: cambian poco; el servidor ya los cachea 5–10 min. */
 const VIGENCIA_DATOS_FORMULARIO_MS = 5 * 60_000
@@ -161,6 +170,31 @@ export function useAplicarCambioEstado(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudCambioEstado) => aplicarCambioEstado(id, solicitud),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+  })
+}
+
+// ------------------------------------------------------------------ Edición de cabecera (TAREA-19a)
+
+/** GET /api/proyectos/{id}/cabecera: se consulta con el detalle para decidir el botón "Editar datos generales" (P3). */
+export function useCabecera(id: number) {
+  return useQuery({
+    queryKey: clavesProyectos.cabecera(id),
+    queryFn: ({ signal }) => obtenerCabecera(id, signal),
+    enabled: Number.isInteger(id) && id > 0,
+  })
+}
+
+/** POST /api/proyectos/{id}/cabecera/previsualizar (no guarda; sin reintentos). */
+export function usePrevisualizarCabecera(id: number) {
+  return useMutation({ mutationFn: (solicitud: SolicitudEditarCabecera) => previsualizarCabecera(id, solicitud) })
+}
+
+/** POST /api/proyectos/{id}/cabecera. Al registrar, invalida detalle, cabecera y listados de proyectos. */
+export function useRegistrarCabecera(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudEditarCabecera) => registrarCabecera(id, solicitud),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
   })
 }

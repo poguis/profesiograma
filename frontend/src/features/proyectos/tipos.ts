@@ -382,3 +382,110 @@ export interface CambioEstadoRealizado {
   estado: string
   version: number
 }
+
+// ------------------------------------------------------------------ Edición de cabecera (TAREA-19a, contrato TAREA-18/18b)
+// Origen: backend/src/App.Application/Proyectos/Cabecera/EdicionCabeceraDtos.cs y EdicionCabeceraContratos.cs.
+
+/** ActividadCabeceraDto (ProyectoActividad con descripción y tipo del ERP). */
+export interface ActividadCabecera {
+  version: number
+  codigo: string
+  descripcion: string | null
+  tipo: string | null
+  tipoMovimiento: string
+  fechaInicio: string
+  fechaFin: string
+}
+
+/** PermisosCabeceraDto. fechaFinMinima = hoy (C4, P2); actividadEditable solo en grupos con proyecto ERP (C6). */
+export interface PermisosCabecera {
+  fechaInicioEditable: boolean
+  motivoFechaInicio: string | null
+  fechaFinMinima: string
+  actividadEditable: boolean
+}
+
+/**
+ * GET /api/proyectos/{id}/cabecera (CabeceraDto). Horas del horario "HH:mm:ss"; almuerzo "HH:mm".
+ * actividadVigente = regla común O3 con hoy; corte = hoy en Ecuador. No trae la compañía ni el proyecto ERP.
+ */
+export interface CabeceraEdicion {
+  id: number
+  codigo: string
+  estado: string
+  puedeEditar: boolean
+  motivo: string | null
+  grupo: string
+  fechaInicio: string
+  fechaFin: string
+  horario: { codigo: number | null; descripcion: string | null; horaEntrada: string | null; horaSalida: string | null }
+  salidaAlmuerzo: string | null
+  regresoAlmuerzo: string | null
+  actividadVigente: ActividadCabecera | null
+  /** Ordenadas por versión. */
+  actividades: ActividadCabecera[]
+  permisos: PermisosCabecera
+  opcionesAlmuerzo: { salida: string[]; regreso: string[] }
+  corte: string
+}
+
+/** Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar] (EditarCabeceraSolicitud). null = no cambia. */
+export interface SolicitudEditarCabecera {
+  fechaInicio: string | null
+  fechaFin: string | null
+  horarioCodigo: number | null
+  salidaAlmuerzo: string | null
+  regresoAlmuerzo: string | null
+  actividad: { actividadId: string | null; desde: string | null } | null
+}
+
+/** CambioCampoDto. campo = fechaInicio | fechaFin | horario | salidaAlmuerzo | regresoAlmuerzo | actividad. */
+export interface CambioCampoCabecera {
+  campo: string
+  anterior: string | null
+  nuevo: string | null
+}
+
+/** DiasAgregadosDto (H15): descanso posterior de un back que se vuelve a insertar tras el recorte. */
+export interface DiasAgregadosCabecera {
+  empleado: EmpleadoCambio
+  rol: string
+  cantidad: number
+  desde: string
+  hasta: string
+}
+
+export type AccionActividadResultante = 'SIN_CAMBIO' | 'MODIFICADA' | 'ELIMINADA' | 'NUEVA'
+
+/** ActividadResultanteDto. Fechas resultantes (en ELIMINADA, las que tenía); las anteriores solo en MODIFICADA. */
+export interface ActividadResultante {
+  version: number | null
+  codigo: string
+  descripcion: string | null
+  fechaInicio: string
+  fechaFin: string
+  fechaInicioAnterior: string | null
+  fechaFinAnterior: string | null
+  accion: AccionActividadResultante
+}
+
+/** 200 de POST /api/proyectos/{id}/cabecera/previsualizar (no guarda). tipoEtapa = EDICION_CABECERA | CAMBIO_ACTIVIDAD. */
+export interface PrevisualizacionCabecera {
+  corte: string
+  tipoEtapa: string
+  fechaInicioNueva: string
+  fechaFinNueva: string
+  cambios: CambioCampoCabecera[]
+  diasEliminados: DiasEliminadosCambio[]
+  personalEliminado: PersonaEliminadaCambio[]
+  personalRecortado: PersonaRecortadaCambio[]
+  diasAgregados: DiasAgregadosCabecera[]
+  actividades: ActividadResultante[]
+  advertencias: string[]
+}
+
+/** 200 de POST /api/proyectos/{id}/cabecera (CabeceraActualizadaDto). */
+export interface CabeceraActualizada {
+  id: number
+  version: number
+}

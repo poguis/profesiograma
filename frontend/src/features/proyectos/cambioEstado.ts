@@ -1,6 +1,6 @@
 // Diálogo "Cambiar estado" (TAREA-15). Lógica pura, sin React: se prueba con Vitest.
 // Las opciones replican la máquina de estados SOLO para la interfaz; el servidor decide (FASE_5_Estados_Proyecto §1).
-import type { TipoErrorApi } from '../../api/errores'
+import { type ErrorRespuesta, type ErroresDialogo, interpretarErrorDialogo, sinErrores } from './erroresDialogo'
 import type { DestinoCambioEstado, PrevisualizacionCambioEstado, SolicitudCambioEstado } from './tipos'
 
 export interface OpcionDestino {
@@ -114,58 +114,13 @@ export function mensajeExito(estado: string, version: number): string {
 
 // ------------------------------------------------------------------ errores (R5)
 
-export interface ErroresCambio {
-  campos: { estadoDestino?: string; fecha?: string }
-  /** Mensajes sin campo identificable (se muestran arriba del diálogo). */
-  generales: string[]
-  /** 400 y 409: botón "Recargar datos del proyecto" (los datos con que se abrió el diálogo pueden estar viejos). */
-  ofrecerRecarga: boolean
-  /** 503 y red: botón "Reintentar". */
-  ofrecerReintento: boolean
-  /** 404: mensaje y enlace al listado. */
-  noEncontrado: boolean
-}
+/** Campos del diálogo; todo 400 ofrece "Recargar datos del proyecto" (lógica común en erroresDialogo.ts). */
+export type ErroresCambio = ErroresDialogo<'estadoDestino' | 'fecha'>
 
-export const SIN_ERRORES_CAMBIO: ErroresCambio = {
-  campos: {},
-  generales: [],
-  ofrecerRecarga: false,
-  ofrecerReintento: false,
-  noEncontrado: false,
-}
+export const SIN_ERRORES_CAMBIO: ErroresCambio = sinErrores()
 
-/** Datos mínimos de un error de la API (ErrorApi los cumple). */
-export interface ErrorRespuesta {
-  tipo: TipoErrorApi
-  titulo: string
-  errores?: Record<string, string[]>
-}
+export type { ErrorRespuesta }
 
 export function interpretarErrorCambio(error: ErrorRespuesta): ErroresCambio {
-  switch (error.tipo) {
-    case 'validacion': {
-      const resultado: ErroresCambio = { ...SIN_ERRORES_CAMBIO, campos: {}, generales: [], ofrecerRecarga: true }
-      for (const [clave, mensajes] of Object.entries(error.errores ?? {})) {
-        const mensaje = mensajes.join(' ')
-        if (clave === 'estadoDestino' || clave === 'fecha') {
-          resultado.campos[clave] = mensaje
-        } else {
-          resultado.generales.push(mensaje)
-        }
-      }
-      if (!error.errores) {
-        resultado.generales.push(error.titulo)
-      }
-      return resultado
-    }
-    case 'conflicto':
-      return { ...SIN_ERRORES_CAMBIO, generales: [error.titulo], ofrecerRecarga: true }
-    case 'noDisponible':
-    case 'red':
-      return { ...SIN_ERRORES_CAMBIO, generales: [error.titulo], ofrecerReintento: true }
-    case 'noEncontrado':
-      return { ...SIN_ERRORES_CAMBIO, generales: ['El proyecto no existe o no tiene acceso.'], noEncontrado: true }
-    default:
-      return { ...SIN_ERRORES_CAMBIO, generales: [error.titulo] }
-  }
+  return interpretarErrorDialogo(error, { campos: ['estadoDestino', 'fecha'] })
 }

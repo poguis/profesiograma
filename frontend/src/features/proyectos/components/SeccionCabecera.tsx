@@ -2,8 +2,8 @@ import { Dropdown, Field, Option, Text, makeStyles, tokens } from '@fluentui/rea
 import { type Dispatch, useState } from 'react'
 import { ErrorApi } from '../../../api/errores'
 import { SelectorFecha } from '../../../components/SelectorFecha'
-import { formatearHora } from '../../../utils/formato'
 import type { AccionFormulario, CabeceraFormulario, CampoCabecera } from '../formularioProyecto'
+import { textoHorario } from '../textos'
 import { useActividadesErp, useDimensionesErp, useProyectosErp } from '../hooks'
 import type { CompaniaErp, GrupoProyectoCatalogo, HorarioErp, OpcionesFormularioProyecto } from '../tipos'
 
@@ -258,13 +258,6 @@ export function SeccionCabecera({ cabecera, dispatch, grupos, companias, horario
 
 function nombreCompania(c: CompaniaErp) {
   return c.nombreCorto ?? c.nombre
-}
-
-/** Las horas del ERP llegan "HH:mm:ss": solo se muestran (formatearHora), no entran al formulario. */
-function textoHorario(h: HorarioErp) {
-  const entrada = formatearHora(h.horaEntrada)
-  const salida = formatearHora(h.horaSalida)
-  return entrada && salida ? `${h.descripcion} · ${entrada}–${salida}` : h.descripcion
 }
 
 function mensajeCarga(error: Error | null): string | undefined {

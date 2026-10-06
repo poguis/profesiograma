@@ -3,6 +3,8 @@ import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
   ActividadErp,
+  CabeceraActualizada,
+  CabeceraEdicion,
   CambioEstadoRealizado,
   Catalogos,
   CompaniaErp,
@@ -13,6 +15,7 @@ import type {
   HorarioErp,
   OpcionesFormularioProyecto,
   Previsualizacion,
+  PrevisualizacionCabecera,
   PrevisualizacionCambioEstado,
   ProyectoCreado,
   ProyectoDetalle,
@@ -20,12 +23,15 @@ import type {
   ProyectoResumen,
   SolicitudCambioEstado,
   SolicitudCrearProyecto,
+  SolicitudEditarCabecera,
 } from './tipos'
 
 export const clavesProyectos = {
   todos: ['proyectos'] as const,
   listado: (filtros: FiltrosProyectos) => ['proyectos', 'listado', filtros] as const,
   detalle: (id: number) => ['proyectos', 'detalle', id] as const,
+  /** Bajo 'proyectos': invalidar `todos` tras un cambio también recarga la cabecera. */
+  cabecera: (id: number) => ['proyectos', 'cabecera', id] as const,
   catalogos: ['catalogos'] as const,
   opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
 }
@@ -113,4 +119,19 @@ export function previsualizarCambioEstado(id: number, solicitud: SolicitudCambio
 /** Aplica la suspensión o el cierre: 200 { id, estado, version }; 400 / 404 / 409 / 503. */
 export function aplicarCambioEstado(id: number, solicitud: SolicitudCambioEstado) {
   return apiPost<SolicitudCambioEstado, CambioEstadoRealizado>(`/proyectos/${id}/cambio-estado`, solicitud)
+}
+
+/** Datos del formulario "Editar datos generales": permisos, actividades y opciones de almuerzo. 404 si no es visible. */
+export function obtenerCabecera(id: number, signal?: AbortSignal) {
+  return apiGet<CabeceraEdicion>(`/proyectos/${id}/cabecera`, { signal })
+}
+
+/** Impacto de editar la cabecera (no guarda). 400 / 404 / 409 / 503. */
+export function previsualizarCabecera(id: number, solicitud: SolicitudEditarCabecera) {
+  return apiPost<SolicitudEditarCabecera, PrevisualizacionCabecera>(`/proyectos/${id}/cabecera/previsualizar`, solicitud)
+}
+
+/** Registra la edición: 200 { id, version }; 400 / 404 / 409 / 503. */
+export function registrarCabecera(id: number, solicitud: SolicitudEditarCabecera) {
+  return apiPost<SolicitudEditarCabecera, CabeceraActualizada>(`/proyectos/${id}/cabecera`, solicitud)
 }

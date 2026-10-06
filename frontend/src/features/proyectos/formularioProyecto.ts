@@ -530,6 +530,21 @@ export function vistaVigente(vista: VistaPreviaFormulario | null, revision: numb
   return vista !== null && vista.revision === revision
 }
 
+/** C10 (TAREA-18): mínimo de principales. El error ("Se requiere al menos 1 principal(es).") solo llega en un 400. */
+export const MINIMO_PRINCIPALES = 1
+
+/** P6: ayuda neutra (no error) mientras falten principales; undefined si ya se cumple el mínimo. */
+export function ayudaPrincipales(estado: EstadoFormulario): string | undefined {
+  return estado.principales.length < MINIMO_PRINCIPALES
+    ? `Agrega al menos ${MINIMO_PRINCIPALES} principal para generar la vista previa.`
+    : undefined
+}
+
+/** P6 (TAREA-19a): sin el mínimo de principales no se genera la vista previa (y por tanto no se registra). */
+export function puedeGenerarVistaPrevia(estado: EstadoFormulario, enviando: boolean): boolean {
+  return !enviando && estado.principales.length >= MINIMO_PRINCIPALES
+}
+
 /** R12: "Registrar" solo con una vista previa vigente, sin cruces y sin un envío en curso. */
 export function puedeRegistrar(vista: VistaPreviaFormulario | null, revision: number, enviando: boolean): boolean {
   return !enviando && vistaVigente(vista, revision) && vista!.datos.cruces.length === 0
