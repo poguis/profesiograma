@@ -6,7 +6,8 @@ namespace App.Application.Proyectos.Personal;
 
 public sealed record EmpleadoEdicionDto(int Id, string CodigoEkon, string NombreCompleto);
 
-public sealed record LimitesEdicionDto(int MaxPrincipales, int MaxBacks, int BackMaxDiasDescanso);
+/// <param name="ExigePrincipal">Parametro PROYECTO_EXIGE_PRINCIPAL (TAREA-19y).</param>
+public sealed record LimitesEdicionDto(int MaxPrincipales, int MaxBacks, int BackMaxDiasDescanso, bool ExigePrincipal);
 
 /// <summary>Qué se puede editar de una persona. Históricos: todo false / null.</summary>
 /// <param name="FechaInicio">Solo vigentes que aún no empiezan (inicio ≥ corte).</param>

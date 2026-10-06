@@ -112,7 +112,9 @@ public class CrearProyectoConsultasSqlTests(ITestOutputHelper salida) : BaseSql(
     {
         Assert.Contains("[Codigo] = @", Sql(DatosReferenciaProyecto.ConsultaGrupo(Db, "CAMPO")));
         Assert.Contains("[Activo] = CAST(1 AS bit)", Sql(DatosReferenciaProyecto.ConsultaJornadas(Db)));
-        Assert.Contains("[Clave] IN (", Sql(DatosReferenciaProyecto.ConsultaLimites(Db)));
+        var limites = Sql(DatosReferenciaProyecto.ConsultaLimites(Db));
+        Assert.Contains("[Clave] IN (", limites);
+        Assert.Contains("PROYECTO_EXIGE_PRINCIPAL", limites); // TAREA-19y
         var empleados = Sql(DatosReferenciaProyecto.ConsultaEmpleadosActivos(Db, [6, 7, 8]));
         Assert.Contains("[EstadoErp] = 'A'", empleados);
         Assert.DoesNotContain("[Cedula]", empleados);

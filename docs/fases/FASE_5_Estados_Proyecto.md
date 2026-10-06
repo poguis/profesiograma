@@ -141,8 +141,8 @@ Cuerpo: `{ fecha, fechaFin, principales: [{ clave, empleadoId, jornada, fechaIni
 | R2 | Fecha R obligatoria: `FechaFin actual < R ≤ fechaFin`. R futura permitida sin advertencia |
 | R3 | R anterior a hoy en Ecuador: se permite con la advertencia "Se generarán días ya transcurridos." |
 | R4 | (H5) `fechaFin` pasa a ser la `FechaFin` del proyecto, que queda ACTIVO |
-| R5 | Corte C = R. **Todo** el personal guardado es histórico y entra al motor con `ForzarHistorica = true` (resuelve el pendiente 23 y H10). Personas nuevas: `ReglasPersonal` (mismos mensajes), inicio ≥ R, RN08 sobre (inicio del proyecto, `fechaFin`), empleado activo, número máx + 1 por rol sobre todo el personal guardado, máximos 20/20 sobre las nuevas, al menos 1 principal |
-| R6 | (H4) El primer principal del cuerpo empieza exactamente en R y se guarda con `EsPrincipalInicial = true`. No se desmarca el anterior: un inicial por periodo; el responsable es el inicial con mayor `FechaFin` (como `vwProyectoResumen`) |
+| R5 | Corte C = R. **Todo** el personal guardado es histórico y entra al motor con `ForzarHistorica = true` (resuelve el pendiente 23 y H10). Personas nuevas: `ReglasPersonal` (mismos mensajes), inicio ≥ R, RN08 sobre (inicio del proyecto, `fechaFin`), empleado activo, número máx + 1 por rol sobre todo el personal guardado, máximos 20/20 sobre las nuevas, al menos 1 principal. **TAREA-19y:** al menos 1 persona nueva (principal o back) → si no, 400 `personal`; con `PROYECTO_EXIGE_PRINCIPAL = 1`, al menos 1 principal → 400 `principales` (§10) |
+| R6 | (H4) El primer principal del cuerpo empieza exactamente en R y se guarda con `EsPrincipalInicial = true`. No se desmarca el anterior: un inicial por periodo; el responsable es el inicial con mayor `FechaFin` (como `vwProyectoResumen`). **TAREA-19y:** solo con backs, al menos uno empieza en R (400 `backs` "Al menos un back debe empezar en la fecha de reactivación (dd/MM/yyyy).") y no hay inicial nuevo |
 | R7 | Propuesta del GET: el principal inicial con mayor `FechaFin`. Si no hay ninguno, el principal con mayor `FechaFin` con la advertencia "El proyecto no tiene principal inicial; se propone el último principal.". Empleado inactivo: se propone con "El empleado del principal propuesto no está activo; elige otro principal." (el registro lo rechaza). Sin principales: null con "El proyecto no tiene principales; agrega uno.". Solo si `puedeReactivar` |
 | R8 | (H11) Si hay una actividad vigente en la fecha de suspensión (la `FechaFin` actual; la de mayor versión), se crea una fila nueva en `ProyectoActividad`: `TipoMovimiento` REACTIVACION, mismo código, descripción y tipo, de R a `fechaFin`, versión máx + 1. Sin actividad no se crea nada. Las filas existentes no cambian |
 | R9 | Etapa REACTIVACION, estado ACTIVO, `FechaInicio` = R, `FechaFin` = `fechaFin`, `FechaCorte` = R, actividad vigente en R (la nueva), snapshot del personal resultante (históricas incluidas) |
@@ -229,3 +229,17 @@ de la misma petición.
   estado cambió) conserva su 409 "El proyecto cambió de estado; vuelve a cargarlo." (`EstadoCambio.Conflicto`).
 - Reactivación (§8): `GET …/reactivacion` y `POST …/reactivacion/previsualizar` devuelven `versionProyecto`;
   `POST …/reactivacion` lo exige (409 `Cambiado`; el 409 con `extensions.cruces` sigue siendo el de cruces).
+
+## 10. Reactivación solo con backs (TAREA-19y, pendiente 33)
+
+- **R5:** al menos 1 persona nueva (principal o back), porque todo el personal guardado queda histórico. Con
+  `PROYECTO_EXIGE_PRINCIPAL = 1` vuelve "Se requiere al menos 1 principal(es)." (`principales`).
+- **R6:** con principales nuevos, el primero empieza en R y es el inicial (como antes). Solo con backs, al menos uno
+  empieza en R; si no, 400 `backs`. Sin principales nuevos no hay inicial nuevo: el responsable sigue siendo el inicial
+  histórico, si lo hay.
+- **R7 sin cambios:** la propuesta del GET sigue siendo el principal (inicial → último); sin principales, null con
+  "El proyecto no tiene principales; agrega uno." (no propone backs).
+- **Advertencia** (no bloquea): "El proyecto no tendrá principal: el responsable quedará vacío." si no hay principales
+  nuevos ni principal inicial histórico.
+- **Corrección:** `ReactivacionServicio.CrearCambio` usaba `c.Plan.Principales[0]` (fallaba con solo backs);
+  `ReactivacionAplicar.ClavePrincipalInicial` pasa a ser anulable (null = sin inicial nuevo).

@@ -139,6 +139,8 @@ export interface OpcionesFormularioProyecto {
   maxPrincipales: number
   maxBacks: number
   backMaxDiasDescanso: number
+  /** PROYECTO_EXIGE_PRINCIPAL (TAREA-19y): true = al menos 1 principal (C10); false = al menos 1 persona. */
+  exigePrincipal: boolean
 }
 
 /** GET /api/erp/companias */
@@ -299,6 +301,8 @@ export interface Previsualizacion {
   diasPorPersona: DiasPersona[]
   cruces: CruceAsignacion[]
   resumen: ResumenCruce[]
+  /** TAREA-19y: avisos que no bloquean (p. ej. "El proyecto no tendrá principal: el responsable quedará vacío."). */
+  advertencias: string[]
 }
 
 /** 201 de POST /api/proyectos */
@@ -517,6 +521,8 @@ export interface LimitesEdicion {
   maxPrincipales: number
   maxBacks: number
   backMaxDiasDescanso: number
+  /** PROYECTO_EXIGE_PRINCIPAL (TAREA-19y). */
+  exigePrincipal: boolean
 }
 
 /** PermisosEdicionDto. Históricos: todo false / null. */

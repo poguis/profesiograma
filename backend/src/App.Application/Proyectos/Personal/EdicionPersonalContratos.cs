@@ -85,13 +85,15 @@ public sealed record ActividadNueva(
 /// <summary>
 /// Parte propia de la REACTIVACION (TAREA-17b): principal inicial nuevo (R6), proyecto ACTIVO con la nueva fecha fin
 /// (R4, H5) y la actividad nueva (R8, null si no había actividad vigente en la fecha de suspensión).
+/// ClavePrincipalInicial = null cuando la reactivación solo tiene backs (TAREA-19y).
 /// </summary>
-public sealed record ReactivacionAplicar(string ClavePrincipalInicial, DateOnly FechaFinProyecto, ActividadNueva? Actividad);
+public sealed record ReactivacionAplicar(string? ClavePrincipalInicial, DateOnly FechaFinProyecto, ActividadNueva? Actividad);
 
 /// <summary>
 /// Todo lo que se escribe en la transacción (recalculado dentro del applock).
 /// FechaInicioProyecto / FechaFinProyecto son las fechas de la etapa (en la reactivación: R y la nueva fecha fin).
-/// Reactivacion = null en ACTUALIZACION_PERSONAL.
+/// Reactivacion = null en ACTUALIZACION_PERSONAL. ClaveInicialNueva: P3 de la TAREA-19y (primer principal nuevo que se
+/// guarda como inicial en la actualización de personal; null = ninguno).
 /// </summary>
 public sealed record CambioPersonal(
     int ProyectoId,
@@ -106,7 +108,8 @@ public sealed record CambioPersonal(
     IReadOnlyList<PersonaNueva> Nuevas,
     IReadOnlyList<int> Eliminadas,
     IReadOnlyList<DiaParaInsertar> Dias,
-    ReactivacionAplicar? Reactivacion = null);
+    ReactivacionAplicar? Reactivacion = null,
+    string? ClaveInicialNueva = null);
 
 public interface IEdicionPersonalRepositorio
 {

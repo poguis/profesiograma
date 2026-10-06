@@ -14,8 +14,11 @@ public sealed record EmpleadoRef(int Id, string CodigoEkon, string NombreComplet
 
 public sealed record DepartamentoRef(int Id, string Nombre);
 
-/// <summary>Límites desde Parametro: PROYECTO_MAX_PRINCIPALES, PROYECTO_MAX_BACKS, BACK_MAX_DIAS_DESCANSO.</summary>
-public sealed record LimitesProyecto(int MaxPrincipales, int MaxBacks, int MaxDiasDescansoBack);
+/// <summary>
+/// Límites desde Parametro: PROYECTO_MAX_PRINCIPALES, PROYECTO_MAX_BACKS, BACK_MAX_DIAS_DESCANSO y
+/// PROYECTO_EXIGE_PRINCIPAL (TAREA-19y: true = al menos 1 principal, C10; false = al menos 1 persona).
+/// </summary>
+public sealed record LimitesProyecto(int MaxPrincipales, int MaxBacks, int MaxDiasDescansoBack, bool ExigePrincipal = false);
 
 public interface IDatosReferenciaProyecto
 {

@@ -50,7 +50,7 @@ public class EdicionPersonalServicioTests
         Assert.Equal("HISTORICO", d.Personal.Single(p => p.Id == 92).Clase);
         Assert.Equal(new PermisosEdicionDto(false, null, false, false), d.Personal.Single(p => p.Id == 92).Permisos);
         Assert.Equal(new PermisosEdicionDto(true, new DateOnly(2026, 10, 1), false, true), d.Personal.Single(p => p.Id == 93).Permisos);
-        Assert.Equal(new LimitesEdicionDto(20, 20, 20), d.Limites);
+        Assert.Equal(new LimitesEdicionDto(20, 20, 20, false), d.Limites);
         Assert.Equal(3, e.Repo.Lecturas[0].Propietario); // gestor: visibilidad R1
     }
 

@@ -12,13 +12,15 @@ namespace App.Application.Proyectos.Crear;
 /// <param name="MaxPrincipales">Parametro PROYECTO_MAX_PRINCIPALES.</param>
 /// <param name="MaxBacks">Parametro PROYECTO_MAX_BACKS.</param>
 /// <param name="BackMaxDiasDescanso">Parametro BACK_MAX_DIAS_DESCANSO.</param>
+/// <param name="ExigePrincipal">Parametro PROYECTO_EXIGE_PRINCIPAL (TAREA-19y).</param>
 public sealed record OpcionesFormularioProyectoDto(
     IReadOnlyList<DepartamentoRef> Departamentos,
     IReadOnlyList<string> AlmuerzoSalidaOpciones,
     IReadOnlyList<string> AlmuerzoRegresoOpciones,
     int MaxPrincipales,
     int MaxBacks,
-    int BackMaxDiasDescanso);
+    int BackMaxDiasDescanso,
+    bool ExigePrincipal);
 
 public sealed class OpcionesFormularioProyectoServicio(IDatosReferenciaProyecto datos, IUsuarioActual usuario)
 {
@@ -36,6 +38,7 @@ public sealed class OpcionesFormularioProyectoServicio(IDatosReferenciaProyecto 
             ReglasAlmuerzo.OpcionesRegreso,
             limites.MaxPrincipales,
             limites.MaxBacks,
-            limites.MaxDiasDescansoBack);
+            limites.MaxDiasDescansoBack,
+            limites.ExigePrincipal);
     }
 }

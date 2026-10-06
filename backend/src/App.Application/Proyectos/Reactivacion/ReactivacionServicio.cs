@@ -60,7 +60,7 @@ public sealed class ReactivacionServicio(
             proyecto.Personal.Select(p => new PersonaReactivacionDto(
                 p.Id, CalculadorCruces.NombreRol(p.Rol), p.Numero, CalculoPersonal.Empleado(p), p.JornadaCodigo, p.FechaInicio, p.FechaFin,
                 p.TipoRegistro, p.DiasDescanso, p.EsPrincipalInicial)).ToList(),
-            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack),
+            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack, limites.ExigePrincipal),
             advertencias,
             version);
     }
@@ -235,6 +235,12 @@ public sealed class ReactivacionServicio(
             advertencias.Add(AdvertenciaDiasTranscurridos); // R3
         }
 
+        // TAREA-19y: sin principales nuevos y sin principal inicial histórico, el responsable quedará vacío.
+        if (plan.Principales.Count == 0 && !proyecto.Personal.Any(p => p.Rol == RolCronograma.Principal && p.EsPrincipalInicial))
+        {
+            advertencias.Add(MinimoPersonal.AdvertenciaSinPrincipal);
+        }
+
         var previsualizacion = new PrevisualizacionReactivacionDto(
             reactivacion, proyecto.FechaFin, fechaFin, actividad,
             CalculoPersonal.Personas(plan), calculo.Tramos, calculo.Cruces, CalculadorCruces.Resumen(calculo.Cruces), advertencias,
@@ -266,7 +272,8 @@ public sealed class ReactivacionServicio(
         var actividadEtapa = ActividadVigente.Elegir(actividades, c.Datos.FechaInicio, c.FechaFin, c.Reactivacion)?.Codigo;
         return new CambioPersonal(c.Datos.Id, c.Reactivacion, version, TipoMovimiento, c.Reactivacion, c.FechaFin, actividadEtapa,
             CalculoPersonal.Snapshot(c.Plan), vigentes, nuevas, [], CalculoPersonal.Dias(c.Regeneracion),
-            new ReactivacionAplicar(c.Plan.Principales[0].Clave, c.FechaFin, actividad));
+            // R6: el primer principal nuevo es el inicial; solo con backs no hay inicial nuevo (TAREA-19y, antes fallaba).
+            new ReactivacionAplicar(c.Plan.Principales.FirstOrDefault()?.Clave, c.FechaFin, actividad));
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

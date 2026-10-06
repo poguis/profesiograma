@@ -22,6 +22,7 @@ const useEstilos = makeStyles({
     cursor: 'pointer',
     ':focus-visible': { outline: `${tokens.strokeWidthThick} solid ${tokens.colorStrokeFocus2}` },
   },
+  secundario: { color: tokens.colorNeutralForeground3 },
 })
 
 function horario(p: ProyectoResumen): string {
@@ -49,11 +50,16 @@ export function TablaProyectos({ proyectos, onAbrir }: TablaProyectosProps) {
       }),
       createTableColumn({ columnId: 'inicio', renderHeaderCell: () => 'Inicio', renderCell: (p) => formatearFecha(p.fechaInicio) }),
       createTableColumn({ columnId: 'fin', renderHeaderCell: () => 'Fin', renderCell: (p) => formatearFecha(p.fechaFin) }),
-      createTableColumn({ columnId: 'responsable', renderHeaderCell: () => 'Responsable', renderCell: (p) => p.responsable ?? '—' }),
+      // TAREA-19y: sin principal inicial (proyecto solo con backs, o sin inicial) el responsable es null.
+      createTableColumn({
+        columnId: 'responsable',
+        renderHeaderCell: () => 'Responsable',
+        renderCell: (p) => p.responsable ?? <span className={estilos.secundario}>Sin responsable</span>,
+      }),
       createTableColumn({ columnId: 'backs', renderHeaderCell: () => 'Backs', renderCell: (p) => <CeldaBacks backs={p.backs} /> }),
       createTableColumn({ columnId: 'horario', renderHeaderCell: () => 'Horario', renderCell: (p) => horario(p) }),
     ],
-    [nombres],
+    [nombres, estilos.secundario],
   )
 
   return (

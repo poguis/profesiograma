@@ -60,7 +60,7 @@ public sealed class EdicionPersonalServicio(
                         : new PermisosEdicionDto(p.FechaInicio >= corte, corte.AddDays(-1), p.Rol == RolCronograma.Principal,
                             p.FechaInicio >= corte));
             }).ToList(),
-            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack),
+            new LimitesEdicionDto(limites.MaxPrincipales, limites.MaxBacks, limites.MaxDiasDescansoBack, limites.ExigePrincipal),
             version);
     }
 
@@ -200,6 +200,12 @@ public sealed class EdicionPersonalServicio(
             advertencias.Add($"Se generarán días anteriores al corte ({ReglasPersonal.Formato(corte)}) para el personal nuevo."); // E5 (M1)
         }
 
+        // TAREA-19y: el proyecto resultante no tendrá principal inicial (responsable vacío). No bloquea.
+        if (CalculoPersonal.QuedaSinResponsable(proyecto, plan))
+        {
+            advertencias.Add(MinimoPersonal.AdvertenciaSinPrincipal);
+        }
+
         // C9: sin cambios = todas las personas enviadas SIN_CAMBIO, ninguna nueva y ninguna eliminada.
         var sinCambios = plan.Eliminadas.Count == 0
                          && plan.Principales.Concat(plan.Backs).All(p => !p.EsNueva && p.Accion == EdicionPersonalValidador.SinCambio);
@@ -228,7 +234,8 @@ public sealed class EdicionPersonalServicio(
         return new CambioPersonal(c.Datos.Id, c.Corte, version, TipoMovimiento, c.Datos.FechaInicio, c.Datos.FechaFin,
             ActividadVigente.Elegir(c.Datos.Actividades, c.Datos.FechaInicio, c.Datos.FechaFin, c.Corte)?.Codigo, // O3: regla de etapas
             CalculoPersonal.Snapshot(c.Plan),
-            vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion));
+            vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion),
+            ClaveInicialNueva: CalculoPersonal.ClaveInicialNueva(c.Datos, c.Plan)); // P3 (TAREA-19y)
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

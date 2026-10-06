@@ -21,13 +21,13 @@ public class ReactivacionServicioTests
         CrucesEdicionFalsos Cruces, TransaccionFalsa Tx);
 
     private static Entorno Crear(RepositorioEdicionFalso? repo = null, CrucesEdicionFalsos? cruces = null, IUsuarioActual? usuario = null,
-        DateTimeOffset? ahora = null, bool conActividad = true)
+        DateTimeOffset? ahora = null, bool conActividad = true, DatosFalsos? datos = null)
     {
         repo ??= new RepositorioEdicionFalso(Proyecto());
         cruces ??= new CrucesEdicionFalsos();
         var repoReactivacion = new RepositorioReactivacionFalso(conActividad ? Actividad : null);
         var tx = new TransaccionFalsa();
-        var servicio = new ReactivacionServicio(repo, repoReactivacion, new DatosFalsos(), cruces, new ReactivacionValidador(), tx,
+        var servicio = new ReactivacionServicio(repo, repoReactivacion, datos ?? new DatosFalsos(), cruces, new ReactivacionValidador(), tx,
             usuario ?? new UsuarioFalso(), new RelojFijo(ahora ?? Ahora));
         return new Entorno(servicio, repo, repoReactivacion, cruces, tx);
     }
@@ -60,7 +60,7 @@ public class ReactivacionServicioTests
         Assert.Equal([101, 102], d.Personal.Select(p => p.Id));
         Assert.True(d.Personal[0].EsPrincipalInicial);
         Assert.Empty(d.Advertencias);
-        Assert.Equal(new LimitesEdicionDto(20, 20, 20), d.Limites);
+        Assert.Equal(new LimitesEdicionDto(20, 20, 20, false), d.Limites);
         Assert.Equal(3, e.Repo.Lecturas[0].Propietario); // gestor: visibilidad R1
     }
 
@@ -193,7 +193,11 @@ public class ReactivacionServicioTests
     [Fact]
     public async Task SinPrincipales_400()
     {
-        var e = await Errores(Cuerpo(principales: []));
+        // TAREA-19y: R5 con PROYECTO_EXIGE_PRINCIPAL = 1 (ajuste aprobado: solo la preparación).
+        var r = await Crear(datos: new DatosFalsos { Limites = new(20, 20, 20, ExigePrincipal: true) })
+            .Servicio.PrevisualizarAsync(ProyectoId, Cuerpo(principales: []), Ct);
+        Assert.Equal(EstadoEdicion.Invalido, r.Estado);
+        var e = r.Errores!;
         Assert.Equal(["Se requiere al menos 1 principal(es)."], e["principales"]);
     }
 

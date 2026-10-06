@@ -103,7 +103,8 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
             JornadaId = n.JornadaId,
             DiasTrabajo = n.DiasTrabajo,
             DiasDescanso = n.DiasDescanso,
-            EsPrincipalInicial = cambio.Reactivacion?.ClavePrincipalInicial == n.Clave, // D6; reactivación: R6 (H4)
+            // D6 + P3 (TAREA-19y): inicial solo la clave indicada; reactivación: R6 (H4), null si solo hay backs.
+            EsPrincipalInicial = n.Clave == (cambio.Reactivacion is { } r ? r.ClavePrincipalInicial : cambio.ClaveInicialNueva),
             TipoRegistro = n.TipoRegistro,
             Observacion = n.Observacion,
             PrincipalRelacionadoId = n.Relacion.Id,

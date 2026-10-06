@@ -51,6 +51,18 @@ export function VistaPrevia({ datos }: { datos: Previsualizacion }) {
         {totalDias} días asignados
       </Text>
 
+      {/* TAREA-19y: avisos que no bloquean (p. ej. proyecto sin principal). */}
+      {datos.advertencias.length > 0 && (
+        <MessageBar intent="warning">
+          <MessageBarBody>
+            <MessageBarTitle>Advertencias</MessageBarTitle>
+            {datos.advertencias.map((a) => (
+              <div key={a}>{a}</div>
+            ))}
+          </MessageBarBody>
+        </MessageBar>
+      )}
+
       {datos.cruces.length > 0 ? (
         <>
           <MessageBar intent="error">

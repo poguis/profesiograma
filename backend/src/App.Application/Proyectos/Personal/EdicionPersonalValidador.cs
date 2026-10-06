@@ -65,8 +65,23 @@ public sealed class EdicionPersonalValidador
             return Invalido(e);
         }
 
-        return ValidarPersonal(s, proyecto, new ReglasValidacionPersonal(corte, (proyecto.FechaInicio, proyecto.FechaFin), Reactivacion: false),
+        var resultado = ValidarPersonal(s, proyecto,
+            new ReglasValidacionPersonal(corte, (proyecto.FechaInicio, proyecto.FechaFin), Reactivacion: false),
             jornadas, limites, empleadosActivos);
+
+        // TAREA-19y (P1): mínimo sobre el personal RESULTANTE = históricas + vigentes enviadas + nuevas (sin eliminadas).
+        // Las históricas cuentan: un proyecto puede quedar sin personal futuro de forma legítima.
+        if (resultado.Plan is { } plan && MinimoPersonal.Validar(
+                plan.Historicas.Count(h => h.Rol == RolCronograma.Principal) + plan.Principales.Count,
+                plan.Historicas.Count(h => h.Rol == RolCronograma.Back) + plan.Backs.Count,
+                limites.ExigePrincipal) is { } minimo)
+        {
+            var e = new Dictionary<string, List<string>>();
+            Agregar(e, minimo.Clave, minimo.Mensaje);
+            return Invalido(e);
+        }
+
+        return resultado;
     }
 
     /// <summary>

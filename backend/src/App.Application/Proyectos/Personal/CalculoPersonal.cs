@@ -98,6 +98,27 @@ internal static class CalculoPersonal
         return (vigentes, nuevas);
     }
 
+    /// <summary>
+    /// P3 (TAREA-19y, ajusta D6) para la actualización de personal: si ningún principal guardado que permanece (no
+    /// eliminado) es EsPrincipalInicial, el PRIMER principal nuevo del cuerpo se guarda como inicial (y pasa a ser el
+    /// responsable). Con un inicial guardado, las nuevas no son iniciales (D6, como antes). null = ninguna nueva es inicial.
+    /// </summary>
+    public static string? ClaveInicialNueva(DatosEdicion datos, PlanEdicion plan) =>
+        QuedaInicialGuardado(datos, plan) ? null : plan.Principales.FirstOrDefault(p => p.EsNueva)?.Clave;
+
+    /// <summary>
+    /// Advertencia de la actualización de personal (TAREA-19y): el proyecto resultante no tendrá ningún principal inicial
+    /// (responsable vacío en el listado): ninguno guardado permanece y no hay principal nuevo.
+    /// </summary>
+    public static bool QuedaSinResponsable(DatosEdicion datos, PlanEdicion plan) =>
+        !QuedaInicialGuardado(datos, plan) && !plan.Principales.Any(p => p.EsNueva);
+
+    private static bool QuedaInicialGuardado(DatosEdicion datos, PlanEdicion plan)
+    {
+        var eliminadas = plan.Eliminadas.Select(e => e.Id).ToHashSet();
+        return datos.Personal.Any(p => p.Rol == RolCronograma.Principal && p.EsPrincipalInicial && !eliminadas.Contains(p.Id));
+    }
+
     /// <summary>DiasAInsertar del motor: clave guardada → ProyectoPersonalId; clave nueva → se resuelve al insertar.</summary>
     public static List<DiaParaInsertar> Dias(CalculoRegeneracion c) =>
         c.Regeneracion.DiasAInsertar.Select(d => c.ClavesGuardadas.TryGetValue(d.Clave, out var id)

@@ -60,7 +60,9 @@ public class CrearProyectoValidadorTests
     public async Task SinPrincipales_400_C10MinimoUno()
     {
         Assert.Equal(1, CrearProyectoValidador.MinimoPrincipales);
-        var r = await Validar(Dobles.SolicitudCampo() with { Principales = [], Backs = [] });
+        // TAREA-19y: C10 rige con PROYECTO_EXIGE_PRINCIPAL = 1 (ajuste aprobado: solo la preparación).
+        var r = await Validar(Dobles.SolicitudCampo() with { Principales = [], Backs = [] },
+            new DatosFalsos { Limites = new(20, 20, 20, ExigePrincipal: true) });
         Assert.Equal(["Se requiere al menos 1 principal(es)."], r.Errores["principales"]);
     }
 

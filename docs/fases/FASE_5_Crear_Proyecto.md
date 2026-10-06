@@ -37,7 +37,7 @@ fecha de corte (RN11), novedades y reporte Excel.
 | RN12 | Etapa versión 1 `CREACION`, estado `ACTIVO`, `FechaCorte = FechaInicio`, snapshot JSON del personal | Application |
 | RN13 | Actividad versión 1 `CREACION` (solo si hay actividad), vigencia = rango del proyecto | Application |
 | RN18 | Máximo de principales y backs desde `Parametro` (20 / 20) | Application |
-| P1 | Mínimo de principales = **1** desde la TAREA-18 (C10, pendiente 28): constante `MinimoPrincipales = 1` del validador, mensaje "Se requiere al menos 1 principal(es).". Antes era 0 (no obligatorio). El formulario de creación lo ajustará en la TAREA-19 | Application |
+| P1 | Mínimo de principales = **1** desde la TAREA-18 (C10, pendiente 28): constante `MinimoPrincipales = 1` del validador, mensaje "Se requiere al menos 1 principal(es).". Antes era 0 (no obligatorio). **Desde la TAREA-19y (pendiente 33) solo con `PROYECTO_EXIGE_PRINCIPAL = 1`; con 0 (inicial) basta 1 persona (principal o back).** Ver §12 | Application |
 | — | Nombre visual: nombre del proyecto ERP; si no hay, `"PLANTA - " + descripción de la dimensión` (igual que la app original, también para OFICINAS) | Domain |
 | — | Estado inicial `ACTIVO`; propietario = usuario actual; departamento = [P5] | Application |
 
@@ -203,9 +203,30 @@ La app original guardaba en 10 pasos sin transacción (podía dejar proyectos a 
 
 | # | Tema | Decisión |
 |---|---|---|
-| P1 | Mínimo de principales | ~~No obligatorio (mínimo 0)~~. **Cambiado en la TAREA-18 (C10):** obligatorio, mínimo 1 (constante `MinimoPrincipales`, sin migración) |
+| P1 | Mínimo de principales | ~~No obligatorio (mínimo 0)~~. **Cambiado en la TAREA-18 (C10):** obligatorio, mínimo 1 (constante `MinimoPrincipales`, sin migración). **Revertido en parte en la TAREA-19y (06/10/2026):** principal opcional, al menos 1 persona; parámetro `PROYECTO_EXIGE_PRINCIPAL` (inicial 0, con 1 vuelve C10). Motivo: más de la mitad de los proyectos de SharePoint solo tienen backs (§12) |
 | P2 | Primer principal = inicio del proyecto | **Se sugiere** la fecha, no se exige |
 | P3 | Descanso posterior del back fuera del rango | **Se guarda completo** (no se recorta). El **reporte Excel** lo recorta a la fecha fin del proyecto (anotar en RN15) |
 | P4 | Descanso automático del principal | **Igual que el original**: automático por jornada, hasta la fecha fin de esa persona; solo se revisa el primer día libre |
 | P5 | Departamento | `UsuarioDepartamento` indica a qué departamento(s) pertenece el usuario. Sirve para: (a) filtrar por defecto la búsqueda de empleados, con opción "ver todos" (ícono de la app original); (b) asignar `Proyecto.DepartamentoId`: si el usuario tiene uno, ese; si tiene varios, lo elige; opcional |
 | P6 | Código | Sufijo en **minúsculas**, igual que los existentes |
+
+## 12. Principal opcional (TAREA-19y, pendiente 33)
+
+**Decisión del negocio (06/10/2026):** en SharePoint más de la mitad de los ~50 proyectos no tiene principal, solo backs;
+deben migrarse tal cual y seguir siendo editables. Por eso **se revierte en parte C10 / el pendiente 28**: el principal
+es opcional y basta **1 persona (principal o back)**.
+
+- **Parámetro `PROYECTO_EXIGE_PRINCIPAL`** (tabla `Parametro`, Id 10, `BOOL`, valor inicial `0`; migración solo de datos
+  `ParametroExigePrincipal`). Se lee con los límites (`DatosReferenciaProyecto.ConsultaLimites` → `LimitesProyecto.ExigePrincipal`):
+  "1" o "true" = exige; otro valor o ausente = no exige. Con `1` vuelve C10 en la creación, la actualización de personal
+  y la reactivación. El frontend lo conoce por `GET /api/proyectos/opciones-formulario` (`exigePrincipal`) y, para la
+  19b/19c, por `LimitesEdicionDto.ExigePrincipal`.
+- **Regla (creación):** principales + backs ≥ 1. Con el parámetro en 0: 400 `personal` "Se requiere al menos 1 persona
+  (principal o back)."; en 1: 400 `principales` "Se requiere al menos 1 principal(es)." (C10). `MinimoPersonal` (Application).
+- **Backs sin principal:** van "Sin relación" (`principalRelacionado` null), como ya permitía la creación.
+- **Advertencia** (no bloquea): la vista previa de creación tiene ahora `advertencias` (`PrevisualizacionDto`); sin
+  principales trae "El proyecto no tendrá principal: el responsable quedará vacío.". El frontend la muestra en la vista previa.
+- **Responsable:** `vwProyectoResumen` toma el principal inicial (`OUTER APPLY`); sin principal inicial devuelve null sin
+  errores. El listado muestra "Sin responsable".
+- **Motor:** `Generar` y `Regenerar` funcionan solo con backs (pruebas B6b, B6c y X18).
+- Fase 3: los proyectos sin principal y los backs sin principal relacionado se cargan tal cual.

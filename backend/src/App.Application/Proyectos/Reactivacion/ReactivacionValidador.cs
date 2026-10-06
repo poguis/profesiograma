@@ -58,19 +58,29 @@ public sealed class ReactivacionValidador
 
         var reactivacion = s.Fecha!.Value;
         var principales = s.Principales ?? [];
+        var backs = s.Backs ?? [];
 
-        // R5: al menos un principal. R6: el primero empieza exactamente en R (antes de R lo informa el núcleo).
-        if (principales.Count == 0)
+        // R5 (TAREA-19y): al menos 1 persona nueva (o 1 principal con PROYECTO_EXIGE_PRINCIPAL = 1).
+        // R6: con principales, el primero empieza exactamente en R (antes de R lo informa el núcleo); solo con backs,
+        // al menos uno empieza en R.
+        if (MinimoPersonal.Validar(principales.Count, backs.Count, limites.ExigePrincipal) is { } minimo)
         {
-            Agregar(e, "principales", "Se requiere al menos 1 principal(es).");
+            Agregar(e, minimo.Clave, minimo.Mensaje);
         }
-        else if (principales[0].Id is null && principales[0].FechaInicio is DateOnly inicio && inicio > reactivacion)
+        else if (principales.Count > 0)
         {
-            Agregar(e, "principales[0].fechaInicio", $"El primer principal debe empezar en la fecha de reactivación ({Formato(reactivacion)}).");
+            if (principales[0].Id is null && principales[0].FechaInicio is DateOnly inicio && inicio > reactivacion)
+            {
+                Agregar(e, "principales[0].fechaInicio", $"El primer principal debe empezar en la fecha de reactivación ({Formato(reactivacion)}).");
+            }
+        }
+        else if (backs.All(b => b.FechaInicio is not null) && !backs.Any(b => b.FechaInicio == reactivacion))
+        {
+            Agregar(e, MinimoPersonal.ClaveBacks, MensajeBackEnR(reactivacion));
         }
 
         var personal = nucleo.ValidarPersonal(
-            new ActualizarPersonalSolicitud(principales, s.Backs ?? []), proyecto,
+            new ActualizarPersonalSolicitud(principales, backs), proyecto,
             new ReglasValidacionPersonal(reactivacion, (proyecto.FechaInicio, s.FechaFin!.Value), Reactivacion: true),
             jornadas, limites, empleadosActivos);
 
@@ -84,6 +94,10 @@ public sealed class ReactivacionValidador
 
         return e.Count > 0 ? Invalido(e) : personal;
     }
+
+    /// <summary>R6 solo con backs (TAREA-19y).</summary>
+    public static string MensajeBackEnR(DateOnly reactivacion) =>
+        $"Al menos un back debe empezar en la fecha de reactivación ({Formato(reactivacion)}).";
 
     /// <summary>Motivo por el que no se puede reactivar (null = se puede): solo proyectos SUSPENDIDO.</summary>
     public static string? MotivoNoReactivable(DatosEdicion proyecto) =>

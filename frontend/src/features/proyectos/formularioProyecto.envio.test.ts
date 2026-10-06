@@ -176,6 +176,7 @@ describe('R12: habilitación de "Registrar"', () => {
       estadoProyecto: 'ACTIVO',
     })),
     resumen: [],
+    advertencias: [],
   })
   const vista = (revision: number, cruces = 0): VistaPreviaFormulario => ({ revision, datos: datos(cruces) })
 

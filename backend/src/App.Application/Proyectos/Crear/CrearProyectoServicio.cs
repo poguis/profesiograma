@@ -117,7 +117,9 @@ public sealed class CrearProyectoServicio(
                     g.OrderBy(d => d.Fecha).Select(d => new DiaDto(d.Fecha, CalculadorCruces.NombreRol(d.Rol), NombreTipo(d.Tipo), d.Bloque)).ToList()))
                 .ToList(),
             cruces,
-            CalculadorCruces.Resumen(cruces));
+            CalculadorCruces.Resumen(cruces),
+            // TAREA-19y: sin principales no hay principal inicial (responsable vacío). No bloquea.
+            p.Principales.Count == 0 ? [MinimoPersonal.AdvertenciaSinPrincipal] : []);
 
         return new Calculo(cronograma, empleados, previsualizacion);
     }

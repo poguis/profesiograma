@@ -8,7 +8,7 @@ import {
   crearEstadoInicial,
   etiquetasPorEmpleado,
   numeroPrincipal,
-  ayudaPrincipales,
+  ayudaPersonal,
   puedeGenerarVistaPrevia,
   reducerFormulario,
   validarCliente,
@@ -292,26 +292,57 @@ describe('R4: validación del cliente (ayuda)', () => {
   })
 })
 
-describe('P6: mínimo de principales (C10)', () => {
+// TAREA-19y: estas 4 pruebas de P6 corren ahora con PROYECTO_EXIGE_PRINCIPAL = 1 (ajuste aprobado: solo la firma).
+describe('P6: mínimo de principales (C10, parámetro en 1)', () => {
   it('sin principales no se genera la vista previa', () => {
-    expect(puedeGenerarVistaPrevia(conCabeceraCampo(), false)).toBe(false)
+    expect(puedeGenerarVistaPrevia(conCabeceraCampo(), false, true)).toBe(false)
   })
 
   it('con 1 principal sí, salvo durante un envío', () => {
     const estado = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
-    expect(puedeGenerarVistaPrevia(estado, false)).toBe(true)
-    expect(puedeGenerarVistaPrevia(estado, true)).toBe(false)
+    expect(puedeGenerarVistaPrevia(estado, false, true)).toBe(true)
+    expect(puedeGenerarVistaPrevia(estado, true, true)).toBe(false)
   })
 
   it('ayuda neutra solo mientras falten principales', () => {
-    expect(ayudaPrincipales(conCabeceraCampo())).toBe('Agrega al menos 1 principal para generar la vista previa.')
+    expect(ayudaPersonal(conCabeceraCampo(), true)).toBe('Agrega al menos 1 principal para generar la vista previa.')
     const conUno = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
-    expect(ayudaPrincipales(conUno)).toBeUndefined()
+    expect(ayudaPersonal(conUno, true)).toBeUndefined()
   })
 
   it('al eliminar el único principal vuelve a bloquearse', () => {
     const conUno = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
     const sinNinguno = aplicar(conUno, { tipo: 'eliminarPrincipal', clave: conUno.principales[0].clave })
-    expect(puedeGenerarVistaPrevia(sinNinguno, false)).toBe(false)
+    expect(puedeGenerarVistaPrevia(sinNinguno, false, true)).toBe(false)
+  })
+
+  it('solo con backs no se genera la vista previa', () => {
+    const soloBack = aplicar(conCabeceraCampo(), { tipo: 'agregarBack', empleado: empleado(2), maximo: MAX })
+    expect(puedeGenerarVistaPrevia(soloBack, false, true)).toBe(false)
+    expect(ayudaPersonal(soloBack, true)).toBe('Agrega al menos 1 principal para generar la vista previa.')
+  })
+})
+
+describe('TAREA-19y: principal opcional (parámetro en 0)', () => {
+  it('sin nadie no se genera la vista previa y la ayuda pide una persona', () => {
+    expect(puedeGenerarVistaPrevia(conCabeceraCampo(), false, false)).toBe(false)
+    expect(ayudaPersonal(conCabeceraCampo(), false)).toBe('Agrega al menos 1 persona (principal o back) para generar la vista previa.')
+  })
+
+  it('solo con backs sí, sin ayuda', () => {
+    const soloBack = aplicar(conCabeceraCampo(), { tipo: 'agregarBack', empleado: empleado(2), maximo: MAX })
+    expect(puedeGenerarVistaPrevia(soloBack, false, false)).toBe(true)
+    expect(ayudaPersonal(soloBack, false)).toBeUndefined()
+  })
+
+  it('solo con un principal sí', () => {
+    const soloPrincipal = aplicar(conCabeceraCampo(), { tipo: 'agregarPrincipal', empleado: empleado(1), maximo: MAX })
+    expect(puedeGenerarVistaPrevia(soloPrincipal, false, false)).toBe(true)
+  })
+
+  it('el back sin principales se envía "Sin relación" (principalRelacionado null)', () => {
+    const soloBack = aplicar(conCabeceraCampo(), { tipo: 'agregarBack', empleado: empleado(2), maximo: MAX })
+    expect(aSolicitud(soloBack).backs[0].principalRelacionado).toBeNull()
+    expect(aSolicitud(soloBack).principales).toEqual([])
   })
 })

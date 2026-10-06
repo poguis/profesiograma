@@ -12,6 +12,7 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     private const string ClaveMaxPrincipales = "PROYECTO_MAX_PRINCIPALES";
     private const string ClaveMaxBacks = "PROYECTO_MAX_BACKS";
     private const string ClaveMaxDiasDescansoBack = "BACK_MAX_DIAS_DESCANSO";
+    private const string ClaveExigePrincipal = "PROYECTO_EXIGE_PRINCIPAL"; // TAREA-19y
     private const int PorDefecto = 20; // valor de las semillas si el parámetro faltara
 
     public Task<GrupoRef?> ObtenerGrupoAsync(string codigo, CancellationToken ct) =>
@@ -29,8 +30,13 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
                 ? n
                 : PorDefecto;
 
-        return new LimitesProyecto(Leer(ClaveMaxPrincipales), Leer(ClaveMaxBacks), Leer(ClaveMaxDiasDescansoBack));
+        return new LimitesProyecto(Leer(ClaveMaxPrincipales), Leer(ClaveMaxBacks), Leer(ClaveMaxDiasDescansoBack),
+            LeerExigePrincipal(valores.GetValueOrDefault(ClaveExigePrincipal)));
     }
+
+    /// <summary>PROYECTO_EXIGE_PRINCIPAL: "1" o "true" (sin importar mayúsculas) = true; otro valor o ausente = false (inicial 0).</summary>
+    internal static bool LeerExigePrincipal(string? valor) =>
+        valor?.Trim() is { } v && (v == "1" || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
 
     public async Task<IReadOnlyDictionary<int, EmpleadoRef>> ObtenerEmpleadosActivosAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
         await ConsultaEmpleadosActivos(db, ids).ToDictionaryAsync(e => e.Id, ct);
@@ -54,7 +60,7 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
 
     internal static IQueryable<Domain.Configuracion.Parametro> ConsultaLimites(ProfesiogramaDbContext db)
     {
-        string[] claves = [ClaveMaxPrincipales, ClaveMaxBacks, ClaveMaxDiasDescansoBack];
+        string[] claves = [ClaveMaxPrincipales, ClaveMaxBacks, ClaveMaxDiasDescansoBack, ClaveExigePrincipal];
         return db.Parametros.AsNoTracking().Where(p => claves.Contains(p.Clave));
     }
 

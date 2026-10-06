@@ -17,7 +17,8 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 {
     /// <summary>
     /// P1: mínimo de principales. 1 desde la TAREA-18 (C10, pendiente 28); antes era 0 (no obligatorio).
-    /// Mensaje: "Se requiere al menos {n} principal(es).".
+    /// Desde la TAREA-19y (pendiente 33) solo se exige con PROYECTO_EXIGE_PRINCIPAL = 1; con 0 basta 1 persona
+    /// (principal o back). Ver MinimoPersonal.
     /// </summary>
     public const int MinimoPrincipales = 1;
 
@@ -160,9 +161,10 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
             Agregar(e, "principales", $"Se permiten como máximo {limites.MaxPrincipales} principales.");
         }
 
-        if (principales.Count < MinimoPrincipales)
+        // C10 con el parámetro en 1; si no, al menos 1 persona (TAREA-19y).
+        if (MinimoPersonal.Validar(principales.Count, backs.Count, limites.ExigePrincipal) is { } minimo)
         {
-            Agregar(e, "principales", $"Se requiere al menos {MinimoPrincipales} principal(es).");
+            Agregar(e, minimo.Clave, minimo.Mensaje);
         }
 
         if (backs.Count > limites.MaxBacks)

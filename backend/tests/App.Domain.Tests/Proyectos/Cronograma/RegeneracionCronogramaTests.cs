@@ -220,6 +220,28 @@ public class RegeneracionCronogramaTests
     }
 
     [Fact]
+    public void X18_SoloBacks_SinPrincipales_RegeneraVigentesYNuevos_SinCruces()
+    {
+        // TAREA-19y (pendiente 33): proyecto sin principales. K1 guardado y vigente en el corte; K2 nuevo con 2 días de descanso.
+        var k2 = new PersonaProyecto(RolCronograma.Back, 2);
+        var r = Regenerar("2026-10-20", backs:
+            [
+                BE(1, 6, "2026-10-15", "2026-10-25", TipoRegistroBack.Jornada, 0, nuevo: false),
+                BE(2, 7, "2026-10-22", "2026-10-25", TipoRegistroBack.Jornada, 2, nuevo: true),
+            ],
+            existentes: Guardado(backs: [Back(1, 6, "2026-10-15", "2026-10-25", TipoRegistroBack.Jornada, 0)]));
+
+        Assert.Equal(ClasePersona.Vigente, r.Clases["K1"]);
+        Assert.Equal(Dias(T(Bck, Man, 1, K1, 6, "2026-10-20", "2026-10-25")), Insertar(r, "K1"));
+        Assert.Equal(
+            Dias(T(Bck, Man, 2, k2, 7, "2026-10-22", "2026-10-25")).Concat(Dias(T(Des, Man, 2, k2, 7, "2026-10-26", "2026-10-27"))),
+            Insertar(r, "K2"));
+        Assert.Empty(r.CrucesInternos);
+        Assert.Empty(r.CrucesHistoricos);
+        Assert.Contains(T(Bck, Man, 1, K1, 6, "2026-10-15", "2026-10-19"), r.Tramos); // base anterior al corte
+    }
+
+    [Fact]
     public void X11_Historicos_NoSeRegeneran_PeroSusTramosSeMuestran()
     {
         var principal = Principal(1, 5, "2026-10-01", "2026-10-10", T3, D3);

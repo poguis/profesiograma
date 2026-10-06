@@ -25,11 +25,13 @@ public sealed record CruceDto(
 /// <summary>Resumen como la app original: persona / rol / proyecto / mes ("diciembre 2026") con días "5, 6, 7".</summary>
 public sealed record ResumenCruceDto(string NombreEmpleado, string Rol, string Proyecto, string Mes, string Dias);
 
+/// <param name="Advertencias">TAREA-19y: avisos que no bloquean (p. ej. proyecto sin principal).</param>
 public sealed record PrevisualizacionDto(
     IReadOnlyList<TramoDto> Tramos,
     IReadOnlyList<DiasPersonaDto> DiasPorPersona,
     IReadOnlyList<CruceDto> Cruces,
-    IReadOnlyList<ResumenCruceDto> Resumen);
+    IReadOnlyList<ResumenCruceDto> Resumen,
+    IReadOnlyList<string> Advertencias);
 
 public sealed record ProyectoCreadoDto(int Id, string Codigo);
 

@@ -28,4 +28,16 @@ public class DatosReferenciaProyectoSqlTests(ITestOutputHelper salida)
         Assert.Contains("ORDER BY", sql);
         Assert.Contains("[Activo] = CAST(1 AS bit)", sql);
     }
+
+    /// <summary>TAREA-19y: PROYECTO_EXIGE_PRINCIPAL ("1" o "true" = exige; otro valor o ausente = no, el inicial es 0).</summary>
+    [Theory]
+    [InlineData("1", true)]
+    [InlineData("true", true)]
+    [InlineData(" TRUE ", true)]
+    [InlineData("0", false)]
+    [InlineData("false", false)]
+    [InlineData("SI", false)]
+    [InlineData(null, false)]
+    public void ExigePrincipal_SeLeeDelParametro(string? valor, bool esperado) =>
+        Assert.Equal(esperado, DatosReferenciaProyecto.LeerExigePrincipal(valor));
 }

@@ -119,7 +119,7 @@ Cuerpo: `{ principales: [{ clave, id?, empleadoId, jornada, fechaInicio, fechaFi
 3. Relaciones con principales **nuevos** (ya tienen Id); referencias a personas omitidas en `null` (por defensa); omitidas eliminadas. → SaveChanges 2.
 4. `DiasAInsertar` (clave → `ProyectoPersonalId`) + etapa **ACTUALIZACION_PERSONAL** con versión máx + 1, `FechaCorte = C`, la actividad vigente en C y el snapshot del personal resultante, históricas incluidas (D8). → SaveChanges 3.
 
-El estado y las fechas del proyecto no cambian. `EsPrincipalInicial` de las nuevas es `false` (D6; en la reactivación, el primer principal es inicial: R6, TAREA-17b).
+El estado y las fechas del proyecto no cambian. `EsPrincipalInicial` de las nuevas es `false` (D6; en la reactivación, el primer principal es inicial: R6, TAREA-17b), **salvo P3 de la TAREA-19y** (§10).
 
 ### 8.4 H12 (TAREA-17b): back recortado por una suspensión
 Después de reactivar, la clasificación R2 (back vigente si `FechaFin + DiasDescanso ≥ C`) regeneraba el descanso que la suspensión borró.
@@ -158,3 +158,17 @@ Después de reactivar, la clasificación R2 (back vigente si `FechaFin + DiasDes
 `versionProyecto`; `POST …/personal` lo exige. Token viejo → 409 "El proyecto cambió; vuelve a cargarlo." sin
 `extensions`; el 409 de cruces sigue llevando `extensions.cruces` y `extensions.resumen` (el frontend de la 19b los
 distingue por las extensiones). Con token viejo, una solicitud "sin cambios" responde 409, no 400 C9 (§8.5).
+
+## 10. Principal opcional en la actualización de personal (TAREA-19y, pendiente 33)
+
+- **P1 (mínimo):** se cuenta el personal **resultante** = históricas + vigentes enviadas + nuevas (sin las eliminadas).
+  Con `PROYECTO_EXIGE_PRINCIPAL = 0` (inicial): al menos 1 persona → si no, 400 `personal` "Se requiere al menos 1 persona
+  (principal o back)."; con 1: al menos 1 principal en ese conjunto → 400 `principales` "Se requiere al menos 1
+  principal(es)." (nuevo en la edición: antes no había mínimo). Las históricas cuentan: un proyecto puede quedar sin
+  personal futuro de forma legítima. Se comprueba después del núcleo (con plan válido) en `EdicionPersonalValidador.Validar`.
+- **P3 (ajusta D6):** si ningún principal guardado que permanece (no eliminado) es `EsPrincipalInicial` (no hay
+  principales, o el inicial se eliminó), el **primer principal nuevo** del cuerpo se guarda como inicial y pasa a ser el
+  responsable (`CalculoPersonal.ClaveInicialNueva` → `CambioPersonal.ClaveInicialNueva` → `EdicionPersonalRepositorio`).
+  Con un inicial guardado, las nuevas no son iniciales (D6, como antes).
+- **Advertencia** (no bloquea): "El proyecto no tendrá principal: el responsable quedará vacío." cuando el resultante no
+  tendrá ningún principal inicial (ninguno guardado permanece y no hay principal nuevo).

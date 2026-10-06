@@ -34,7 +34,7 @@ import {
   SIN_ERRORES_SERVIDOR,
   type VistaPreviaFormulario,
   aSolicitud,
-  ayudaPrincipales,
+  ayudaPersonal,
   advertenciasFechas,
   clavesDelEnvio,
   crearEstadoInicial,
@@ -256,9 +256,9 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
 
   const enviando = previsualizar.isPending || crear.isPending
   const vigente = vistaVigente(vista, estado.revision)
-  const habilitadoVistaPrevia = puedeGenerarVistaPrevia(estado, enviando)
+  const habilitadoVistaPrevia = puedeGenerarVistaPrevia(estado, enviando, opciones.exigePrincipal)
   // P6: ayuda neutra mientras falten principales; el error rojo solo con un 400 del servidor en `principales`.
-  const ayudaMinimo = ayudaPrincipales(estado)
+  const ayudaMinimo = ayudaPersonal(estado, opciones.exigePrincipal)
 
   const puedeAgregar =
     buscador === 'principal'
