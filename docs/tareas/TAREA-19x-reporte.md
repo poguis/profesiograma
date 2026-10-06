@@ -1,7 +1,7 @@
 # TAREA-19x — Token de concurrencia desde el cliente (pendiente 32)
 
 **Fecha:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada; **prueba manual (sección 6) y verificación visual W1–W3 (sección 7) pendientes**.
+**Resultado:** ✅ completada. Prueba manual del usuario del 06/10/2026 (`parte1.cmd` y `parte2.cmd`) y verificación visual W1–W3: todo OK (secciones 6 y 7). Dato de prueba: Id 12 en versión 6 tras la parte 1; las W1–W3 agregaron versiones (versión ≥ 6).
 
 **Backend**
 - `dotnet build Profesiograma.slnx -c Release --no-incremental`: 0 advertencias y 0 errores.
@@ -115,32 +115,32 @@ Cambiaron 41 llamadas de 39 pruebas: `RegistrarAsync(…, s.ConVersion(repo), �
 - `cambioEstado.test.ts`: el registro lleva el token de la vista y la vista previa no; 409 → recarga; 400 `versionProyecto` → recarga.
 - `edicionCabecera.test.ts`: las mismas tres para la cabecera.
 
-## 6. Prueba manual (la ejecuta el usuario) — [PENDIENTE]
-Con la API corriendo, ejecutar desde `backend\tests\manual\tarea19x\`:
+## 6. Prueba manual (usuario, 06/10/2026) — todo OK
+Ejecutada por el usuario el 06/10/2026 con la API corriendo, desde `backend\tests\manual\tarea19x\` (salidas `resultado-parte1.txt` y `resultado-parte2.txt`, ignoradas por git):
 1. `parte1.cmd`: escribe solo en el Id 12. Protección: si existe `resultado-parte1.txt`, no se ejecuta; el archivo se crea justo antes del primer registro que escribe (d).
 2. `parte2.cmd`: diseñado para no escribir; se puede repetir. Usa el Id 12 y el Id 2.
 
 ### 6.1 `parte1.cmd` (Id 12)
 | Paso | Solicitud | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|
-| a | GET cabecera | V = `versionProyecto`; R1 y R2 = regresos de almuerzo posteriores a la salida y distintos del actual. Si el Id 12 no está ACTIVO o faltan datos: termina sin escribir | No | [PENDIENTE] |
-| b | Vista previa con regreso R1 | 200 y `versionProyecto` = V | No | [PENDIENTE] |
-| c | Registro **sin token** y sin cambios (regreso actual) | 400 `versionProyecto`. Si el control fallara, daría 400 "No hay cambios": tampoco escribe. Si b o c no dan lo esperado: termina sin escribir | No | [PENDIENTE] |
-| d | Registro regreso R1 con token V | 200, versión V+1 | **Sí (Id 12)** | [PENDIENTE] |
-| e | Registro regreso R2 con el **mismo** token V | 409 "El proyecto cambió; vuelve a cargarlo." | No (si fallara: V+2) | [PENDIENTE] |
-| f | GET cabecera | CONTROL: `versionProyecto` = V+1 y regreso R1 | No | [PENDIENTE] |
+| a | GET cabecera | V = `versionProyecto`; R1 y R2 = regresos de almuerzo posteriores a la salida y distintos del actual. Si el Id 12 no está ACTIVO o faltan datos: termina sin escribir | No | OK: V = 5 |
+| b | Vista previa con regreso R1 | 200 y `versionProyecto` = V | No | OK: 200, `versionProyecto` 5 |
+| c | Registro **sin token** y sin cambios (regreso actual) | 400 `versionProyecto`. Si el control fallara, daría 400 "No hay cambios": tampoco escribe. Si b o c no dan lo esperado: termina sin escribir | No | OK: 400 `versionProyecto` (no escribió) |
+| d | Registro regreso R1 con token V | 200, versión V+1 | **Sí (Id 12)** | OK: 200, versión 6 |
+| e | Registro regreso R2 con el **mismo** token V | 409 "El proyecto cambió; vuelve a cargarlo." | No (si fallara: V+2) | OK: 409 "El proyecto cambió; vuelve a cargarlo." (no escribió) |
+| f | GET cabecera | CONTROL: `versionProyecto` = V+1 y regreso R1 | No | OK: `versionProyecto` 6, regreso 14:00 |
 
 ### 6.2 `parte2.cmd` (Id 12 e Id 2; sin escritura posible)
 Cada registro lleva un token viejo (V − 1) **y** un cuerpo que el servidor rechazaría con 400. Si la comprobación previa fallara, la respuesta sería 400, que tampoco escribe.
 
 | Paso | Solicitud | Esperado | Resultado |
 |---|---|---|---|
-| qa / qb | GET cabecera del Id 12 (V) y GET reactivación del Id 2 (VR) | Tokens | [PENDIENTE] |
-| q1 | cambio-estado Id 12: SUSPENDIDO con fecha 01/01/2000 y token V−1 | 409 | [PENDIENTE] |
-| q2 | cambio-estado Id 12: el mismo cuerpo sin token | 400 `versionProyecto` | [PENDIENTE] |
-| q3 | personal Id 12: un principal sin empleado y token V−1 | 409 (sin `extensions`) | [PENDIENTE] |
-| q4 | cabecera Id 12: regreso actual (sin cambios) y token V−1 | 409 (antes del 400 de la C9) | [PENDIENTE] |
-| q5 | reactivación Id 2: fechas 01/01/2000 y token VR−1 | 409 | [PENDIENTE] |
+| qa / qb | GET cabecera del Id 12 (V) y GET reactivación del Id 2 (VR) | Tokens | OK |
+| q1 | cambio-estado Id 12: SUSPENDIDO con fecha 01/01/2000 y token V−1 | 409 | OK: 409 (no escribió) |
+| q2 | cambio-estado Id 12: el mismo cuerpo sin token | 400 `versionProyecto` | OK: 400 `versionProyecto` (no escribió) |
+| q3 | personal Id 12: un principal sin empleado y token V−1 | 409 (sin `extensions`) | OK: 409 (no escribió) |
+| q4 | cabecera Id 12: regreso actual (sin cambios) y token V−1 | 409 (antes del 400 de la C9) | OK: 409 (no escribió) |
+| q5 | reactivación Id 2: fechas 01/01/2000 y token VR−1 | 409 | OK: 409 (no escribió; el Id 2 sigue SUSPENDIDO) |
 
 ### 6.3 Prueba de la lógica de los scripts (Claude, solo simulación)
 **Cómo se ejecutó**
@@ -158,12 +158,12 @@ Cada registro lleva un token viejo (V − 1) **y** un cuerpo que el servidor rec
 
 **Cuerpos JSON generados:** se revisaron en `tmp\`. Por ejemplo, `pd` = `{"regresoAlmuerzo":"14:00","versionProyecto":5}` y `q3` lleva un principal con `empleadoId: null`.
 
-## 7. Verificación visual (usuario) — [PENDIENTE]
+## 7. Verificación visual (usuario, 06/10/2026) — W1–W3 OK
 | # | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|
-| W1 | Id 12, dos pestañas con "Editar datos generales" y el impacto listo, con cambios **distintos**: A cambia el almuerzo, B el horario. Registrar A y después B | B: 409 "El proyecto cambió; vuelve a cargarlo." y "Recargar datos del proyecto". Tras recargar, B ve los datos de A y puede volver a ver el impacto y registrar | Sí (Id 12: solo A) | [PENDIENTE] |
-| W2 | Id 12: pestaña B con el impacto de "Suspender" listo; en la pestaña A editar la cabecera y registrar; luego confirmar en B | B: 409 y "Recargar datos del proyecto"; el proyecto **no** se suspende | Sí (Id 12: solo la cabecera de A) | [PENDIENTE] |
-| W3 | Flujo normal de los dos diálogos (por ejemplo, otro cambio de cabecera en el Id 12) | Registra como antes; el token viaja solo | Sí (Id 12) | [PENDIENTE] |
+| W1 | Id 12, dos pestañas con "Editar datos generales" y el impacto listo, con cambios **distintos**: A cambia el almuerzo, B el horario. Registrar A y después B | B: 409 "El proyecto cambió; vuelve a cargarlo." y "Recargar datos del proyecto". Tras recargar, B ve los datos de A y puede volver a ver el impacto y registrar | Sí (Id 12: solo A) | OK: B recibió 409 y "Recargar datos del proyecto"; tras recargar vio los datos de A |
+| W2 | Id 12: pestaña B con el impacto de "Suspender" listo; en la pestaña A editar la cabecera y registrar; luego confirmar en B | B: 409 y "Recargar datos del proyecto"; el proyecto **no** se suspende | Sí (Id 12: solo la cabecera de A) | OK: 409; el proyecto siguió ACTIVO |
+| W3 | Flujo normal de los dos diálogos (por ejemplo, otro cambio de cabecera en el Id 12) | Registra como antes; el token viaja solo | Sí (Id 12) | OK: flujo normal de los dos diálogos |
 
 ## 8. Contradicciones y observaciones
 1. **Mensajes de 409 del cambio de estado.** Ahora hay dos: el token viejo da "El proyecto cambió; vuelve a cargarlo." y la relectura de estado sigue dando "El proyecto cambió de estado; vuelve a cargarlo." (P2). Con token, la relectura casi nunca se alcanza, porque un cambio de estado crea una etapa y la comprobación previa responde antes.
@@ -172,6 +172,5 @@ Cada registro lleva un token viejo (V − 1) **y** un cuerpo que el servidor rec
 4. **Visibilidad en la vista previa.** La vista previa lee la versión antes de comprobar la visibilidad. Para un proyecto no visible responde 404 igual, y el número leído no se devuelve.
 
 ## 9. Pendientes
-- Prueba manual (sección 6) y verificación visual W1–W3 (sección 7).
 - **Pendiente 33 → TAREA-19y** (antes de la 19b): principal opcional (ver `00_ESTADO_ACTUAL.md` §7).
 - TAREA-19b (personal) y 19c (reactivación) usarán los contratos ya listos en `tipos.ts` y deben registrar con el token de su vista previa.
