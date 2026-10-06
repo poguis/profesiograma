@@ -20,7 +20,9 @@ public class CatalogoErpSimuladoTests
 
     [Fact]
     public async Task Actividades_DevErp001() =>
-        Assert.Equal([new ActividadErp("DEV.01", "ACTIVIDAD DE PRUEBA", "PRUEBA")], await catalogo.ListarActividadesAsync(9001, "DEV-ERP-001", Ct));
+        Assert.Equal(
+            [new ActividadErp("DEV.01", "ACTIVIDAD DE PRUEBA", "PRUEBA"), new ActividadErp("DEV.02", "ACTIVIDAD DE PRUEBA 2", "PRUEBA")],
+            await catalogo.ListarActividadesAsync(9001, "DEV-ERP-001", Ct));
 
     [Fact]
     public async Task Dimensiones9001_Dos() =>

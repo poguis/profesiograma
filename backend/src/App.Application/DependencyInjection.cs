@@ -1,6 +1,7 @@
 using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Proyectos;
+using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
@@ -28,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<EdicionPersonalServicio>();
         services.AddScoped<ReactivacionValidador>();
         services.AddScoped<ReactivacionServicio>();
+        services.AddScoped<EdicionCabeceraValidador>();
+        services.AddScoped<EdicionCabeceraServicio>();
         return services;
     }
 }

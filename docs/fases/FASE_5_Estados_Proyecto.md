@@ -35,7 +35,7 @@ stateDiagram-v2
 | Id | Regla |
 |---|---|
 | E1 | Movimiento según la tabla de la sección 1. SIN_CAMBIO, NO_PERMITIDO y REACTIVACION → 400 (la reactivación va por §8) |
-| E2 | La fecha F es obligatoria, con `FechaInicio ≤ F ≤ FechaFin` del proyecto. **Inclusiva**: el día F se conserva (D1) |
+| E2 | La fecha F es obligatoria, con `FechaInicio ≤ F ≤ FechaFin` del proyecto. **Inclusiva**: el día F se conserva (D1). **C11 (TAREA-18):** la fecha solo se valida si el movimiento es SUSPENSION o CIERRE; con SIN_CAMBIO, NO_PERMITIDO, REACTIVACION o un estado desconocido el 400 trae solo el error de `estadoDestino` (pendiente 29) |
 | E3 | Recorte (`RecorteProyecto`, lógica pura):<br>• se eliminan los días con `Fecha > F` de cualquier rol, incluidos los DESCANSO AUTO y MANUAL (también los descansos de backs posteriores a la fecha fin del proyecto, P3 → decisión 2026-10-01);<br>• se elimina el personal con `FechaInicio > F`;<br>• se recorta a F el personal con `FechaFin > F`, sin cambiar `DiasDescanso` (pendiente 23 → TAREA-16);<br>• se eliminan las actividades que empiezan después de F y se recorta a F la `FechaFin` de las que terminan después (H3);<br>• un back que cubría a un principal eliminado queda **sin principal relacionado** (la FK no permite la referencia), con advertencia "El back {n} ({nombre}) quedará sin principal relacionado.";<br>• en el proyecto: `FechaFin = F` y estado = destino |
 | E4 | Etapa nueva:<br>• `Version` = máx + 1, calculada dentro de la transacción;<br>• `TipoMovimiento` = SUSPENSION o CIERRE; `Estado` = destino;<br>• `FechaInicio` = inicio del proyecto; `FechaFin` = `FechaCorte` = F;<br>• `ActividadCodigo` = actividad vigente en F (la de mayor versión si se solapan);<br>• snapshot JSON del personal **resultante**, en el mismo formato que la creación (`SnapshotPersonal`, sin cédula ni correo) |
 | E5 | Política Gestor y visibilidad R1: Admin ve cualquier proyecto; los demás solo los propios. Un proyecto no visible, eliminado o inexistente responde 404 |
@@ -65,7 +65,7 @@ stateDiagram-v2
 | El proyecto ya está en estado {X}. | SIN_CAMBIO |
 | La reactivación se registra con la opción Reactivar. | REACTIVACION (TAREA-17b; antes "La reactivación todavía no está disponible.") |
 | Este cambio de estado no está permitido desde el estado actual ({ORIGEN} → {DESTINO}). | NO_PERMITIDO |
-| La fecha del movimiento es obligatoria. | Falta `fecha` |
+| La fecha del movimiento es obligatoria. | Falta `fecha` (solo SUSPENSION o CIERRE, C11) |
 | La fecha del movimiento no puede ser menor a la fecha de inicio del proyecto (dd/MM/yyyy). | F < inicio |
 | La fecha del movimiento no puede ser mayor a la fecha fin del proyecto (dd/MM/yyyy). | F > fin |
 

@@ -1,5 +1,6 @@
 using App.Application.Catalogos;
 using App.Application.Empleados;
+using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
@@ -51,6 +52,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<ICambioEstadoRepositorio, CambioEstadoRepositorio>();
         services.AddScoped<IEdicionPersonalRepositorio, EdicionPersonalRepositorio>();
         services.AddScoped<IReactivacionRepositorio, EdicionPersonalRepositorio>();
+        services.AddScoped<ICabeceraRepositorio, EdicionCabeceraRepositorio>();
         services.AddScoped<IUsuarioProvisionamiento, UsuarioProvisionamiento>();
         services.AddScoped<DatosPruebaSembrador>();
 

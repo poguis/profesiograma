@@ -78,7 +78,12 @@ public sealed class EdicionPersonalServicio(
             return error;
         }
 
-        if (previo.Calculo!.Previsualizacion.Cruces.Count > 0)
+        if (previo.Calculo!.SinCambios)
+        {
+            return ResultadoEdicionPersonal.Invalido(ResultadoEdicionPersonal.ErroresSinCambios()); // C9
+        }
+
+        if (previo.Calculo.Previsualizacion.Cruces.Count > 0)
         {
             return ResultadoEdicionPersonal.ConCruces(previo.Calculo.Previsualizacion);
         }
@@ -115,7 +120,8 @@ public sealed class EdicionPersonalServicio(
     // ------------------------------------------------------------------ cálculo común
 
     private sealed record Calculo(
-        DatosEdicion Datos, DateOnly Corte, PlanEdicion Plan, CalculoRegeneracion Regeneracion, PrevisualizacionPersonalDto Previsualizacion);
+        DatosEdicion Datos, DateOnly Corte, PlanEdicion Plan, CalculoRegeneracion Regeneracion, PrevisualizacionPersonalDto Previsualizacion,
+        bool SinCambios);
 
     private sealed record Resultado(ResultadoEdicionPersonal? Error, Calculo? Calculo);
 
@@ -164,6 +170,14 @@ public sealed class EdicionPersonalServicio(
             advertencias.Add($"Se generarán días anteriores al corte ({ReglasPersonal.Formato(corte)}) para el personal nuevo."); // E5 (M1)
         }
 
+        // C9: sin cambios = todas las personas enviadas SIN_CAMBIO, ninguna nueva y ninguna eliminada.
+        var sinCambios = plan.Eliminadas.Count == 0
+                         && plan.Principales.Concat(plan.Backs).All(p => !p.EsNueva && p.Accion == EdicionPersonalValidador.SinCambio);
+        if (sinCambios)
+        {
+            advertencias.Add(ResultadoEdicionPersonal.AdvertenciaSinCambios);
+        }
+
         var previsualizacion = new PrevisualizacionPersonalDto(
             corte,
             CalculoPersonal.Personas(plan),
@@ -172,7 +186,7 @@ public sealed class EdicionPersonalServicio(
             CalculadorCruces.Resumen(calculo.Cruces),
             advertencias);
 
-        return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion));
+        return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion, sinCambios));
     }
 
     // ------------------------------------------------------------------ escritura

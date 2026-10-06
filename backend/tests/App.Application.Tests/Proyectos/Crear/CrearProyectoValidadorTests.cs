@@ -57,11 +57,11 @@ public class CrearProyectoValidadorTests
     }
 
     [Fact]
-    public async Task SinPrincipales_EsValido_P1MinimoCero()
+    public async Task SinPrincipales_400_C10MinimoUno()
     {
-        Assert.Equal(0, CrearProyectoValidador.MinimoPrincipales);
+        Assert.Equal(1, CrearProyectoValidador.MinimoPrincipales);
         var r = await Validar(Dobles.SolicitudCampo() with { Principales = [], Backs = [] });
-        Assert.Empty(r.Errores);
+        Assert.Equal(["Se requiere al menos 1 principal(es)."], r.Errores["principales"]);
     }
 
     // ------------------------------------------------------------------ cabecera

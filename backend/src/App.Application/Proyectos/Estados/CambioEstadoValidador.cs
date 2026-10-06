@@ -55,17 +55,22 @@ public sealed class CambioEstadoValidador
         }
 
         // --- Fecha del movimiento (E2): obligatoria e inclusiva en [inicio, fin] del proyecto.
-        if (s.Fecha is not DateOnly fecha)
+        // C11 (TAREA-18): solo se valida si el movimiento es válido (SUSPENSION o CIERRE); con un destino
+        // inválido (SIN_CAMBIO, NO_PERMITIDO, REACTIVACION o desconocido) basta el error de estadoDestino.
+        if (movimiento is MovimientoEstado.Suspension or MovimientoEstado.Cierre)
         {
-            Agregar(e, "fecha", MensajeFechaObligatoria);
-        }
-        else if (fecha < inicioProyecto)
-        {
-            Agregar(e, "fecha", $"La fecha del movimiento no puede ser menor a la fecha de inicio del proyecto ({Formato(inicioProyecto)}).");
-        }
-        else if (fecha > finProyecto)
-        {
-            Agregar(e, "fecha", $"La fecha del movimiento no puede ser mayor a la fecha fin del proyecto ({Formato(finProyecto)}).");
+            if (s.Fecha is not DateOnly fecha)
+            {
+                Agregar(e, "fecha", MensajeFechaObligatoria);
+            }
+            else if (fecha < inicioProyecto)
+            {
+                Agregar(e, "fecha", $"La fecha del movimiento no puede ser menor a la fecha de inicio del proyecto ({Formato(inicioProyecto)}).");
+            }
+            else if (fecha > finProyecto)
+            {
+                Agregar(e, "fecha", $"La fecha del movimiento no puede ser mayor a la fecha fin del proyecto ({Formato(finProyecto)}).");
+            }
         }
 
         var errores = e.ToDictionary(x => x.Key, x => x.Value.ToArray());

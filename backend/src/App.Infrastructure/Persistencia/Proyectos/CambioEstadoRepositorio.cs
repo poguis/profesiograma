@@ -54,41 +54,19 @@ internal sealed class CambioEstadoRepositorio(ProfesiogramaDbContext db) : ICamb
         ArgumentNullException.ThrowIfNull(cambio);
         var plan = cambio.Plan;
         var idProyecto = cambio.ProyectoId;
-        var personalEliminado = plan.PersonalEliminado.ToHashSet();
 
-        // 1) Días: antes que el personal (FK compuesta). Las filas desaparecen: no necesitan auditoría.
-        await ConsultaDiasAEliminar(db, idProyecto, plan.Fecha, plan.PersonalEliminado).ExecuteDeleteAsync(ct);
+        // 1) y 2) Días, referencias a principales eliminados y recorte de fechas (EscrituraRecorte, común con la TAREA-18).
+        var personal = await EscrituraRecorte.AplicarAntesDeGuardarAsync(db, idProyecto, plan, ct);
 
         var estadoId = await ConsultaIdEstado(db, cambio.EstadoDestino).FirstAsync(ct);
         var tipoMovimientoId = await ConsultaIdTipoMovimiento(db, cambio.TipoMovimiento).FirstAsync(ct);
         var proyecto = await ConsultaProyectoSeguimiento(db, idProyecto).FirstAsync(ct);
-        var personal = await ConsultaPersonalSeguimiento(db, idProyecto).ToListAsync(ct);
         var actividades = await ConsultaActividadesSeguimiento(db, idProyecto).ToListAsync(ct);
-
-        // 2) Referencias a principales que se eliminan (FK autorreferenciada Restrict) y recorte de fechas.
-        foreach (var p in personal.Where(p => p.PrincipalRelacionadoId is int principal && personalEliminado.Contains(principal)))
-        {
-            p.PrincipalRelacionadoId = null;
-        }
-
-        var recortes = plan.PersonalRecortado.ToDictionary(r => r.Id, r => r.FinNuevo);
-        foreach (var p in personal.Where(p => recortes.ContainsKey(p.Id)))
-        {
-            p.FechaFin = recortes[p.Id]; // DiasDescanso no cambia (E3)
-        }
 
         await GuardarAsync(ct);
 
         // 3) Personal y actividades eliminadas, actividades recortadas (H3), proyecto y etapa nueva (E4).
-        db.ProyectoPersonal.RemoveRange(personal.Where(p => personalEliminado.Contains(p.Id)));
-
-        var actividadesEliminadas = plan.ActividadesEliminadas.ToHashSet();
-        db.ProyectoActividades.RemoveRange(actividades.Where(a => actividadesEliminadas.Contains(a.Id)));
-        var actividadesRecortadas = plan.ActividadesRecortadas.ToDictionary(r => r.Id, r => r.FinNuevo);
-        foreach (var a in actividades.Where(a => actividadesRecortadas.ContainsKey(a.Id)))
-        {
-            a.FechaFin = actividadesRecortadas[a.Id];
-        }
+        EscrituraRecorte.AplicarPersonalYActividades(db, plan, personal, actividades);
 
         proyecto.FechaFin = plan.Fecha;
         proyecto.EstadoProyectoId = estadoId;

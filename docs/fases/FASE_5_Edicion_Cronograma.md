@@ -127,3 +127,9 @@ Después de reactivar, la clasificación R2 (back vigente si `FechaFin + DiasDes
 - **Implementación:** `PersonaGuardada.SinDescansoPosterior` (lo llena `EdicionPersonalRepositorio` con la consulta `ConsultaBacksConDescansoPosterior`, prueba `ToQueryString`) y `PersonaGuardada.EsHistorica`. Las históricas entran al motor con `ForzarHistorica = true` (`CalculoPersonal`).
 - **Pruebas:** `EdicionPersonalH12Tests` (recortado → histórico y sin descanso; con descanso guardado → vigente y se regenera como antes). Las pruebas de la TAREA-17 pasan sin modificarse.
 - **Riesgo:** datos migrados (Fase 3) de backs sin días de descanso guardados se tratarían como recortados. [PENDIENTE DE CONFIRMAR en la Fase 3]
+
+### 8.5 C9 (TAREA-18): registro sin cambios
+- `POST …/personal` sin cambios (todas las personas enviadas SIN_CAMBIO, ninguna nueva y ninguna eliminada) → 400 en la clave `general` "No hay cambios para registrar.", sin abrir la transacción.
+- La vista previa responde 200 con la advertencia "No hay cambios.".
+- Resuelve el pendiente 25 (antes, registrar sin cambios creaba igualmente una etapa nueva, como el original). Tres pruebas de la TAREA-17 que registraban sin cambios se ajustaron para enviar un cambio real (aprobado).
+- Misma regla en la edición de cabecera (`FASE_5_Edicion_Cabecera.md`, C9).

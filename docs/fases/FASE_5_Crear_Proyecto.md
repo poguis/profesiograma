@@ -37,7 +37,7 @@ fecha de corte (RN11), novedades y reporte Excel.
 | RN12 | Etapa versión 1 `CREACION`, estado `ACTIVO`, `FechaCorte = FechaInicio`, snapshot JSON del personal | Application |
 | RN13 | Actividad versión 1 `CREACION` (solo si hay actividad), vigencia = rango del proyecto | Application |
 | RN18 | Máximo de principales y backs desde `Parametro` (20 / 20) | Application |
-| P1 | Mínimo de principales = **0** (no obligatorio). La regla existe en el validador con la constante `MinimoPrincipales = 0` y un comentario que indica cómo exigir 1 o más | Application |
+| P1 | Mínimo de principales = **1** desde la TAREA-18 (C10, pendiente 28): constante `MinimoPrincipales = 1` del validador, mensaje "Se requiere al menos 1 principal(es).". Antes era 0 (no obligatorio). El formulario de creación lo ajustará en la TAREA-19 | Application |
 | — | Nombre visual: nombre del proyecto ERP; si no hay, `"PLANTA - " + descripción de la dimensión` (igual que la app original, también para OFICINAS) | Domain |
 | — | Estado inicial `ACTIVO`; propietario = usuario actual; departamento = [P5] | Application |
 
@@ -203,7 +203,7 @@ La app original guardaba en 10 pasos sin transacción (podía dejar proyectos a 
 
 | # | Tema | Decisión |
 |---|---|---|
-| P1 | Mínimo de principales | **No obligatorio** (mínimo 0). Queda la regla preparada con la constante `MinimoPrincipales` y comentario para exigir 1 o más en el futuro |
+| P1 | Mínimo de principales | ~~No obligatorio (mínimo 0)~~. **Cambiado en la TAREA-18 (C10):** obligatorio, mínimo 1 (constante `MinimoPrincipales`, sin migración) |
 | P2 | Primer principal = inicio del proyecto | **Se sugiere** la fecha, no se exige |
 | P3 | Descanso posterior del back fuera del rango | **Se guarda completo** (no se recorta). El **reporte Excel** lo recorta a la fecha fin del proyecto (anotar en RN15) |
 | P4 | Descanso automático del principal | **Igual que el original**: automático por jornada, hasta la fecha fin de esa persona; solo se revisa el primer día libre |

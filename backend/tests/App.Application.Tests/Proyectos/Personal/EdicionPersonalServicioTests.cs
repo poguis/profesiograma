@@ -354,7 +354,8 @@ public class EdicionPersonalServicioTests
         var sinK1 = Proyecto() with { Personal = [P1, P2] };
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), sinK1));
 
-        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct);
+        // Con un cambio real (P1 a TIPO_2): sin cambios respondería 400 antes de la transacción (C9, TAREA-18).
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct);
 
         Assert.Equal(EstadoEdicion.Cambiado, r.Estado);
         Assert.Equal("El proyecto cambió; vuelve a cargarlo.", ResultadoEdicionPersonal.MensajeCambiado);
@@ -366,7 +367,7 @@ public class EdicionPersonalServicioTests
     public async Task DentroDeLaTransaccion_EstadoCambio_409()
     {
         var e = Crear(new RepositorioEdicionFalso(Proyecto(), Proyecto("SUSPENDIDO")));
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct)).Estado); // C9
         Assert.Null(e.Repo.Aplicado);
     }
 
@@ -390,7 +391,7 @@ public class EdicionPersonalServicioTests
         var repo = new RepositorioEdicionFalso(Proyecto()) { LanzarConflicto = true };
         var e = Crear(repo);
 
-        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo(), Ct)).Estado);
+        Assert.Equal(EstadoEdicion.Cambiado, (await e.Servicio.RegistrarAsync(ProyectoId, Cuerpo([SolP1("TIPO_2")]), Ct)).Estado); // C9
         Assert.Equal((1, 0, 1), (e.Tx.Iniciadas, e.Tx.Confirmadas, e.Tx.Revertidas));
     }
 

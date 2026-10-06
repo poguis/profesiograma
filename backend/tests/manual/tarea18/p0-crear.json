@@ -1,0 +1,31 @@
+{
+  "companiaId": 9001,
+  "grupo": "CAMPO",
+  "proyectoErpId": "DEV-ERP-001",
+  "actividadId": "DEV.01",
+  "dimensionUegpId": null,
+  "fechaInicio": "__INICIO__",
+  "fechaFin": "__FIN__",
+  "horarioCodigo": 1,
+  "salidaAlmuerzo": "13:00",
+  "regresoAlmuerzo": "14:00",
+  "principales": [
+    {
+      "empleadoId": __ID_EMP_P1__,
+      "jornada": "TIPO_2",
+      "fechaInicio": "__P1_INICIO__",
+      "fechaFin": "__FIN__"
+    }
+  ],
+  "backs": [
+    {
+      "empleadoId": __ID_EMP_BACK__,
+      "tipoRegistro": "JORNADA",
+      "diasDescanso": 2,
+      "fechaInicio": "__BACK_INICIO__",
+      "fechaFin": "__BACK_FIN__",
+      "principalRelacionado": 1,
+      "observacion": "Back TAREA-18"
+    }
+  ]
+}

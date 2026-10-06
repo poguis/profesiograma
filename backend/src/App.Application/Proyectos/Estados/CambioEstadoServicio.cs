@@ -132,25 +132,14 @@ public sealed class CambioEstadoServicio(
 
     private CambioEstadoPrevisualizacionDto CrearPrevisualizacion(Calculo c)
     {
-        var personas = c.Datos.Personal.ToDictionary(p => p.Corte.Id);
-        var plan = c.Plan;
+        var impacto = VistaRecorte.Crear(c.Datos.Personal, c.Datos.Actividades, c.Plan);
 
         var advertencias = new List<string>();
         if (c.Fecha < FechaNegocio.Hoy(reloj))
         {
             advertencias.Add(AdvertenciaDiasTranscurridos); // E6 / H2
         }
-        advertencias.AddRange(plan.BacksSinPrincipal.Select(id =>
-            $"El back {personas[id].Corte.Numero} ({personas[id].NombreCompleto}) quedará sin principal relacionado."));
-
-        var actividades = c.Datos.Actividades.ToDictionary(a => a.Id);
-        var actividadesAfectadas = plan.ActividadesRecortadas
-            .Select(r => new ActividadAfectadaDto(actividades[r.Id].Codigo, actividades[r.Id].Version, actividades[r.Id].FechaInicio,
-                r.FinAnterior, r.FinNuevo, "RECORTADA"))
-            .Concat(plan.ActividadesEliminadas.Select(id => new ActividadAfectadaDto(actividades[id].Codigo, actividades[id].Version,
-                actividades[id].FechaInicio, actividades[id].FechaFin, null, "ELIMINADA")))
-            .OrderBy(a => a.Version)
-            .ToList();
+        advertencias.AddRange(impacto.AdvertenciasBacks);
 
         return new CambioEstadoPrevisualizacionDto(
             MaquinaEstadosProyecto.CodigoTipoMovimiento(c.Movimiento),
@@ -159,37 +148,13 @@ public sealed class CambioEstadoServicio(
             c.Fecha,
             c.Datos.FechaFin,
             c.Fecha,
-            plan.DiasEliminados.Select(d => new DiasEliminadosDto(
-                Empleado(personas[d.PersonalId]), CalculadorCruces.NombreRol(d.Rol), d.Cantidad, d.Desde, d.Hasta)).ToList(),
-            plan.PersonalEliminado.Select(id => personas[id]).Select(p => new PersonaEliminadaDto(
-                Empleado(p), CalculadorCruces.NombreRol(p.Corte.Rol), p.Corte.Numero, p.Corte.FechaInicio, p.Corte.FechaFin)).ToList(),
-            plan.PersonalRecortado.Select(r => (r, p: personas[r.Id])).Select(x => new PersonaRecortadaDto(
-                Empleado(x.p), CalculadorCruces.NombreRol(x.p.Corte.Rol), x.p.Corte.Numero, x.p.Corte.FechaInicio, x.r.FinAnterior, x.r.FinNuevo)).ToList(),
-            actividadesAfectadas,
+            impacto.DiasEliminados,
+            impacto.PersonalEliminado,
+            impacto.PersonalRecortado,
+            impacto.ActividadesAfectadas,
             advertencias);
     }
 
-    private static EmpleadoCambioDto Empleado(PersonalCambio p) => new(p.Corte.EmpleadoId, p.CodigoEkon, p.NombreCompleto);
-
     /// <summary>E4: snapshot del personal RESULTANTE (sin eliminados, fechas recortadas). Mismo formato que la creación.</summary>
-    private static string CrearSnapshot(Calculo c)
-    {
-        var eliminados = c.Plan.PersonalEliminado.ToHashSet();
-        var recortes = c.Plan.PersonalRecortado.ToDictionary(r => r.Id, r => r.FinNuevo);
-
-        return SnapshotPersonal.Serializar(c.Datos.Personal
-            .Where(p => !eliminados.Contains(p.Corte.Id))
-            .OrderBy(p => p.Corte.Rol).ThenBy(p => p.Corte.Numero)
-            .Select(p => new ElementoSnapshot(
-                p.Corte.Numero,
-                CalculadorCruces.NombreRol(p.Corte.Rol),
-                p.CodigoEkon,
-                p.NombreCompleto,
-                p.Corte.FechaInicio,
-                recortes.GetValueOrDefault(p.Corte.Id, p.Corte.FechaFin),
-                p.JornadaCodigo,
-                p.DiasTrabajo,
-                p.DiasDescanso,
-                p.TipoRegistro)));
-    }
+    private static string CrearSnapshot(Calculo c) => VistaRecorte.Snapshot(c.Datos.Personal, c.Plan);
 }

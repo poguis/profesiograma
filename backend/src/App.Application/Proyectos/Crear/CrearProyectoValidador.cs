@@ -1,4 +1,3 @@
-using System.Globalization;
 using App.Application.Comun;
 using App.Application.Erp;
 using App.Application.Seguridad;
@@ -17,15 +16,13 @@ public sealed record ResultadoValidacionProyecto(ProyectoValidado? Valido, IRead
 public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICatalogoErp erp, IUsuarioActual usuario)
 {
     /// <summary>
-    /// P1: mínimo de principales. Hoy 0 (no obligatorio). Para exigir 1 o más, cambiar esta constante:
-    /// la regla ya se valida más abajo ("Se requiere al menos {n} principal(es).").
+    /// P1: mínimo de principales. 1 desde la TAREA-18 (C10, pendiente 28); antes era 0 (no obligatorio).
+    /// Mensaje: "Se requiere al menos {n} principal(es).".
     /// </summary>
-    public const int MinimoPrincipales = 0;
+    public const int MinimoPrincipales = 1;
 
     public const int LargoMaximoCargo = 200;
     public const int LargoMaximoObservacion = 500;
-
-    private static readonly string[] FormatosHora = ["HH:mm", "HH:mm:ss"];
 
     public async Task<ResultadoValidacionProyecto> ValidarAsync(CrearProyectoSolicitud s, CancellationToken ct)
     {
@@ -145,35 +142,12 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         }
 
         // --- Horario (ERP) y almuerzo (RN09)
-        HorarioErp? horario = null;
-        if (s.HorarioCodigo is not int horarioCodigo)
-        {
-            Agregar(e, "horarioCodigo", "El horario es obligatorio.");
-        }
-        else if ((horario = await erp.ObtenerHorarioAsync(horarioCodigo, ct)) is null)
-        {
-            Agregar(e, "horarioCodigo", "El horario no existe o no está activo.");
-        }
-
-        var salida = LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", "La hora de salida a almuerzo es obligatoria.", e);
-        var regreso = LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", "La hora de regreso de almuerzo es obligatoria.", e);
+        // Reglas comunes con la edición de cabecera (ReglasHorarioAlmuerzo, mismos mensajes).
+        var horario = await ReglasHorarioAlmuerzo.ValidarHorarioAsync(s.HorarioCodigo, erp, e, ct);
+        var salida = ReglasHorarioAlmuerzo.LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", ReglasHorarioAlmuerzo.MensajeSalidaObligatoria, e);
+        var regreso = ReglasHorarioAlmuerzo.LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", ReglasHorarioAlmuerzo.MensajeRegresoObligatorio, e);
         // RN09: rangos en ReglasAlmuerzo (misma fuente que las opciones del formulario).
-        if (salida is TimeOnly sal && !ReglasAlmuerzo.SalidaEnRango(sal))
-        {
-            Agregar(e, "salidaAlmuerzo",
-                $"La salida a almuerzo debe estar entre {ReglasAlmuerzo.Formato(ReglasAlmuerzo.SalidaMinima)} y {ReglasAlmuerzo.Formato(ReglasAlmuerzo.SalidaMaxima)}.");
-        }
-
-        if (regreso is TimeOnly reg && !ReglasAlmuerzo.RegresoEnRango(reg))
-        {
-            Agregar(e, "regresoAlmuerzo",
-                $"El regreso de almuerzo debe estar entre {ReglasAlmuerzo.Formato(ReglasAlmuerzo.RegresoMinimo)} y {ReglasAlmuerzo.Formato(ReglasAlmuerzo.RegresoMaximo)}.");
-        }
-
-        if (salida is TimeOnly s1 && regreso is TimeOnly r1 && r1 <= s1)
-        {
-            Agregar(e, "regresoAlmuerzo", "El regreso de almuerzo debe ser posterior a la salida.");
-        }
+        ReglasHorarioAlmuerzo.ValidarAlmuerzo(salida, regreso, validarSalida: true, validarRegreso: true, e);
 
         // --- Departamento (P5)
         var departamentos = await datos.ObtenerDepartamentosDeUsuarioAsync(usuarioId, ct);
@@ -295,24 +269,6 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
                 return elegido;
         }
-    }
-
-    private static TimeOnly? LeerHora(string? valor, string clave, string mensajeObligatorio, Dictionary<string, List<string>> e)
-    {
-        var texto = LectorParametros.Normalizar(valor);
-        if (texto is null)
-        {
-            Agregar(e, clave, mensajeObligatorio);
-            return null;
-        }
-
-        if (TimeOnly.TryParseExact(texto, FormatosHora, CultureInfo.InvariantCulture, DateTimeStyles.None, out var hora))
-        {
-            return hora;
-        }
-
-        Agregar(e, clave, "Use el formato HH:mm.");
-        return null;
     }
 
     private static ResultadoValidacionProyecto Invalido(Dictionary<string, List<string>> e) =>

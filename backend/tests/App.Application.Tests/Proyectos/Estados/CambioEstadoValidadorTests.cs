@@ -63,9 +63,19 @@ public class CambioEstadoValidadorTests
             Validar("SUSPENDIDO", new DateOnly(2027, 5, 1)).Errores["fecha"]);
 
     [Fact]
-    public void Acumula_ErroresDeDestinoYFecha()
+    public void DestinoInvalido_NoValidaLaFecha_C11()
     {
         var r = Validar("XYZ", null);
-        Assert.Equal(["estadoDestino", "fecha"], r.Errores.Keys.Order());
+        Assert.Equal(["estadoDestino"], r.Errores.Keys);
+    }
+
+    [Theory]
+    [InlineData("ACTIVO", "SUSPENDIDO")] // REACTIVACION (caso i de la TAREA-17b)
+    [InlineData("ACTIVO", "ACTIVO")]     // SIN_CAMBIO
+    [InlineData("INACTIVO", "ACTIVO")]   // NO_PERMITIDO
+    public void C11_MovimientoInvalido_ConFechaFueraDeRango_UnSoloError(string destino, string estadoActual)
+    {
+        var r = Validar(destino, new DateOnly(2027, 6, 1), estadoActual);
+        Assert.Equal(["estadoDestino"], r.Errores.Keys);
     }
 }

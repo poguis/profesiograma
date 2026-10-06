@@ -1,5 +1,6 @@
 using App.Application.Comun;
 using App.Application.Proyectos;
+using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
@@ -189,8 +190,47 @@ public static class ProyectoEndpoints
                 };
             });
 
+        // ---------------------------------------------------------- cabecera y actividad (TAREA-18)
+
+        proyectos.MapGet("/{id:int}/cabecera", async Task<Results<Ok<CabeceraDto>, NotFound>> (
+            int id, EdicionCabeceraServicio servicio, CancellationToken ct) =>
+            await servicio.ObtenerAsync(id, ct) is { } cabecera ? TypedResults.Ok(cabecera) : TypedResults.NotFound());
+
+        // Vista previa: cambios, impacto del recorte, actividades resultantes, tipo de etapa y advertencias. No guarda nada.
+        proyectos.MapPost("/{id:int}/cabecera/previsualizar",
+            async Task<Results<Ok<PrevisualizacionCabeceraDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, EditarCabeceraSolicitud solicitud, EdicionCabeceraServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.PrevisualizarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Previsualizado => TypedResults.Ok(resultado.Previsualizacion!),
+                    EstadoEdicion.Invalido => CabeceraInvalida(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
+        // Una transacción con applock. 200 { id, version }; 400; 404; 409 "El proyecto cambió; vuelve a cargarlo."; 503.
+        proyectos.MapPost("/{id:int}/cabecera",
+            async Task<Results<Ok<CabeceraActualizadaDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+                int id, EditarCabeceraSolicitud solicitud, EdicionCabeceraServicio servicio, CancellationToken ct) =>
+            {
+                var resultado = await servicio.RegistrarAsync(id, solicitud, ct);
+                return resultado.Estado switch
+                {
+                    EstadoEdicion.Realizado => TypedResults.Ok(resultado.Realizado!),
+                    EstadoEdicion.Invalido => CabeceraInvalida(resultado),
+                    EstadoEdicion.Cambiado => ProyectoCambiado(),
+                    _ => TypedResults.NotFound(),
+                };
+            });
+
         return app;
     }
+
+    private static ValidationProblem CabeceraInvalida(ResultadoCabecera resultado) =>
+        TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos de la cabecera no son válidos.");
 
     private static ValidationProblem ReactivacionInvalida(ResultadoReactivacion resultado) =>
         TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos de la reactivación no son válidos.");

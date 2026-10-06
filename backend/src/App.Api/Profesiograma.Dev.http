@@ -631,3 +631,79 @@ Content-Type: application/json
 
 { "fecha": "2026-10-08", "fechaFin": "2026-12-03",
   "principales": [ { "clave": "p1", "empleadoId": 7, "jornada": "TIPO_2", "fechaInicio": "2026-10-08", "fechaFin": "2026-12-03" } ], "backs": [] }
+
+###############################################################################
+### TAREA-18 — Editar cabecera (fechas, horario, almuerzo) y cambio de actividad. NO EJECUTAR desde Claude Code.
+### Ejemplo con H = 06/10/2026: proyecto C 11/10–15/11, P1 desde el 14/10, back 16/10–18/10 + 2 días, CAMPO DEV.01.
+### Completar @idC con el Id real (prueba guiada: backend/tests/manual/tarea18/parte1.cmd y parte2.cmd).
+### Los Id 1–10 solo reciben GET y vistas previas.
+@idC = 0
+
+### Y1. Datos del formulario → 200: puedeEditar, fechaInicioEditable true, fechaFinMinima = hoy, actividadEditable, opciones de almuerzo
+GET {{base}}/api/proyectos/{{idC}}/cabecera
+X-Dev-User: gestor
+
+### Y2. Inicio después del inicio de P1 → 400 fechaInicio "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal."
+POST {{base}}/api/proyectos/{{idC}}/cabecera/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fechaInicio": "2026-10-15" }
+
+### Y3. Atrasar el inicio al 14/10 (P1) → 200; la actividad v1 pasa a empezar el 14/10 (MODIFICADA)
+POST {{base}}/api/proyectos/{{idC}}/cabecera/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fechaInicio": "2026-10-14" }
+
+### Y4. Acortar la fecha fin al 17/10 (C4) → 200 con personal recortado, días eliminados y la actividad recortada
+POST {{base}}/api/proyectos/{{idC}}/cabecera/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fechaFin": "2026-10-17" }
+
+### Y5. Misma actividad (C6) → 400 actividad.actividadId "La actividad DEV.01 ya está vigente el 26/10/2026."
+POST {{base}}/api/proyectos/{{idC}}/cabecera/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "actividad": { "actividadId": "DEV.01", "desde": "2026-10-26" } }
+
+### Y6. Sin cambios → vista previa 200 con "No hay cambios."; registro → 400 general "No hay cambios para registrar." (C9)
+POST {{base}}/api/proyectos/{{idC}}/cabecera
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ }
+
+### Y7. REGISTRAR: ampliar al 05/12 + horario 2 + almuerzo 12:00–13:00 → 200 { id: idC, version: 2 } (EDICION_CABECERA)
+POST {{base}}/api/proyectos/{{idC}}/cabecera
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "fechaFin": "2026-12-05", "horarioCodigo": 2, "salidaAlmuerzo": "12:00", "regresoAlmuerzo": "13:00" }
+
+### Y8. REGISTRAR solo actividad DEV.02 desde el 26/10 → 200 version 3 (CAMBIO_ACTIVIDAD). Requiere DEV.02 en el ERP simulado.
+POST {{base}}/api/proyectos/{{idC}}/cabecera
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "actividad": { "actividadId": "DEV.02", "desde": "2026-10-26" } }
+
+### Y9. C10: crear sin principales (vista previa) → 400 principales "Se requiere al menos 1 principal(es)."
+POST {{base}}/api/proyectos/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "companiaId": 9001, "grupo": "CAMPO", "proyectoErpId": "DEV-ERP-001", "actividadId": "DEV.01", "dimensionUegpId": null,
+  "fechaInicio": "2026-11-01", "fechaFin": "2026-11-30", "horarioCodigo": 1, "salidaAlmuerzo": "13:00", "regresoAlmuerzo": "14:00",
+  "principales": [], "backs": [] }
+
+### Y10. C11: cambio-estado a ACTIVO del Id 2 con fecha fuera de rango → 400 con un solo error (estadoDestino)
+POST {{base}}/api/proyectos/2/cambio-estado/previsualizar
+X-Dev-User: gestor
+Content-Type: application/json
+
+{ "estadoDestino": "ACTIVO", "fecha": "2030-01-01" }

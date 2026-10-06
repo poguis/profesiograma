@@ -66,6 +66,15 @@ public sealed record ResultadoEdicionPersonal(
     public const string MensajeCambiado = "El proyecto cambió; vuelve a cargarlo.";
     public const string MensajeCruces = "El proyecto tiene cruces de asignación.";
 
+    /// <summary>C9 (TAREA-18, pendiente 25): registro sin cambios → 400 en la clave "general".</summary>
+    public const string ClaveSinCambios = "general";
+    public const string MensajeSinCambios = "No hay cambios para registrar.";
+    /// <summary>C9: advertencia de la vista previa cuando no hay cambios (200).</summary>
+    public const string AdvertenciaSinCambios = "No hay cambios.";
+
+    public static IReadOnlyDictionary<string, string[]> ErroresSinCambios() =>
+        new Dictionary<string, string[]> { [ClaveSinCambios] = [MensajeSinCambios] };
+
     public static ResultadoEdicionPersonal Invalido(IReadOnlyDictionary<string, string[]> e) => new(EstadoEdicion.Invalido, e);
     public static ResultadoEdicionPersonal NoEncontrado() => new(EstadoEdicion.NoEncontrado);
     public static ResultadoEdicionPersonal Cambiado() => new(EstadoEdicion.Cambiado);

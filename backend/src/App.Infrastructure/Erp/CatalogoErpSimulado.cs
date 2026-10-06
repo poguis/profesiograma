@@ -26,6 +26,8 @@ internal sealed class CatalogoErpSimulado : CatalogoErpBase
     private static readonly (int CompaniaId, string ProyectoId, ActividadErp Actividad)[] Actividades =
     [
         (CompaniaPrueba, "DEV-ERP-001", new ActividadErp("DEV.01", "ACTIVIDAD DE PRUEBA", "PRUEBA")),
+        // TAREA-18 (pendiente 30): segunda actividad para probar el cambio de actividad.
+        (CompaniaPrueba, "DEV-ERP-001", new ActividadErp("DEV.02", "ACTIVIDAD DE PRUEBA 2", "PRUEBA")),
     ];
 
     private static readonly (int CompaniaId, DimensionErp Dimension)[] Dimensiones =
