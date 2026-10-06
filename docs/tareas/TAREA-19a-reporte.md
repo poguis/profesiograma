@@ -1,7 +1,7 @@
 # TAREA-19a — Edición de cabecera y cambio de actividad (frontend) + P6
 
 **Fecha:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada; **verificación visual del usuario pendiente** (sección 6).
+**Resultado:** ✅ completada. Verificación visual del usuario del 06/10/2026: **V1–V17 OK** (sección 6). Proyecto D = **Id 12** (creado en V11; versiones 2–5 por V12–V15). V15 reveló la falta de un token de concurrencia desde el cliente (pendiente 32).
 - `npm run build`: sin errores ni advertencias.
 - `npm run lint` (oxlint): sin hallazgos.
 - `npm test`: **117/117** (72 anteriores sin cambios + 41 de `edicionCabecera.test.ts` + 4 de P6 en `formularioProyecto.test.ts`).
@@ -131,7 +131,7 @@ Formatos: fechas "yyyy-MM-dd". Horas del horario "HH:mm:ss" (`TimeOnly`, solo se
 
 Errores durante la implementación: ninguno de compilación ni de pruebas.
 
-## 6. Verificación visual (usuario) — [PENDIENTE]
+## 6. Verificación visual (usuario, 06/10/2026) — V1–V17 OK
 Con la API y `npm run dev` corriendo (los ejecuta el usuario), como `gestor`. Fechas calculadas con hoy = 06/10/2026.
 
 **Dependencias de fecha:**
@@ -151,25 +151,29 @@ Solo V11–V15 escriben, y solo en D.
 
 | # | Proyecto | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|---|
-| V1 | Id 2 (SUSPENDIDO) | Abrir el detalle | "Editar datos generales" deshabilitado con "Solo se puede editar la cabecera de un proyecto ACTIVO (estado actual: SUSPENDIDO)." | No | [PENDIENTE] |
-| V2 | Id 10 (ACTIVO, ya empezó) | Abrir el diálogo | Inicio en solo lectura con "La fecha de inicio ya no se puede cambiar: el proyecto empezó el 02/10/2026."; fin con mínimo hoy; el foco cae en la fecha fin; sección Actividad según el grupo | No | [PENDIENTE] |
-| V3 | Id 11 | Abrir el diálogo (hasta el 10/10) | Inicio editable (mínimo hoy) con el foco en él; historial con v1, v2 y v3 y la marca "Vigente" en **v1 DEV.01** (O3: referencia = max(inicio 11/10, hoy) = 11/10); "Vigente hoy: DEV.01 …"; la tarjeta del detalle muestra la misma actividad y versión (sin recalcular en el frontend) | No | [PENDIENTE] |
-| V4 | Id 11 | Inicio 15/10 → Ver impacto | 400 en el campo inicio: "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal." | No | [PENDIENTE] |
-| V5 | Id 11 | Fin 20/10 y otro regreso de almuerzo de la lista → Ver impacto | Etapa Edición de cabecera; cambios fecha fin y regreso; v3 DEV.01 MODIFICADA hasta 20/10; sin casilla de confirmación; "Registrar" habilitado (**no pulsarlo**) | No | [PENDIENTE] |
-| V6 | Id 11 | Fin 15/10 → Ver impacto | DEV003 recortado (16/10 → 15/10); DEV001 eliminado con sus días; v3 DEV.01 ELIMINADA; casilla obligatoria. **No registrar** | No | [PENDIENTE] |
-| V7 | Id 11 | Abrir y "Ver impacto" sin tocar nada | Advertencia "No hay cambios."; "Registrar" deshabilitado con "No hay cambios para registrar." (pendiente 25) | No | [PENDIENTE] |
-| V8 | Id 11 | Tras V5, cambiar otro campo | "Vista previa desactualizada.", impacto atenuado y "Registrar" deshabilitado | No | [PENDIENTE] |
-| V9 | Id 11 | Actividad DEV.01 desde 16/10 → Ver impacto | 400 en "Cambiar a la actividad": "La actividad DEV.01 ya está vigente el 16/10/2026." | No | [PENDIENTE] |
-| V10 | — | "Nuevo proyecto" sin principales | "Generar vista previa" deshabilitado; ayuda neutra (no roja) "Agrega al menos 1 principal para generar la vista previa." bajo Principales y en la barra; sin error rojo; al agregar un principal la ayuda desaparece y el botón se habilita (P6) | No | [PENDIENTE] |
-| V11 | D (nuevo) | Crear D desde "Nuevo proyecto" con los datos de arriba | 201 y detalle de D con aviso del código | **Sí (crea D)** | [PENDIENTE] |
-| V12 | D | Fin 07/11 y otro horario → Ver impacto → Registrar | "Datos generales actualizados (versión 2).", pestaña Historial con la etapa EDICION_CABECERA, detalle recargado | **Sí (D)** | [PENDIENTE] |
-| V13 | D | Solo actividad DEV.02 desde 27/10 → Ver impacto → Registrar | Etapa CAMBIO_ACTIVIDAD; "Actividad cambiada (versión 3)."; en el historial, la actividad DEV.02 | **Sí (D)** | [PENDIENTE] |
-| V14 | D | Fin 26/10 → Ver impacto → marcar la casilla → Registrar con doble clic rápido | P1 y back recortados al 26/10; "Días que se agregan": back DESCANSO 27/10–28/10 (2) (H15); DEV.02 ELIMINADA; una sola versión nueva (4) | **Sí (D)** | [PENDIENTE] |
-| V15 | D | Dos pestañas con el diálogo y el impacto listos; registrar en una y luego en la otra | 409 "El proyecto cambió; vuelve a cargarlo." y "Recargar datos del proyecto", que reinicia el formulario con los datos nuevos | **Sí (D)** | [PENDIENTE] |
-| V16 | Cualquiera | Opcional: con el diálogo abierto, el usuario detiene la API y pulsa "Ver impacto" | Error de red con "Reintentar" | No | [PENDIENTE] |
-| V17 | Id 11 | Cambiar un campo y pulsar Cancelar (repetir con Esc y con el botón Atrás del navegador) | "Hay cambios sin registrar. ¿Cerrar de todos modos?": "Seguir editando" conserva los datos; "Cerrar sin registrar" cierra (o navega, con Atrás). Sin cambios, Cancelar cierra sin preguntar | No | [PENDIENTE] |
+| V1 | Id 2 (SUSPENDIDO) | Abrir el detalle | "Editar datos generales" deshabilitado con "Solo se puede editar la cabecera de un proyecto ACTIVO (estado actual: SUSPENDIDO)." | No | OK |
+| V2 | Id 10 (ACTIVO, ya empezó) | Abrir el diálogo | Inicio en solo lectura con "La fecha de inicio ya no se puede cambiar: el proyecto empezó el 02/10/2026."; fin con mínimo hoy; el foco cae en la fecha fin; sección Actividad según el grupo | No | OK |
+| V3 | Id 11 | Abrir el diálogo (hasta el 10/10) | Inicio editable (mínimo hoy) con el foco en él; historial con v1, v2 y v3 y la marca "Vigente" en **v1 DEV.01** (O3: referencia = max(inicio 11/10, hoy) = 11/10); "Vigente hoy: DEV.01 …"; la tarjeta del detalle muestra la misma actividad y versión (sin recalcular en el frontend) | No | OK |
+| V4 | Id 11 | Inicio 15/10 → Ver impacto | 400 en el campo inicio: "Hay personal que empieza antes de la nueva fecha de inicio; ajusta primero el personal." | No | OK |
+| V5 | Id 11 | Fin 20/10 y otro regreso de almuerzo de la lista → Ver impacto | Etapa Edición de cabecera; cambios fecha fin y regreso; v3 DEV.01 MODIFICADA hasta 20/10; sin casilla de confirmación; "Registrar" habilitado (**no pulsarlo**) | No | OK |
+| V6 | Id 11 | Fin 15/10 → Ver impacto | DEV003 recortado (16/10 → 15/10); DEV001 eliminado con sus días; v3 DEV.01 ELIMINADA; casilla obligatoria. **No registrar** | No | OK |
+| V7 | Id 11 | Abrir y "Ver impacto" sin tocar nada | Advertencia "No hay cambios."; "Registrar" deshabilitado con "No hay cambios para registrar." (pendiente 25) | No | OK |
+| V8 | Id 11 | Tras V5, cambiar otro campo | "Vista previa desactualizada.", impacto atenuado y "Registrar" deshabilitado | No | OK |
+| V9 | Id 11 | Actividad DEV.01 desde 16/10 → Ver impacto | 400 en "Cambiar a la actividad": "La actividad DEV.01 ya está vigente el 16/10/2026." | No | OK |
+| V10 | — | "Nuevo proyecto" sin principales | "Generar vista previa" deshabilitado; ayuda neutra (no roja) "Agrega al menos 1 principal para generar la vista previa." bajo Principales y en la barra; sin error rojo; al agregar un principal la ayuda desaparece y el botón se habilita (P6) | No | OK |
+| V11 | D (nuevo) | Crear D desde "Nuevo proyecto" con los datos de arriba | 201 y detalle de D con aviso del código | **Sí (crea D)** | OK |
+| V12 | D | Fin 07/11 y otro horario → Ver impacto → Registrar | "Datos generales actualizados (versión 2).", pestaña Historial con la etapa EDICION_CABECERA, detalle recargado | **Sí (D)** | OK |
+| V13 | D | Solo actividad DEV.02 desde 27/10 → Ver impacto → Registrar | Etapa CAMBIO_ACTIVIDAD; "Actividad cambiada (versión 3)."; en el historial, la actividad DEV.02 | **Sí (D)** | OK |
+| V14 | D | Fin 26/10 → Ver impacto → marcar la casilla → Registrar con doble clic rápido | P1 y back recortados al 26/10; "Días que se agregan": back DESCANSO 27/10–28/10 (2) (H15); DEV.02 ELIMINADA; una sola versión nueva (4) | **Sí (D)** | OK |
+| V15 | D | Dos pestañas con el diálogo y el impacto listos; registrar en una y luego en la otra | 409 "El proyecto cambió; vuelve a cargarlo." y "Recargar datos del proyecto", que reinicia el formulario con los datos nuevos | **Sí (D)** | OK (ver nota) |
+| V16 | Cualquiera | Opcional: con el diálogo abierto, el usuario detiene la API y pulsa "Ver impacto" | Error de red con "Reintentar" | No | OK |
+| V17 | Id 11 | Cambiar un campo y pulsar Cancelar (repetir con Esc y con el botón Atrás del navegador) | "Hay cambios sin registrar. ¿Cerrar de todos modos?": "Seguir editando" conserva los datos; "Cerrar sin registrar" cierra (o navega, con Atrás). Sin cambios, Cancelar cierra sin preguntar | No | OK |
 
 V17 se agrega por el requisito nuevo de confirmación de cierre.
+
+**Proyecto D:** Id 12, creado en V11 (versión 1). V12–V15 registraron las versiones 2 a 5.
+
+**Nota V15.** La pestaña B respondió **400 "No hay cambios para registrar."**, no 409: pidió el mismo almuerzo que A ya había guardado. Es el resultado esperado para ese caso (C9). Pero confirma que el cliente no envía un token de concurrencia. El servidor recalcula sobre los datos actuales (relectura y `RowVer` dentro de la misma petición), así que con un cambio distinto B se habría aplicado sobre los datos de A sin 409, aunque su vista previa era de la versión anterior. Queda como **pendiente 32** de `00_ESTADO_ACTUAL.md` (antes de la TAREA-19b).
 
 ## 7. Contradicciones y observaciones
 1. **Datos del ERP del diálogo.** El GET de cabecera no trae la compañía ni el proyecto ERP; se toman del detalle (`proyecto.compania.id`, `proyecto.erp.proyectoErpId`). La actividad solo se puede cambiar si `permisos.actividadEditable` y además hay `proyectoErpId`.
@@ -179,6 +183,6 @@ V17 se agrega por el requisito nuevo de confirmación de cierre.
 5. **Etiqueta de la etapa en el impacto.** El nombre sale del catálogo `tiposMovimiento`; si EDICION_CABECERA o CAMBIO_ACTIVIDAD faltaran en él, se muestra el código.
 
 ## 8. Pendientes
-- Verificación visual V1–V17 (sección 6).
+- **Pendiente 32** (antes de la 19b): token de concurrencia desde el cliente. La vista previa devuelve la versión del proyecto (o RowVer) y el registro la envía; si no coincide → 409 "El proyecto cambió; vuelve a cargarlo.". Alcance: cabecera, personal, cambio de estado y reactivación (backend + frontend de las TAREA-15/19a).
 - TAREA-19b: actualización de personal, pendiente 25 del lado del personal y unión de tramos contiguos (pendiente 26).
 - TAREA-19c: reactivación (pendiente 26).
