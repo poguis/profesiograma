@@ -94,10 +94,10 @@ public class EmpleadoConsultaServicioTests
         public EmpleadoFiltro? UltimoFiltro { get; private set; }
         public List<int> UsuariosConsultados { get; } = [];
 
-        public Task<PaginaResultado<EmpleadoBusquedaDto>> BuscarAsync(EmpleadoFiltro filtro, CancellationToken ct)
+        public Task<ResultadoBusquedaEmpleadosDto> BuscarAsync(EmpleadoFiltro filtro, CancellationToken ct)
         {
             UltimoFiltro = filtro;
-            return Task.FromResult(new PaginaResultado<EmpleadoBusquedaDto>([], filtro.Pagina, filtro.Tamano, 0));
+            return Task.FromResult(new ResultadoBusquedaEmpleadosDto([], filtro.Pagina, filtro.Tamano, 0, null));
         }
 
         public Task<IReadOnlyList<string>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct)

@@ -132,7 +132,8 @@ Reutiliza la TAREA-17: núcleo de `EdicionPersonalValidador`, `CalculoPersonal` 
 | `POST …/reactivacion/previsualizar` | 200 `PrevisualizacionReactivacionDto`: los campos de la vista previa de la TAREA-17 (`corte` = R, `personal`, `tramos`, `cruces`, `resumen`, `advertencias`) + `fechaFinActual`, `fechaFinNueva`, `actividad` que se creará (o null) y `versionProyecto` (§9). 400 / 404 / 409 (cambiado). No guarda |
 | `POST …/reactivacion` | 200 `{ id, estado: "ACTIVO", version }`. Exige `versionProyecto` (§9): ausente → 400 `versionProyecto`; distinto de la versión actual → 409. 400; 404; 409 con extensiones `cruces` y `resumen`, o "El proyecto cambió; vuelve a cargarlo."; 503 (applock) |
 
-Cuerpo: `{ fecha, fechaFin, principales: [{ clave, empleadoId, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, empleadoId, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`. Todas las personas son nuevas (sin `id`). `principalClave` apunta a un principal del cuerpo; `principalId`, a un principal guardado (todos son históricos). Excluyentes.
+Cuerpo: `{ fecha, fechaFin, principales: [{ clave, codigoEkon?, empleadoId?, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, codigoEkon?, empleadoId?, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`. Todas las personas son nuevas (sin `id`). `principalClave` apunta a un principal del cuerpo; `principalId`, a un principal guardado (todos son históricos). Excluyentes.
+**TAREA-26d:** el empleado va por `codigoEkon` (o, hasta la 26d-3, `empleadoId`; excluyentes), activo en la API (lectura fresca al registrar; 503 sin abrir la transacción si no responde); alta puntual en `Empleado` dentro de la transacción. La propuesta R7 decide "activo" con la API (caché); si la API no responde, se propone con la advertencia "No se pudo verificar los datos en el ERP." (sin 503).
 
 ### 8.2 Reglas
 | Id | Regla |

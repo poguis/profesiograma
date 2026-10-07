@@ -1,0 +1,5 @@
+# TAREA-26d: salidas locales y cuerpos del usuario (se versiona solo crear-proyecto.ejemplo.json).
+resultado-*.txt
+*.json
+!*.ejemplo.json
+simulacion/

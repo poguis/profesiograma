@@ -20,7 +20,7 @@ public class EdicionPersonalServicioTests
         cruces ??= new CrucesEdicionFalsos();
         var tx = new TransaccionFalsa();
         var servicio = new EdicionPersonalServicio(repo, new DatosFalsos(), cruces, new EdicionPersonalValidador(), tx,
-            usuario ?? new UsuarioFalso(), new RelojFijo(Ahora));
+            usuario ?? new UsuarioFalso(), new RelojFijo(Ahora), new EmpleadosErpFalsos());
         return new Entorno(servicio, repo, cruces, tx);
     }
 
@@ -400,7 +400,7 @@ public class EdicionPersonalServicioTests
     [Fact]
     public void CalculadorCruces_Historicos_YInternosDesdeLista()
     {
-        var empleados = new Dictionary<int, EmpleadoRef> { [6] = new(6, "DEV006", "EMPLEADO PRUEBA 06", null) };
+        var empleados = new Dictionary<int, EmpleadoAsignable> { [6] = new(6, "DEV006", "EMPLEADO PRUEBA 06", null) };
         var p1 = new App.Domain.Proyectos.Cronograma.PersonaProyecto(App.Domain.Proyectos.Cronograma.RolCronograma.Principal, 1);
         var k2 = new App.Domain.Proyectos.Cronograma.PersonaProyecto(App.Domain.Proyectos.Cronograma.RolCronograma.Back, 2);
 

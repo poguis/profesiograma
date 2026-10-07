@@ -10,24 +10,6 @@ namespace App.Application.Proyectos.Crear;
 /// </summary>
 internal static class ReglasPersonal
 {
-    public static EmpleadoRef? ValidarEmpleado(int? id, string clave, IReadOnlyDictionary<int, EmpleadoRef> empleados,
-        Dictionary<string, List<string>> e)
-    {
-        if (id is not int empleadoId)
-        {
-            Agregar(e, $"{clave}.empleadoId", "El empleado es obligatorio.");
-            return null;
-        }
-
-        if (!empleados.TryGetValue(empleadoId, out var empleado))
-        {
-            Agregar(e, $"{clave}.empleadoId", $"El empleado {empleadoId} no existe o no está activo.");
-            return null;
-        }
-
-        return empleado;
-    }
-
     /// <summary>RN08: fechas obligatorias, fin ≥ inicio y dentro del rango del proyecto.</summary>
     public static (DateOnly Inicio, DateOnly Fin)? ValidarFechasPersona(DateOnly? inicio, DateOnly? fin, string clave,
         (DateOnly Inicio, DateOnly Fin)? proyecto, Dictionary<string, List<string>> e)

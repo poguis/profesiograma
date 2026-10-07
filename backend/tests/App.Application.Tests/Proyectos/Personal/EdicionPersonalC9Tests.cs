@@ -14,7 +14,7 @@ public class EdicionPersonalC9Tests
         var repo = new RepositorioEdicionFalso(Proyecto());
         var tx = new TransaccionFalsa();
         return (new EdicionPersonalServicio(repo, new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(), tx,
-            new UsuarioFalso(), new RelojFijo(Ahora)), repo, tx);
+            new UsuarioFalso(), new RelojFijo(Ahora), new EmpleadosErpFalsos()), repo, tx);
     }
 
     [Fact]

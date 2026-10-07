@@ -1,4 +1,5 @@
 using App.Application.Comun;
+using App.Application.Proyectos.Estados;
 using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cronograma;
 
@@ -33,7 +34,8 @@ public sealed class CrearProyectoServicio(
 
     public async Task<ResultadoCrearProyecto> RegistrarAsync(CrearProyectoSolicitud solicitud, CancellationToken ct)
     {
-        var validacion = await validador.ValidarAsync(solicitud, ct);
+        // TAREA-26d (P5): lectura FRESCA de la API de empleados; si falla → 503 sin abrir la transacción.
+        var validacion = await validador.ValidarAsync(solicitud, ct, empleadosFrescos: true);
         if (validacion.Valido is not { } proyecto)
         {
             return ResultadoCrearProyecto.Invalido(validacion.Errores);
@@ -73,8 +75,16 @@ public sealed class CrearProyectoServicio(
                 var codigo = GeneradorCodigoProyecto.Generar(hoy, uid);
                 if (!await repositorio.ExisteCodigoAsync(codigo, ctTx))
                 {
-                    var id = await repositorio.AgregarAsync(nuevo, codigo, uid, ctTx);
-                    return ResultadoCrearProyecto.Registrado(new ProyectoCreadoDto(id, codigo));
+                    try
+                    {
+                        var id = await repositorio.AgregarAsync(nuevo, codigo, uid, ctTx);
+                        return ResultadoCrearProyecto.Registrado(new ProyectoCreadoDto(id, codigo));
+                    }
+                    catch (ConflictoConcurrenciaException)
+                    {
+                        // TAREA-26d: la alta puntual chocó con UQ_Empleado_CodigoEkon (otro registro al mismo tiempo) → 409.
+                        return ResultadoCrearProyecto.Cambiado(); // se revierte (confirmar = false)
+                    }
                 }
             }
 
@@ -84,7 +94,7 @@ public sealed class CrearProyectoServicio(
 
     // ------------------------------------------------------------------ cálculo común
 
-    private sealed record Calculo(ResultadoCronograma Cronograma, IReadOnlyDictionary<int, EmpleadoRef> Empleados, PrevisualizacionDto Previsualizacion);
+    private sealed record Calculo(ResultadoCronograma Cronograma, IReadOnlyDictionary<int, EmpleadoAsignable> Empleados, PrevisualizacionDto Previsualizacion);
 
     private async Task<Calculo> CalcularAsync(ProyectoValidado p, CancellationToken ct)
     {
@@ -126,7 +136,7 @@ public sealed class CrearProyectoServicio(
 
     /// <summary>Consulta los días existentes en el rango de los días ≠ DESCANSO del proyecto nuevo y los cruza.</summary>
     private async Task<IReadOnlyList<CruceDto>> BuscarCrucesExternosAsync(
-        ResultadoCronograma cronograma, IReadOnlyDictionary<int, EmpleadoRef> empleados, CancellationToken ct)
+        ResultadoCronograma cronograma, IReadOnlyDictionary<int, EmpleadoAsignable> empleados, CancellationToken ct)
     {
         var trabajo = cronograma.DiasFinales.Where(d => d.Rol != RolCronograma.Descanso).ToList();
         if (trabajo.Count == 0)
@@ -134,8 +144,15 @@ public sealed class CrearProyectoServicio(
             return [];
         }
 
+        // TAREA-26d: un Id temporal (negativo) es una persona sin fila: no tiene asignaciones en otros proyectos.
+        var conFila = trabajo.Select(d => d.EmpleadoId).Where(id => id > 0).Distinct().ToList();
+        if (conFila.Count == 0)
+        {
+            return [];
+        }
+
         var existentes = await crucesExternos.BuscarAsync(
-            trabajo.Select(d => d.EmpleadoId).Distinct().ToList(),
+            conFila,
             trabajo.Min(d => d.Fecha), trabajo.Max(d => d.Fecha), excluirProyectoId: null, ct);
 
         return CalculadorCruces.Externos(trabajo, existentes, empleados);

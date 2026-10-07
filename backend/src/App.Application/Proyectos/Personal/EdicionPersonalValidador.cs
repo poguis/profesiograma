@@ -14,7 +14,7 @@ public sealed record RelacionPlan(int? PrincipalId, string? PrincipalClaveNueva)
 
 /// <summary>Persona vigente o nueva ya validada. Numero = el guardado (vigente) o máx + 1 (nueva).</summary>
 public sealed record PersonaPlan(
-    string Clave, int? Id, RolCronograma Rol, short Numero, EmpleadoRef Empleado, JornadaRef? Jornada,
+    string Clave, int? Id, RolCronograma Rol, short Numero, EmpleadoAsignable Empleado, JornadaRef? Jornada,
     DateOnly Inicio, DateOnly Fin, TipoRegistroBack TipoRegistro, byte DiasDescanso,
     string? Cargo, string? Observacion, RelacionPlan Relacion, string Accion)
 {
@@ -52,7 +52,7 @@ public sealed class EdicionPersonalValidador
         DateOnly corte,
         IReadOnlyDictionary<string, JornadaRef> jornadas,
         LimitesProyecto limites,
-        IReadOnlyDictionary<int, EmpleadoRef> empleadosActivos)
+        CatalogoEmpleados empleadosActivos)
     {
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(proyecto);
@@ -94,7 +94,7 @@ public sealed class EdicionPersonalValidador
         ReglasValidacionPersonal reglas,
         IReadOnlyDictionary<string, JornadaRef> jornadas,
         LimitesProyecto limites,
-        IReadOnlyDictionary<int, EmpleadoRef> empleadosActivos)
+        CatalogoEmpleados empleadosActivos)
     {
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(proyecto);
@@ -148,7 +148,7 @@ public sealed class EdicionPersonalValidador
                 continue; // Id inválido: no se valida el resto de la fila (un solo error, en "id")
             }
 
-            var empleado = ResolverEmpleado(p.EmpleadoId, guardada, clave, empleadosActivos, e);
+            var empleado = ResolverEmpleado(p.EmpleadoId, p.CodigoEkon, guardada, clave, empleadosActivos, e);
             var jornada = ValidarJornada(p.Jornada, clave, jornadas, e);
             var fechas = ValidarFechas(p.FechaInicio, p.FechaFin, guardada, clave, rango, corte, corteMenosUno, inicioMinimoNuevas, e);
             var cargo = guardada is not null && p.Cargo is null
@@ -180,7 +180,7 @@ public sealed class EdicionPersonalValidador
                 continue; // Id inválido: no se valida el resto de la fila (un solo error, en "id")
             }
 
-            var empleado = ResolverEmpleado(b.EmpleadoId, guardada, clave, empleadosActivos, e);
+            var empleado = ResolverEmpleado(b.EmpleadoId, b.CodigoEkon, guardada, clave, empleadosActivos, e);
             var tipo = ValidarTipoRegistro(b.TipoRegistro, clave, e);
             var dias = ValidarDiasDescanso(b.DiasDescanso, clave, limites.MaxDiasDescansoBack, e);
             var fechas = ValidarFechas(b.FechaInicio, b.FechaFin, guardada, clave, rango, corte, corteMenosUno, inicioMinimoNuevas, e);
@@ -315,23 +315,28 @@ public sealed class EdicionPersonalValidador
         return true;
     }
 
-    /// <summary>Vigente: el empleado no cambia (null = el mismo). Nueva: obligatorio y activo (D4).</summary>
-    private static EmpleadoRef? ResolverEmpleado(int? empleadoId, PersonaGuardada? guardada, string clave,
-        IReadOnlyDictionary<int, EmpleadoRef> activos, Dictionary<string, List<string>> e)
+    /// <summary>
+    /// Vigente: el empleado no cambia (null = el mismo). Nueva: obligatorio y activo en la API (D4; TAREA-26d: por
+    /// codigoEkon o, en la transición, empleadoId).
+    /// </summary>
+    private static EmpleadoAsignable? ResolverEmpleado(int? empleadoId, string? codigoEkon, PersonaGuardada? guardada, string clave,
+        CatalogoEmpleados activos, Dictionary<string, List<string>> e)
     {
         if (guardada is null)
         {
-            return ValidarEmpleado(empleadoId, clave, activos, e);
+            return activos.Validar(empleadoId, codigoEkon, clave, e);
         }
 
-        if (empleadoId is int id && id != guardada.EmpleadoId)
+        var codigo = string.IsNullOrWhiteSpace(codigoEkon) ? null : codigoEkon.Trim();
+        if ((empleadoId is int id && id != guardada.EmpleadoId)
+            || (codigo is not null && !string.Equals(codigo, guardada.CodigoEkon, StringComparison.OrdinalIgnoreCase)))
         {
-            Agregar(e, $"{clave}.empleadoId",
+            Agregar(e, $"{clave}.{(empleadoId is null ? "codigoEkon" : "empleadoId")}",
                 "No se puede cambiar el empleado de una persona vigente. Para reemplazarla, acorte su fecha fin y agregue una persona nueva.");
             return null;
         }
 
-        return new EmpleadoRef(guardada.EmpleadoId, guardada.CodigoEkon, guardada.NombreCompleto, guardada.Cargo);
+        return new EmpleadoAsignable(guardada.EmpleadoId, guardada.CodigoEkon, guardada.NombreCompleto, guardada.Cargo);
     }
 
     /// <summary>

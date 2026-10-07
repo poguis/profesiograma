@@ -5,6 +5,7 @@ using App.Domain.Catalogos;
 using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
+using App.Infrastructure.Persistencia.Empleados;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,6 +77,9 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
         var tipoMovimientoId = await CambioEstadoRepositorio.ConsultaIdTipoMovimiento(db, cambio.TipoMovimiento).FirstAsync(ct);
         var personal = (await CambioEstadoRepositorio.ConsultaPersonalSeguimiento(db, idProyecto).ToListAsync(ct)).ToDictionary(p => p.Id);
 
+        // TAREA-26d: alta puntual de los empleados de las personas nuevas (fila nueva o refrescada); Id temporal → real.
+        var empleados = await AltaPuntualEmpleados.AplicarAsync(db, cambio.AltasEmpleados ?? [], ct);
+
         // 2) Vigentes (el empleado no cambia) y nuevas. Las relaciones con principales nuevos se asignan en el paso 3.
         foreach (var v in cambio.Vigentes)
         {
@@ -96,7 +100,7 @@ internal sealed class EdicionPersonalRepositorio(ProfesiogramaDbContext db) : IE
             ProyectoId = idProyecto,
             RolAsignacionId = (byte)n.Rol,
             Numero = n.Numero,
-            EmpleadoId = n.EmpleadoId,
+            EmpleadoId = AltaPuntualEmpleados.IdReal(empleados, n.EmpleadoId),
             CargoAsignado = n.Cargo,
             FechaInicio = n.FechaInicio,
             FechaFin = n.FechaFin,

@@ -3,6 +3,7 @@ using App.Domain.Catalogos;
 using App.Domain.Maestros;
 using App.Domain.Proyectos;
 using App.Domain.Proyectos.Cronograma;
+using App.Infrastructure.Persistencia.Empleados;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistencia.Proyectos;
@@ -30,6 +31,9 @@ internal sealed class ProyectoRepositorio(ProfesiogramaDbContext db) : IProyecto
     public async Task<int> AgregarAsync(NuevoProyecto nuevo, string codigo, Guid uid, CancellationToken ct)
     {
         var d = nuevo.Datos;
+
+        // TAREA-26d: alta puntual de los empleados (fila nueva o refrescada) antes del personal; Id temporal → real.
+        var empleados = await AltaPuntualEmpleados.AplicarAsync(db, d.Principales.Concat(d.Backs).Select(x => x.Empleado), ct);
 
         await UpsertCompaniaAsync(d, ct);
 
@@ -68,7 +72,7 @@ internal sealed class ProyectoRepositorio(ProfesiogramaDbContext db) : IProyecto
             {
                 RolAsignacionId = CatalogoIds.RolAsignacion.Principal,
                 Numero = p.Persona.Numero,
-                EmpleadoId = p.Empleado.Id,
+                EmpleadoId = AltaPuntualEmpleados.IdReal(empleados, p.Empleado.Id),
                 CargoAsignado = Truncar(p.Cargo, 200),
                 FechaInicio = p.Inicio,
                 FechaFin = p.Fin,
@@ -86,7 +90,7 @@ internal sealed class ProyectoRepositorio(ProfesiogramaDbContext db) : IProyecto
             {
                 RolAsignacionId = CatalogoIds.RolAsignacion.Back,
                 Numero = b.Persona.Numero,
-                EmpleadoId = b.Empleado.Id,
+                EmpleadoId = AltaPuntualEmpleados.IdReal(empleados, b.Empleado.Id),
                 CargoAsignado = Truncar(b.Cargo, 200),
                 FechaInicio = b.Inicio,
                 FechaFin = b.Fin,

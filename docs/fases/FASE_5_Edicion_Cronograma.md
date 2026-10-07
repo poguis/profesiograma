@@ -96,7 +96,8 @@ Alcance: **ACTUALIZACION_PERSONAL** sobre proyectos **ACTIVO**. La reactivación
 | `POST /api/proyectos/{id:int}/personal/previsualizar` | 200 `PrevisualizacionPersonalDto` (`corte`, `personal` con clase y acción, `tramos`, `cruces` INTERNO / HISTORICO / EXTERNO, `resumen`, `advertencias`). 400 / 404 / 409 (cambiado). No guarda |
 | `POST /api/proyectos/{id:int}/personal` | 200 `{ id, version }`. 400; 404; 409 con extensiones `cruces` y `resumen` (cruces) o "El proyecto cambió; vuelve a cargarlo."; 503 (applock) |
 
-Cuerpo: `{ principales: [{ clave, id?, empleadoId, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, id?, empleadoId, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`.
+Cuerpo: `{ principales: [{ clave, id?, codigoEkon?, empleadoId?, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, id?, codigoEkon?, empleadoId?, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`.
+- **TAREA-26d:** una persona nueva va por `codigoEkon` (o, hasta la 26d-3, `empleadoId`; excluyentes) y debe estar activa en la API (lectura fresca al registrar; 503 si la API no responde, sin abrir la transacción). Al registrar se da de alta (o se refresca) su fila en `Empleado` dentro de la transacción ("alta puntual", `FASE_4_Empleados_API.md` §6).
 - `id` presente: persona vigente; ausente: persona nueva.
 - `principalClave` apunta a un principal del cuerpo; `principalId`, a un principal **histórico** (D3). Son excluyentes.
 - `cargo` null en una vigente: se conserva.

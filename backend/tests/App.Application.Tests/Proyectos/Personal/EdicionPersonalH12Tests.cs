@@ -41,7 +41,7 @@ public class EdicionPersonalH12Tests
 
     private static EdicionPersonalServicio Servicio(DatosEdicion proyecto) =>
         new(new RepositorioEdicionFalso(proyecto), new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(),
-            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(Ahora));
+            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(Ahora), new EmpleadosErpFalsos());
 
     private static PrincipalEdicionSolicitud SolP2() => new("p2", 103, 7, "TIPO_2", Corte, Fin, null);
 

@@ -17,4 +17,13 @@ public sealed class ServiciosExternosOpciones
     public string ErpBase7055 { get; init; } = string.Empty;
 
     public int TimeoutSegundos { get; init; } = 15;
+
+    /// <summary>Tiempo de espera de la API EvolutionEmployee (respuesta de ~2,5 MB).</summary>
+    public int TimeoutEmpleadosSegundos { get; init; } = 60;
+
+    /// <summary>TAREA-26d (P3): duración de la lista de empleados en memoria (buscador y vista previa).</summary>
+    public int CacheEmpleadosMinutos { get; init; } = 10;
+
+    /// <summary>TAREA-26d (P4): si la API no responde, el buscador usa la lista anterior mientras tenga menos de esto.</summary>
+    public int CacheEmpleadosMaxAntiguedadMinutos { get; init; } = 60;
 }

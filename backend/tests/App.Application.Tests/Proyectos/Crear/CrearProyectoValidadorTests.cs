@@ -9,7 +9,7 @@ public class CrearProyectoValidadorTests
     private static readonly CancellationToken Ct = CancellationToken.None;
 
     private static Task<ResultadoValidacionProyecto> Validar(CrearProyectoSolicitud s, DatosFalsos? datos = null, int? usuarioId = 3) =>
-        new CrearProyectoValidador(datos ?? new DatosFalsos(), new ErpFalso(), new UsuarioFalso(usuarioId)).ValidarAsync(s, Ct);
+        new CrearProyectoValidador(datos ?? new DatosFalsos(), new ErpFalso(), new UsuarioFalso(usuarioId), new EmpleadosErpFalsos()).ValidarAsync(s, Ct);
 
     private static async Task Error(CrearProyectoSolicitud s, string clave, string mensaje, DatosFalsos? datos = null)
     {

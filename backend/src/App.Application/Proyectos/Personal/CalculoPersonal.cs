@@ -98,6 +98,14 @@ internal static class CalculoPersonal
         return (vigentes, nuevas);
     }
 
+    /// <summary>TAREA-26d: empleados de las personas nuevas con datos de la API (alta puntual al registrar).</summary>
+    public static IReadOnlyList<EmpleadoAsignable> AltasEmpleados(PlanEdicion plan) =>
+        plan.Principales.Concat(plan.Backs)
+            .Where(p => p.EsNueva && p.Empleado.Erp is not null)
+            .Select(p => p.Empleado)
+            .DistinctBy(e => e.Id)
+            .ToList();
+
     /// <summary>
     /// P3 (TAREA-19y, ajusta D6) para la actualización de personal: si ningún principal guardado que permanece (no
     /// eliminado) es EsPrincipalInicial, el PRIMER principal nuevo del cuerpo se guarda como inicial (y pasa a ser el
@@ -140,15 +148,15 @@ internal static class CalculoPersonal
     private static string TipoRegistro(PersonaPlan p) =>
         p.TipoRegistro == TipoRegistroBack.Descanso ? ProyectoPersonal.TipoRegistroDescanso : ProyectoPersonal.TipoRegistroJornada;
 
-    private static Dictionary<int, EmpleadoRef> Empleados(DatosEdicion proyecto, PlanEdicion plan) =>
+    private static Dictionary<int, EmpleadoAsignable> Empleados(DatosEdicion proyecto, PlanEdicion plan) =>
         proyecto.Personal
-            .Select(p => new EmpleadoRef(p.EmpleadoId, p.CodigoEkon, p.NombreCompleto, p.Cargo))
+            .Select(p => new EmpleadoAsignable(p.EmpleadoId, p.CodigoEkon, p.NombreCompleto, p.Cargo))
             .Concat(plan.Principales.Concat(plan.Backs).Select(p => p.Empleado))
             .DistinctBy(x => x.Id)
             .ToDictionary(x => x.Id);
 
     private static async Task<IReadOnlyList<CruceDto>> BuscarExternosAsync(int proyectoId, IReadOnlyList<DiaAsignado> trabajo,
-        IReadOnlyDictionary<int, EmpleadoRef> empleados, IConsultaCrucesExternos crucesExternos, CancellationToken ct)
+        IReadOnlyDictionary<int, EmpleadoAsignable> empleados, IConsultaCrucesExternos crucesExternos, CancellationToken ct)
     {
         if (trabajo.Count == 0)
         {
@@ -156,7 +164,8 @@ internal static class CalculoPersonal
         }
 
         var existentes = await crucesExternos.BuscarAsync(
-            trabajo.Select(d => d.EmpleadoId).Distinct().ToList(), trabajo.Min(d => d.Fecha), trabajo.Max(d => d.Fecha),
+            // TAREA-26d: un Id temporal (negativo) es una persona sin fila, sin asignaciones en otros proyectos.
+            trabajo.Select(d => d.EmpleadoId).Where(id => id > 0).Distinct().ToList(), trabajo.Min(d => d.Fecha), trabajo.Max(d => d.Fecha),
             excluirProyectoId: proyectoId, ct);
         return CalculadorCruces.Externos(trabajo, existentes, empleados);
     }

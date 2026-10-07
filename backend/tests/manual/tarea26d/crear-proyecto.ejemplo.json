@@ -1,0 +1,20 @@
+{
+  "companiaId": 0,
+  "grupo": "CAMPO",
+  "proyectoErpId": "COMPLETAR",
+  "actividadId": "COMPLETAR",
+  "dimensionUegpId": null,
+  "fechaInicio": "2026-11-02",
+  "fechaFin": "2026-11-27",
+  "horarioCodigo": 0,
+  "salidaAlmuerzo": "13:00",
+  "regresoAlmuerzo": "14:00",
+  "departamentoId": null,
+  "principales": [
+    { "codigoEkon": "COMPLETAR", "jornada": "TIPO_2", "fechaInicio": "2026-11-02", "fechaFin": "2026-11-27", "cargo": null }
+  ],
+  "backs": [
+    { "codigoEkon": "COMPLETAR", "tipoRegistro": "JORNADA", "diasDescanso": 2, "fechaInicio": "2026-11-09", "fechaFin": "2026-11-12",
+      "principalRelacionado": 1, "observacion": null, "cargo": null }
+  ]
+}

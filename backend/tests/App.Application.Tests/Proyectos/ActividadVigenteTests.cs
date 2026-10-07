@@ -69,7 +69,7 @@ public class ActividadVigenteTests
         var corte = D("2026-09-15");
         var repo = new RepositorioEdicionFalso(DoblesPersonal.Proyecto(corte: corte));
         var servicio = new EdicionPersonalServicio(repo, new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(),
-            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(new DateTimeOffset(2026, 9, 15, 15, 0, 0, TimeSpan.Zero)));
+            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(new DateTimeOffset(2026, 9, 15, 15, 0, 0, TimeSpan.Zero)), new EmpleadosErpFalsos());
 
         var r = await servicio.RegistrarAsync(DoblesPersonal.ProyectoId, new ActualizarPersonalSolicitud([DoblesPersonal.SolP1("TIPO_2")], []).ConVersion(repo), Ct);
 

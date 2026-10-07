@@ -1,4 +1,5 @@
 using App.Application.Comun;
+using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Seguridad;
 using App.Domain.Proyectos.Cronograma;
@@ -13,7 +14,7 @@ public sealed record ResultadoValidacionProyecto(ProyectoValidado? Valido, IRead
 /// Validación de "Crear proyecto" (FASE_5 §3: RN02, RN08, RN09, RN18, P1, P5). Mensajes en español por campo
 /// (claves camelCase con índice, p. ej. "principales[0].jornada"). Los datos del ERP se obtienen SIEMPRE por Id.
 /// </summary>
-public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICatalogoErp erp, IUsuarioActual usuario)
+public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICatalogoErp erp, IUsuarioActual usuario, IFuenteEmpleadosErp empleadosErp)
 {
     /// <summary>
     /// P1: mínimo de principales. 1 desde la TAREA-18 (C10, pendiente 28); antes era 0 (no obligatorio).
@@ -25,7 +26,8 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
     public const int LargoMaximoCargo = 200;
     public const int LargoMaximoObservacion = 500;
 
-    public async Task<ResultadoValidacionProyecto> ValidarAsync(CrearProyectoSolicitud s, CancellationToken ct)
+    /// <param name="empleadosFrescos">TAREA-26d (P5): true al registrar (lectura fresca de la API); false en la vista previa (caché).</param>
+    public async Task<ResultadoValidacionProyecto> ValidarAsync(CrearProyectoSolicitud s, CancellationToken ct, bool empleadosFrescos = false)
     {
         ArgumentNullException.ThrowIfNull(s);
         var e = new Dictionary<string, List<string>>();
@@ -172,11 +174,11 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
             Agregar(e, "backs", $"Se permiten como máximo {limites.MaxBacks} backs.");
         }
 
-        var idsEmpleados = principales.Select(p => p.EmpleadoId).Concat(backs.Select(b => b.EmpleadoId))
-            .OfType<int>().Distinct().ToList();
-        var empleados = idsEmpleados.Count == 0
-            ? new Dictionary<int, EmpleadoRef>()
-            : await datos.ObtenerEmpleadosActivosAsync(idsEmpleados, ct);
+        // TAREA-26d: empleados de la API (fresca al registrar), con Id real o temporal (alta puntual al registrar).
+        var empleados = await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
+            principales.Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
+                .Concat(backs.Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            empleadosFrescos, ct);
         var jornadas = principales.Count == 0
             ? new Dictionary<string, JornadaRef>()
             : await datos.ObtenerJornadasAsync(ct);
@@ -188,7 +190,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         {
             var p = principales[i];
             var clave = $"principales[{i}]";
-            var empleado = ValidarEmpleado(p.EmpleadoId, clave, empleados, e);
+            var empleado = empleados.Validar(p.EmpleadoId, p.CodigoEkon, clave, e);
 
             var jornada = ValidarJornada(p.Jornada, clave, jornadas, e);
 
@@ -209,7 +211,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         {
             var b = backs[i];
             var clave = $"backs[{i}]";
-            var empleado = ValidarEmpleado(b.EmpleadoId, clave, empleados, e);
+            var empleado = empleados.Validar(b.EmpleadoId, b.CodigoEkon, clave, e);
 
             var tipo = ValidarTipoRegistro(b.TipoRegistro, clave, e);
             var diasDescanso = ValidarDiasDescanso(b.DiasDescanso, clave, limites.MaxDiasDescansoBack, e);

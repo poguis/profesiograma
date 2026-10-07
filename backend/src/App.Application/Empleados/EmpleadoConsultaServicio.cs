@@ -12,7 +12,7 @@ public sealed class EmpleadoConsultaServicio(IEmpleadoConsultas consultas, IUsua
     public const int TamanoPorDefecto = 20;
     public const int TamanoMaximo = 100;
 
-    public async Task<ResultadoConsulta<PaginaResultado<EmpleadoBusquedaDto>>> BuscarAsync(
+    public async Task<ResultadoConsulta<ResultadoBusquedaEmpleadosDto>> BuscarAsync(
         EmpleadoBusquedaSolicitud solicitud, CancellationToken ct)
     {
         var errores = new Dictionary<string, string[]>();
@@ -22,13 +22,13 @@ public sealed class EmpleadoConsultaServicio(IEmpleadoConsultas consultas, IUsua
 
         if (errores.Count > 0)
         {
-            return ResultadoConsulta<PaginaResultado<EmpleadoBusquedaDto>>.Invalido(errores);
+            return ResultadoConsulta<ResultadoBusquedaEmpleadosDto>.Invalido(errores);
         }
 
         var departamentos = await ResolverDepartamentosAsync(soloMisDepartamentos, ct);
         var filtro = new EmpleadoFiltro(LectorParametros.Normalizar(solicitud.Texto), departamentos, pagina, tamano);
 
-        return ResultadoConsulta<PaginaResultado<EmpleadoBusquedaDto>>.Ok(await consultas.BuscarAsync(filtro, ct));
+        return ResultadoConsulta<ResultadoBusquedaEmpleadosDto>.Ok(await consultas.BuscarAsync(filtro, ct));
     }
 
     /// <summary>

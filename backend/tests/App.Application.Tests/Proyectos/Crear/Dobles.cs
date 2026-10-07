@@ -1,3 +1,4 @@
+using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Proyectos.Crear;
 using App.Application.Seguridad;
@@ -77,9 +78,12 @@ internal sealed class DatosFalsos : IDatosReferenciaProyecto
     private static readonly JornadaRef[] Jornadas =
         [new(1, "TIPO_1", 22, 8), new(2, "TIPO_2", 11, 4), new(3, "TIPO_3", 5, 2), new(4, "ESPECIAL", 3, 0)];
 
-    /// <summary>Empleados activos 1..8 (DEV001–DEV008). El 9 existe pero está inactivo: no se devuelve.</summary>
-    private static readonly Dictionary<int, EmpleadoRef> Empleados = Enumerable.Range(1, 8)
-        .ToDictionary(i => i, i => new EmpleadoRef(i, $"DEV{i:000}", $"EMPLEADO PRUEBA {i:00}", $"PUESTO {i}"));
+    /// <summary>
+    /// Filas de Empleado 1..9 (DEV001–DEV009). TAREA-26d: activos en la API (EmpleadosErpFalsos) solo 1..8; el 9 existe
+    /// pero está inactivo (no está en la API).
+    /// </summary>
+    internal static readonly Dictionary<int, EmpleadoAsignable> Empleados = Enumerable.Range(1, 9)
+        .ToDictionary(i => i, i => new EmpleadoAsignable(i, $"DEV{i:000}", $"EMPLEADO PRUEBA {i:00}", $"PUESTO {i}"));
 
     public Task<GrupoRef?> ObtenerGrupoAsync(string codigo, CancellationToken ct) =>
         Task.FromResult(Grupos.FirstOrDefault(g => string.Equals(g.Codigo, codigo, StringComparison.OrdinalIgnoreCase)));
@@ -89,11 +93,46 @@ internal sealed class DatosFalsos : IDatosReferenciaProyecto
 
     public Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct) => Task.FromResult(Limites);
 
-    public Task<IReadOnlyDictionary<int, EmpleadoRef>> ObtenerEmpleadosActivosAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
-        Task.FromResult<IReadOnlyDictionary<int, EmpleadoRef>>(ids.Where(Empleados.ContainsKey).ToDictionary(i => i, i => Empleados[i]));
+    public Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<int, EmpleadoAsignable>>(ids.Where(Empleados.ContainsKey).ToDictionary(i => i, i => Empleados[i]));
+
+    public Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<string, int>>(Empleados.Values
+            .Where(e => codigos.Contains(e.CodigoEkon, StringComparer.OrdinalIgnoreCase))
+            .ToDictionary(e => e.CodigoEkon, e => e.Id, StringComparer.OrdinalIgnoreCase));
 
     public Task<IReadOnlyList<DepartamentoRef>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<DepartamentoRef>>(DepartamentosUsuario);
+}
+
+/// <summary>
+/// TAREA-26d: API de empleados falsa. Activos = DEV001–DEV008 con el mismo nombre y puesto que sus filas (DatosFalsos)
+/// más los "extra" indicados (personas sin fila). Cuenta las lecturas en caché y las frescas.
+/// </summary>
+internal sealed class EmpleadosErpFalsos(params EmpleadoErp[] extra) : IFuenteEmpleadosErp
+{
+    public int Lecturas { get; private set; }
+    public int LecturasFrescas { get; private set; }
+    public Exception? Error { get; set; }
+
+    public static EmpleadoErp Activo(string codigo, string nombre, string? puesto) =>
+        new(codigo, nombre, null, null, null, null, null, null, puesto, null, null, null, null, null, null, null, null, null, "A");
+
+    private ListaEmpleadosErp Lista() =>
+        new(DatosFalsos.Empleados.Values.Where(e => e.Id <= 8).Select(e => Activo(e.CodigoEkon, e.NombreCompleto, e.Puesto))
+            .Concat(extra).ToList(), DateTimeOffset.UnixEpoch);
+
+    public Task<ListaEmpleadosErp> ObtenerActivosAsync(CancellationToken ct)
+    {
+        Lecturas++;
+        return Error is null ? Task.FromResult(Lista()) : Task.FromException<ListaEmpleadosErp>(Error);
+    }
+
+    public Task<ListaEmpleadosErp> ObtenerActivosFrescosAsync(CancellationToken ct)
+    {
+        LecturasFrescas++;
+        return Error is null ? Task.FromResult(Lista()) : Task.FromException<ListaEmpleadosErp>(Error);
+    }
 }
 
 /// <summary>Cruces externos: respuesta por llamada (la 1.ª es fuera de la transacción, la 2.ª dentro).</summary>

@@ -41,6 +41,8 @@ public enum EstadoCrearProyecto
     Conflicto,
     Previsualizado,
     Creado,
+    /// <summary>TAREA-26d: otro registro guardó al mismo empleado al mismo tiempo (UQ_Empleado_CodigoEkon) → 409.</summary>
+    Cambiado,
 }
 
 public sealed record ResultadoCrearProyecto(
@@ -53,4 +55,6 @@ public sealed record ResultadoCrearProyecto(
     public static ResultadoCrearProyecto Conflicto(PrevisualizacionDto p) => new(EstadoCrearProyecto.Conflicto, Previsualizacion: p);
     public static ResultadoCrearProyecto Previsualizado(PrevisualizacionDto p) => new(EstadoCrearProyecto.Previsualizado, Previsualizacion: p);
     public static ResultadoCrearProyecto Registrado(ProyectoCreadoDto c) => new(EstadoCrearProyecto.Creado, Creado: c);
+    public static ResultadoCrearProyecto Cambiado() => new(EstadoCrearProyecto.Cambiado);
+    public const string MensajeCambiado = "Otro registro se guardó al mismo tiempo; vuelva a intentarlo.";
 }

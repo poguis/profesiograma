@@ -33,6 +33,7 @@ internal sealed class EmpleadoConfiguracion : IEntityTypeConfiguration<Empleado>
         b.Property(e => e.CodSeccion).HasMaxLength(10).IsUnicode(false);
         b.Property(e => e.Seccion).HasMaxLength(200);
         b.Property(e => e.FamiliaPuesto).HasMaxLength(100);
+        // TAREA-26d: EstadoErp = estado en la API en la última alta puntual; FechaSincronizacion = última copia desde la API.
         b.Property(e => e.EstadoErp).HasMaxLength(1).IsFixedLength().IsUnicode(false);
         b.Property(e => e.EsOrigenLegado).ConDefault(false, "DF_Empleado_EsOrigenLegado");
 

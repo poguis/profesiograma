@@ -61,26 +61,12 @@ public class ProyectoConsultasSqlTests(ITestOutputHelper salida) : BaseSql(salid
     }
 }
 
-/// <summary>Traducción a SQL de EmpleadoConsultas (TAREA-11).</summary>
+/// <summary>
+/// Traducción a SQL de EmpleadoConsultas (TAREA-11). TAREA-26d: la búsqueda ya no consulta la base (lee la API en
+/// memoria); se retiraron sus pruebas de traducción y queda la de los departamentos del usuario.
+/// </summary>
 public class EmpleadoConsultasSqlTests(ITestOutputHelper salida) : BaseSql(salida)
 {
-    [Fact]
-    public void Busqueda_ConTextoYDepartamentos_YPagina_SinDatosSensibles()
-    {
-        var consulta = EmpleadoConsultas.ConsultaBusqueda(Db, new EmpleadoFiltro("DEV", ["UNIDAD SISTEMA INTEGRADO DE GESTION", "DEPARTAMENTO SEDEMI ENERGIA"], 1, 20));
-        var conteo = Sql(consulta);
-        Assert.Contains("[EstadoErp] = 'A'", conteo);
-        Assert.Contains(" IN (", conteo); // con 1 solo departamento EF 10 genera "=" en lugar de IN
-
-        var pagina = Sql(EmpleadoConsultas.PaginaBusqueda(consulta, 0, 20));
-        Assert.Contains("ORDER BY", pagina);
-        Assert.DoesNotContain("[Cedula]", pagina);
-        Assert.DoesNotContain("[CorreoEmpresa]", pagina);
-    }
-
-    [Fact]
-    public void Busqueda_SinFiltros() => Sql(EmpleadoConsultas.ConsultaBusqueda(Db, new EmpleadoFiltro(null, null, 1, 20)));
-
     [Fact]
     public void DepartamentosDeUsuario() => Assert.Contains("SELECT DISTINCT", Sql(EmpleadoConsultas.ConsultaDepartamentosDeUsuario(Db, 3)));
 }
@@ -115,8 +101,9 @@ public class CrearProyectoConsultasSqlTests(ITestOutputHelper salida) : BaseSql(
         var limites = Sql(DatosReferenciaProyecto.ConsultaLimites(Db));
         Assert.Contains("[Clave] IN (", limites);
         Assert.Contains("PROYECTO_EXIGE_PRINCIPAL", limites); // TAREA-19y
-        var empleados = Sql(DatosReferenciaProyecto.ConsultaEmpleadosActivos(Db, [6, 7, 8]));
-        Assert.Contains("[EstadoErp] = 'A'", empleados);
+        // TAREA-26d: por Id sin filtro de estado (si está activo lo decide la API).
+        var empleados = Sql(DatosReferenciaProyecto.ConsultaEmpleadosPorIds(Db, [6, 7, 8]));
+        Assert.DoesNotContain("[EstadoErp]", empleados);
         Assert.DoesNotContain("[Cedula]", empleados);
     }
 

@@ -18,7 +18,7 @@ public class SnapshotCreacionTests
     {
         var repo = new RepositorioFalso();
         var servicio = new CrearProyectoServicio(
-            new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso()),
+            new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso(), new EmpleadosErpFalsos()),
             new CrucesExternosFalsos(), repo, new TransaccionFalsa(),
             new RelojFijo(new DateTimeOffset(2026, 12, 1, 15, 0, 0, TimeSpan.Zero)));
 

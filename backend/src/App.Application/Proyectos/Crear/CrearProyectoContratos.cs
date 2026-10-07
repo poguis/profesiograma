@@ -1,3 +1,4 @@
+using App.Application.Empleados;
 using App.Application.Erp;
 using App.Domain.Proyectos.Cronograma;
 
@@ -9,8 +10,12 @@ public sealed record GrupoRef(byte Id, string Codigo, bool RequiereProyectoErp, 
 
 public sealed record JornadaRef(byte Id, string Codigo, byte DiasTrabajo, byte DiasDescanso);
 
-/// <summary>Empleado activo (sin datos sensibles).</summary>
-public sealed record EmpleadoRef(int Id, string CodigoEkon, string NombreCompleto, string? Puesto);
+/// <summary>
+/// Empleado asignable (sin datos sensibles). TAREA-26d: Id = Id real de la tabla Empleado, o un Id TEMPORAL negativo si
+/// la persona todavía no tiene fila (se crea con la alta puntual al registrar; nunca se persiste un Id negativo).
+/// Erp = datos de la API para la alta puntual (personas nuevas); null para las personas guardadas.
+/// </summary>
+public sealed record EmpleadoAsignable(int Id, string CodigoEkon, string NombreCompleto, string? Puesto, EmpleadoErp? Erp = null);
 
 public sealed record DepartamentoRef(int Id, string Nombre);
 
@@ -30,8 +35,14 @@ public interface IDatosReferenciaProyecto
 
     Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct);
 
-    /// <summary>Empleados activos (EstadoErp = "A") entre los Id indicados.</summary>
-    Task<IReadOnlyDictionary<int, EmpleadoRef>> ObtenerEmpleadosActivosAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
+    /// <summary>
+    /// Filas de Empleado por Id, sin filtrar por estado (TAREA-26d: transición con empleadoId; si el empleado está activo
+    /// lo decide la API).
+    /// </summary>
+    Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
+
+    /// <summary>Id de las filas de Empleado por CodigoEkon (sin distinguir mayúsculas). Los que no tienen fila no aparecen.</summary>
+    Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct);
 
     /// <summary>Departamentos activos asignados al usuario (UsuarioDepartamento).</summary>
     Task<IReadOnlyList<DepartamentoRef>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct);
@@ -59,7 +70,7 @@ public interface IConsultaCrucesExternos
 /// <summary>Personal validado. Principales: Jornada no null. Backs: TipoRegistro no null.</summary>
 public sealed record PersonalValidado(
     PersonaProyecto Persona,
-    EmpleadoRef Empleado,
+    EmpleadoAsignable Empleado,
     DateOnly Inicio,
     DateOnly Fin,
     JornadaRef? Jornada,

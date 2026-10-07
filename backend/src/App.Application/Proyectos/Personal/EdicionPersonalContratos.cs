@@ -1,3 +1,4 @@
+using App.Application.Proyectos.Crear;
 using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
 
@@ -12,17 +13,21 @@ public sealed record ActualizarPersonalSolicitud(
     IReadOnlyList<BackEdicionSolicitud>? Backs,
     int? VersionProyecto = null);
 
-/// <summary>Principal. Id presente = vigente existente; ausente = nuevo. Cargo null en un vigente = se conserva.</summary>
+/// <summary>
+/// Principal. Id presente = vigente existente; ausente = nuevo. Cargo null en un vigente = se conserva.
+/// TAREA-26d: una persona nueva va por CodigoEkon (P2); EmpleadoId se acepta hasta la 26d-3 (excluyentes).
+/// </summary>
 public sealed record PrincipalEdicionSolicitud(
-    string? Clave, int? Id, int? EmpleadoId, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo);
+    string? Clave, int? Id, int? EmpleadoId, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo,
+    string? CodigoEkon = null);
 
 /// <summary>
 /// Back. PrincipalClave = clave de un principal del cuerpo (vigente o nuevo); PrincipalId = Id de un principal
-/// HISTÓRICO del proyecto (D3). Son excluyentes.
+/// HISTÓRICO del proyecto (D3). Son excluyentes. TAREA-26d: persona nueva por CodigoEkon o, hasta la 26d-3, EmpleadoId.
 /// </summary>
 public sealed record BackEdicionSolicitud(
     string? Clave, int? Id, int? EmpleadoId, string? TipoRegistro, DateOnly? FechaInicio, DateOnly? FechaFin,
-    int? DiasDescanso, string? PrincipalClave, int? PrincipalId, string? Observacion);
+    int? DiasDescanso, string? PrincipalClave, int? PrincipalId, string? Observacion, string? CodigoEkon = null);
 
 // ------------------------------------------------------------------ lectura
 
@@ -93,7 +98,9 @@ public sealed record ReactivacionAplicar(string? ClavePrincipalInicial, DateOnly
 /// Todo lo que se escribe en la transacción (recalculado dentro del applock).
 /// FechaInicioProyecto / FechaFinProyecto son las fechas de la etapa (en la reactivación: R y la nueva fecha fin).
 /// Reactivacion = null en ACTUALIZACION_PERSONAL. ClaveInicialNueva: P3 de la TAREA-19y (primer principal nuevo que se
-/// guarda como inicial en la actualización de personal; null = ninguno).
+/// guarda como inicial en la actualización de personal; null = ninguno). AltasEmpleados (TAREA-26d): empleados de las
+/// personas nuevas con sus datos de la API, para la alta puntual (Id real o temporal negativo; PersonaNueva.EmpleadoId
+/// usa el mismo Id).
 /// </summary>
 public sealed record CambioPersonal(
     int ProyectoId,
@@ -109,7 +116,8 @@ public sealed record CambioPersonal(
     IReadOnlyList<int> Eliminadas,
     IReadOnlyList<DiaParaInsertar> Dias,
     ReactivacionAplicar? Reactivacion = null,
-    string? ClaveInicialNueva = null);
+    string? ClaveInicialNueva = null,
+    IReadOnlyList<EmpleadoAsignable>? AltasEmpleados = null);
 
 public interface IEdicionPersonalRepositorio
 {

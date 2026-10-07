@@ -191,7 +191,7 @@ public class VersionProyectoTests
         var repo = new RepositorioEdicionFalso(DoblesPersonal.Proyecto()) { UltimaVersion = ultimaVersion };
         var tx = new TransaccionFalsa();
         return (new EdicionPersonalServicio(repo, new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(), tx,
-            new UsuarioFalso(), new RelojFijo(DoblesPersonal.Ahora)), repo, tx);
+            new UsuarioFalso(), new RelojFijo(DoblesPersonal.Ahora), new EmpleadosErpFalsos()), repo, tx);
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public class VersionProyectoTests
         var repo = new RepositorioEdicionFalso(DoblesReactivacion.Proyecto()) { UltimaVersion = ultimaVersion };
         var tx = new TransaccionFalsa();
         return (new ReactivacionServicio(repo, new RepositorioReactivacionFalso(new ActividadParaReactivar("DEV.01", "ACTIVIDAD DE PRUEBA", "PRUEBA")), new DatosFalsos(),
-            new CrucesEdicionFalsos(), new ReactivacionValidador(), tx, new UsuarioFalso(), new RelojFijo(DoblesReactivacion.Ahora)), repo, tx);
+            new CrucesEdicionFalsos(), new ReactivacionValidador(), tx, new UsuarioFalso(), new RelojFijo(DoblesReactivacion.Ahora), new EmpleadosErpFalsos()), repo, tx);
     }
 
     [Fact]

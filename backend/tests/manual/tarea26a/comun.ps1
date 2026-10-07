@@ -26,7 +26,8 @@ $script:UrlInvalida = 'https://localhost:1'
 # detiene el script; la linea se repite en la consola sin tildes y el archivo siempre la recibe completa.
 function Iniciar-Salida([string]$Nombre) {
     Cerrar-Salida
-    $script:ArchivoSalida = Join-Path $PSScriptRoot $Nombre
+    # Nombre relativo: carpeta de comun.ps1 (tarea26a). Ruta absoluta: la indicada (p. ej. tarea26b, que reutiliza este archivo).
+    $script:ArchivoSalida = if ([IO.Path]::IsPathRooted($Nombre)) { $Nombre } else { Join-Path $PSScriptRoot $Nombre }
     $script:Escritor = New-Object IO.StreamWriter($script:ArchivoSalida, $false, (New-Object Text.UTF8Encoding($true)))
     $script:Escritor.AutoFlush = $true
     $script:AvisoConsola = $false

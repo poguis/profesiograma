@@ -18,18 +18,18 @@ public static class CalculadorCruces
     /// <summary>Cultura fija para el mes ("diciembre 2026"); nunca la del servidor.</summary>
     private static readonly CultureInfo CulturaEcuador = CultureInfo.GetCultureInfo("es-EC");
 
-    public static IReadOnlyList<CruceDto> Internos(ResultadoCronograma cronograma, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
+    public static IReadOnlyList<CruceDto> Internos(ResultadoCronograma cronograma, IReadOnlyDictionary<int, EmpleadoAsignable> empleados) =>
         Internos(cronograma.CrucesInternos, empleados);
 
     /// <summary>Un cruce por persona involucrada (rol de cada una), como en la creación.</summary>
-    public static IReadOnlyList<CruceDto> Internos(IEnumerable<CruceInterno> cruces, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
+    public static IReadOnlyList<CruceDto> Internos(IEnumerable<CruceInterno> cruces, IReadOnlyDictionary<int, EmpleadoAsignable> empleados) =>
         cruces
             .SelectMany(c => c.Involucrados.Select(persona => Crear(
                 OrigenInterno, empleados[c.EmpleadoId], c.Fecha, persona.Rol, MismoProyecto, null, null)))
             .ToList();
 
     /// <summary>HISTORICO_PROPIO (edición): un cruce por día regenerado, con el rol del día regenerado.</summary>
-    public static IReadOnlyList<CruceDto> Historicos(IEnumerable<CruceHistorico> cruces, IReadOnlyDictionary<int, EmpleadoRef> empleados) =>
+    public static IReadOnlyList<CruceDto> Historicos(IEnumerable<CruceHistorico> cruces, IReadOnlyDictionary<int, EmpleadoAsignable> empleados) =>
         cruces
             .Select(c => Crear(OrigenHistorico, empleados[c.EmpleadoId], c.Fecha, c.Regenerada.Rol, MismoProyecto, null, null))
             .ToList();
@@ -39,7 +39,7 @@ public static class CalculadorCruces
     /// otros proyectos vigentes, rol ≠ DESCANSO). Un cruce por día nuevo y proyecto existente.
     /// </summary>
     public static IReadOnlyList<CruceDto> Externos(
-        IEnumerable<DiaAsignado> diasNuevos, IReadOnlyList<AsignacionExistente> existentes, IReadOnlyDictionary<int, EmpleadoRef> empleados)
+        IEnumerable<DiaAsignado> diasNuevos, IReadOnlyList<AsignacionExistente> existentes, IReadOnlyDictionary<int, EmpleadoAsignable> empleados)
     {
         var porClave = existentes.ToLookup(a => (a.EmpleadoId, a.Fecha));
 
@@ -77,7 +77,7 @@ public static class CalculadorCruces
     private static string EtiquetaProyecto(CruceDto c) =>
         c.ProyectoCodigo is null ? c.Proyecto : $"{c.ProyectoCodigo} · {c.Proyecto}";
 
-    private static CruceDto Crear(string origen, EmpleadoRef empleado, DateOnly fecha, RolCronograma rol,
+    private static CruceDto Crear(string origen, EmpleadoAsignable empleado, DateOnly fecha, RolCronograma rol,
         string proyecto, string? codigo, string? estado) =>
         new(origen, empleado.Id, empleado.CodigoEkon, empleado.NombreCompleto, fecha, NombreRol(rol), proyecto, codigo, estado);
 }

@@ -57,7 +57,7 @@ Las APIs del ERP (`https://backstack.sedemi.com`, puertos 7048/7055, sin autenti
   - `Http` → llama a las APIs reales (HttpClient con timeout y manejo de error → 503 "Servicio ERP no disponible").
   - `Simulado` → datos fijos de prueba coherentes con la compañía 9001 y `DEV-ERP-001` (solo Development).
 - Al registrar, la compañía elegida se guarda/actualiza en la tabla `Compania` (caché).
-- **Empleados:** se buscan en la tabla local `Empleado` (activos, sin datos sensibles). La sincronización con `EvolutionEmployee` es una tarea aparte; en desarrollo se usan DEV001–DEV008.
+- **Empleados (TAREA-26d, opción C):** se buscan en la API EvolutionEmployee (caché en memoria de 10 min; sin datos sensibles); ya no en la tabla `Empleado`, que solo tiene a las personas asignadas. Al registrar, las personas se validan con una lectura **fresca** de la API y se dan de alta (o se refrescan) en `Empleado` dentro de la transacción ("alta puntual", con su puesto en `CargoInfor`). En modo Simulado la "API" trae DEV001–DEV008 y SIM001–SIM200. Ver `FASE_4_Empleados_API.md`.
 
 ## 5. Motor de cronograma (RN04–RN06) — replica exacta de la app original
 
@@ -148,22 +148,23 @@ Mismo cuerpo:
   "salidaAlmuerzo": "13:00",
   "regresoAlmuerzo": "14:00",
   "principales": [
-    { "empleadoId": 1, "jornada": "TIPO_2", "fechaInicio": "2026-10-01", "fechaFin": "2026-10-31", "cargo": null }
+    { "codigoEkon": "SIM001", "jornada": "TIPO_2", "fechaInicio": "2026-10-01", "fechaFin": "2026-10-31", "cargo": null }
   ],
   "backs": [
-    { "empleadoId": 3, "tipoRegistro": "JORNADA", "diasDescanso": 2,
+    { "codigoEkon": "SIM003", "tipoRegistro": "JORNADA", "diasDescanso": 2,
       "fechaInicio": "2026-10-12", "fechaFin": "2026-10-15", "principalRelacionado": 1, "observacion": null }
   ]
 }
 ```
 
 - Nombres, descripciones, RUC, datos del horario y de la actividad **no los envía el navegador**: el servidor los obtiene de `ICatalogoErp` por Id (evita datos manipulados).
+- **TAREA-26d:** el empleado va por `codigoEkon` (P2). Hasta la 26d-3 se acepta `empleadoId` (Id de una fila de `Empleado`) como alternativa excluyente: ambos → 400 `…codigoEkon` "Indique codigoEkon o empleadoId, no ambos."; ninguno → 400 `…empleadoId` "El empleado es obligatorio."; no activo en la API → 400 "El empleado {identificador} no existe o no está activo.". La API de empleados caída al registrar → 503 "Servicio de empleados no disponible" sin abrir la transacción; duplicado en la alta puntual → 409. En la vista previa, una persona sin fila aparece con un `empleadoId` temporal negativo.
 - `previsualizar` → 200 `{ tramos[], dias[] (resumido por persona), cruces[], resumen }`. No guarda nada.
 - `POST /api/proyectos` → 201 `{ id, codigo }` + `Location`; 400 validación; 409 cruces; 503 ERP no disponible.
 
 ### 7.2 Apoyo
 
-- `GET /api/empleados?texto=&soloMisDepartamentos=true|false&pagina=&tamano=` (Gestor): Id, código EKON, nombre, cargo, departamento. Sin cédula ni correo.
+- `GET /api/empleados?texto=&soloMisDepartamentos=true|false&pagina=&tamano=` (Gestor): **TAREA-26d:** desde la API (caché en memoria), filtro en memoria sin distinguir mayúsculas ni tildes (nombre, apellidos, nombres, código). Ítems: código EKON (clave), nombre, cargo, departamento y unidad. Sin cédula ni correo. Respuesta con `items`, `pagina`, `tamano`, `total` y `avisoErp` ("Lista de empleados de las HH:mm; el ERP no respondió." si se usa la lista anterior de menos de 60 min); sin lista → 503.
   - `soloMisDepartamentos=true` (por defecto): solo empleados cuyo departamento/unidad coincide **por nombre** con los departamentos del usuario en `UsuarioDepartamento`.
   - `false`: toda la estructura (equivale al ícono "Ver otros departamentos" de la app original). No es control de seguridad, es un filtro de ayuda.
   - Admin sin departamentos asignados: ve todos.

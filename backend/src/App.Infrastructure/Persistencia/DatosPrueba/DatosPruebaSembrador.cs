@@ -189,30 +189,15 @@ public sealed class DatosPruebaSembrador(
 
     private async Task<List<Empleado>> AsegurarEmpleadosAsync(CancellationToken ct)
     {
-        string[] puestos = ["SUPERVISOR SSA", "PARAMEDICO", "TECNICO SSA", "INSPECTOR SSA", "ASISTENTE SSA", "SUPERVISOR SSA", "PARAMEDICO", "TECNICO SSA"];
+        // TAREA-26d: definición común con el modo Simulado (EmpleadosPrueba), sin cambiar los datos sembrados.
         var lista = new List<Empleado>();
-        for (var i = 1; i <= puestos.Length; i++)
+        for (var i = 1; i <= EmpleadosPrueba.CantidadDev; i++)
         {
             var codigo = $"DEV{i:000}";
             var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.CodigoEkon == codigo, ct);
             if (empleado is null)
             {
-                empleado = new Empleado
-                {
-                    CodigoEkon = codigo,
-                    Cedula = $"99999999{i:00}",
-                    NombreCompleto = $"EMPLEADO PRUEBA {i:00}",
-                    Apellidos = "PRUEBA",
-                    Nombres = $"EMPLEADO {i:00}",
-                    CorreoEmpresa = $"empleado{i:00}.dev@profesiograma.local",
-                    Empresa = "COMPAÑÍA DE PRUEBA S.A.",
-                    Puesto = puestos[i - 1],
-                    Departamento = DepartamentoPrueba,
-                    Unidad = DepartamentoPrueba,
-                    FamiliaPuesto = "ADMINISTRATIVO",
-                    EstadoErp = "A",
-                    FechaSincronizacion = reloj.GetUtcNow().UtcDateTime
-                };
+                empleado = EmpleadosPrueba.CrearDev(i, reloj.GetUtcNow().UtcDateTime);
                 db.Empleados.Add(empleado);
             }
             lista.Add(empleado);

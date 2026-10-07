@@ -8,7 +8,6 @@ namespace App.Infrastructure.Consultas;
 /// <summary>Datos de referencia para validar "Crear proyecto" (solo lectura).</summary>
 internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDatosReferenciaProyecto
 {
-    private const string EstadoEmpleadoActivo = "A";
     private const string ClaveMaxPrincipales = "PROYECTO_MAX_PRINCIPALES";
     private const string ClaveMaxBacks = "PROYECTO_MAX_BACKS";
     private const string ClaveMaxDiasDescansoBack = "BACK_MAX_DIAS_DESCANSO";
@@ -38,8 +37,12 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     internal static bool LeerExigePrincipal(string? valor) =>
         valor?.Trim() is { } v && (v == "1" || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
 
-    public async Task<IReadOnlyDictionary<int, EmpleadoRef>> ObtenerEmpleadosActivosAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
-        await ConsultaEmpleadosActivos(db, ids).ToDictionaryAsync(e => e.Id, ct);
+    public async Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
+        await ConsultaEmpleadosPorIds(db, ids).ToDictionaryAsync(e => e.Id, ct);
+
+    public async Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct) =>
+        (await ConsultaIdsPorCodigos(db, codigos).ToListAsync(ct))
+            .ToDictionary(e => e.CodigoEkon, e => e.Id, StringComparer.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<DepartamentoRef>> ObtenerDepartamentosDeUsuarioAsync(int usuarioId, CancellationToken ct) =>
         (await ConsultaDepartamentosDeUsuario(db, usuarioId).ToListAsync(ct))
@@ -64,10 +67,26 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
         return db.Parametros.AsNoTracking().Where(p => claves.Contains(p.Clave));
     }
 
-    internal static IQueryable<EmpleadoRef> ConsultaEmpleadosActivos(ProfesiogramaDbContext db, IReadOnlyCollection<int> ids) =>
+    /// <summary>
+    /// TAREA-26d: filas de Empleado por Id SIN filtrar por estado (transición con empleadoId). Si el empleado está activo
+    /// lo decide la API, no la base. Sin cédula ni correo.
+    /// </summary>
+    internal static IQueryable<EmpleadoAsignable> ConsultaEmpleadosPorIds(ProfesiogramaDbContext db, IReadOnlyCollection<int> ids) =>
         db.Empleados.AsNoTracking()
-            .Where(e => ids.Contains(e.Id) && e.EstadoErp == EstadoEmpleadoActivo)
-            .Select(e => new EmpleadoRef(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto));
+            .Where(e => ids.Contains(e.Id))
+            .Select(e => new EmpleadoAsignable(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, null));
+
+    /// <summary>TAREA-26d: Id de las filas de Empleado por CodigoEkon (collation CI de la base).</summary>
+    internal static IQueryable<FilaCodigoEmpleado> ConsultaIdsPorCodigos(ProfesiogramaDbContext db, IReadOnlyCollection<string> codigos) =>
+        db.Empleados.AsNoTracking()
+            .Where(e => codigos.Contains(e.CodigoEkon))
+            .Select(e => new FilaCodigoEmpleado { Id = e.Id, CodigoEkon = e.CodigoEkon });
+
+    internal sealed class FilaCodigoEmpleado
+    {
+        public int Id { get; init; }
+        public string CodigoEkon { get; init; } = string.Empty;
+    }
 
     /// <summary>
     /// Distinct y OrderBy sobre un tipo anónimo (traducible a SQL); el record se arma en memoria.

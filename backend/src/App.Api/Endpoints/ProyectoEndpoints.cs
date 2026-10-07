@@ -59,6 +59,8 @@ public static class ProyectoEndpoints
             {
                 EstadoCrearProyecto.Creado => TypedResults.Created($"/api/proyectos/{resultado.Creado!.Id}", resultado.Creado),
                 EstadoCrearProyecto.Invalido => ValidacionFallida(resultado),
+                EstadoCrearProyecto.Cambiado => TypedResults.Problem( // TAREA-26d: alta puntual concurrente
+                    title: ResultadoCrearProyecto.MensajeCambiado, statusCode: StatusCodes.Status409Conflict),
                 _ => TypedResults.Problem(
                     title: "El proyecto tiene cruces de asignación.",
                     detail: "No se registró el proyecto. Revise los cruces y ajuste el personal o las fechas.",

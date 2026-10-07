@@ -1,4 +1,6 @@
 using App.Application.Comun;
+using App.Application.Empleados;
+using App.Application.Erp;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Proyectos.Personal;
@@ -23,13 +25,16 @@ public sealed class ReactivacionServicio(
     ReactivacionValidador validador,
     ITransaccionAsignaciones transaccion,
     IUsuarioActual usuario,
-    TimeProvider reloj)
+    TimeProvider reloj,
+    IFuenteEmpleadosErp empleadosErp)
 {
     public const string TipoMovimiento = "REACTIVACION";
     public const string AdvertenciaSinInicial = "El proyecto no tiene principal inicial; se propone el último principal.";
     public const string AdvertenciaInactivo = "El empleado del principal propuesto no está activo; elige otro principal.";
     public const string AdvertenciaSinPrincipales = "El proyecto no tiene principales; agrega uno.";
     public const string AdvertenciaDiasTranscurridos = "Se generarán días ya transcurridos.";
+    /// <summary>TAREA-26d: la API de empleados no respondió al proponer el principal (no bloquea; el registro valida).</summary>
+    public const string AdvertenciaErpNoVerificado = "No se pudo verificar los datos en el ERP.";
 
     // ------------------------------------------------------------------ GET reactivacion
 
@@ -86,8 +91,19 @@ public sealed class ReactivacionServicio(
             return null;
         }
 
-        var activos = await datos.ObtenerEmpleadosActivosAsync([elegido.EmpleadoId], ct);
-        var activo = activos.ContainsKey(elegido.EmpleadoId);
+        // TAREA-26d: "activo" según la API (lista en caché). Si la API no responde, no se bloquea el GET: se propone con el
+        // aviso general y el registro valida con una lectura fresca.
+        bool activo;
+        try
+        {
+            activo = (await empleadosErp.ObtenerActivosAsync(ct)).PorCodigo.ContainsKey(elegido.CodigoEkon);
+        }
+        catch (ErpNoDisponibleException)
+        {
+            activo = true;
+            advertencias.Add(AdvertenciaErpNoVerificado);
+        }
+
         if (!activo)
         {
             advertencias.Add(AdvertenciaInactivo);
@@ -103,7 +119,7 @@ public sealed class ReactivacionServicio(
     public async Task<ResultadoReactivacion> PrevisualizarAsync(int proyectoId, ReactivarProyectoSolicitud s, CancellationToken ct)
     {
         var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct); // TAREA-19x: antes que los datos
-        var r = await CalcularAsync(proyectoId, s, version, ct);
+        var r = await CalcularAsync(proyectoId, s, version, empleados: null, fresco: false, ct); // TAREA-26d: API en caché
         return r.Error ?? ResultadoReactivacion.Previsualizado(r.Calculo!.Previsualizacion);
     }
 
@@ -117,7 +133,8 @@ public sealed class ReactivacionServicio(
         }
 
         // Verificación previa fuera de la transacción: no se abre el bloqueo si la solicitud no es válida o tiene cruces.
-        var previo = await CalcularAsync(proyectoId, s, token, ct);
+        // TAREA-26d (P5): empleados con lectura FRESCA de la API (si falla → 503 sin abrir la transacción).
+        var previo = await CalcularAsync(proyectoId, s, token, empleados: null, fresco: true, ct);
         if (previo.Error is { Estado: EstadoEdicion.NoEncontrado } noEncontrado)
         {
             return noEncontrado;
@@ -143,7 +160,8 @@ public sealed class ReactivacionServicio(
         {
             // Dentro del applock se vuelve a leer y a recalcular todo. Lo que era válido fuera y ya no lo es dentro
             // (p. ej. el proyecto ya no está SUSPENDIDO), o una FechaFin distinta, significa que el proyecto cambió.
-            var r = await CalcularAsync(proyectoId, s, token, ctTx);
+            // TAREA-26d: con los empleados ya validados fuera (sin llamar a la API dentro del bloqueo).
+            var r = await CalcularAsync(proyectoId, s, token, previo.Calculo.Empleados, fresco: false, ctTx);
             if (r.Error is { } errorTx)
             {
                 return errorTx.Estado == EstadoEdicion.Invalido ? ResultadoReactivacion.Cambiado() : errorTx;
@@ -184,12 +202,14 @@ public sealed class ReactivacionServicio(
 
     private sealed record Calculo(
         DatosEdicion Datos, DateOnly Reactivacion, DateOnly FechaFin, PlanEdicion Plan, CalculoRegeneracion Regeneracion,
-        ActividadReactivacionDto? Actividad, PrevisualizacionReactivacionDto Previsualizacion);
+        ActividadReactivacionDto? Actividad, PrevisualizacionReactivacionDto Previsualizacion, CatalogoEmpleados Empleados);
 
     private sealed record Resultado(ResultadoReactivacion? Error, Calculo? Calculo);
 
     /// <param name="versionProyecto">Token que lleva la vista previa (leído antes que los datos, o el del registro).</param>
-    private async Task<Resultado> CalcularAsync(int proyectoId, ReactivarProyectoSolicitud s, int versionProyecto, CancellationToken ct)
+    /// <param name="empleados">TAREA-26d: catálogo ya cargado (dentro del applock); null = cargarlo (fresco al registrar).</param>
+    private async Task<Resultado> CalcularAsync(int proyectoId, ReactivarProyectoSolicitud s, int versionProyecto,
+        CatalogoEmpleados? empleados, bool fresco, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(s);
         if (!TryObtenerVisibilidad(out var propietario))
@@ -204,13 +224,11 @@ public sealed class ReactivacionServicio(
             return new Resultado(ResultadoReactivacion.NoEncontrado(), null);
         }
 
-        // Datos de referencia: jornadas, límites y empleados activos (todas las personas son nuevas).
-        var idsEmpleados = (s.Principales ?? []).Select(p => p.EmpleadoId)
-            .Concat((s.Backs ?? []).Select(b => b.EmpleadoId))
-            .OfType<int>().Distinct().ToList();
-        var activos = idsEmpleados.Count == 0
-            ? new Dictionary<int, EmpleadoRef>()
-            : await datos.ObtenerEmpleadosActivosAsync(idsEmpleados, ct);
+        // Datos de referencia: jornadas, límites y empleados activos en la API (todas las personas son nuevas; TAREA-26d).
+        var activos = empleados ?? await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
+            (s.Principales ?? []).Where(p => p.Id is null).Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
+                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            fresco, ct);
         var jornadas = await datos.ObtenerJornadasAsync(ct);
         var limites = await datos.ObtenerLimitesAsync(ct);
 
@@ -246,7 +264,7 @@ public sealed class ReactivacionServicio(
             CalculoPersonal.Personas(plan), calculo.Tramos, calculo.Cruces, CalculadorCruces.Resumen(calculo.Cruces), advertencias,
             versionProyecto);
 
-        return new Resultado(null, new Calculo(proyecto, reactivacion, fechaFin, plan, calculo, actividad, previsualizacion));
+        return new Resultado(null, new Calculo(proyecto, reactivacion, fechaFin, plan, calculo, actividad, previsualizacion, activos));
     }
 
     // ------------------------------------------------------------------ escritura
@@ -273,7 +291,8 @@ public sealed class ReactivacionServicio(
         return new CambioPersonal(c.Datos.Id, c.Reactivacion, version, TipoMovimiento, c.Reactivacion, c.FechaFin, actividadEtapa,
             CalculoPersonal.Snapshot(c.Plan), vigentes, nuevas, [], CalculoPersonal.Dias(c.Regeneracion),
             // R6: el primer principal nuevo es el inicial; solo con backs no hay inicial nuevo (TAREA-19y, antes fallaba).
-            new ReactivacionAplicar(c.Plan.Principales.FirstOrDefault()?.Clave, c.FechaFin, actividad));
+            new ReactivacionAplicar(c.Plan.Principales.FirstOrDefault()?.Clave, c.FechaFin, actividad),
+            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan)); // TAREA-26d
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

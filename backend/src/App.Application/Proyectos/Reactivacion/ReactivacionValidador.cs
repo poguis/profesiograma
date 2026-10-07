@@ -20,7 +20,7 @@ public sealed class ReactivacionValidador
         DatosEdicion proyecto,
         IReadOnlyDictionary<string, JornadaRef> jornadas,
         LimitesProyecto limites,
-        IReadOnlyDictionary<int, EmpleadoRef> empleadosActivos)
+        CatalogoEmpleados empleadosActivos)
     {
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(proyecto);

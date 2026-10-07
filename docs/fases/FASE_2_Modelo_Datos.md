@@ -17,7 +17,7 @@ Script completo: `claude/FASE_2_modelo_profesiograma.sql` (validado sintácticam
 | 7 | CARGO INFOR | Catálogo `CargoInfor` con CRUD e importación desde Excel. A futuro, desde API. |
 | 8 | Límites | 20 principales / 20 backs, configurables en `Parametro`. |
 | 9 | MIGRADO | Los 51 proyectos ya están en listas normalizadas (DETALLE ≈ 5.000 filas). Se migra solo desde las listas nuevas. |
-| 10 | API empleados | `POST :7048/api/EvolutionEmployee/EmployeesEvolution` → reemplaza `ESTRUCTURA GENERAL`. |
+| 10 | API empleados | `POST :7048/api/EvolutionEmployee/EmployeesEvolution` → reemplaza `ESTRUCTURA GENERAL`. **Contrato verificado en la TAREA-26a** (sondeo con solo agregados): cuerpo `{ "parameter": "", "estado": "A", "codEmpresa": "", "codDepartamento": "" }`, sin autenticación, envoltura `{ statusCode, isSuccess, errorMessages, result[] }`, ~1633 activos, ~2,5 MB, sin paginación. Desde la TAREA-26d (opción C) la API es la **única fuente** de los empleados: sin sincronización; `Empleado` solo con las personas asignadas (alta puntual). Ver `FASE_4_Empleados_API.md`. |
  
 ### Nuevo hallazgo
  
@@ -25,7 +25,7 @@ Script completo: `claude/FASE_2_modelo_profesiograma.sql` (validado sintácticam
 |---|---|---|
 | C29 | En `SIG PROYECTOS`, `Creado por` (Author) = `gestor.administrativosig@` y `CORREO_CREADOR` = `gestor.sig@` para el mismo registro. El correo **no es un identificador confiable** (alias / UPN distinto). | La identidad se basa en `EntraObjectId` (claim `oid`). En la migración, el propietario se toma de `CORREO_CREADOR` (la app lo usa para visibilidad). [PENDIENTE confirmar si ambos correos son la misma persona] |
 | C30 | Las novedades de PERMISO MEDICO identifican a la persona por `Fechas.Ekon`; `Persona.Correo` a veces está vacío y no existe `Persona.Ekon`. | Resolución de empleado por EKON; el correo es secundario. |
-| C31 | La API de empleados devuelve datos sensibles (salario, BPR, fecha de nacimiento, teléfono, correo personal, dirección). | La caché `Empleado` guarda **solo** datos laborales necesarios. Nada sensible se persiste. |
+| C31 | La API de empleados devuelve datos sensibles: salario, BPR, fecha de nacimiento, teléfono, correo personal, dirección y, verificado en la TAREA-26a, también `cedula`, `fechaAntiguedad`, `sexo`, `nivelDireccion`, los campos de domicilio (`provincia`, `canton`, `barrio`, `callePrincipal`, `calleSecundaria`, `numeroCasa`) y los datos de la persona a quien reporta (`reportaA`, `nombresReportaA`, `cedulaReportaA`). | La caché `Empleado` guarda **solo** datos laborales necesarios. Nada sensible se persiste: el DTO del cliente HTTP (TAREA-26b) solo tiene los campos permitidos y la cédula no se mapea (P10). |
  
 ---
  
@@ -269,7 +269,7 @@ erDiagram
  
 | # | Decisión | Motivo |
 |---|---|---|
-| J1 | **Empleado como caché** de la API, sincronizada por job (Fase 4). | Búsquedas y cronograma rápidos con JOIN; integridad referencial; la app no depende de la API en cada pantalla. Solo campos laborales (C31). |
+| J1 | ~~Empleado como caché de la API, sincronizada por job (Fase 4).~~ **Reemplazada (TAREA-26d, 07/10/2026, opción C):** la API EvolutionEmployee es la única fuente de los empleados; `Empleado` contiene solo a las personas asignadas (alta puntual desde la API al asignar; Fase 3: desde las asignaciones de SharePoint). | No depender de una réplica que puede desincronizarse: la API es el contrato. Se conservan la integridad referencial (FK desde `ProyectoPersonal`, `Novedad`, `Usuario`) y los JOIN de detalle, vistas y cronograma. Solo campos laborales (C31). Ver `FASE_4_Empleados_API.md`. |
 | J2 | Clave de empleado = `CodigoEkon` (codPersona), VARCHAR. | Es el identificador usado en todas las listas (EKON). En SP era Number y se exportaba como "2.448" (C3). [SUPUESTO: único entre empresas] |
 | J3 | `Usuario` separado de `Empleado`. | Usuario = identidad Entra (quién usa la app); Empleado = maestro ERP (a quién se asigna). No todo empleado es usuario. |
 | J4 | `UsuarioDepartamento` reemplaza el JSON de la fila 666. | Elimina la búsqueda por subcadena (C10) y el registro "configuración dentro de datos". |
@@ -333,6 +333,7 @@ erDiagram
 | 5 | Departamentos por **nombre** | `Departamento.Nombre` se compara con `Empleado.Departamento` / `Empleado.Unidad`. `CodigoErp` queda opcional. |
 | 6 | La API devuelve todos; se quieren solo activos | Sincronización con `estado = "A"`. Empleados históricos no activos se crean desde la migración con `EsOrigenLegado = 1`. |
 | 7 | Sincronización PERMISO MEDICO manual | Acción manual "Sincronizar novedades externas" (solo admin), no job programado. |
+| 8 (07/10/2026) | Empleados: la API es la única fuente (opción C, TAREA-26d); sin sincronización masiva (la TAREA-26b se descartó) | `Empleado` = personas asignadas (alta puntual). `EstadoErp` = estado en la API en la última alta; `FechaSincronizacion` = última copia desde la API (sin migración). El buscador lee la API con caché en memoria. |
  
 ## 8. Resultado del diagnóstico de SQL Server (2026-09-29)
  

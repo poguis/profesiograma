@@ -48,7 +48,7 @@ public class PrincipalOpcionalTests
     private static CrearProyectoSolicitud SoloBacks() => Dobles.SolicitudCampo() with { Principales = [], Backs = [BackSinRelacion] };
 
     private static Task<ResultadoValidacionProyecto> ValidarCreacion(CrearProyectoSolicitud s, DatosFalsos? datos = null) =>
-        new CrearProyectoValidador(datos ?? new DatosFalsos(), new ErpFalso(), new UsuarioFalso()).ValidarAsync(s, Ct);
+        new CrearProyectoValidador(datos ?? new DatosFalsos(), new ErpFalso(), new UsuarioFalso(), new EmpleadosErpFalsos()).ValidarAsync(s, Ct);
 
     [Fact]
     public async Task Creacion_Parametro0_SoloBacks_Valido()
@@ -83,7 +83,7 @@ public class PrincipalOpcionalTests
     }
 
     private static CrearProyectoServicio ServicioCreacion() =>
-        new(new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso()), new CrucesExternosFalsos(),
+        new(new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso(), new EmpleadosErpFalsos()), new CrucesExternosFalsos(),
             new RepositorioFalso(), new TransaccionFalsa(), new RelojFijo(new DateTimeOffset(2026, 12, 1, 15, 0, 0, TimeSpan.Zero)));
 
     [Fact]
@@ -131,7 +131,7 @@ public class PrincipalOpcionalTests
     {
         var repo = new RepositorioEdicionFalso(proyecto);
         return (new EdicionPersonalServicio(repo, datos ?? new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(),
-            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(DoblesPersonal.Ahora)), repo);
+            new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(DoblesPersonal.Ahora), new EmpleadosErpFalsos()), repo);
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class PrincipalOpcionalTests
     {
         var repo = new RepositorioEdicionFalso(proyecto ?? DoblesReactivacion.Proyecto());
         return (new ReactivacionServicio(repo, new RepositorioReactivacionFalso(null), datos ?? new DatosFalsos(), new CrucesEdicionFalsos(),
-            new ReactivacionValidador(), new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(DoblesReactivacion.Ahora)), repo);
+            new ReactivacionValidador(), new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(DoblesReactivacion.Ahora), new EmpleadosErpFalsos()), repo);
     }
 
     private static readonly BackEdicionSolicitud BackEnR =

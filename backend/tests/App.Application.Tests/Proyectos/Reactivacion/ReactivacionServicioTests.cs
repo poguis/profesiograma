@@ -28,7 +28,7 @@ public class ReactivacionServicioTests
         var repoReactivacion = new RepositorioReactivacionFalso(conActividad ? Actividad : null);
         var tx = new TransaccionFalsa();
         var servicio = new ReactivacionServicio(repo, repoReactivacion, datos ?? new DatosFalsos(), cruces, new ReactivacionValidador(), tx,
-            usuario ?? new UsuarioFalso(), new RelojFijo(ahora ?? Ahora));
+            usuario ?? new UsuarioFalso(), new RelojFijo(ahora ?? Ahora), new EmpleadosErpFalsos());
         return new Entorno(servicio, repo, repoReactivacion, cruces, tx);
     }
 

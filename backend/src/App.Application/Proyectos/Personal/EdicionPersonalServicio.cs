@@ -1,4 +1,5 @@
 using App.Application.Comun;
+using App.Application.Empleados;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
 using App.Application.Seguridad;
@@ -20,7 +21,8 @@ public sealed class EdicionPersonalServicio(
     EdicionPersonalValidador validador,
     ITransaccionAsignaciones transaccion,
     IUsuarioActual usuario,
-    TimeProvider reloj)
+    TimeProvider reloj,
+    IFuenteEmpleadosErp empleadosErp)
 {
     public const string TipoMovimiento = "ACTUALIZACION_PERSONAL";
 
@@ -69,7 +71,7 @@ public sealed class EdicionPersonalServicio(
     public async Task<ResultadoEdicionPersonal> PrevisualizarAsync(int proyectoId, ActualizarPersonalSolicitud s, CancellationToken ct)
     {
         var version = await repositorio.ObtenerUltimaVersionEtapaAsync(proyectoId, ct); // TAREA-19x: antes que los datos
-        var r = await CalcularAsync(proyectoId, s, version, ct);
+        var r = await CalcularAsync(proyectoId, s, version, empleados: null, fresco: false, ct); // TAREA-26d: API en caché
         return r.Error ?? ResultadoEdicionPersonal.Previsualizado(r.Calculo!.Previsualizacion);
     }
 
@@ -83,7 +85,8 @@ public sealed class EdicionPersonalServicio(
         }
 
         // Verificación previa fuera de la transacción: no se abre el bloqueo si la solicitud no es válida o tiene cruces.
-        var previo = await CalcularAsync(proyectoId, s, token, ct);
+        // TAREA-26d (P5): empleados nuevos con lectura FRESCA de la API (si falla → 503 sin abrir la transacción).
+        var previo = await CalcularAsync(proyectoId, s, token, empleados: null, fresco: true, ct);
         if (previo.Error is { Estado: EstadoEdicion.NoEncontrado } noEncontrado)
         {
             return noEncontrado;
@@ -113,7 +116,8 @@ public sealed class EdicionPersonalServicio(
         return await transaccion.EjecutarAsync(async ctTx =>
         {
             // E7: dentro del applock se vuelve a leer y a recalcular todo (estado, personal, base y cruces externos).
-            var r = await CalcularAsync(proyectoId, s, token, ctTx);
+            // TAREA-26d: con los empleados ya validados fuera (sin llamar a la API dentro del bloqueo).
+            var r = await CalcularAsync(proyectoId, s, token, previo.Calculo.Empleados, fresco: false, ctTx);
             if (r.Error is { } errorTx)
             {
                 // Lo que era válido fuera y ya no lo es dentro: los datos cambiaron entre la lectura y el bloqueo.
@@ -150,12 +154,14 @@ public sealed class EdicionPersonalServicio(
 
     private sealed record Calculo(
         DatosEdicion Datos, DateOnly Corte, PlanEdicion Plan, CalculoRegeneracion Regeneracion, PrevisualizacionPersonalDto Previsualizacion,
-        bool SinCambios);
+        bool SinCambios, CatalogoEmpleados Empleados);
 
     private sealed record Resultado(ResultadoEdicionPersonal? Error, Calculo? Calculo);
 
     /// <param name="versionProyecto">Token que lleva la vista previa (leído antes que los datos, o el del registro).</param>
-    private async Task<Resultado> CalcularAsync(int proyectoId, ActualizarPersonalSolicitud s, int versionProyecto, CancellationToken ct)
+    /// <param name="empleados">TAREA-26d: catálogo ya cargado (dentro del applock); null = cargarlo (fresco al registrar).</param>
+    private async Task<Resultado> CalcularAsync(int proyectoId, ActualizarPersonalSolicitud s, int versionProyecto,
+        CatalogoEmpleados? empleados, bool fresco, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(s);
         if (!TryObtenerVisibilidad(out var propietario))
@@ -170,13 +176,11 @@ public sealed class EdicionPersonalServicio(
             return new Resultado(ResultadoEdicionPersonal.NoEncontrado(), null);
         }
 
-        // Datos de referencia: jornadas, límites y empleados activos de las personas NUEVAS (D4).
-        var idsNuevos = (s.Principales ?? []).Where(p => p.Id is null).Select(p => p.EmpleadoId)
-            .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => b.EmpleadoId))
-            .OfType<int>().Distinct().ToList();
-        var activos = idsNuevos.Count == 0
-            ? new Dictionary<int, EmpleadoRef>()
-            : await datos.ObtenerEmpleadosActivosAsync(idsNuevos, ct);
+        // Datos de referencia: jornadas, límites y empleados activos en la API de las personas NUEVAS (D4, TAREA-26d).
+        var activos = empleados ?? await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
+            (s.Principales ?? []).Where(p => p.Id is null).Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
+                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            fresco, ct);
         var jornadas = await datos.ObtenerJornadasAsync(ct);
         var limites = await datos.ObtenerLimitesAsync(ct);
 
@@ -223,7 +227,7 @@ public sealed class EdicionPersonalServicio(
             advertencias,
             versionProyecto);
 
-        return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion, sinCambios));
+        return new Resultado(null, new Calculo(proyecto, corte, plan, calculo, previsualizacion, sinCambios, activos));
     }
 
     // ------------------------------------------------------------------ escritura
@@ -235,7 +239,8 @@ public sealed class EdicionPersonalServicio(
             ActividadVigente.Elegir(c.Datos.Actividades, c.Datos.FechaInicio, c.Datos.FechaFin, c.Corte)?.Codigo, // O3: regla de etapas
             CalculoPersonal.Snapshot(c.Plan),
             vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion),
-            ClaveInicialNueva: CalculoPersonal.ClaveInicialNueva(c.Datos, c.Plan)); // P3 (TAREA-19y)
+            ClaveInicialNueva: CalculoPersonal.ClaveInicialNueva(c.Datos, c.Plan), // P3 (TAREA-19y)
+            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan)); // TAREA-26d
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

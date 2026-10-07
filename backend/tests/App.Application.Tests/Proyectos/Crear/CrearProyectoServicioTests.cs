@@ -17,7 +17,7 @@ public class CrearProyectoServicioTests
         cruces ??= new CrucesExternosFalsos();
         repo ??= new RepositorioFalso();
         var tx = new TransaccionFalsa();
-        var validador = new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso());
+        var validador = new CrearProyectoValidador(new DatosFalsos(), new ErpFalso(), new UsuarioFalso(), new EmpleadosErpFalsos());
         return new Entorno(new CrearProyectoServicio(validador, cruces, repo, tx, new RelojFijo(ahora ?? Ahora)), cruces, repo, tx);
     }
 

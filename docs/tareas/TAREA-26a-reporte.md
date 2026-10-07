@@ -1,7 +1,7 @@
 # TAREA-26a — ERP real en Development: logs, scripts de sondeo y verificación
 
 **Fecha:** 2026-10-07 (Fase A y Fase B)
-**Resultado:** implementada. Resultados del usuario: A2 (con la corrección de la sección 7) y A5 recibidos (sección 8); el resto de A1–A11 está pendiente.
+**Resultado:** ✅ completada. Verificación del usuario del 07/10/2026: **A1–A11 OK** (sección 6). Sondeo A2 completo (sección 8.4). Dato de prueba: **Id 14**, creado con datos ERP reales (A6).
 - `dotnet build Profesiograma.slnx -c Release`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **549/549** (543 anteriores sin cambios + 6 nuevas).
 - Los 4 scripts se probaron **solo con `SIMULAR=1`**: 4/4 OK, sin llamadas de red (sección 5).
@@ -155,17 +155,17 @@ Ver `backend/tests/manual/tarea26a/LEEME.md`. Pegue en el chat solo los `resulta
 
 | # | Caso | Pasos | Esperado | Anotar | ¿Escribe? | Resultado |
 |---|---|---|---|---|---|---|
-| A1 | Conectividad | `conectividad.cmd` | TCP 7048 y 7055 CONECTA; `list_company` HTTP 200 | `resultado-conectividad.txt` | No | |
-| A2 | Contrato de EvolutionEmployee | Copiar la plantilla a `cuerpo-empleados-1.json` → `sondeo-empleados.cmd` | HTTP 200 con agregados (o 401/403 si pide autenticación) | `resultado-sondeo.txt` completo: forma, registros, campos, paginación, códigos y departamentos | No | |
-| A3 | Modo Http | `user-secrets set ServiciosExternos:Modo Http` → reiniciar la API | Línea `ERP: modo Http` en la consola de la API | La línea del log | No | |
-| A4 | "Nuevo proyecto" con el ERP real | Abrir la pantalla; elegir una compañía real, un grupo, proyecto ERP / actividad o dimensión, y un horario | Listas reales; ningún 500 | Cuántas compañías aparecen; si algún grupo o compañía no carga (mensaje exacto); tiempo aproximado de la primera carga | No | |
-| A5 | Horarios y largos | `erp-horarios.cmd` y `erp-largos.cmd` | Archivos con datos | `resultado-horarios.txt` (significado de M/D) y `resultado-largos.txt` (¿algún `EXCEDE`?) | No | |
-| A6 | Crear un proyecto con datos reales | "Nuevo proyecto" con compañía, proyecto ERP, actividad y horario reales, y un empleado DEV → Registrar | 201 y detalle con los datos ERP reales | Código del proyecto creado | **Sí (proyecto nuevo)** | |
-| A7 | Degradación con datos de prueba | Id 12 → "Editar datos generales" | Aviso "El horario actual no está activo en el ERP; se conserva si no elige otro." (si su horario no existe en el ERP real); la actividad muestra "No se pudo cargar la lista: …" (compañía 9001 inexistente); cambiar solo el almuerzo → Ver impacto → Registrar | Texto exacto del aviso de horario y del error de actividades; resultado del registro (versión) | **Sí (Id 12)** | |
-| A8 | Sin 500 en los datos de prueba | Detalle, Historial, "Actualizar personal" (vista previa) y "Reactivar" (si hay un SUSPENDIDO) de los Id 1–13 | Todo funciona como en Simulado; ningún 500 | Cualquier pantalla con error (Id, pantalla y mensaje) | No | |
-| A9 | 503 controlado | Base inválida (`user-secrets` de `LEEME.md`) → reiniciar → "Nuevo proyecto" | 503 "Servicio ERP no disponible" + "Reintentar". Restaurar las URL y reiniciar | Mensaje mostrado | No | |
-| A10 | Caché | Con las URL reales, abrir "Nuevo proyecto" dos veces en menos de 5 min | En la consola de la API, líneas `ERP compañías: HTTP 200 en … ms` y `ERP horarios: …` solo la primera vez | Líneas de log de las dos aperturas | No | |
-| A11 | Volver a Simulado | `user-secrets remove ServiciosExternos:Modo` → reiniciar | Línea `ERP: modo Simulado`; la compañía 9001 vuelve a aparecer | — | No | |
+| A1 | Conectividad | `conectividad.cmd` | TCP 7048 y 7055 CONECTA; `list_company` HTTP 200 | `resultado-conectividad.txt` | No | OK |
+| A2 | Contrato de EvolutionEmployee | Copiar la plantilla a `cuerpo-empleados-1.json` → `sondeo-empleados.cmd` | HTTP 200 con agregados (o 401/403 si pide autenticación) | `resultado-sondeo.txt` completo: forma, registros, campos, paginación, códigos y departamentos | No | OK |
+| A3 | Modo Http | `user-secrets set ServiciosExternos:Modo Http` → reiniciar la API | Línea `ERP: modo Http` en la consola de la API | La línea del log | No | OK |
+| A4 | "Nuevo proyecto" con el ERP real | Abrir la pantalla; elegir una compañía real, un grupo, proyecto ERP / actividad o dimensión, y un horario | Listas reales; ningún 500 | Cuántas compañías aparecen; si algún grupo o compañía no carga (mensaje exacto); tiempo aproximado de la primera carga | No | OK: catálogos reales correctos |
+| A5 | Horarios y largos | `erp-horarios.cmd` y `erp-largos.cmd` | Archivos con datos | `resultado-horarios.txt` (significado de M/D) y `resultado-largos.txt` (¿algún `EXCEDE`?) | No | OK |
+| A6 | Crear un proyecto con datos reales | "Nuevo proyecto" con compañía, proyecto ERP, actividad y horario reales, y un empleado DEV → Registrar | 201 y detalle con los datos ERP reales | Código del proyecto creado | **Sí (proyecto nuevo)** | OK: proyecto **Id 14** creado con datos ERP reales |
+| A7 | Degradación con datos de prueba | Id 12 → "Editar datos generales" | Aviso "El horario actual no está activo en el ERP; se conserva si no elige otro." (si su horario no existe en el ERP real); la actividad muestra "No se pudo cargar la lista: …" (compañía 9001 inexistente); cambiar solo el almuerzo → Ver impacto → Registrar | Texto exacto del aviso de horario y del error de actividades; resultado del registro (versión) | **Sí (Id 12)** | OK |
+| A8 | Sin 500 en los datos de prueba | Detalle, Historial, "Actualizar personal" (vista previa) y "Reactivar" (si hay un SUSPENDIDO) de los Id 1–13 | Todo funciona como en Simulado; ningún 500 | Cualquier pantalla con error (Id, pantalla y mensaje) | No | OK |
+| A9 | 503 controlado | Base inválida (`user-secrets` de `LEEME.md`) → reiniciar → "Nuevo proyecto" | 503 "Servicio ERP no disponible" + "Reintentar". Restaurar las URL y reiniciar | Mensaje mostrado | No | OK |
+| A10 | Caché | Con las URL reales, abrir "Nuevo proyecto" dos veces en menos de 5 min | En la consola de la API, líneas `ERP compañías: HTTP 200 en … ms` y `ERP horarios: …` solo la primera vez | Líneas de log de las dos aperturas | No | OK |
+| A11 | Volver a Simulado | `user-secrets remove ServiciosExternos:Modo` → reiniciar | Línea `ERP: modo Simulado`; la compañía 9001 vuelve a aparecer | — | No | OK |
 
 ## 7. Corrección del sondeo de empleados (A2, 07/10/2026)
 ### 7.1 Problema
@@ -269,8 +269,15 @@ Largo máximo real: **proyecto 9, dimensión 9, actividad 6**, frente a columnas
 1. **Horarios no laborales en la lista de horarios activos:** LIBRE, FERIADO, VACIO, VACACIONES, PERMISO MEDICO y CALAMIDAD DOMESTICA. Hoy se pueden elegir como horario de un proyecto. Hay que decidir si se filtran, por ejemplo por descripción o por un indicador del ERP [PENDIENTE DE DECISIÓN DEL USUARIO].
 2. **Horarios que cruzan la medianoche** (salida anterior a la entrada). Hay que verificar cómo los tratan `ReglasHorarioAlmuerzo` y RN09 (rangos de almuerzo y regreso > salida), en la 26b o en una tarea propia.
 
+### 8.4 A2 completo con el sondeo corregido (solo agregados)
+- **1633 activos** (la primera ejecución, interrumpida, había contado 1631).
+- **`codPersona`:** único (0 repetidos), siempre numérico, de 1 a 5 caracteres, **0 con prefijo "DEV"**. Por eso la exclusión de los DEV de la 26b no afecta a ningún empleado real.
+- **Departamentos:** los 7 nombres de la tabla `Departamento` coinciden con empleados reales; **"UNIDAD SISTEMA INTEGRADO DE GESTION" = 85**.
+- `codEmpresa` del empleado (ECU, SCE…) no es el Id de compañía del ERP de proyectos: no se cruzan (pendiente 43).
+- La API trae además `codPerfil`, `posicion` y `cargoTipo` (organizacionales), que no se guardan (pendiente 44).
+
 ## 9. Pendientes
-- **Repetir A2 con el sondeo corregido**, para obtener los valores permitidos, el análisis de `codPersona` y las coincidencias de departamentos. Cierra el pendiente 40.
-- **Resto de A1–A11** (A1, A3, A4, A6–A11).
-- **Pendiente 13** (M/D) abierto; observaciones de horarios no laborales y que cruzan la medianoche (sección 8.3).
-- **26b:** sincronización de empleados, con `parameter` vacío y `estado = "A"` como valores fijos.
+- **Pendiente 13** (M/D) abierto: consultar al ERP o a RR. HH.
+- **Pendiente 41** (horarios no laborales en las listas) y **pendiente 42** (RN09 con horarios que cruzan la medianoche): TAREA-26c.
+- **Pendientes 43** (`codEmpresa` del empleado ≠ compañía del ERP) y **44** (`codPerfil`, `posicion`, `cargoTipo` para Perfiles).
+- **TAREA-26b:** sincronización de empleados (ver `TAREA-26b-reporte.md`).

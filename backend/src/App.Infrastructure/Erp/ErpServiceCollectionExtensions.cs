@@ -1,7 +1,10 @@
 using System.Globalization;
+using App.Application.Empleados;
 using App.Application.Erp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace App.Infrastructure.Erp;
 
@@ -26,6 +29,8 @@ public static class ErpServiceCollectionExtensions
             }
 
             services.AddSingleton<ICatalogoErp, CatalogoErpSimulado>();
+            services.AddSingleton<IDescargaEmpleadosErp, EmpleadosErpSimulado>(); // TAREA-26d (P12)
+            AddCacheEmpleados(services, opciones);
             return services;
         }
 
@@ -43,10 +48,40 @@ public static class ErpServiceCollectionExtensions
                 $"{ServiciosExternosOpciones.Seccion}:TimeoutSegundos debe estar entre 1 y 120 (actual: {opciones.TimeoutSegundos}).");
         }
 
+        if (opciones.TimeoutEmpleadosSegundos is < 1 or > 600)
+        {
+            throw new InvalidOperationException(
+                $"{ServiciosExternosOpciones.Seccion}:TimeoutEmpleadosSegundos debe estar entre 1 y 600 (actual: {opciones.TimeoutEmpleadosSegundos}).");
+        }
+
         services.AddMemoryCache();
         services.AddSingleton(opciones);
         services.AddHttpClient<ICatalogoErp, CatalogoErpHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(opciones.TimeoutSegundos));
+        services.AddHttpClient<IDescargaEmpleadosErp, FuenteEmpleadosErpHttp>(
+            cliente => cliente.Timeout = TimeSpan.FromSeconds(opciones.TimeoutEmpleadosSegundos)); // TAREA-26d
+        AddCacheEmpleados(services, opciones);
         return services;
+    }
+
+    /// <summary>
+    /// TAREA-26d: lista de empleados en memoria (singleton, descarga única). La descarga se resuelve en cada llamada (el
+    /// cliente HTTP tipado es transitorio; su HttpMessageHandler lo administra IHttpClientFactory).
+    /// </summary>
+    private static void AddCacheEmpleados(IServiceCollection services, ServiciosExternosOpciones opciones)
+    {
+        if (opciones.CacheEmpleadosMinutos is < 1 or > 1440
+            || opciones.CacheEmpleadosMaxAntiguedadMinutos < opciones.CacheEmpleadosMinutos
+            || opciones.CacheEmpleadosMaxAntiguedadMinutos > 1440)
+        {
+            throw new InvalidOperationException(
+                $"{ServiciosExternosOpciones.Seccion}: CacheEmpleadosMinutos debe estar entre 1 y 1440 y " +
+                "CacheEmpleadosMaxAntiguedadMinutos entre CacheEmpleadosMinutos y 1440.");
+        }
+
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<IFuenteEmpleadosErp>(sp => new CacheEmpleadosErp(
+            () => sp.GetRequiredService<IDescargaEmpleadosErp>(), opciones, sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<ILogger<CacheEmpleadosErp>>()));
     }
 
     /// <summary>
@@ -64,6 +99,9 @@ public static class ErpServiceCollectionExtensions
     {
         var seccion = configuration.GetSection(ServiciosExternosOpciones.Seccion);
         var timeout = seccion[nameof(ServiciosExternosOpciones.TimeoutSegundos)];
+        var timeoutEmpleados = seccion[nameof(ServiciosExternosOpciones.TimeoutEmpleadosSegundos)];
+        var cacheEmpleados = seccion[nameof(ServiciosExternosOpciones.CacheEmpleadosMinutos)];
+        var antiguedadEmpleados = seccion[nameof(ServiciosExternosOpciones.CacheEmpleadosMaxAntiguedadMinutos)];
 
         return new ServiciosExternosOpciones
         {
@@ -71,6 +109,16 @@ public static class ErpServiceCollectionExtensions
             ErpBase7048 = seccion[nameof(ServiciosExternosOpciones.ErpBase7048)] ?? string.Empty,
             ErpBase7055 = seccion[nameof(ServiciosExternosOpciones.ErpBase7055)] ?? string.Empty,
             TimeoutSegundos = int.TryParse(timeout, NumberStyles.Integer, CultureInfo.InvariantCulture, out var segundos) ? segundos : 15,
+            TimeoutEmpleadosSegundos = int.TryParse(timeoutEmpleados, NumberStyles.Integer, CultureInfo.InvariantCulture, out var segundosEmpleados)
+                ? segundosEmpleados
+                : 60,
+            CacheEmpleadosMinutos = int.TryParse(cacheEmpleados, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutos)
+                ? minutos
+                : 10,
+            CacheEmpleadosMaxAntiguedadMinutos = int.TryParse(antiguedadEmpleados, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                out var antiguedad)
+                ? antiguedad
+                : 60,
         };
     }
 

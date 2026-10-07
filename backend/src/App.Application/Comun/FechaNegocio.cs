@@ -11,4 +11,8 @@ public static class FechaNegocio
     /// <summary>Fecha de hoy en Ecuador según el reloj indicado.</summary>
     public static DateOnly Hoy(TimeProvider reloj)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), Zona.Value).DateTime);
+
+    /// <summary>Hora de Ecuador de un instante (TAREA-26d: aviso de la lista de empleados anterior).</summary>
+    public static TimeOnly Hora(DateTimeOffset instante)
+        => TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(instante, Zona.Value).DateTime);
 }
