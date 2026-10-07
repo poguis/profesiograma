@@ -2,6 +2,7 @@
 // Concentra la limpieza de campos dependientes (R3), las referencias back → principal (R8) y la revisión que
 // invalida la vista previa (R12). El servidor tiene la última palabra en todas las validaciones.
 import { formatearFecha } from '../../utils/formato'
+import { ayudaMinimo, cumpleMinimo } from './minimoPersonal'
 import type {
   BackSolicitud,
   CruceAsignacion,
@@ -530,32 +531,14 @@ export function vistaVigente(vista: VistaPreviaFormulario | null, revision: numb
   return vista !== null && vista.revision === revision
 }
 
-/**
- * Mínimo de personal (TAREA-19y, pendiente 33): con PROYECTO_EXIGE_PRINCIPAL (`exigePrincipal`) al menos 1 principal
- * (C10); si no, al menos 1 persona (principal o back). El error del servidor solo llega en un 400 (`principales` o
- * `personal`); aquí solo se da la ayuda y se bloquea la vista previa.
- */
-export const MINIMO_PRINCIPALES = 1
-
-function cumpleMinimo(estado: EstadoFormulario, exigePrincipal: boolean): boolean {
-  return exigePrincipal
-    ? estado.principales.length >= MINIMO_PRINCIPALES
-    : estado.principales.length + estado.backs.length >= 1
-}
-
-/** P6 / TAREA-19y: ayuda neutra (no error) mientras no se cumpla el mínimo; undefined si ya se cumple. */
+/** P6 / TAREA-19y: ayuda neutra (no error) mientras no se cumpla el mínimo (regla común en minimoPersonal.ts). */
 export function ayudaPersonal(estado: EstadoFormulario, exigePrincipal: boolean): string | undefined {
-  if (cumpleMinimo(estado, exigePrincipal)) {
-    return undefined
-  }
-  return exigePrincipal
-    ? `Agrega al menos ${MINIMO_PRINCIPALES} principal para generar la vista previa.`
-    : 'Agrega al menos 1 persona (principal o back) para generar la vista previa.'
+  return ayudaMinimo(estado.principales.length, estado.backs.length, exigePrincipal)
 }
 
 /** P6 / TAREA-19y: sin el mínimo no se genera la vista previa (y por tanto no se registra). */
 export function puedeGenerarVistaPrevia(estado: EstadoFormulario, enviando: boolean, exigePrincipal: boolean): boolean {
-  return !enviando && cumpleMinimo(estado, exigePrincipal)
+  return !enviando && cumpleMinimo(estado.principales.length, estado.backs.length, exigePrincipal)
 }
 
 /** R12: "Registrar" solo con una vista previa vigente, sin cruces y sin un envío en curso. */

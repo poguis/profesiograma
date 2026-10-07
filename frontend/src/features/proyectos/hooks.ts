@@ -14,18 +14,22 @@ import {
   listarProyectos,
   listarProyectosErp,
   obtenerCabecera,
+  obtenerEdicionPersonal,
   obtenerCatalogos,
   obtenerOpcionesFormulario,
   obtenerProyecto,
   previsualizarCabecera,
   previsualizarCambioEstado,
+  previsualizarPersonal,
   previsualizarProyecto,
   registrarCabecera,
+  registrarPersonal,
 } from './api'
 import type {
   Catalogos,
   FiltroEmpleados,
   FiltrosProyectos,
+  SolicitudActualizarPersonal,
   SolicitudCambioEstado,
   SolicitudEditarCabecera,
 } from './tipos'
@@ -195,6 +199,31 @@ export function useRegistrarCabecera(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudEditarCabecera) => registrarCabecera(id, solicitud),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+  })
+}
+
+// ------------------------------------------------------------------ Actualización de personal (TAREA-19b)
+
+/** GET /api/proyectos/{id}/edicion: decide "Actualizar personal" en el detalle y alimenta la pantalla. */
+export function useEdicionPersonal(id: number) {
+  return useQuery({
+    queryKey: clavesProyectos.edicion(id),
+    queryFn: ({ signal }) => obtenerEdicionPersonal(id, signal),
+    enabled: Number.isInteger(id) && id > 0,
+  })
+}
+
+/** POST /api/proyectos/{id}/personal/previsualizar (no guarda; sin reintentos). */
+export function usePrevisualizarPersonal(id: number) {
+  return useMutation({ mutationFn: (solicitud: SolicitudActualizarPersonal) => previsualizarPersonal(id, solicitud) })
+}
+
+/** POST /api/proyectos/{id}/personal. Al registrar, invalida detalle, edición y listados de proyectos. */
+export function useRegistrarPersonal(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudActualizarPersonal) => registrarPersonal(id, solicitud),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
   })
 }

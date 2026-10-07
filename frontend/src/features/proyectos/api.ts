@@ -9,18 +9,22 @@ import type {
   Catalogos,
   CompaniaErp,
   DimensionErp,
+  EdicionPersonal,
   EmpleadoBusqueda,
   FiltroEmpleados,
   FiltrosProyectos,
   HorarioErp,
   OpcionesFormularioProyecto,
+  PersonalActualizado,
   Previsualizacion,
   PrevisualizacionCabecera,
+  PrevisualizacionPersonal,
   PrevisualizacionCambioEstado,
   ProyectoCreado,
   ProyectoDetalle,
   ProyectoErp,
   ProyectoResumen,
+  SolicitudActualizarPersonal,
   SolicitudCambioEstado,
   SolicitudCrearProyecto,
   SolicitudEditarCabecera,
@@ -32,6 +36,8 @@ export const clavesProyectos = {
   detalle: (id: number) => ['proyectos', 'detalle', id] as const,
   /** Bajo 'proyectos': invalidar `todos` tras un cambio también recarga la cabecera. */
   cabecera: (id: number) => ['proyectos', 'cabecera', id] as const,
+  /** GET …/edicion (TAREA-19b): bajo 'proyectos', se refresca al invalidar `todos`. */
+  edicion: (id: number) => ['proyectos', 'edicion', id] as const,
   catalogos: ['catalogos'] as const,
   opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
 }
@@ -134,4 +140,19 @@ export function previsualizarCabecera(id: number, solicitud: SolicitudEditarCabe
 /** Registra la edición: 200 { id, version }; 400 / 404 / 409 / 503. */
 export function registrarCabecera(id: number, solicitud: SolicitudEditarCabecera) {
   return apiPost<SolicitudEditarCabecera, CabeceraActualizada>(`/proyectos/${id}/cabecera`, solicitud)
+}
+
+/** Datos de "Actualizar personal" (TAREA-17): corte, personal por clase con permisos, límites y token. 404 si no es visible. */
+export function obtenerEdicionPersonal(id: number, signal?: AbortSignal) {
+  return apiGet<EdicionPersonal>(`/proyectos/${id}/edicion`, { signal })
+}
+
+/** Vista previa de la actualización de personal (no guarda; 200 aunque haya cruces). 400 / 404 / 409 / 503. */
+export function previsualizarPersonal(id: number, solicitud: SolicitudActualizarPersonal) {
+  return apiPost<SolicitudActualizarPersonal, PrevisualizacionPersonal>(`/proyectos/${id}/personal/previsualizar`, solicitud)
+}
+
+/** Registra la actualización: 200 { id, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503. */
+export function registrarPersonal(id: number, solicitud: SolicitudActualizarPersonal) {
+  return apiPost<SolicitudActualizarPersonal, PersonalActualizado>(`/proyectos/${id}/personal`, solicitud)
 }

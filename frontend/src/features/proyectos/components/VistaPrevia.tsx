@@ -19,6 +19,7 @@ import {
 import { useMemo } from 'react'
 import { formatearFecha } from '../../../utils/formato'
 import type { Previsualizacion, TramoCronograma } from '../tipos'
+import { unirTramosContiguos } from '../tramos'
 import { TablaCruces } from './TablaCruces'
 
 const useEstilos = makeStyles({
@@ -47,7 +48,7 @@ export function VistaPrevia({ datos }: { datos: Previsualizacion }) {
   return (
     <div className={estilos.contenedor}>
       <Text>
-        {personas.length} {personas.length === 1 ? 'persona' : 'personas'} · {datos.tramos.length} tramos ·{' '}
+        {personas.length} {personas.length === 1 ? 'persona' : 'personas'} · {personas.reduce((suma, p) => suma + p.tramos.length, 0)} tramos ·{' '}
         {totalDias} días asignados
       </Text>
 
@@ -135,7 +136,8 @@ function agruparPorPersona(datos: Previsualizacion): GrupoPersona[] {
         clave,
         orden: (d.persona.rol === 'PRINCIPAL' ? 0 : 1000) + d.persona.numero,
         etiqueta: `${prefijo} · ${d.codigoEkon} · ${d.nombreEmpleado}`,
-        tramos: datos.tramos
+        // Pendiente 26 (TAREA-19b): tramos contiguos unidos (solo presentación).
+        tramos: unirTramosContiguos(datos.tramos)
           .filter((t) => claveDe(t.persona) === clave)
           .sort((a, b) => a.inicio.localeCompare(b.inicio)),
         diasTrabajo: d.dias.length - descanso,

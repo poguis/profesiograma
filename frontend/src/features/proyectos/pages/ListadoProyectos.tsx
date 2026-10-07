@@ -28,6 +28,9 @@ import { useProyectos } from '../hooks'
 export interface EstadoNavegacionProyectos {
   busqueda?: string
   codigoCreado?: string
+  /** TAREA-19b: aviso de éxito y pestaña con que se abre el detalle (p. ej. tras "Actualizar personal"). */
+  aviso?: string
+  pestana?: 'personal' | 'historial'
 }
 
 const CAMPOS_EN_FILTROS = new Set(['desde', 'hasta'])

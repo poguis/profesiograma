@@ -1,18 +1,6 @@
-import {
-  Button,
-  Dropdown,
-  Field,
-  Input,
-  MessageBar,
-  MessageBarBody,
-  Option,
-  Text,
-  makeStyles,
-  tokens,
-} from '@fluentui/react-components'
+import { Button, MessageBar, MessageBarBody, Text, makeStyles, tokens } from '@fluentui/react-components'
 import { Add20Regular, ArrowDown20Regular, ArrowUp20Regular, Delete20Regular } from '@fluentui/react-icons'
-import { type Dispatch, useState } from 'react'
-import { SelectorFecha } from '../../../components/SelectorFecha'
+import type { Dispatch } from 'react'
 import {
   type AccionFormulario,
   type CambiosPrincipal,
@@ -22,6 +10,8 @@ import {
 } from '../formularioProyecto'
 import type { JornadaCatalogo } from '../tipos'
 import { AyudaAgregarPersonal } from './AyudaAgregarPersonal'
+import { CAMPOS_VISIBLES_PRINCIPAL } from '../camposVisibles'
+import { CamposPrincipal } from './CamposPersona'
 import { TarjetaPersona } from './TarjetaPersona'
 
 const useEstilos = makeStyles({
@@ -98,8 +88,6 @@ export function ListaPrincipales({
   )
 }
 
-const CAMPOS_VISIBLES = ['jornada', 'fechaInicio', 'fechaFin', 'cargo']
-
 interface TarjetaPrincipalProps {
   fila: FilaPrincipal
   numero: number
@@ -112,18 +100,15 @@ interface TarjetaPrincipalProps {
 }
 
 function TarjetaPrincipal({ fila, numero, esPrimero, esUltimo, dispatch, jornadas, advertencia, errores }: TarjetaPrincipalProps) {
-  const [errorFormatoInicio, setErrorFormatoInicio] = useState<string>()
-  const [errorFormatoFin, setErrorFormatoFin] = useState<string>()
   const actualizar = (cambios: CambiosPrincipal) => dispatch({ tipo: 'actualizarPrincipal', clave: fila.clave, cambios })
   const etiqueta = `P${numero}`
-  const jornada = jornadas.find((j) => j.codigo === fila.jornada)
 
   return (
     <TarjetaPersona
       etiqueta={etiqueta}
       empleado={fila.empleado}
       advertencias={advertencia ? [advertencia] : []}
-      errores={mensajesSinCampo(errores, CAMPOS_VISIBLES)}
+      errores={mensajesSinCampo(errores, CAMPOS_VISIBLES_PRINCIPAL)}
       acciones={
         <>
           <Button
@@ -152,45 +137,13 @@ function TarjetaPrincipal({ fila, numero, esPrimero, esUltimo, dispatch, jornada
         </>
       }
     >
-      <Field label="Jornada" required validationMessage={errores.jornada}>
-        <Dropdown
-          placeholder="Seleccione la jornada"
-          value={jornada?.nombre ?? fila.jornada ?? ''}
-          selectedOptions={fila.jornada ? [fila.jornada] : []}
-          onOptionSelect={(_, d) => actualizar({ jornada: d.optionValue ?? null })}
-        >
-          {jornadas.map((j) => (
-            <Option key={j.codigo} value={j.codigo}>
-              {j.nombre}
-            </Option>
-          ))}
-        </Dropdown>
-      </Field>
-
-      <Field label="Inicio" required validationMessage={errorFormatoInicio ?? errores.fechaInicio}>
-        <SelectorFecha
-          valor={fila.fechaInicio ?? undefined}
-          onCambiar={(valor) => actualizar({ fechaInicio: valor ?? null })}
-          onErrorFormato={setErrorFormatoInicio}
-        />
-      </Field>
-
-      <Field label="Fin" required validationMessage={errorFormatoFin ?? errores.fechaFin}>
-        <SelectorFecha
-          valor={fila.fechaFin ?? undefined}
-          onCambiar={(valor) => actualizar({ fechaFin: valor ?? null })}
-          onErrorFormato={setErrorFormatoFin}
-        />
-      </Field>
-
-      <Field label="Cargo" hint="Opcional: si se deja vacío se usa el del empleado." validationMessage={errores.cargo}>
-        <Input
-          value={fila.cargo}
-          maxLength={200}
-          placeholder={fila.empleado.cargo ?? 'Cargo del empleado'}
-          onChange={(_, d) => actualizar({ cargo: d.value })}
-        />
-      </Field>
+      <CamposPrincipal
+        valores={fila}
+        onCambiar={actualizar}
+        jornadas={jornadas}
+        errores={errores}
+        cargoEmpleado={fila.empleado.cargo}
+      />
     </TarjetaPersona>
   )
 }

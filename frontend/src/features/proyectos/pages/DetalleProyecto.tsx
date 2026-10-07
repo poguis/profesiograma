@@ -6,24 +6,24 @@ import {
   Spinner,
   Tab,
   TabList,
-  Text,
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { ArrowLeft20Regular, ArrowSwap20Regular, Edit20Regular } from '@fluentui/react-icons'
-import { type UseQueryResult, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft20Regular, ArrowSwap20Regular, Edit20Regular, People20Regular } from '@fluentui/react-icons'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
 import { EstadoError } from '../../../components/EstadoError'
 import { mensajeExito, puedeCambiarEstado } from '../cambioEstado'
 import { clavesProyectos } from '../api'
+import { AccionSegunConsulta } from '../components/AccionSegunConsulta'
 import { CabeceraProyecto } from '../components/CabeceraProyecto'
 import { DialogoCambioEstado } from '../components/DialogoCambioEstado'
 import { DialogoEditarCabecera } from '../components/DialogoEditarCabecera'
 import { TablaHistorial } from '../components/TablaHistorial'
 import { TablaPersonal } from '../components/TablaPersonal'
-import { useCabecera, useProyecto } from '../hooks'
+import { useCabecera, useEdicionPersonal, useProyecto } from '../hooks'
 import type { CabeceraEdicion } from '../tipos'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
 
@@ -33,8 +33,6 @@ const useEstilos = makeStyles({
   pagina: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL },
   volver: { alignSelf: 'flex-start' },
   panel: { overflowX: 'auto' },
-  accion: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalS },
-  secundario: { color: tokens.colorNeutralForeground3 },
 })
 
 type Dialogo = 'estado' | 'cabecera' | null
@@ -49,13 +47,16 @@ export function DetalleProyecto() {
   const { data: proyecto, error, isPending } = useProyecto(numero)
   // P3: la cabecera se consulta con el detalle para decidir "Editar datos generales"; su error no bloquea la página.
   const cabecera = useCabecera(numero)
-  const [pestana, setPestana] = useState<Pestana>('personal')
+  // TAREA-19b: igual para "Actualizar personal" (GET …/edicion).
+  const edicion = useEdicionPersonal(numero)
+  // Vuelve al listado con los filtros con que se abrió el detalle (si se llegó desde allí). Tras "Actualizar
+  // personal" llegan el aviso y la pestaña (P6 de la TAREA-19b).
+  const estadoNavegacion = location.state as EstadoNavegacionProyectos | null
+  const [pestana, setPestana] = useState<Pestana>(estadoNavegacion?.pestana ?? 'personal')
   const [dialogo, setDialogo] = useState<Dialogo>(null)
-  const [avisoCambio, setAvisoCambio] = useState<string>()
+  const [avisoCambio, setAvisoCambio] = useState<string | undefined>(estadoNavegacion?.aviso)
   const queryClient = useQueryClient()
 
-  // Vuelve al listado con los filtros con que se abrió el detalle (si se llegó desde allí).
-  const estadoNavegacion = location.state as EstadoNavegacionProyectos | null
   const busqueda = estadoNavegacion?.busqueda ?? ''
   const codigoCreado = estadoNavegacion?.codigoCreado
   const rutaListado = `/proyectos${busqueda}`
@@ -114,7 +115,21 @@ export function DetalleProyecto() {
               proyecto={proyecto}
               acciones={
                 <>
-                  <AccionEditarCabecera consulta={cabecera} onAbrir={() => abrir('cabecera')} />
+                  <AccionSegunConsulta
+                    consulta={cabecera}
+                    etiqueta="Editar datos generales"
+                    icono={<Edit20Regular />}
+                    onAbrir={() => abrir('cabecera')}
+                  />
+                  <AccionSegunConsulta
+                    consulta={edicion}
+                    etiqueta="Actualizar personal"
+                    icono={<People20Regular />}
+                    onAbrir={() => {
+                      const estado: EstadoNavegacionProyectos = { busqueda }
+                      void navigate(`/proyectos/${proyecto.id}/personal`, { state: estado })
+                    }}
+                  />
                   {puedeCambiarEstado(proyecto.estado.codigo) && (
                     <Button icon={<ArrowSwap20Regular />} onClick={() => abrir('estado')}>
                       Cambiar estado
@@ -174,43 +189,3 @@ export function DetalleProyecto() {
   )
 }
 
-/**
- * P3: "Editar datos generales" habilitado si la cabecera dice puedeEditar; si no, deshabilitado con el motivo.
- * Si la consulta falla, deshabilitado con aviso y "Reintentar" (el detalle se muestra igual).
- */
-function AccionEditarCabecera({ consulta, onAbrir }: { consulta: UseQueryResult<CabeceraEdicion>; onAbrir: () => void }) {
-  const estilos = useEstilos()
-  const boton = (habilitado: boolean) => (
-    <Button icon={<Edit20Regular />} disabled={!habilitado} onClick={onAbrir}>
-      Editar datos generales
-    </Button>
-  )
-
-  if (consulta.isPending) {
-    return boton(false)
-  }
-  if (consulta.isError) {
-    return (
-      <span className={estilos.accion}>
-        {boton(false)}
-        <Text size={200} className={estilos.secundario}>
-          No se pudo verificar si el proyecto se puede editar.
-        </Text>
-        <Button size="small" disabled={consulta.isFetching} onClick={() => void consulta.refetch()}>
-          Reintentar
-        </Button>
-      </span>
-    )
-  }
-  if (!consulta.data.puedeEditar) {
-    return (
-      <span className={estilos.accion}>
-        {boton(false)}
-        <Text size={200} className={estilos.secundario}>
-          {consulta.data.motivo}
-        </Text>
-      </span>
-    )
-  }
-  return boton(true)
-}
