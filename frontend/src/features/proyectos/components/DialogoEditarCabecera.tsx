@@ -56,6 +56,7 @@ import {
 import { useActividadesErp, useHorariosErp, useNombresCatalogo, usePrevisualizarCabecera, useRegistrarCabecera } from '../hooks'
 import { textoHorario, textoRango } from '../textos'
 import type { ActividadCabecera, CabeceraEdicion } from '../tipos'
+import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro } from '../tokenConcurrencia'
 import { ImpactoCabecera } from './ImpactoCabecera'
 
 const useEstilos = makeStyles({
@@ -214,7 +215,7 @@ export function DialogoEditarCabecera({
     const tipoEtapa = vista!.datos.tipoEtapa
     setUltimaOperacion('registrar')
     setErrores(SIN_ERRORES_CABECERA)
-    registrar.mutate(aSolicitudRegistroCabecera(estado, vista!), {
+    registrar.mutate(aSolicitudRegistroCabecera(estado), {
       onSuccess: (r) => {
         registradoRef.current = true // desactiva la confirmación al salir
         onRealizado(mensajeExitoCabecera(tipoEtapa, r.version))
@@ -491,6 +492,20 @@ export function DialogoEditarCabecera({
                   {previsualizar.isPending ? 'Calculando…' : 'Ver impacto'}
                 </Button>
               </div>
+
+              {/* TAREA-19b2: la vista previa trae otra versión que la de los datos con que se abrió: no se registra. */}
+              {vigente && cambioPorOtro(vista, estado.versionBase) && (
+                <MessageBar intent="warning">
+                  <MessageBarBody>
+                    <MessageBarTitle>{MENSAJE_CAMBIO_POR_OTRO}</MessageBarTitle>
+                  </MessageBarBody>
+                  <MessageBarActions>
+                    <Button disabled={enviando} onClick={() => void recargar()}>
+                      Recargar datos del proyecto
+                    </Button>
+                  </MessageBarActions>
+                </MessageBar>
+              )}
 
               {vista !== null && !vigente && (
                 <MessageBar intent="warning">

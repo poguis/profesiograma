@@ -56,6 +56,7 @@ import {
 import type { ErroresFila } from '../formularioProyecto'
 import { useCatalogos, useEdicionPersonal, usePrevisualizarPersonal, useProyecto, useRegistrarPersonal } from '../hooks'
 import type { EdicionPersonal, JornadaCatalogo, ProyectoDetalle } from '../tipos'
+import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro } from '../tokenConcurrencia'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
 
 const useEstilos = makeStyles({
@@ -181,6 +182,7 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
   const [ultimaOperacion, setUltimaOperacion] = useState<Operacion>('previsualizar')
   const [buscador, setBuscador] = useState<Buscador>(null)
   const [recargando, setRecargando] = useState(false)
+  const [confirmarRecarga, setConfirmarRecarga] = useState(false)
   const previsualizar = usePrevisualizarPersonal(dto.id)
   const registrar = useRegistrarPersonal(dto.id)
   // Refs: se leen en el mismo instante del clic o de la navegación, antes del siguiente render.
@@ -292,7 +294,7 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
     }
     enviandoRef.current = true
     setErrores(SIN_ERRORES_PERSONAL)
-    registrar.mutate(aSolicitudRegistroPersonal(estado, vista!), {
+    registrar.mutate(aSolicitudRegistroPersonal(estado), {
       onSuccess: (r) => {
         registradoRef.current = true // desactiva la confirmación al salir
         const destino: EstadoNavegacionProyectos = { busqueda, aviso: mensajeExitoPersonal(r.version), pestana: 'historial' }
@@ -305,7 +307,18 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
     })
   }
 
-  /** 400 versionProyecto/proyecto y 409: recargar y empezar de nuevo (no navega: no pide confirmación). */
+  /**
+   * "Recargar datos del proyecto" (409, 400 versionProyecto/proyecto o cambio por otro): con cambios sin registrar pide
+   * confirmación (TAREA-19b2, P2); no navega, así que no salta la confirmación de salida.
+   */
+  const pedirRecarga = () => {
+    if (estado.editado) {
+      setConfirmarRecarga(true)
+    } else {
+      void recargar()
+    }
+  }
+
   const recargar = async () => {
     setRecargando(true)
     try {
@@ -359,7 +372,7 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
             Recargue para continuar con la información actual (se descartan los cambios del formulario).
           </MessageBarBody>
           <MessageBarActions>
-            <Button disabled={enviando} onClick={() => void recargar()}>
+            <Button disabled={enviando} onClick={pedirRecarga}>
               Recargar datos del proyecto
             </Button>
           </MessageBarActions>
@@ -386,6 +399,20 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
 
         {vista === null && (
           <Text size={200}>Genere la vista previa para revisar los cambios, el cronograma y los cruces. Es obligatoria antes de registrar.</Text>
+        )}
+
+        {/* TAREA-19b2: la vista previa trae otra versión que la de los datos con que se abrió: no se registra. */}
+        {vigente && cambioPorOtro(vista, estado.versionBase) && (
+          <MessageBar intent="warning">
+            <MessageBarBody>
+              <MessageBarTitle>{MENSAJE_CAMBIO_POR_OTRO}</MessageBarTitle>
+            </MessageBarBody>
+            <MessageBarActions>
+              <Button disabled={enviando} onClick={pedirRecarga}>
+                Recargar datos del proyecto
+              </Button>
+            </MessageBarActions>
+          </MessageBar>
         )}
 
         {vista !== null && !vigente && (
@@ -450,6 +477,27 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
         }}
         onCerrar={() => setBuscador(null)}
       />
+
+      <Dialog open={confirmarRecarga} onOpenChange={(_, d) => !d.open && setConfirmarRecarga(false)}>
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>¿Recargar los datos del proyecto?</DialogTitle>
+            <DialogContent>Se perderán los cambios que no registraste.</DialogContent>
+            <DialogActions>
+              <Button onClick={() => setConfirmarRecarga(false)}>Seguir editando</Button>
+              <Button
+                appearance="primary"
+                onClick={() => {
+                  setConfirmarRecarga(false)
+                  void recargar()
+                }}
+              >
+                Recargar
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
+      </Dialog>
 
       <Dialog open={bloqueo.state === 'blocked'} onOpenChange={(_, d) => !d.open && bloqueo.reset?.()}>
         <DialogSurface>

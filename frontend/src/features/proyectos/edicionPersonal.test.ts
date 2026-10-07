@@ -283,11 +283,22 @@ describe('solicitud', () => {
     expect(aSolicitudPersonal(e).principales![0].cargo).toBe('SUPERVISOR')
   })
 
-  it('el registro lleva la versionProyecto de la vista previa', () => {
+  // TAREA-19b2 (ajuste aprobado): el registro lleva el token BASE (GET …/edicion = 3), no el de la vista previa (7).
+  it('el registro lleva el token base, aunque la vista previa traiga otra versión', () => {
     const e = aplicar(inicial(), { tipo: 'actualizar', clave: 'p33', cambios: { fechaFin: '2026-11-20' } })
-    const registro = aSolicitudRegistroPersonal(e, vistaDe(e.revision, { versionProyecto: 7 }))
-    expect(registro.versionProyecto).toBe(7)
+    expect(e.versionBase).toBe(3)
+    expect(aSolicitudRegistroPersonal(e).versionProyecto).toBe(3)
     expect(aSolicitudPersonal(e)).not.toHaveProperty('versionProyecto')
+  })
+
+  it('TAREA-19b2: vista previa con otra versión (P10 de la 19b) → no se registra, con el motivo', () => {
+    const e = aplicar(inicial(), { tipo: 'actualizar', clave: 'p33', cambios: { cargo: 'X' } })
+    const deOtro = vistaDe(e.revision, { versionProyecto: 4 })
+    expect(puedeRegistrarPersonal(deOtro, e, false)).toBe(false)
+    expect(motivoSinRegistroPersonal(deOtro, e, false)).toBe(
+      'El proyecto cambió desde que abriste esta pantalla. Recarga los datos para continuar.',
+    )
+    expect(puedeRegistrarPersonal(vistaDe(e.revision), e, false)).toBe(true)
   })
 
   it('opciones de relación: principales enviados y principales históricos', () => {

@@ -38,6 +38,7 @@ import {
   reducerDialogo,
   vistaCambioVigente,
 } from '../cambioEstado'
+import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro } from '../tokenConcurrencia'
 import { useAplicarCambioEstado, usePrevisualizarCambioEstado } from '../hooks'
 import type { CambioEstadoRealizado, DestinoCambioEstado } from '../tipos'
 import { ImpactoCambioEstado } from './ImpactoCambioEstado'
@@ -56,6 +57,8 @@ export interface ProyectoCambio {
   estado: string
   fechaInicio: string
   fechaFin: string
+  /** Token BASE (TAREA-19b2): versión de la última etapa del detalle; el diálogo lo fija al abrirse. */
+  versionBase: number
 }
 
 export interface DialogoCambioEstadoProps {
@@ -64,8 +67,11 @@ export interface DialogoCambioEstadoProps {
   rutaListado: string
   onCerrar: () => void
   onRealizado: (resultado: CambioEstadoRealizado) => void
-  /** Recarga el detalle (400/409). Si el estado nuevo ya no admite cambios, el padre cierra el diálogo. */
-  onRecargar: () => Promise<unknown>
+  /**
+   * Recarga el detalle (400/409 o cambio por otro) y devuelve la versión de su última etapa (nuevo token base). Si el
+   * estado nuevo ya no admite cambios, el padre cierra el diálogo.
+   */
+  onRecargar: () => Promise<number | undefined>
 }
 
 type Operacion = 'impacto' | 'confirmar'
@@ -82,11 +88,14 @@ export function DialogoCambioEstado({ proyecto, rutaListado, onCerrar, onRealiza
   const previsualizar = usePrevisualizarCambioEstado(proyecto.id)
   const aplicar = useAplicarCambioEstado(proyecto.id)
   const enviandoRef = useRef(false)
+  // TAREA-19b2: token base fijado al abrir; solo cambia con "Recargar datos del proyecto".
+  const [versionBase, setVersionBase] = useState(proyecto.versionBase)
 
   const enviando = previsualizar.isPending || aplicar.isPending || recargando
   const opciones = opcionesDestino(proyecto.estado)
   const vigente = vistaCambioVigente(vista, estado.revision)
-  const habilitadoConfirmar = puedeConfirmar(vista, estado, aplicar.isPending) && !previsualizar.isPending && !recargando
+  const habilitadoConfirmar =
+    puedeConfirmar(vista, estado, aplicar.isPending, versionBase) && !previsualizar.isPending && !recargando
   const esCierre = estado.destino === 'TERMINADO'
 
   /** Cambiar destino o fecha borra el error del servidor de ese campo. */
@@ -120,13 +129,13 @@ export function DialogoCambioEstado({ proyecto, rutaListado, onCerrar, onRealiza
 
   const confirmar = () => {
     // El ref evita un doble envío aunque el segundo clic llegue antes de que se deshabilite el botón.
-    if (enviandoRef.current || !puedeConfirmar(vista, estado, aplicar.isPending)) {
+    if (enviandoRef.current || !puedeConfirmar(vista, estado, aplicar.isPending, versionBase)) {
       return
     }
     enviandoRef.current = true
     setUltimaOperacion('confirmar')
     setErrores(SIN_ERRORES_CAMBIO)
-    aplicar.mutate(aSolicitudRegistroCambio(estado, vista!), {
+    aplicar.mutate(aSolicitudRegistroCambio(estado, versionBase), {
       onSuccess: onRealizado,
       onError: registrarError,
       onSettled: () => {
@@ -135,11 +144,14 @@ export function DialogoCambioEstado({ proyecto, rutaListado, onCerrar, onRealiza
     })
   }
 
-  /** 400/409: recargar el detalle y empezar de nuevo con los datos actuales. */
+  /** 400/409 o cambio por otro: recargar el detalle y empezar de nuevo con los datos actuales (y su token base). */
   const recargar = async () => {
     setRecargando(true)
     try {
-      await onRecargar()
+      const nueva = await onRecargar()
+      if (nueva !== undefined) {
+        setVersionBase(nueva)
+      }
     } finally {
       setRecargando(false)
       despachar({ tipo: 'reiniciar' })
@@ -229,6 +241,20 @@ export function DialogoCambioEstado({ proyecto, rutaListado, onCerrar, onRealiza
                 {previsualizar.isPending ? 'Calculando…' : 'Ver impacto'}
               </Button>
             </div>
+
+            {/* TAREA-19b2: la vista previa trae otra versión que la de los datos con que se abrió: no se registra. */}
+            {vigente && cambioPorOtro(vista, versionBase) && (
+              <MessageBar intent="warning">
+                <MessageBarBody>
+                  <MessageBarTitle>{MENSAJE_CAMBIO_POR_OTRO}</MessageBarTitle>
+                </MessageBarBody>
+                <MessageBarActions>
+                  <Button disabled={enviando} onClick={() => void recargar()}>
+                    Recargar datos del proyecto
+                  </Button>
+                </MessageBarActions>
+              </MessageBar>
+            )}
 
             {vista !== null && !vigente && (
               <MessageBar intent="warning">

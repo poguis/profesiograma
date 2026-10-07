@@ -16,6 +16,7 @@ import {
   distribuirErrores,
 } from './formularioProyecto'
 import { ayudaMinimo, cumpleMinimo } from './minimoPersonal'
+import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro, conToken } from './tokenConcurrencia'
 import type {
   BackEdicionSolicitud,
   CruceAsignacion,
@@ -75,6 +76,8 @@ export interface EstadoEdicionPersonal {
   editado: boolean
   /** Casilla "Entiendo que esta acción no se puede deshacer." (se desmarca con cada cambio). */
   entiende: boolean
+  /** Token BASE (TAREA-19b2): `versionProyecto` del GET …/edicion con que se armó el formulario. */
+  versionBase: number
   siguienteClave: number
   corte: string
   fechaInicioProyecto: string
@@ -150,6 +153,7 @@ export function crearEstadoEdicionPersonal(dto: EdicionPersonal, iniciales: Read
     revision: 0,
     editado: false,
     entiende: false,
+    versionBase: dto.versionProyecto,
     siguienteClave: 1,
     corte: dto.corte,
     fechaInicioProyecto: dto.fechaInicio,
@@ -481,9 +485,12 @@ export function aSolicitudPersonal(estado: EstadoEdicionPersonal): SolicitudActu
   return { principales, backs }
 }
 
-/** Cuerpo del registro (TAREA-19x): el de la vista previa más su `versionProyecto`. */
-export function aSolicitudRegistroPersonal(estado: EstadoEdicionPersonal, vista: VistaPersonal): SolicitudActualizarPersonal {
-  return { ...aSolicitudPersonal(estado), versionProyecto: vista.datos.versionProyecto }
+/**
+ * Cuerpo del registro con el token BASE (TAREA-19b2): la versión del GET …/edicion con que se armó el formulario, nunca
+ * la de la vista previa. Si el proyecto cambió desde entonces, el servidor responde 409 ("Recargar").
+ */
+export function aSolicitudRegistroPersonal(estado: EstadoEdicionPersonal): SolicitudActualizarPersonal {
+  return conToken(aSolicitudPersonal(estado), estado.versionBase)
 }
 
 /** Claves de las filas en el orden del envío: el índice de un error 400 apunta a ESA fila. */
@@ -520,7 +527,7 @@ export function puedeRegistrarPersonal(vista: VistaPersonal | null, estado: Esta
     return false
   }
   const datos = vista!.datos
-  if (datos.cruces.length > 0 || sinCambiosPersonal(datos)) {
+  if (datos.cruces.length > 0 || sinCambiosPersonal(datos) || cambioPorOtro(vista, estado.versionBase)) {
     return false
   }
   return !requiereConfirmacionPersonal(datos, estado) || estado.entiende
@@ -536,6 +543,9 @@ export function motivoSinRegistroPersonal(vista: VistaPersonal | null, estado: E
   }
   if (!vistaPersonalVigente(vista, estado.revision)) {
     return 'La vista previa está desactualizada.'
+  }
+  if (cambioPorOtro(vista, estado.versionBase)) {
+    return MENSAJE_CAMBIO_POR_OTRO // TAREA-19b2
   }
   if (vista.datos.cruces.length > 0) {
     return 'No se puede registrar con cruces de asignación.'

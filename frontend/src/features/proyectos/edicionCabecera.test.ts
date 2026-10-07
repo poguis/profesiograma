@@ -376,11 +376,24 @@ describe('interpretarErrorCabecera', () => {
 })
 
 describe('TAREA-19x: token de concurrencia', () => {
-  it('el registro lleva la versionProyecto de la vista previa; la vista previa no la envía', () => {
-    const e = aplicar(crearEstadoEdicion(cabecera()), campos({ fechaFin: '2026-10-20' }))
-    const vista: VistaCabecera = { revision: e.revision, datos: datos({ versionProyecto: 7 }) }
-    expect(aSolicitudRegistroCabecera(e, vista)).toEqual({ ...aSolicitudCabecera(e), versionProyecto: 7 })
+  // TAREA-19b2 (ajuste aprobado): el registro lleva el token BASE, no el de la vista previa.
+  it('el registro lleva el token base (GET …/cabecera), aunque la vista previa traiga otra versión', () => {
+    const e = aplicar(crearEstadoEdicion(cabecera({ versionProyecto: 5 })), campos({ fechaFin: '2026-10-20' }))
+    expect(e.versionBase).toBe(5)
+    expect(aSolicitudRegistroCabecera(e)).toEqual({ ...aSolicitudCabecera(e), versionProyecto: 5 })
     expect(aSolicitudCabecera(e)).not.toHaveProperty('versionProyecto')
+  })
+
+  it('TAREA-19b2: vista previa con otra versión → no se registra, con el motivo; reiniciar toma la base nueva', () => {
+    const e = aplicar(crearEstadoEdicion(cabecera({ versionProyecto: 5 })), campos({ fechaFin: '2026-10-20' }))
+    const deOtro: VistaCabecera = { revision: e.revision, datos: datos({ versionProyecto: 6 }) }
+    expect(puedeRegistrar(deOtro, e, false)).toBe(false)
+    expect(motivoSinRegistro(deOtro, e, false)).toBe(
+      'El proyecto cambió desde que abriste esta pantalla. Recarga los datos para continuar.',
+    )
+    expect(puedeRegistrar({ revision: e.revision, datos: datos({ versionProyecto: 5 }) }, e, false)).toBe(true)
+    const recargado = aplicar(e, { tipo: 'reiniciar', cabecera: cabecera({ versionProyecto: 6 }) })
+    expect(recargado.versionBase).toBe(6)
   })
 
   it('409 por token viejo: mensaje y recarga', () => {

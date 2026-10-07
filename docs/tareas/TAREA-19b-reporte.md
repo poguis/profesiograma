@@ -1,7 +1,7 @@
 # TAREA-19b — Frontend: actualización de personal
 
 **Fecha:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** implementada; **verificación visual del usuario pendiente** (sección 6).
+**Resultado:** ✅ implementada y verificada por el usuario el 06/10/2026: **P1–P9 y P11–P15 OK**. **P10 mostró un defecto** (sobrescritura con dos pestañas), corregido en la **TAREA-19b2** (token base; ver `TAREA-19b2-reporte.md`).
 - `npm run build`: sin errores ni advertencias.
 - `npm run lint` (oxlint): sin hallazgos. Hubo 2 avisos `only-export-components` en `CamposPersona.tsx`, corregidos moviendo las constantes a `camposVisibles.ts`.
 - `npm test`: **170/170**. Las 128 existentes no cambiaron; se suman 33 de `edicionPersonal.test.ts` y 9 de `tramos.test.ts`.
@@ -118,7 +118,7 @@
 4. **Vista previa de creación:** el resumen "n tramos" ahora cuenta los tramos unidos. Solo cambia la presentación.
 5. **Foco tras un 400:** se busca el primer control con `aria-invalid="true"` (lo pone `Field` con `validationMessage`). Si el error es de sección o general, el foco va al resumen de errores (`tabIndex=-1`).
 
-## 6. Verificación visual (usuario) — [PENDIENTE]
+## 6. Verificación visual (usuario, 06/10/2026) — P1–P9 y P11–P15 OK; P10 → TAREA-19b2
 - Usuario `gestor`.
 - **H** = día de la prueba.
 - **Fechas límite:** P2 hasta el 16/10, P5 hasta el 26/10 y P8 hasta el 05/11. Pasada esa fecha, la persona ya empezó o el proyecto terminó.
@@ -126,24 +126,24 @@
 
 | # | Proyecto | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|---|
-| P1 | Id 2 (SUSPENDIDO) | Detalle | "Actualizar personal" deshabilitado con el motivo (no está ACTIVO) | No | [PENDIENTE] |
-| P2 | Id 11 | Detalle | Si H ≤ 16/10: habilitado. Si H > 16/10: deshabilitado con el motivo "ya terminó" (D1) | No | [PENDIENTE] |
-| P3 | Id 10 (con históricos) | Abrir la pantalla | Históricos en tabla de solo lectura; el principal vigente con "Ya empezó", inicio de solo lectura, fin "Desde H−1" y sin "Eliminar". Vista previa sin cambios: "No hay cambios para registrar." y "Registrar" deshabilitado (pendiente 25). Tramos del principal **unidos** (antes 04/10–04/10 y 05/10–…; pendiente 26) | No | [PENDIENTE] |
-| P4 | Id 10 | Acortar el fin del principal vigente → vista previa | MODIFICADO; casilla "Entiendo que esta acción no se puede deshacer." obligatoria. **No registrar** | No | [PENDIENTE] |
-| P5 | Id 13 (solo backs; hasta el 26/10) | Eliminar los dos backs | Atenuados con "Restaurar"; ayuda "Agrega al menos 1 persona (principal o back) para generar la vista previa." y "Generar vista previa" deshabilitado. Restaurar y salir sin registrar (confirmación de salida) | No | [PENDIENTE] |
-| P6 | Id 12 (02/11–25/11) | Agregar un back DEV004 del 05/11 al 09/11 → vista previa | Cruces EXTERNOS con el Id 13; "Registrar" deshabilitado ("No se puede registrar con cruces de asignación.") | No | [PENDIENTE] |
-| P7 | Id 13 | Agregar un principal **DEV008** en todo el rango → vista previa. Si tiene cruces: "Cambiar empleado" (sin perder fechas ni jornada) y probar DEV002, DEV001, DEV006 y DEV007, en ese orden. Luego Registrar | Marca "Será el principal inicial (responsable)" (P3); acción NUEVO; sin la advertencia de "sin principal". "Personal actualizado (versión 3).", pestaña Historial; en el listado, Responsable = ese empleado | **Sí (Id 13)** | [PENDIENTE] |
-| P8 | Id 13 (hasta el 05/11) | Eliminar el back 2 → vista previa → marcar la casilla → Registrar con doble clic rápido | ELIMINADO; una sola versión nueva (4) | **Sí (Id 13)** | [PENDIENTE] |
-| P9 | Id 13 | Relacionar el back 1 con el principal de P7 → vista previa → Registrar | MODIFICADO; versión 5 | **Sí (Id 13)** | [PENDIENTE] |
-| P10 | Id 13 | Dos pestañas: A cambia la observación del back 1 y registra; B (abierta antes, con su vista previa) cambia el fin del back 1 → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto"; tras recargar (sin pedir confirmación de salida) ve los datos de A | **Sí (Id 13, solo A)** | [PENDIENTE] |
-| P11 | Id 13 | Cambiar un campo después de la vista previa | "Vista previa desactualizada."; "Registrar" deshabilitado | No | [PENDIENTE] |
-| P12 | Id 13 | Con cambios, pulsar "Volver al proyecto" o Atrás del navegador | "¿Salir sin registrar?" | No | [PENDIENTE] |
-| P13 | Creación | "Nuevo proyecto" → vista previa | Tramos por persona como antes (unidos si había contiguos) | No | [PENDIENTE] |
-| P14 | — | `/proyectos/999/personal` | "Proyecto no encontrado o sin acceso" + enlace al listado | No | [PENDIENTE] |
-| P15 | Opcional | Detener la API y generar la vista previa | Error de red + "Reintentar" | No | [PENDIENTE] |
+| P1 | Id 2 (SUSPENDIDO) | Detalle | "Actualizar personal" deshabilitado con el motivo (no está ACTIVO) | No | OK |
+| P2 | Id 11 | Detalle | Si H ≤ 16/10: habilitado. Si H > 16/10: deshabilitado con el motivo "ya terminó" (D1) | No | OK |
+| P3 | Id 10 (con históricos) | Abrir la pantalla | Históricos en tabla de solo lectura; el principal vigente con "Ya empezó", inicio de solo lectura, fin "Desde H−1" y sin "Eliminar". Vista previa sin cambios: "No hay cambios para registrar." y "Registrar" deshabilitado (pendiente 25). Tramos del principal **unidos** (antes 04/10–04/10 y 05/10–…; pendiente 26) | No | OK |
+| P4 | Id 10 | Acortar el fin del principal vigente → vista previa | MODIFICADO; casilla "Entiendo que esta acción no se puede deshacer." obligatoria. **No registrar** | No | OK |
+| P5 | Id 13 (solo backs; hasta el 26/10) | Eliminar los dos backs | Atenuados con "Restaurar"; ayuda "Agrega al menos 1 persona (principal o back) para generar la vista previa." y "Generar vista previa" deshabilitado. Restaurar y salir sin registrar (confirmación de salida) | No | OK |
+| P6 | Id 12 (02/11–25/11) | Agregar un back DEV004 del 05/11 al 09/11 → vista previa | Cruces EXTERNOS con el Id 13; "Registrar" deshabilitado ("No se puede registrar con cruces de asignación.") | No | OK |
+| P7 | Id 13 | Agregar un principal **DEV008** en todo el rango → vista previa. Si tiene cruces: "Cambiar empleado" (sin perder fechas ni jornada) y probar DEV002, DEV001, DEV006 y DEV007, en ese orden. Luego Registrar | Marca "Será el principal inicial (responsable)" (P3); acción NUEVO; sin la advertencia de "sin principal". "Personal actualizado (versión 3).", pestaña Historial; en el listado, Responsable = ese empleado | **Sí (Id 13)** | OK |
+| P8 | Id 13 (hasta el 05/11) | Eliminar el back 2 → vista previa → marcar la casilla → Registrar con doble clic rápido | ELIMINADO; una sola versión nueva (4) | **Sí (Id 13)** | OK |
+| P9 | Id 13 | Relacionar el back 1 con el principal de P7 → vista previa → Registrar | MODIFICADO; versión 5 | **Sí (Id 13)** | OK |
+| P10 | Id 13 | Dos pestañas: A cambia la observación del back 1 y registra; B (abierta antes, con su vista previa) cambia el fin del back 1 → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto"; tras recargar (sin pedir confirmación de salida) ve los datos de A | **Sí (Id 13, solo A)** | **Defecto:** B (formulario del GET anterior, v5) cambió el fin del back 1, generó la vista previa DESPUÉS del registro de A (v6) y registró: 200 sin 409, y la observación de A quedó sobrescrita con la vieja. Causa: el registro usaba el `versionProyecto` de la vista previa (decisión de la 19x). **Corregido en la TAREA-19b2** (token base = datos que vio el usuario); se repite como B1/B2 |
+| P11 | Id 13 | Cambiar un campo después de la vista previa | "Vista previa desactualizada."; "Registrar" deshabilitado | No | OK |
+| P12 | Id 13 | Con cambios, pulsar "Volver al proyecto" o Atrás del navegador | "¿Salir sin registrar?" | No | OK |
+| P13 | Creación | "Nuevo proyecto" → vista previa | Tramos por persona como antes (unidos si había contiguos) | No | OK |
+| P14 | — | `/proyectos/999/personal` | "Proyecto no encontrado o sin acceso" + enlace al listado | No | OK |
+| P15 | Opcional | Detener la API y generar la vista previa | Error de red + "Reintentar" | No | OK |
 
 Los 400 por índice del servidor no se pueden provocar fácilmente desde la pantalla, porque los selectores limitan las fechas. Quedan cubiertos por las pruebas de `interpretarErrorPersonal`.
 
 ## 7. Pendientes
-- Verificación visual P1–P15.
+- P10: verificar la corrección (B1 y B2 de la TAREA-19b2).
 - TAREA-19c (reactivación): reutilizar `CamposPersona`, `unirTramosContiguos`, `minimoPersonal.ts` y el patrón de esta pantalla.

@@ -219,8 +219,15 @@ de la misma petición.
 - **Vistas previas y GET:** devuelven `versionProyecto` leído **antes** que los datos: si alguien escribe en medio, el
   token queda más viejo que los datos y el registro da 409 (el error cae del lado seguro). Las vistas previas no
   exigen el token (son de lectura) y lo ignoran si llega.
-- **Frontend:** el diálogo registra con el `versionProyecto` de la vista previa vigente (`aSolicitudRegistroCambio`,
-  `aSolicitudRegistroCabecera`); con 409 o con 400 `versionProyecto` ofrece "Recargar datos del proyecto".
+- **Frontend (corregido en la TAREA-19b2, pendiente 35):** se registra con el **token base** = la versión de los datos
+  que vio el usuario, **no** la de la vista previa (la decisión de la 19x de usar la de la vista previa dejaba pasar un
+  cuerpo armado con datos viejos si la vista previa se generaba después del registro de otro usuario: P10 de la 19b).
+  Token base: `versionProyecto` del GET del formulario (`…/edicion`, `…/cabecera`; `…/reactivacion` en la 19c) y, en el
+  cambio de estado, la última etapa del detalle al abrir el diálogo. Se fija al abrir y solo cambia con "Recargar datos
+  del proyecto". Si la vista previa trae otra versión que la base, se avisa "El proyecto cambió desde que abriste esta
+  pantalla. Recarga los datos para continuar." y el registro queda bloqueado; si otro registra después de la vista previa,
+  el servidor responde 409. Con 409 o con 400 `versionProyecto` se ofrece "Recargar datos del proyecto"
+  (`tokenConcurrencia.ts`: `versionDeEtapas`, `cambioPorOtro`, `conToken`).
 - La creación no aplica (no hay versión previa). El GET del detalle no devuelve el token (P4).
 
 **En este documento:**

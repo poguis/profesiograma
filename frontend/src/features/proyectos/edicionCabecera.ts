@@ -4,6 +4,7 @@
 import { formatearFecha } from '../../utils/formato'
 import { type ErrorRespuesta, type ErroresDialogo, interpretarErrorDialogo, sinErrores } from './erroresDialogo'
 import type { CabeceraEdicion, PrevisualizacionCabecera, SolicitudEditarCabecera } from './tipos'
+import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro, conToken } from './tokenConcurrencia'
 
 /** Valores del formulario. Fechas "yyyy-MM-dd", horas "HH:mm". actividadId null = sin cambio de actividad. */
 export interface ValoresCabecera {
@@ -26,6 +27,8 @@ export interface EstadoEdicion {
   editado: boolean
   /** Casilla "Entiendo que esta acción no se puede deshacer." (se desmarca con cada cambio). */
   entiende: boolean
+  /** Token BASE (TAREA-19b2): `versionProyecto` del GET …/cabecera con que se abrió o recargó el diálogo. */
+  versionBase: number
 }
 
 export type AccionEdicion =
@@ -47,7 +50,7 @@ export function valoresDeCabecera(c: CabeceraEdicion): ValoresCabecera {
 
 export function crearEstadoEdicion(cabecera: CabeceraEdicion): EstadoEdicion {
   const original = valoresDeCabecera(cabecera)
-  return { revision: 0, original, valores: original, editado: false, entiende: false }
+  return { revision: 0, original, valores: original, editado: false, entiende: false, versionBase: cabecera.versionProyecto }
 }
 
 export function reducerEdicion(estado: EstadoEdicion, accion: AccionEdicion): EstadoEdicion {
@@ -92,11 +95,11 @@ export function aSolicitudCabecera(estado: EstadoEdicion): SolicitudEditarCabece
 }
 
 /**
- * Cuerpo del registro (TAREA-19x): el de la vista previa más su `versionProyecto`. Si el proyecto cambió desde la vista
- * previa, el servidor responde 409 y el diálogo ofrece "Recargar datos del proyecto".
+ * Cuerpo del registro con el token BASE (TAREA-19b2): la versión de la cabecera con que se abrió o recargó el diálogo,
+ * nunca la de la vista previa. Si el proyecto cambió desde entonces, el servidor responde 409 ("Recargar").
  */
-export function aSolicitudRegistroCabecera(estado: EstadoEdicion, vista: VistaCabecera): SolicitudEditarCabecera {
-  return { ...aSolicitudCabecera(estado), versionProyecto: vista.datos.versionProyecto }
+export function aSolicitudRegistroCabecera(estado: EstadoEdicion): SolicitudEditarCabecera {
+  return conToken(aSolicitudCabecera(estado), estado.versionBase)
 }
 
 // ------------------------------------------------------------------ rangos y ayudas
@@ -215,6 +218,9 @@ export function puedeRegistrar(vista: VistaCabecera | null, estado: EstadoEdicio
   if (enviando || !vistaCabeceraVigente(vista, estado.revision) || sinCambios(vista!.datos)) {
     return false
   }
+  if (cambioPorOtro(vista, estado.versionBase)) {
+    return false // TAREA-19b2: alguien registró después de abrir el diálogo
+  }
   return !requiereConfirmacion(vista!.datos) || estado.entiende
 }
 
@@ -228,6 +234,9 @@ export function motivoSinRegistro(vista: VistaCabecera | null, estado: EstadoEdi
   }
   if (!vistaCabeceraVigente(vista, estado.revision)) {
     return 'La vista previa está desactualizada.'
+  }
+  if (cambioPorOtro(vista, estado.versionBase)) {
+    return MENSAJE_CAMBIO_POR_OTRO
   }
   if (sinCambios(vista.datos)) {
     return 'No hay cambios para registrar.'

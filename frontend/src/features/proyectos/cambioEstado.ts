@@ -2,6 +2,7 @@
 // Las opciones replican la máquina de estados SOLO para la interfaz; el servidor decide (FASE_5_Estados_Proyecto §1).
 import { type ErrorRespuesta, type ErroresDialogo, interpretarErrorDialogo, sinErrores } from './erroresDialogo'
 import type { DestinoCambioEstado, PrevisualizacionCambioEstado, SolicitudCambioEstado } from './tipos'
+import { cambioPorOtro, conToken } from './tokenConcurrencia'
 
 export interface OpcionDestino {
   codigo: DestinoCambioEstado | 'ACTIVO'
@@ -88,11 +89,11 @@ export function aSolicitudCambio(estado: EstadoDialogo): SolicitudCambioEstado {
 }
 
 /**
- * Cuerpo del registro (TAREA-19x): el de la vista previa más su `versionProyecto`. Si el proyecto cambió desde la vista
- * previa, el servidor responde 409 y el diálogo ofrece "Recargar datos del proyecto".
+ * Cuerpo del registro con el token BASE (TAREA-19b2): la última etapa del detalle con que se abrió el diálogo, nunca la
+ * versión de la vista previa. Si el proyecto cambió desde entonces, el servidor responde 409 ("Recargar").
  */
-export function aSolicitudRegistroCambio(estado: EstadoDialogo, vista: VistaCambio): SolicitudCambioEstado {
-  return { ...aSolicitudCambio(estado), versionProyecto: vista.datos.versionProyecto }
+export function aSolicitudRegistroCambio(estado: EstadoDialogo, versionBase: number): SolicitudCambioEstado {
+  return conToken(aSolicitudCambio(estado), versionBase)
 }
 
 // ------------------------------------------------------------------ vista previa y confirmación
@@ -106,9 +107,15 @@ export function vistaCambioVigente(vista: VistaCambio | null, revision: number):
   return vista !== null && vista.revision === revision
 }
 
-/** R4: vista previa vigente, sin envío en curso y, para TERMINAR, la casilla marcada. */
-export function puedeConfirmar(vista: VistaCambio | null, estado: EstadoDialogo, enviando: boolean): boolean {
+/**
+ * R4: vista previa vigente, sin envío en curso y, para TERMINAR, la casilla marcada. TAREA-19b2: con `versionBase`, una
+ * vista previa con otra versión (alguien registró después de abrir el diálogo) bloquea la confirmación.
+ */
+export function puedeConfirmar(vista: VistaCambio | null, estado: EstadoDialogo, enviando: boolean, versionBase?: number): boolean {
   if (enviando || !vistaCambioVigente(vista, estado.revision)) {
+    return false
+  }
+  if (versionBase !== undefined && cambioPorOtro(vista, versionBase)) {
     return false
   }
   return estado.destino !== 'TERMINADO' || estado.entiendeTerminado

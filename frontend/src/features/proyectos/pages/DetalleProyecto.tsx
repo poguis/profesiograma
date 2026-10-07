@@ -24,7 +24,8 @@ import { DialogoEditarCabecera } from '../components/DialogoEditarCabecera'
 import { TablaHistorial } from '../components/TablaHistorial'
 import { TablaPersonal } from '../components/TablaPersonal'
 import { useCabecera, useEdicionPersonal, useProyecto } from '../hooks'
-import type { CabeceraEdicion } from '../tipos'
+import type { CabeceraEdicion, ProyectoDetalle } from '../tipos'
+import { versionDeEtapas } from '../tokenConcurrencia'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
 
 type Pestana = 'personal' | 'historial'
@@ -146,11 +147,16 @@ export function DetalleProyecto() {
                   estado: proyecto.estado.codigo,
                   fechaInicio: proyecto.fechaInicio,
                   fechaFin: proyecto.fechaFin,
+                  versionBase: versionDeEtapas(proyecto.etapas), // TAREA-19b2: el diálogo lo fija al abrirse
                 }}
                 rutaListado={rutaListado}
                 onCerrar={() => setDialogo(null)}
                 onRealizado={(r) => alRealizar(mensajeExito(r.estado, r.version))}
-                onRecargar={recargar}
+                onRecargar={async () => {
+                  await recargar()
+                  const detalle = queryClient.getQueryData<ProyectoDetalle>(clavesProyectos.detalle(proyecto.id))
+                  return detalle ? versionDeEtapas(detalle.etapas) : undefined
+                }}
               />
             )}
             {/* Igual: si tras "Recargar" el proyecto ya no se puede editar, el diálogo se cierra. */}

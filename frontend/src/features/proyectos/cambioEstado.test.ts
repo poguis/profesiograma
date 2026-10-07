@@ -212,11 +212,19 @@ describe('R5: respuestas', () => {
 })
 
 describe('TAREA-19x: token de concurrencia', () => {
-  it('el registro lleva la versionProyecto de la vista previa; la vista previa no la envía', () => {
+  // TAREA-19b2 (ajuste aprobado): el registro lleva el token BASE, no el de la vista previa.
+  it('el registro lleva el token base (última etapa al abrir), aunque la vista previa traiga otra versión', () => {
     const estado = aplicar(crearEstadoDialogo(), elegir('SUSPENDIDO'), { tipo: 'fecha', fecha: '2027-04-20' })
-    const vista: VistaCambio = { revision: estado.revision, datos: { ...datos(), versionProyecto: 7 } }
-    expect(aSolicitudRegistroCambio(estado, vista)).toEqual({ estadoDestino: 'SUSPENDIDO', fecha: '2027-04-20', versionProyecto: 7 })
+    expect(aSolicitudRegistroCambio(estado, 5)).toEqual({ estadoDestino: 'SUSPENDIDO', fecha: '2027-04-20', versionProyecto: 5 })
     expect(aSolicitudCambio(estado)).toEqual({ estadoDestino: 'SUSPENDIDO', fecha: '2027-04-20' })
+  })
+
+  it('TAREA-19b2: una vista previa con otra versión que la base bloquea la confirmación', () => {
+    const estado = aplicar(crearEstadoDialogo(), elegir('SUSPENDIDO'), { tipo: 'fecha', fecha: '2027-04-20' })
+    const vista: VistaCambio = { revision: estado.revision, datos: { ...datos(), versionProyecto: 6 } }
+    expect(puedeConfirmar(vista, estado, false, 5)).toBe(false)
+    expect(puedeConfirmar(vista, estado, false, 6)).toBe(true)
+    expect(puedeConfirmar(vista, estado, false)).toBe(true) // sin base: como antes
   })
 
   it('409 por token viejo: mensaje y recarga', () => {
