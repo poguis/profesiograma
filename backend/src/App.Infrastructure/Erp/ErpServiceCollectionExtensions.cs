@@ -49,6 +49,17 @@ public static class ErpServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Modo del ERP que usará la API ("Http" o "Simulado"), para el log del arranque (TAREA-26a). Sin URL ni secretos.
+    /// Un modo inválido no llega aquí: AddCatalogoErp ya impidió el arranque.
+    /// </summary>
+    public static string ModoEfectivo(IConfiguration configuration) => ModoEfectivo(LeerOpciones(configuration));
+
+    internal static string ModoEfectivo(ServiciosExternosOpciones opciones) =>
+        string.Equals(opciones.Modo, ServiciosExternosOpciones.ModoSimulado, StringComparison.OrdinalIgnoreCase)
+            ? ServiciosExternosOpciones.ModoSimulado
+            : ServiciosExternosOpciones.ModoHttp;
+
     internal static ServiciosExternosOpciones LeerOpciones(IConfiguration configuration)
     {
         var seccion = configuration.GetSection(ServiciosExternosOpciones.Seccion);

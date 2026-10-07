@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-07 (TAREA-19c ✅: reactivación en el frontend, verificada V1–V16)
+**Última actualización:** 2026-10-07 (TAREA-26a implementada: ERP real en Development — logs y scripts de sondeo; pendientes los resultados del usuario)
 
 ## 1. Documentos del proyecto (en orden)
 
@@ -106,11 +106,13 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 | 19b | Edición — frontend: actualización de personal (`/proyectos/:id/personal`) + pendiente 25 (lado frontend del personal) + unión de tramos contiguos (pendiente 26) ✅ (P10 resuelto por la 19b2) |
 | 19b2 | Corrección: token de concurrencia base = datos que vio el usuario (pendiente 35) en personal, cabecera y cambio de estado ✅ |
 | 19c | Edición — frontend: reactivación (habilitar "Reactivar" en el diálogo de la TAREA-15 y pantalla `/proyectos/:id/reactivar`; pendiente 26) ✅ |
+| 26a (adelantada) | ERP real en Development: activación por user-secrets (sin cambio de código), log del modo al arrancar y log Debug por llamada al ERP; scripts de sondeo (conectividad, contrato de EvolutionEmployee con solo agregados, horarios y largos de Id); verificación de los pendientes 13, 17 y 20 — implementada; resultados del usuario pendientes (A1–A11) |
+| 26b (adelantada) | Sincronización de empleados (EvolutionEmployee) con el contrato confirmado por el sondeo de la 26a |
 | 20–21 | Cronograma: consulta y vista |
 | 22 | Reporte Excel (ClosedXML; requiere la plantilla, pendiente 4) |
 | 23–24 | Novedades: backend y frontend |
 | 25 | Administración de permisos por departamento |
-| 26 | Sincronización de empleados (EvolutionEmployee) |
+| 26 | Sincronización de empleados (EvolutionEmployee): **adelantada** (decisión del usuario, 07/10/2026) y dividida en 26a y 26b (arriba). La carga desde SharePoint (Fase 3) sigue al final |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
 
 **Decisión del usuario (2026-09-29):** la migración de datos (Fase 3, carga masiva desde SharePoint) se hace **al final**, justo antes del corte a producción. Mientras tanto se desarrolla con datos de prueba. "Migración de EF Core" (crear tablas) ≠ "migración de datos".
@@ -129,14 +131,14 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
 11. Leer la zona horaria de negocio desde `Parametro.ZONA_HORARIA` en lugar de la constante `"SA Pacific Standard Time"` (`ProyectoConsultaServicio` y `DatosPruebaSembrador`). Origen: TAREA-07 (C3).
 12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
-13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR]. Modo `Http` pendiente de probar de extremo a extremo en un entorno de QA.
+13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR]. Modo `Http` pendiente de probar de extremo a extremo en un entorno de QA. **En verificación (TAREA-26a):** `erp-horarios.cmd` (A5) con el ERP real; extremo a extremo en Development (A6).
 14. **Resuelto (TAREA-13):** el formulario "Nuevo proyecto" limpia proyecto ERP / actividad / dimensión al cambiar de grupo o compañía (y la actividad al cambiar de proyecto ERP); los campos que el grupo no usa se envían como `null` (`reducerFormulario` + `aSolicitud`, con pruebas Vitest).
 15. Sin prueba de traducción SQL (fuera del alcance pedido en la TAREA-12): consultas de `UsuarioProvisionamiento` y `DatosPruebaSembrador` (Paso 2).
 16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
-17. Los Id del ERP (proyecto ≤ 30, dimensión ≤ 30, actividad ≤ 20 caracteres) no se validan contra el largo de columna; las descripciones sí se recortan. Un Id más largo produciría 500 al guardar [PENDIENTE DE CONFIRMAR largos reales del ERP].
+17. Los Id del ERP (proyecto ≤ 30, dimensión ≤ 30, actividad ≤ 20 caracteres) no se validan contra el largo de columna; las descripciones sí se recortan. Un Id más largo produciría 500 al guardar [PENDIENTE DE CONFIRMAR largos reales del ERP]. **En verificación (TAREA-26a):** `erp-largos.cmd` (A5) mide los largos reales; la decisión (400 por largo o ampliar columnas, P4) se toma con esos datos.
 18. Los parámetros `ALMUERZO_SALIDA_OPCIONES` / `ALMUERZO_REGRESO_OPCIONES` quedan **sin uso**: el validador y `GET /api/proyectos/opciones-formulario` usan `ReglasAlmuerzo` (Application, rangos RN09 y opciones cada hora). Decidir si se eliminan o si `ReglasAlmuerzo` pasa a leerlos (servirían al validador y al formulario a la vez). Origen: TAREA-13 (B0). [PENDIENTE DE DECISIÓN DEL USUARIO]
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
-20. [TAREA-13] Respuesta 503 (ERP no disponible / registro ocupado) y botón "Reintentar" sin prueba visual: el ERP Simulado no falla. Probar en QA con `ServiciosExternos:Modo = Http`.
+20. [TAREA-13] Respuesta 503 (ERP no disponible / registro ocupado) y botón "Reintentar" sin prueba visual: el ERP Simulado no falla. Probar en QA con `ServiciosExternos:Modo = Http`. **En verificación (TAREA-26a):** A9 con URL base inválida por user-secrets (`https://localhost:1`) → 503 y "Reintentar".
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
 22. **Resuelto (TAREA-17b, R7):** el recorte puede eliminar al principal inicial original o a todos los principales; la reactivación lo cubre con R7 (respaldo: último principal, o null con advertencia). Diferencia con el original: allí solo se mostraba un error ("No se encontró un principal a cargo para reactivar el proyecto"). Ver `FASE_5_Estados_Proyecto.md` §8.
 23. **Resuelto (TAREA-17b):** en la REACTIVACION todo el personal guardado queda histórico (`ForzarHistorica`, R5), así que no se regenera el descanso que la suspensión borró; en la edición posterior lo cubre H12 (`FASE_5_Edicion_Cronograma.md` §8.4). `DiasDescanso` no se modifica al recortar.
@@ -156,6 +158,7 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 37. [Menor, backend] Agregar `principalRelacionadoId`, `cargo` y `observacion` a `PersonaReactivacionDto` (GET `…/reactivacion`) para mostrar la relación de los backs históricos en la pantalla de reactivación. Hoy la tabla de históricos de la TAREA-19c no muestra la relación, el cargo ni la observación. Origen: TAREA-19c (Fase A, sección A).
 38. [Menor, frontend] Unificar `validarEdicionPersonal` (`edicionPersonal.ts`, TAREA-19b) y `validarPersonalReactivacion` (`reactivacion.ts`, TAREA-19c): una sola función que acepte la fecha fin del proyecto vacía. Hoy la reactivación tiene su propia versión con los mismos textos más la regla de inicio ≥ R. Origen: TAREA-19c.
 39. Los datos de prueba tienen solo 8 empleados (DEV001–DEV008), con cruces en casi todas las fechas disponibles: ya no alcanzan para pruebas sin cruces (V17 de la TAREA-19c no se pudo hacer). Ampliar los empleados de prueba (sembrador o SQL aprobado). [PENDIENTE DE DECISIÓN DEL USUARIO]
+40. [TAREA-26a → 26b] Contrato de EvolutionEmployee: confirmados la URL (`POST :7048/api/EvolutionEmployee/EmployeesEvolution`) y el cuerpo `{ "parameter": "", "estado": "A", "codEmpresa": "", "codDepartamento": "" }` (todos los activos de todas las empresas; P6: se sincronizan todas). [PENDIENTE DE CONFIRMAR con `sondeo-empleados.cmd` (A2)]: autenticación, forma de la respuesta (lista o envoltura), nombres y tipos de los campos, paginación y volumen.
 
 ## 7.1 Reglas técnicas obligatorias
 

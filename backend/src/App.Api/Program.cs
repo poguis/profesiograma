@@ -3,6 +3,7 @@ using App.Api.Endpoints;
 using App.Api.Seguridad;
 using App.Application;
 using App.Infrastructure;
+using App.Infrastructure.Erp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddProblemDetails();
 builder.AddSeguridadProfesiograma();             // DevAuth / Entra ID + políticas Admin/Gestor
 
 var app = builder.Build();
+app.Logger.LogInformation("ERP: modo {Modo}", ErpServiceCollectionExtensions.ModoEfectivo(builder.Configuration)); // TAREA-26a
 
 app.UseExceptionHandler();
 app.UseSeguridadProfesiograma();                 // UseAuthentication → UsuarioActualMiddleware → UseAuthorization

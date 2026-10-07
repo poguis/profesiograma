@@ -1,0 +1,4 @@
+# TAREA-26a: salidas locales y cuerpos del usuario (se versiona solo la plantilla cuerpo-empleados.ejemplo.json).
+resultado-*.txt
+cuerpo-empleados-*.json
+simulacion/

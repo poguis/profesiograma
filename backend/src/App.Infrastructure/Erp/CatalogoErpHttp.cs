@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -96,6 +97,7 @@ internal sealed class CatalogoErpHttp(
         where T : class
     {
         HttpResponseMessage respuesta;
+        var cronometro = Stopwatch.StartNew();
         try
         {
             respuesta = await http.GetAsync(uri, ct);
@@ -108,6 +110,10 @@ internal sealed class CatalogoErpHttp(
         {
             throw Registrar(new ErpNoDisponibleException(operacion, "tiempo de espera agotado", ex));
         }
+
+        // TAREA-26a: una línea por llamada real al ERP (las respuestas en caché no llegan aquí). Nunca el cuerpo ni la URL.
+        logger.LogDebug("ERP {Operacion}: HTTP {Codigo} en {Milisegundos} ms", operacion, (int)respuesta.StatusCode,
+            cronometro.ElapsedMilliseconds);
 
         using (respuesta)
         {
