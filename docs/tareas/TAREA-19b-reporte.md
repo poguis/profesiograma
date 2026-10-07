@@ -1,7 +1,7 @@
 # TAREA-19b — Frontend: actualización de personal
 
 **Fecha:** 2026-10-06 (Fase A y Fase B)
-**Resultado:** ✅ implementada y verificada por el usuario el 06/10/2026: **P1–P9 y P11–P15 OK**. **P10 mostró un defecto** (sobrescritura con dos pestañas), corregido en la **TAREA-19b2** (token base; ver `TAREA-19b2-reporte.md`).
+**Resultado:** ✅ completada. Verificada por el usuario el 06/10/2026: **P1–P9 y P11–P15 OK**; **P10 resuelto por la TAREA-19b2** (B1–E2 OK). Historial: **P10 mostró un defecto** (sobrescritura con dos pestañas), corregido en la **TAREA-19b2** (token base; ver `TAREA-19b2-reporte.md`).
 - `npm run build`: sin errores ni advertencias.
 - `npm run lint` (oxlint): sin hallazgos. Hubo 2 avisos `only-export-components` en `CamposPersona.tsx`, corregidos moviendo las constantes a `camposVisibles.ts`.
 - `npm test`: **170/170**. Las 128 existentes no cambiaron; se suman 33 de `edicionPersonal.test.ts` y 9 de `tramos.test.ts`.
@@ -118,7 +118,7 @@
 4. **Vista previa de creación:** el resumen "n tramos" ahora cuenta los tramos unidos. Solo cambia la presentación.
 5. **Foco tras un 400:** se busca el primer control con `aria-invalid="true"` (lo pone `Field` con `validationMessage`). Si el error es de sección o general, el foco va al resumen de errores (`tabIndex=-1`).
 
-## 6. Verificación visual (usuario, 06/10/2026) — P1–P9 y P11–P15 OK; P10 → TAREA-19b2
+## 6. Verificación visual (usuario, 06/10/2026) — P1–P15 OK (P10 tras la TAREA-19b2)
 - Usuario `gestor`.
 - **H** = día de la prueba.
 - **Fechas límite:** P2 hasta el 16/10, P5 hasta el 26/10 y P8 hasta el 05/11. Pasada esa fecha, la persona ya empezó o el proyecto terminó.
@@ -135,7 +135,7 @@
 | P7 | Id 13 | Agregar un principal **DEV008** en todo el rango → vista previa. Si tiene cruces: "Cambiar empleado" (sin perder fechas ni jornada) y probar DEV002, DEV001, DEV006 y DEV007, en ese orden. Luego Registrar | Marca "Será el principal inicial (responsable)" (P3); acción NUEVO; sin la advertencia de "sin principal". "Personal actualizado (versión 3).", pestaña Historial; en el listado, Responsable = ese empleado | **Sí (Id 13)** | OK |
 | P8 | Id 13 (hasta el 05/11) | Eliminar el back 2 → vista previa → marcar la casilla → Registrar con doble clic rápido | ELIMINADO; una sola versión nueva (4) | **Sí (Id 13)** | OK |
 | P9 | Id 13 | Relacionar el back 1 con el principal de P7 → vista previa → Registrar | MODIFICADO; versión 5 | **Sí (Id 13)** | OK |
-| P10 | Id 13 | Dos pestañas: A cambia la observación del back 1 y registra; B (abierta antes, con su vista previa) cambia el fin del back 1 → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto"; tras recargar (sin pedir confirmación de salida) ve los datos de A | **Sí (Id 13, solo A)** | **Defecto:** B (formulario del GET anterior, v5) cambió el fin del back 1, generó la vista previa DESPUÉS del registro de A (v6) y registró: 200 sin 409, y la observación de A quedó sobrescrita con la vieja. Causa: el registro usaba el `versionProyecto` de la vista previa (decisión de la 19x). **Corregido en la TAREA-19b2** (token base = datos que vio el usuario); se repite como B1/B2 |
+| P10 | Id 13 | Dos pestañas: A cambia la observación del back 1 y registra; B (abierta antes, con su vista previa) cambia el fin del back 1 → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto"; tras recargar (sin pedir confirmación de salida) ve los datos de A | **Sí (Id 13, solo A)** | **Defecto:** B (formulario del GET anterior, v5) cambió el fin del back 1, generó la vista previa DESPUÉS del registro de A (v6) y registró: 200 sin 409, y la observación de A quedó sobrescrita con la vieja. Causa: el registro usaba el `versionProyecto` de la vista previa (decisión de la 19x). **Corregido en la TAREA-19b2** (token base = datos que vio el usuario); se repitió como B1/B2: **OK tras la corrección** |
 | P11 | Id 13 | Cambiar un campo después de la vista previa | "Vista previa desactualizada."; "Registrar" deshabilitado | No | OK |
 | P12 | Id 13 | Con cambios, pulsar "Volver al proyecto" o Atrás del navegador | "¿Salir sin registrar?" | No | OK |
 | P13 | Creación | "Nuevo proyecto" → vista previa | Tramos por persona como antes (unidos si había contiguos) | No | OK |
@@ -145,5 +145,5 @@
 Los 400 por índice del servidor no se pueden provocar fácilmente desde la pantalla, porque los selectores limitan las fechas. Quedan cubiertos por las pruebas de `interpretarErrorPersonal`.
 
 ## 7. Pendientes
-- P10: verificar la corrección (B1 y B2 de la TAREA-19b2).
+- Menor: agregar `esPrincipalInicial` al GET …/edicion (hoy se toma del detalle; pendiente 36).
 - TAREA-19c (reactivación): reutilizar `CamposPersona`, `unirTramosContiguos`, `minimoPersonal.ts` y el patrón de esta pantalla.

@@ -1,7 +1,7 @@
 # TAREA-19b2 — Corrección: token de concurrencia basado en los datos que vio el usuario (pendiente 35)
 
 **Fecha:** 2026-10-07 (Fase A y Fase B)
-**Resultado:** implementada; **verificación visual del usuario pendiente** (sección 5).
+**Resultado:** ✅ completada. Verificación visual del usuario (B1, B2, C1, C2, E1, E2): todo OK (sección 5). Resuelve P10 de la TAREA-19b.
 - `npm run build`: sin errores ni advertencias.
 - `npm run lint` (oxlint): sin hallazgos.
 - `npm test`: **177/177**. Son las 170 anteriores (3 ajustadas, aprobadas) más 7 nuevas: 4 de `tokenConcurrencia.test.ts` y 1 en cada uno de `cambioEstado.test.ts`, `edicionCabecera.test.ts` y `edicionPersonal.test.ts`.
@@ -93,18 +93,18 @@ Ninguna otra prueba cambió de resultado. Las fixtures ya usaban la misma versi�
 - **`edicionCabecera.test.ts` (1):** una vista previa "de otro" → `puedeRegistrar` false y el motivo nuevo; con la misma versión → true; `reiniciar` toma la base nueva.
 - **`edicionPersonal.test.ts` (1):** el caso de P10 → `puedeRegistrarPersonal` false y el motivo nuevo; con la misma versión → true.
 
-## 5. Verificación visual (usuario) — [PENDIENTE]
+## 5. Verificación visual (usuario) — B1–E2 OK
 - Usuario `gestor`.
 - **Escrituras:** solo las de la pestaña A, en el Id 13 (personal) y en el Id 12 (cabecera).
 
 | # | Proyecto | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|---|
-| B1 | Id 13 (personal) | Pestañas A y B en "Actualizar personal". A cambia la observación del back 1 → vista previa → Registrar. B cambia el fin del back 1 → genera la vista previa **después** del registro de A | B: aviso "El proyecto cambió desde que abriste esta pantalla. Recarga los datos para continuar." y "Registrar" deshabilitado (motivo junto al botón). "Recargar datos del proyecto" → "¿Recargar los datos del proyecto?" / "Se perderán los cambios que no registraste." → Recargar → B ve la observación de A | Sí (solo A) | [PENDIENTE] |
-| B2 | Id 13 (personal) | A y B abiertas. B cambia el fin del back 1 y genera la vista previa **antes**. A cambia la observación y registra. B → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto" (con confirmación, porque B tiene cambios) | Sí (solo A) | [PENDIENTE] |
-| C1 | Id 12 (cabecera) | A y B con "Editar datos generales" abierto. A cambia el almuerzo y registra. B cambia el horario → "Ver impacto" | B: aviso y "Registrar" deshabilitado; "Recargar" reinicia el formulario con el almuerzo de A | Sí (solo A) | [PENDIENTE] |
-| C2 | Id 12 (cabecera) | B → "Ver impacto" primero. A registra otro cambio. B → Registrar | B: 409 + "Recargar" | Sí (solo A) | [PENDIENTE] |
-| E1 | Id 12 (02/11–25/11) | B abre "Cambiar estado" → Suspender con fecha 24/11. A cambia **solo el almuerzo** (cabecera) y registra. B → "Ver impacto" | B: vista previa 200 (con la versión nueva), aviso de cambio y "Confirmar suspensión" deshabilitado. **Si quedara habilitado, NO confirmar y reportarlo** | Sí (solo A, cabecera) | [PENDIENTE] |
-| E2 | Id 12 | B → "Ver impacto" con 24/11 (antes). **Después**, A acorta el fin a 20/11 y registra. B → "Confirmar suspensión" | B: 409 + "Recargar". Si el control del token fallara, la relectura rechazaría la fecha 24/11 (> fin) y no se suspendería | Sí (solo A, cabecera: fin 20/11) | [PENDIENTE] |
+| B1 | Id 13 (personal) | Pestañas A y B en "Actualizar personal". A cambia la observación del back 1 → vista previa → Registrar. B cambia el fin del back 1 → genera la vista previa **después** del registro de A | B: aviso "El proyecto cambió desde que abriste esta pantalla. Recarga los datos para continuar." y "Registrar" deshabilitado (motivo junto al botón). "Recargar datos del proyecto" → "¿Recargar los datos del proyecto?" / "Se perderán los cambios que no registraste." → Recargar → B ve la observación de A | Sí (solo A) | OK |
+| B2 | Id 13 (personal) | A y B abiertas. B cambia el fin del back 1 y genera la vista previa **antes**. A cambia la observación y registra. B → Registrar | B: 409 "El proyecto cambió; vuelve a cargarlo." + "Recargar datos del proyecto" (con confirmación, porque B tiene cambios) | Sí (solo A) | OK |
+| C1 | Id 12 (cabecera) | A y B con "Editar datos generales" abierto. A cambia el almuerzo y registra. B cambia el horario → "Ver impacto" | B: aviso y "Registrar" deshabilitado; "Recargar" reinicia el formulario con el almuerzo de A | Sí (solo A) | OK |
+| C2 | Id 12 (cabecera) | B → "Ver impacto" primero. A registra otro cambio. B → Registrar | B: 409 + "Recargar" | Sí (solo A) | OK |
+| E1 | Id 12 (02/11–25/11) | B abre "Cambiar estado" → Suspender con fecha 24/11. A cambia **solo el almuerzo** (cabecera) y registra. B → "Ver impacto" | B: vista previa 200 (con la versión nueva), aviso de cambio y "Confirmar suspensión" deshabilitado. **Si quedara habilitado, NO confirmar y reportarlo** | Sí (solo A, cabecera) | OK |
+| E2 | Id 12 | B → "Ver impacto" con 24/11 (antes). **Después**, A acorta el fin a 20/11 y registra. B → "Confirmar suspensión" | B: 409 + "Recargar". Si el control del token fallara, la relectura rechazaría la fecha 24/11 (> fin) y no se suspendería | Sí (solo A, cabecera: fin 20/11) | OK |
 
 ## 6. Contradicciones y observaciones
 1. **Se revierte la decisión de la 19x** ("se registra con el token de la vista previa vigente"). W1 de la 19x salió bien solo porque B generó su vista previa **antes** del registro de A. Se corrigieron los tres documentos FASE_5.
@@ -112,4 +112,4 @@ Ninguna otra prueba cambió de resultado. Las fixtures ya usaban la misma versi�
 3. **Reactivación (19c):** usará la base del GET `…/reactivacion` con las mismas funciones de `tokenConcurrencia.ts`.
 
 ## 7. Pendientes
-- Verificación visual B1, B2, C1, C2, E1 y E2 (sección 5).
+- Menor: agregar `esPrincipalInicial` al GET …/edicion (hoy el frontend lo toma del detalle; pendiente 36).
