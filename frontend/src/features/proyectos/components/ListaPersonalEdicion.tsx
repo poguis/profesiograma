@@ -60,6 +60,25 @@ export interface ListaPersonalEdicionProps {
   secciones: { principales?: string; backs?: string }
   onAgregar: (rol: FilaEdicion['rol']) => void
   onCambiarEmpleado: (clave: string) => void
+  // ---- TAREA-19c (reactivación). Sin estas props, el comportamiento es el de "Actualizar personal".
+  /** Clave de la fila con la marca "Será el principal inicial"; sin valor: claveSeraInicial (P3 de la 19y). */
+  claveInicial?: string | null
+  /** Fila con el inicio bloqueado (primer principal nuevo en R) y su texto. */
+  claveInicioFijo?: string | null
+  motivoInicioFijo?: string
+  /** Mínimo del inicio y del fin de las filas nuevas. */
+  fechaMinimaInicio?: string
+  fechaMinimaFinNuevas?: string
+  /** Máximo de los selectores; sin valor: fin del proyecto del estado; null: sin máximo. */
+  fechaMaxima?: string | null
+  /** Id de los principales históricos iniciales (marca en la tabla de históricos). */
+  inicialesHistoricas?: ReadonlySet<number>
+  /** Avisos adicionales por fila (clave → mensajes). */
+  avisosFila?: Record<string, string[]>
+  /** Ayudas por sección que no bloquean. */
+  ayudasSeccion?: { principales?: string; backs?: string }
+  /** Texto de una sección sin filas (reemplaza "Sin … vigentes."). */
+  textoSinFilas?: { principales: string; backs: string }
 }
 
 /** Personal de "Actualizar personal": históricos (solo lectura), vigentes según permisos y nuevas. */
@@ -82,6 +101,16 @@ function SeccionRol({
   secciones,
   onAgregar,
   onCambiarEmpleado,
+  claveInicial,
+  claveInicioFijo,
+  motivoInicioFijo,
+  fechaMinimaInicio,
+  fechaMinimaFinNuevas,
+  fechaMaxima,
+  inicialesHistoricas,
+  avisosFila,
+  ayudasSeccion,
+  textoSinFilas,
 }: ListaPersonalEdicionProps & { rol: FilaEdicion['rol'] }) {
   const estilos = useEstilos()
   const esPrincipal = rol === ROL_PRINCIPAL
@@ -91,7 +120,15 @@ function SeccionRol({
   const maximo = esPrincipal ? limites.maxPrincipales : limites.maxBacks
   const titulo = esPrincipal ? 'Principales' : 'Backs'
   const errorSeccion = esPrincipal ? secciones.principales : secciones.backs
-  const inicial = claveSeraInicial(estado)
+  const inicial = claveInicial === undefined ? claveSeraInicial(estado) : claveInicial
+  const ayudaSeccion = esPrincipal ? ayudasSeccion?.principales : ayudasSeccion?.backs
+  const sinFilas = textoSinFilas
+    ? esPrincipal
+      ? textoSinFilas.principales
+      : textoSinFilas.backs
+    : historicas.length > 0
+      ? `Sin ${titulo.toLowerCase()} vigentes.`
+      : `Sin ${titulo.toLowerCase()}.`
 
   return (
     <section className={estilos.seccion} aria-label={titulo}>
@@ -111,9 +148,15 @@ function SeccionRol({
         </MessageBar>
       )}
 
-      {historicas.length > 0 && <TablaHistoricas historicas={historicas} jornadas={jornadas} />}
+      {ayudaSeccion && (
+        <MessageBar intent="info">
+          <MessageBarBody>{ayudaSeccion}</MessageBarBody>
+        </MessageBar>
+      )}
 
-      {filas.length === 0 && <Text size={200}>{historicas.length > 0 ? `Sin ${titulo.toLowerCase()} vigentes.` : `Sin ${titulo.toLowerCase()}.`}</Text>}
+      {historicas.length > 0 && <TablaHistoricas historicas={historicas} jornadas={jornadas} iniciales={inicialesHistoricas} />}
+
+      {filas.length === 0 && <Text size={200}>{sinFilas}</Text>}
 
       {filas.map((f) => (
         <TarjetaEdicion
@@ -126,13 +169,27 @@ function SeccionRol({
           errores={errores[f.clave] ?? {}}
           seraInicial={f.clave === inicial}
           onCambiarEmpleado={() => onCambiarEmpleado(f.clave)}
+          inicioFijo={f.clave === claveInicioFijo ? (motivoInicioFijo ?? '') : undefined}
+          fechaMinimaInicio={fechaMinimaInicio}
+          fechaMinimaFinNuevas={fechaMinimaFinNuevas}
+          fechaMaxima={fechaMaxima === undefined ? estado.fechaFinProyecto : (fechaMaxima ?? undefined)}
+          avisos={avisosFila?.[f.clave]}
         />
       ))}
     </section>
   )
 }
 
-function TablaHistoricas({ historicas, jornadas }: { historicas: PersonaEdicion[]; jornadas: JornadaCatalogo[] }) {
+function TablaHistoricas({
+  historicas,
+  jornadas,
+  iniciales,
+}: {
+  historicas: PersonaEdicion[]
+  jornadas: JornadaCatalogo[]
+  /** TAREA-19c: marca "Inicial" en los principales históricos iniciales. */
+  iniciales?: ReadonlySet<number>
+}) {
   const estilos = useEstilos()
   const esPrincipal = historicas[0].rol === ROL_PRINCIPAL
   return (
@@ -152,6 +209,14 @@ function TablaHistoricas({ historicas, jornadas }: { historicas: PersonaEdicion[
               <TableCell>
                 {esPrincipal ? 'P' : 'Back '}
                 {h.numero} · {h.empleado.codigoEkon} · {h.empleado.nombreCompleto}
+                {iniciales?.has(h.id) && (
+                  <>
+                    {' '}
+                    <Badge appearance="tint" color="success">
+                      Inicial
+                    </Badge>
+                  </>
+                )}
               </TableCell>
               <TableCell>
                 {esPrincipal ? (jornadas.find((j) => j.codigo === h.jornada)?.nombre ?? h.jornada ?? '—') : h.tipoRegistro}
@@ -175,9 +240,29 @@ interface TarjetaEdicionProps {
   errores: ErroresFila
   seraInicial: boolean
   onCambiarEmpleado: () => void
+  /** TAREA-19c: texto del inicio bloqueado (undefined = no fijo por esta regla). */
+  inicioFijo?: string
+  fechaMinimaInicio?: string
+  fechaMinimaFinNuevas?: string
+  fechaMaxima?: string
+  avisos?: string[]
 }
 
-function TarjetaEdicion({ fila, estado, dispatch, jornadas, limites, errores, seraInicial, onCambiarEmpleado }: TarjetaEdicionProps) {
+function TarjetaEdicion({
+  fila,
+  estado,
+  dispatch,
+  jornadas,
+  limites,
+  errores,
+  seraInicial,
+  onCambiarEmpleado,
+  inicioFijo,
+  fechaMinimaInicio,
+  fechaMinimaFinNuevas,
+  fechaMaxima,
+  avisos = [],
+}: TarjetaEdicionProps) {
   const estilos = useEstilos()
   const etiqueta = etiquetaFila(estado, fila)
   const nueva = fila.id === null
@@ -205,15 +290,19 @@ function TarjetaEdicion({ fila, estado, dispatch, jornadas, limites, errores, se
     )
   }
 
-  const visibles = esPrincipal
+  const visiblesRol = esPrincipal
     ? CAMPOS_VISIBLES_PRINCIPAL
     : [...CAMPOS_VISIBLES_BACK, 'principalClave', 'principalId', ...(fila.tipoRegistro === 'JORNADA' ? ['diasDescanso'] : [])]
+  // Inicio fijo (solo lectura): su error del servidor se muestra en la tarjeta.
+  const visibles = inicioFijo === undefined ? visiblesRol : visiblesRol.filter((c) => c !== 'fechaInicio')
+  const inicioBloqueado = yaEmpezo || inicioFijo !== undefined
+  const minimaFin = fila.permisos?.fechaFinMinima ?? (nueva ? fechaMinimaFinNuevas : undefined)
 
   return (
     <TarjetaPersona
       etiqueta={etiqueta}
       empleado={fila.empleado}
-      advertencias={fila.avisoRelacion ? [AVISO_RELACION] : []}
+      advertencias={[...(fila.avisoRelacion ? [AVISO_RELACION] : []), ...avisos]}
       errores={mensajesSinCampo(errores, visibles)}
       acciones={
         <>
@@ -270,9 +359,11 @@ function TarjetaEdicion({ fila, estado, dispatch, jornadas, limites, errores, se
           jornadas={jornadas}
           errores={errores}
           cargoEmpleado={fila.empleado.cargo}
-          bloqueados={{ jornada: fila.permisos !== null && !fila.permisos.jornada, fechaInicio: yaEmpezo }}
-          fechaMinimaFin={fila.permisos?.fechaFinMinima ?? undefined}
-          fechaMaxima={estado.fechaFinProyecto}
+          bloqueados={{ jornada: fila.permisos !== null && !fila.permisos.jornada, fechaInicio: inicioBloqueado }}
+          fechaMinimaFin={minimaFin}
+          fechaMaxima={fechaMaxima}
+          fechaMinimaInicio={nueva ? fechaMinimaInicio : undefined}
+          motivoInicioBloqueado={inicioFijo}
         />
       ) : (
         <CamposBack
@@ -288,9 +379,11 @@ function TarjetaEdicion({ fila, estado, dispatch, jornadas, limites, errores, se
           maxDiasDescanso={limites.backMaxDiasDescanso}
           errores={errores}
           errorRelacion={errores.principalClave ?? errores.principalId}
-          bloqueados={{ fechaInicio: yaEmpezo }}
-          fechaMinimaFin={fila.permisos?.fechaFinMinima ?? undefined}
-          fechaMaxima={estado.fechaFinProyecto}
+          bloqueados={{ fechaInicio: inicioBloqueado }}
+          fechaMinimaFin={minimaFin}
+          fechaMaxima={fechaMaxima}
+          fechaMinimaInicio={nueva ? fechaMinimaInicio : undefined}
+          motivoInicioBloqueado={inicioFijo}
         />
       )}
     </TarjetaPersona>

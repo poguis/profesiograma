@@ -273,7 +273,7 @@ export interface DiasPersona {
   dias: DiaCronograma[]
 }
 
-/** origen = INTERNO | EXTERNO. Del proyecto existente solo código, nombre y estado. */
+/** origen = INTERNO | EXTERNO (creación) o también HISTORICO (personal y reactivación). Del proyecto existente solo código, nombre y estado. */
 export interface CruceAsignacion {
   origen: string
   empleadoId: number
@@ -318,7 +318,8 @@ export type DestinoCambioEstado = 'SUSPENDIDO' | 'TERMINADO'
 
 /**
  * Cuerpo de POST /api/proyectos/{id}/cambio-estado[/previsualizar]. Fecha "yyyy-MM-dd".
- * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al aplicar (el de la vista previa vigente).
+ * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al aplicar. Se envía el token BASE (TAREA-19b2: última
+ * etapa del detalle al abrir el diálogo), no el de la vista previa.
  */
 export interface SolicitudCambioEstado {
   estadoDestino: string | null
@@ -382,7 +383,7 @@ export interface PrevisualizacionCambioEstado {
   personalRecortado: PersonaRecortadaCambio[]
   actividadesAfectadas: ActividadAfectadaCambio[]
   advertencias: string[]
-  /** Token de concurrencia (TAREA-19x): se envía al aplicar. */
+  /** Token de concurrencia (TAREA-19x). Si difiere del token base, alguien registró antes: se bloquea (TAREA-19b2). */
   versionProyecto: number
 }
 
@@ -443,7 +444,8 @@ export interface CabeceraEdicion {
 
 /**
  * Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar] (EditarCabeceraSolicitud). null = no cambia.
- * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al registrar (el de la vista previa vigente).
+ * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al registrar. Se envía el token BASE (TAREA-19b2:
+ * el del GET …/cabecera), no el de la vista previa.
  */
 export interface SolicitudEditarCabecera {
   fechaInicio: string | null
@@ -498,7 +500,7 @@ export interface PrevisualizacionCabecera {
   diasAgregados: DiasAgregadosCabecera[]
   actividades: ActividadResultante[]
   advertencias: string[]
-  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  /** Token de concurrencia (TAREA-19x). Si difiere del token base, alguien registró antes: se bloquea (TAREA-19b2). */
   versionProyecto: number
 }
 
@@ -621,7 +623,7 @@ export interface PrevisualizacionPersonal {
   cruces: CruceAsignacion[]
   resumen: ResumenCruce[]
   advertencias: string[]
-  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  /** Token de concurrencia (TAREA-19x). Si difiere del token base, alguien registró antes: se bloquea (TAREA-19b2). */
   versionProyecto: number
 }
 
@@ -631,7 +633,7 @@ export interface PersonalActualizado {
   version: number
 }
 
-// ------------------------------------------------------------------ Reactivación (contrato TAREA-17b; pantalla en la TAREA-19c)
+// ------------------------------------------------------------------ Reactivación (contrato TAREA-17b; pantalla TAREA-19c)
 // Origen: backend/src/App.Application/Proyectos/Reactivacion/ReactivacionDtos.cs y ReactivacionContratos.cs.
 
 /** activo = false: se propone con advertencia y el registro lo rechazará. */
@@ -710,7 +712,7 @@ export interface PrevisualizacionReactivacion {
   cruces: CruceAsignacion[]
   resumen: ResumenCruce[]
   advertencias: string[]
-  /** Token de concurrencia (TAREA-19x): se envía al registrar. */
+  /** Token de concurrencia (TAREA-19x). Si difiere del token base, alguien registró antes: se bloquea (TAREA-19b2). */
   versionProyecto: number
 }
 

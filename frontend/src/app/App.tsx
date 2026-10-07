@@ -27,6 +27,10 @@ const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/ActualizarPersonal')).ActualizarPersonal }),
       },
       {
+        path: 'proyectos/:id/reactivar',
+        lazy: async () => ({ Component: (await import('../features/proyectos/pages/ReactivarProyecto')).ReactivarProyecto }),
+      },
+      {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),
       },

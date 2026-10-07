@@ -62,13 +62,14 @@ describe('R1/R2: máquina de estados (solo interfaz)', () => {
     ])
   })
 
-  it('SUSPENDIDO: Terminar y Reactivar deshabilitado con ayuda', () => {
+  it('SUSPENDIDO: Terminar y Reactivar habilitado, sin ayuda (TAREA-19c, P10)', () => {
     const opciones = opcionesDestino('SUSPENDIDO')
     expect(opciones.map((o) => [o.codigo, o.habilitada])).toEqual([
       ['TERMINADO', true],
-      ['ACTIVO', false],
+      ['ACTIVO', true],
     ])
-    expect(opciones[1]).toMatchObject({ etiqueta: 'Reactivar', ayuda: 'Disponible próximamente' })
+    expect(opciones[1]).toMatchObject({ etiqueta: 'Reactivar' })
+    expect(opciones[1].ayuda).toBeUndefined()
   })
 
   it('TERMINADO: sin opciones', () => {

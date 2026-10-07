@@ -8,6 +8,8 @@ import type { JornadaCatalogo, TipoRegistroBack } from '../tipos'
 // Campos de una persona, comunes a "Nuevo proyecto" (TAREA-13) y "Actualizar personal" (TAREA-19b). Solo
 // presentación: cada pantalla decide qué cambia, qué está bloqueado y qué errores mostrar.
 
+const MOTIVO_YA_EMPEZO = 'Ya empezó: no se puede cambiar.'
+
 /** Campo de solo lectura (vigentes que ya empezaron). */
 function SoloLectura({ label, valor, hint }: { label: string; valor: string; hint?: string }) {
   return (
@@ -36,6 +38,9 @@ export interface CamposPrincipalProps {
   /** Límites de los selectores ("yyyy-MM-dd"). */
   fechaMinimaFin?: string
   fechaMaxima?: string
+  /** TAREA-19c: mínimo del inicio (reactivación: R) y texto del inicio bloqueado. */
+  fechaMinimaInicio?: string
+  motivoInicioBloqueado?: string
 }
 
 export function CamposPrincipal({
@@ -47,6 +52,8 @@ export function CamposPrincipal({
   bloqueados = {},
   fechaMinimaFin,
   fechaMaxima,
+  fechaMinimaInicio,
+  motivoInicioBloqueado = MOTIVO_YA_EMPEZO,
 }: CamposPrincipalProps) {
   const [errorFormatoInicio, setErrorFormatoInicio] = useState<string>()
   const [errorFormatoFin, setErrorFormatoFin] = useState<string>()
@@ -74,11 +81,12 @@ export function CamposPrincipal({
       )}
 
       {bloqueados.fechaInicio ? (
-        <SoloLectura label="Inicio" valor={formatearFecha(valores.fechaInicio)} hint="Ya empezó: no se puede cambiar." />
+        <SoloLectura label="Inicio" valor={formatearFecha(valores.fechaInicio)} hint={motivoInicioBloqueado} />
       ) : (
         <Field label="Inicio" required validationMessage={errorFormatoInicio ?? errores.fechaInicio}>
           <SelectorFecha
             valor={valores.fechaInicio ?? undefined}
+            fechaMinima={fechaMinimaInicio}
             fechaMaxima={fechaMaxima}
             onCambiar={(valor) => onCambiar({ fechaInicio: valor ?? null })}
             onErrorFormato={setErrorFormatoInicio}
@@ -148,6 +156,9 @@ export interface CamposBackProps {
   bloqueados?: { fechaInicio?: boolean }
   fechaMinimaFin?: string
   fechaMaxima?: string
+  /** TAREA-19c: mínimo del inicio (reactivación: R) y texto del inicio bloqueado. */
+  fechaMinimaInicio?: string
+  motivoInicioBloqueado?: string
 }
 
 export function CamposBack({
@@ -160,6 +171,8 @@ export function CamposBack({
   bloqueados = {},
   fechaMinimaFin,
   fechaMaxima,
+  fechaMinimaInicio,
+  motivoInicioBloqueado = MOTIVO_YA_EMPEZO,
 }: CamposBackProps) {
   const [errorFormatoInicio, setErrorFormatoInicio] = useState<string>()
   const [errorFormatoFin, setErrorFormatoFin] = useState<string>()
@@ -199,11 +212,12 @@ export function CamposBack({
       )}
 
       {bloqueados.fechaInicio ? (
-        <SoloLectura label="Inicio" valor={formatearFecha(valores.fechaInicio)} hint="Ya empezó: no se puede cambiar." />
+        <SoloLectura label="Inicio" valor={formatearFecha(valores.fechaInicio)} hint={motivoInicioBloqueado} />
       ) : (
         <Field label="Inicio" required validationMessage={errorFormatoInicio ?? errores.fechaInicio}>
           <SelectorFecha
             valor={valores.fechaInicio ?? undefined}
+            fechaMinima={fechaMinimaInicio}
             fechaMaxima={fechaMaxima}
             onCambiar={(valor) => onCambiar({ fechaInicio: valor ?? null })}
             onErrorFormato={setErrorFormatoInicio}

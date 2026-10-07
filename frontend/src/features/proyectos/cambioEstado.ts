@@ -16,7 +16,10 @@ export function puedeCambiarEstado(estado: string): boolean {
   return estado === 'ACTIVO' || estado === 'SUSPENDIDO'
 }
 
-/** R2: ACTIVO → Suspender / Terminar; SUSPENDIDO → Terminar y "Reactivar" deshabilitado (TAREA-17). */
+/**
+ * R2: ACTIVO → Suspender / Terminar; SUSPENDIDO → Terminar y Reactivar. La reactivación no se registra en el diálogo:
+ * lleva a la pantalla /proyectos/:id/reactivar (TAREA-19c, P1).
+ */
 export function opcionesDestino(estado: string): OpcionDestino[] {
   switch (estado) {
     case 'ACTIVO':
@@ -27,11 +30,16 @@ export function opcionesDestino(estado: string): OpcionDestino[] {
     case 'SUSPENDIDO':
       return [
         { codigo: 'TERMINADO', etiqueta: 'Terminar', habilitada: true },
-        { codigo: 'ACTIVO', etiqueta: 'Reactivar', habilitada: false, ayuda: 'Disponible próximamente' },
+        { codigo: 'ACTIVO', etiqueta: 'Reactivar', habilitada: true },
       ]
     default:
       return []
   }
+}
+
+/** TAREA-19c: la opción "Reactivar" (destino ACTIVO) lleva a la pantalla de reactivación. */
+export function esReactivacion(codigo: string): boolean {
+  return codigo === 'ACTIVO'
 }
 
 /** Fecha sugerida: vacía, salvo CIERRE desde SUSPENDIDO, que propone la fecha fin actual (H1). */

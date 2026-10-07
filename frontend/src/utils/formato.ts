@@ -50,6 +50,20 @@ export function formatearFechaHora(valorIsoUtc: string | null | undefined): stri
   return Number.isNaN(fecha.getTime()) ? '' : formatoFechaHora.format(fecha).replace(',', '')
 }
 
+const formatoFechaIsoNegocio = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: ZONA_NEGOCIO,
+})
+
+/** Fecha de hoy en Ecuador como "yyyy-MM-dd" (TAREA-19c: fecha de reactivación por defecto). */
+export function hoyEnNegocio(ahora: Date = new Date()): string {
+  const partes = formatoFechaIsoNegocio.formatToParts(ahora)
+  const parte = (tipo: Intl.DateTimeFormatPartTypes) => partes.find((p) => p.type === tipo)?.value ?? ''
+  return `${parte('year')}-${parte('month')}-${parte('day')}`
+}
+
 /** "HH:mm:ss" (TimeOnly de la API) → "HH:mm". */
 export function formatearHora(valor: string | null | undefined): string {
   return valor ? valor.slice(0, 5) : ''

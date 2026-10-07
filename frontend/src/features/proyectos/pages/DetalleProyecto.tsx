@@ -157,6 +157,11 @@ export function DetalleProyecto() {
                   const detalle = queryClient.getQueryData<ProyectoDetalle>(clavesProyectos.detalle(proyecto.id))
                   return detalle ? versionDeEtapas(detalle.etapas) : undefined
                 }}
+                onReactivar={() => {
+                  // TAREA-19c (P1): la reactivación se completa en su propia pantalla.
+                  const estado: EstadoNavegacionProyectos = { busqueda }
+                  void navigate(`/proyectos/${proyecto.id}/reactivar`, { state: estado })
+                }}
               />
             )}
             {/* Igual: si tras "Recargar" el proyecto ya no se puede editar, el diálogo se cierra. */}

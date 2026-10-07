@@ -1,6 +1,6 @@
 # FASE 5 — Diseño: Estados del proyecto (suspensión y cierre)
 
-**Fecha:** 2026-10-01 (TAREA-14). **Implementado:** SUSPENSION y CIERRE (backend, TAREA-14; frontend, TAREA-15); REACTIVACION (backend, TAREA-17b, §8; verificado en prueba manual el 05/10/2026). **Pendiente:** frontend de la reactivación (TAREA-19).
+**Fecha:** 2026-10-01 (TAREA-14). **Implementado:** SUSPENSION y CIERRE (backend, TAREA-14; frontend, TAREA-15); REACTIVACION (backend, TAREA-17b, §8; verificado en prueba manual el 05/10/2026; frontend, TAREA-19c, §8.7).
 **Origen:** `docs/origen/powerapps/ConfigurarProyecto_1.pa.yaml`:
 - `estadoEdit_1.OnChange` (l. 446);
 - `fechaMovimientoEstadoEdit_1.OnChange` (l. 491);
@@ -120,7 +120,7 @@ stateDiagram-v2
 
 ## 8. Reactivación (SUSPENDIDO → ACTIVO) — TAREA-17b
 
-**Estado:** implementado y **verificado en prueba manual (05/10/2026)**: proyecto de prueba Id 10 (PRY-20261005-98f053), casos a–j y h1–h4 OK (`docs/tareas/TAREA-17b-reporte.md` §6.2). Observación pendiente: el 400 de `cambio-estado` a ACTIVO trae además un error en `fecha` (pendiente 29, TAREA-18).
+**Estado:** implementado y **verificado en prueba manual (05/10/2026)**: proyecto de prueba Id 10 (PRY-20261005-98f053), casos a–j y h1–h4 OK (`docs/tareas/TAREA-17b-reporte.md` §6.2). La observación del 400 de `cambio-estado` a ACTIVO con un error adicional en `fecha` (pendiente 29) quedó **resuelta en la TAREA-18 (C11)**: ahora el 400 trae solo `estadoDestino`. Frontend: **TAREA-19c** (§8.7).
 
 **Origen** (`ConfigurarProyecto_1.pa.yaml`): `fechaMovimientoEstadoEdit_1.OnChange` (l. 491–549), `Aplicar estado_1` (l. 580–766), Regenerar (cadena de la l. 1910, R‑797–805), Registrar (l. 2275–2291 y 2590–2616).
 Reutiliza la TAREA-17: núcleo de `EdicionPersonalValidador`, `CalculoPersonal` (motor `Regenerar`, cruces), `ITransaccionAsignaciones`, la escritura D7 de `EdicionPersonalRepositorio` y `SnapshotPersonal`.
@@ -128,9 +128,9 @@ Reutiliza la TAREA-17: núcleo de `EdicionPersonalValidador`, `CalculoPersonal` 
 ### 8.1 API (política Gestor, visibilidad R1 → 404)
 | Endpoint | Respuesta |
 |---|---|
-| `GET /api/proyectos/{id:int}/reactivacion` | 200 `ReactivacionDto`: `puedeReactivar` + `motivo`, `estadoActual`, `fechaInicio`, `fechaFinActual`, `fechaMinima` (= FechaFin + 1), `principalPropuesto` (`empleado {id, codigoEkon, nombreCompleto, activo}`, `jornada`, `cargo`) o null, `personal` (todo el guardado, con `esPrincipalInicial`), `limites`, `advertencias` |
-| `POST …/reactivacion/previsualizar` | 200 `PrevisualizacionReactivacionDto`: los campos de la vista previa de la TAREA-17 (`corte` = R, `personal`, `tramos`, `cruces`, `resumen`, `advertencias`) + `fechaFinActual`, `fechaFinNueva`, `actividad` que se creará (o null). 400 / 404 / 409 (cambiado). No guarda |
-| `POST …/reactivacion` | 200 `{ id, estado: "ACTIVO", version }`. 400; 404; 409 con extensiones `cruces` y `resumen`, o "El proyecto cambió; vuelve a cargarlo."; 503 (applock) |
+| `GET /api/proyectos/{id:int}/reactivacion` | 200 `ReactivacionDto`: `puedeReactivar` + `motivo`, `estadoActual`, `fechaInicio`, `fechaFinActual`, `fechaMinima` (= FechaFin + 1), `principalPropuesto` (`empleado {id, codigoEkon, nombreCompleto, activo}`, `jornada`, `cargo`) o null, `personal` (todo el guardado, con `esPrincipalInicial`; sin relación, cargo ni observación: pendiente 37), `limites` (`maxPrincipales`, `maxBacks`, `backMaxDiasDescanso` y `exigePrincipal` = `PROYECTO_EXIGE_PRINCIPAL`, TAREA-19y), `advertencias` y `versionProyecto` (token de concurrencia, TAREA-19x, §9) |
+| `POST …/reactivacion/previsualizar` | 200 `PrevisualizacionReactivacionDto`: los campos de la vista previa de la TAREA-17 (`corte` = R, `personal`, `tramos`, `cruces`, `resumen`, `advertencias`) + `fechaFinActual`, `fechaFinNueva`, `actividad` que se creará (o null) y `versionProyecto` (§9). 400 / 404 / 409 (cambiado). No guarda |
+| `POST …/reactivacion` | 200 `{ id, estado: "ACTIVO", version }`. Exige `versionProyecto` (§9): ausente → 400 `versionProyecto`; distinto de la versión actual → 409. 400; 404; 409 con extensiones `cruces` y `resumen`, o "El proyecto cambió; vuelve a cargarlo."; 503 (applock) |
 
 Cuerpo: `{ fecha, fechaFin, principales: [{ clave, empleadoId, jornada, fechaInicio, fechaFin, cargo? }], backs: [{ clave, empleadoId, tipoRegistro, fechaInicio, fechaFin, diasDescanso, principalClave?, principalId?, observacion? }] }`. Todas las personas son nuevas (sin `id`). `principalClave` apunta a un principal del cuerpo; `principalId`, a un principal guardado (todos son históricos). Excluyentes.
 
@@ -157,13 +157,17 @@ Cuerpo: `{ fecha, fechaFin, principales: [{ clave, empleadoId, jornada, fechaIni
 | `fecha` | La fecha de reactivación debe ser posterior a la fecha fin actual del proyecto (dd/MM/yyyy). |
 | `fechaFin` | La fecha fin es obligatoria. |
 | `fechaFin` | La fecha fin no puede ser anterior a la fecha de reactivación (dd/MM/yyyy). |
-| `principales` | Se requiere al menos 1 principal(es). |
+| `personal` | Se requiere al menos 1 persona (principal o back). (TAREA-19y, con `PROYECTO_EXIGE_PRINCIPAL = 0`: ninguna persona nueva) |
+| `principales` | Se requiere al menos 1 principal(es). (solo con `PROYECTO_EXIGE_PRINCIPAL = 1`, TAREA-19y) |
+| `backs` | Al menos un back debe empezar en la fecha de reactivación (dd/MM/yyyy). (R6 solo con backs, TAREA-19y) |
 | `principales[0].fechaInicio` | El primer principal debe empezar en la fecha de reactivación (dd/MM/yyyy). |
 | `…fechaInicio` | La fecha de inicio no puede ser anterior a la fecha de reactivación (dd/MM/yyyy). |
 | `…id` | En la reactivación todas las personas son nuevas; no envíe id. (un solo error por fila) |
 | (resto) | Los de `ReglasPersonal` y la TAREA-17, sin cambios (RN08 con la nueva fecha fin, jornada, empleado activo, relación del back, máximos) |
 
-Título del `ValidationProblem`: "Los datos de la reactivación no son válidos.".
+Título del `ValidationProblem`: "Los datos de la reactivación no son válidos.". Si `fecha` o `fechaFin` tienen error, el 400 trae solo esas claves (las personas se validan cuando las fechas son válidas).
+
+**Advertencias de la vista previa (no bloquean):** "Se generarán días ya transcurridos." (R3) y, sin principales nuevos ni principal inicial histórico, "El proyecto no tendrá principal: el responsable quedará vacío." (TAREA-19y, §10).
 
 ### 8.3 Escritura (una transacción con applock)
 1. Fuera del bloqueo se valida y se calcula todo; si hay cruces, 409 sin abrir la transacción.
@@ -198,6 +202,29 @@ Título del `ValidationProblem`: "Los datos de la reactivación no son válidos.
 | Application | `Proyectos/Reactivacion/` (`ReactivacionContratos`, `ReactivacionDtos`, `ReactivacionValidador`, `ReactivacionServicio`); `Proyectos/Personal/CalculoPersonal.cs` (extraído de `EdicionPersonalServicio`) y núcleo `ValidarPersonal` de `EdicionPersonalValidador` |
 | Infrastructure | `Persistencia/Proyectos/EdicionPersonalRepositorio.cs` (`IReactivacionRepositorio`, `AplicarAsync` con `Reactivacion`, consultas `ConsultaActividadParaReactivar` y `ConsultaBacksConDescansoPosterior`) |
 | Api | `Endpoints/ProyectoEndpoints.cs` (GET + dos POST) |
+
+### 8.7 Frontend (TAREA-19c)
+Pantalla `/proyectos/:id/reactivar` (`pages/ReactivarProyecto.tsx`, lógica pura en `features/proyectos/reactivacion.ts`
+con Vitest). Decisiones aprobadas:
+
+| Id | Decisión |
+|---|---|
+| P1 | El diálogo "Cambiar estado" (TAREA-15) habilita "Reactivar" solo desde SUSPENDIDO. Al elegirlo oculta la fecha y "Ver impacto", muestra "La reactivación se completa en una pantalla propia (fecha, nueva fecha fin y personal)." y el botón "Continuar a reactivación", que navega a la pantalla (carga diferida, ruta antes de `proyectos/:id`). Si `puedeReactivar` es false, la pantalla muestra el `motivo` |
+| P2 | R inicial = max(`fechaMinima`, hoy en Ecuador) (`hoyEnNegocio()`, `America/Guayaquil`) |
+| P3 | Fecha fin nueva inicial = `fechaFin` de la etapa anterior a la última SUSPENSION del detalle, si es ≥ R; si no (o si el detalle no carga), vacía y obligatoria |
+| P4 | Arrastre: las personas nuevas con inicio = R anterior siguen a la R nueva; las que tenían el fin anterior (o vacío) siguen al fin nuevo. El primer principal nuevo tiene el inicio bloqueado en R ("Empieza en la fecha de reactivación."), también tras ↑↓, y lleva la marca "Será el principal inicial (responsable)" (R6) |
+| P5 | Propuesto (R7) con empleado inactivo: se precarga con el aviso del servidor en la fila y "Generar vista previa" queda bloqueado hasta cambiar el empleado o quitar la fila |
+| P6 | R6 solo con backs: ayuda que no bloquea en la sección Backs; el servidor responde 400 `backs` |
+| P7 | Éxito: detalle con "Proyecto reactivado (versión n)." en la pestaña Historial (`replace`); se invalida `['proyectos']` (detalle, listado, cabecera, edición y reactivación). Sin confirmación al salir tras registrar ni al recargar |
+| P8 | Sin casilla de confirmación (no se elimina nada): texto "Esta acción no se puede deshacer." junto a "Registrar"; protección contra doble clic |
+
+Además: personal guardado en tablas de solo lectura (marca "Inicial"); personas nuevas con las tarjetas de la 19b
+(buscador, ↑↓ de principales, backs relacionados por clave o con un principal histórico por `principalId`); mínimo
+de personal solo sobre las nuevas según `limites.exigePrincipal`; vista previa con fecha fin actual → nueva, actividad
+que se creará (o "Sin actividad"), advertencias, cruces y tramos unidos (pendiente 26), invalidada por revisión; token
+base = `versionProyecto` del GET (§9), con el aviso de cambio por otro y "Recargar datos del proyecto"; 400 por campo
+(`fecha`, `fechaFin`, filas por índice del envío, secciones, `personal`; `proyecto`/`versionProyecto` con "Recargar"),
+409 con cruces o "El proyecto cambió", 503 "Reintentar" y 404 con enlace al listado.
 
 ## 9. Token de concurrencia `versionProyecto` (TAREA-19x, pendiente 32)
 

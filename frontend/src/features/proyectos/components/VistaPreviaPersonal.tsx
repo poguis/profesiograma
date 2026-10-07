@@ -47,13 +47,14 @@ interface GrupoTramos {
 }
 
 /** Vista previa de "Actualizar personal": personas con su acción, advertencias, cruces y tramos (unidos, pendiente 26). */
-export function VistaPreviaPersonal({ datos }: { datos: PrevisualizacionPersonal }) {
+export function VistaPreviaPersonal({ datos, textoCorte }: { datos: PrevisualizacionPersonal; textoCorte?: string }) {
   const estilos = useEstilos()
   const grupos = useMemo(() => agruparTramos(datos), [datos])
 
   return (
     <div className={estilos.contenedor}>
-      <Text>Corte: {formatearFecha(datos.corte)}. Los días anteriores al corte no cambian.</Text>
+      {/* TAREA-19c: la reactivación usa su propio texto (corte = fecha de reactivación). */}
+      <Text>{textoCorte ?? `Corte: ${formatearFecha(datos.corte)}. Los días anteriores al corte no cambian.`}</Text>
 
       {datos.advertencias.length > 0 && (
         <MessageBar intent="warning">

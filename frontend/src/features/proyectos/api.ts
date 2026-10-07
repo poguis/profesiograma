@@ -20,14 +20,18 @@ import type {
   PrevisualizacionCabecera,
   PrevisualizacionPersonal,
   PrevisualizacionCambioEstado,
+  PrevisualizacionReactivacion,
   ProyectoCreado,
   ProyectoDetalle,
   ProyectoErp,
+  ProyectoReactivado,
   ProyectoResumen,
+  Reactivacion,
   SolicitudActualizarPersonal,
   SolicitudCambioEstado,
   SolicitudCrearProyecto,
   SolicitudEditarCabecera,
+  SolicitudReactivar,
 } from './tipos'
 
 export const clavesProyectos = {
@@ -38,6 +42,8 @@ export const clavesProyectos = {
   cabecera: (id: number) => ['proyectos', 'cabecera', id] as const,
   /** GET …/edicion (TAREA-19b): bajo 'proyectos', se refresca al invalidar `todos`. */
   edicion: (id: number) => ['proyectos', 'edicion', id] as const,
+  /** GET …/reactivacion (TAREA-19c): bajo 'proyectos', se refresca al invalidar `todos`. */
+  reactivacion: (id: number) => ['proyectos', 'reactivacion', id] as const,
   catalogos: ['catalogos'] as const,
   opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
 }
@@ -155,4 +161,21 @@ export function previsualizarPersonal(id: number, solicitud: SolicitudActualizar
 /** Registra la actualización: 200 { id, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503. */
 export function registrarPersonal(id: number, solicitud: SolicitudActualizarPersonal) {
   return apiPost<SolicitudActualizarPersonal, PersonalActualizado>(`/proyectos/${id}/personal`, solicitud)
+}
+
+// ------------------------------------------------------------------ Reactivación (TAREA-17b; pantalla TAREA-19c)
+
+/** GET /api/proyectos/{id}/reactivacion: datos del formulario (puedeReactivar, propuesto, personal, token). */
+export function obtenerReactivacion(id: number, signal?: AbortSignal) {
+  return apiGet<Reactivacion>(`/proyectos/${id}/reactivacion`, { signal })
+}
+
+/** Vista previa de la reactivación (no guarda). 400 / 404 / 409 / 503. */
+export function previsualizarReactivacion(id: number, solicitud: SolicitudReactivar) {
+  return apiPost<SolicitudReactivar, PrevisualizacionReactivacion>(`/proyectos/${id}/reactivacion/previsualizar`, solicitud)
+}
+
+/** Registra la reactivación. 200 { id, estado, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503. */
+export function registrarReactivacion(id: number, solicitud: SolicitudReactivar) {
+  return apiPost<SolicitudReactivar, ProyectoReactivado>(`/proyectos/${id}/reactivacion`, solicitud)
 }

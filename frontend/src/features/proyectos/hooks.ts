@@ -18,12 +18,15 @@ import {
   obtenerCatalogos,
   obtenerOpcionesFormulario,
   obtenerProyecto,
+  obtenerReactivacion,
   previsualizarCabecera,
   previsualizarCambioEstado,
   previsualizarPersonal,
   previsualizarProyecto,
+  previsualizarReactivacion,
   registrarCabecera,
   registrarPersonal,
+  registrarReactivacion,
 } from './api'
 import type {
   Catalogos,
@@ -32,6 +35,7 @@ import type {
   SolicitudActualizarPersonal,
   SolicitudCambioEstado,
   SolicitudEditarCabecera,
+  SolicitudReactivar,
 } from './tipos'
 
 /** Datos del ERP y del formulario: cambian poco; el servidor ya los cachea 5–10 min. */
@@ -224,6 +228,31 @@ export function useRegistrarPersonal(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudActualizarPersonal) => registrarPersonal(id, solicitud),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+  })
+}
+
+// ------------------------------------------------------------------ Reactivación (TAREA-19c)
+
+/** GET /api/proyectos/{id}/reactivacion: alimenta la pantalla "Reactivar proyecto". */
+export function useReactivacion(id: number) {
+  return useQuery({
+    queryKey: clavesProyectos.reactivacion(id),
+    queryFn: ({ signal }) => obtenerReactivacion(id, signal),
+    enabled: Number.isInteger(id) && id > 0,
+  })
+}
+
+/** POST /api/proyectos/{id}/reactivacion/previsualizar (no guarda; sin reintentos). */
+export function usePrevisualizarReactivacion(id: number) {
+  return useMutation({ mutationFn: (solicitud: SolicitudReactivar) => previsualizarReactivacion(id, solicitud) })
+}
+
+/** POST /api/proyectos/{id}/reactivacion. Al registrar, invalida detalle, listado, cabecera, edición y reactivación. */
+export function useRegistrarReactivacion(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudReactivar) => registrarReactivacion(id, solicitud),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
   })
 }
