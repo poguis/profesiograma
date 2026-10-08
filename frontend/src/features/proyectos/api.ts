@@ -10,7 +10,6 @@ import type {
   CompaniaErp,
   DimensionErp,
   EdicionPersonal,
-  EmpleadoBusqueda,
   FiltroEmpleados,
   FiltrosProyectos,
   HorarioErp,
@@ -27,6 +26,7 @@ import type {
   ProyectoReactivado,
   ProyectoResumen,
   Reactivacion,
+  ResultadoBusquedaEmpleados,
   SolicitudActualizarPersonal,
   SolicitudCambioEstado,
   SolicitudCrearProyecto,
@@ -110,7 +110,7 @@ export function buscarEmpleados(filtro: FiltroEmpleados, signal?: AbortSignal) {
   if (filtro.texto) {
     consulta.set('texto', filtro.texto)
   }
-  return apiGet<PaginaResultado<EmpleadoBusqueda>>(`/empleados?${consulta.toString()}`, { signal })
+  return apiGet<ResultadoBusquedaEmpleados>(`/empleados?${consulta.toString()}`, { signal })
 }
 
 /** 200 con tramos, días y cruces; no guarda nada. 400 validación; 503 ERP no disponible. */

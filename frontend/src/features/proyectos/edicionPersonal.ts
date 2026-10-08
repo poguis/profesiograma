@@ -12,6 +12,7 @@ import {
   type ErroresFila,
   type ErroresServidor,
   SIN_ERRORES_SERVIDOR,
+  claveEmpleado,
   crucesDeConflicto,
   distribuirErrores,
 } from './formularioProyecto'
@@ -131,7 +132,7 @@ function aFila(p: PersonaEdicion, principalesVigentes: Set<number>, iniciales: R
     id: p.id,
     rol: esPrincipal ? ROL_PRINCIPAL : ROL_BACK,
     numero: p.numero,
-    empleado: { id: p.empleado.id, codigoEkon: p.empleado.codigoEkon, nombreCompleto: p.empleado.nombreCompleto, cargo: null },
+    empleado: { codigoEkon: p.empleado.codigoEkon, nombreCompleto: p.empleado.nombreCompleto, cargo: null },
     permisos: p.permisos,
     original: campos,
     esPrincipalInicial: iniciales.has(p.id),
@@ -264,7 +265,7 @@ export function reducerEdicionPersonal(estado: EstadoEdicionPersonal, accion: Ac
     case 'cambiarEmpleado': {
       // Solo las nuevas: el resto del formulario se conserva.
       const fila = buscar(estado, accion.clave)
-      if (!fila || fila.id !== null || fila.empleado.id === accion.empleado.id) {
+      if (!fila || fila.id !== null || claveEmpleado(fila.empleado.codigoEkon) === claveEmpleado(accion.empleado.codigoEkon)) {
         return estado
       }
       return revisar({ ...estado, ...mapearFilas(estado, (f) => (f.clave === fila.clave ? { ...f, empleado: accion.empleado } : f)) })
@@ -340,15 +341,16 @@ export function etiquetaFila(estado: EstadoEdicionPersonal, fila: FilaEdicion): 
   return fila.rol === ROL_PRINCIPAL ? `Nuevo principal ${posicion}` : `Nuevo back ${posicion}`
 }
 
-/** Etiquetas por empleado para el buscador ("P1", "Back 2", históricos incluidos). */
-export function etiquetasPorEmpleadoEdicion(estado: EstadoEdicionPersonal): Map<number, string[]> {
-  const etiquetas = new Map<number, string[]>()
-  const agregar = (id: number, etiqueta: string) => etiquetas.set(id, [...(etiquetas.get(id) ?? []), etiqueta])
+/** Etiquetas por empleado (`claveEmpleado`) para el buscador ("P1", "Back 2", históricos incluidos). */
+export function etiquetasPorEmpleadoEdicion(estado: EstadoEdicionPersonal): Map<string, string[]> {
+  const etiquetas = new Map<string, string[]>()
+  const agregar = (codigo: string, etiqueta: string) =>
+    etiquetas.set(claveEmpleado(codigo), [...(etiquetas.get(claveEmpleado(codigo)) ?? []), etiqueta])
   for (const h of estado.historicas) {
-    agregar(h.empleado.id, `${h.rol === ROL_PRINCIPAL ? 'P' : 'Back '}${h.numero} (histórico)`)
+    agregar(h.empleado.codigoEkon, `${h.rol === ROL_PRINCIPAL ? 'P' : 'Back '}${h.numero} (histórico)`)
   }
   for (const f of [...principalesEnviados(estado), ...backsEnviados(estado)]) {
-    agregar(f.empleado.id, etiquetaFila(estado, f))
+    agregar(f.empleado.codigoEkon, etiquetaFila(estado, f))
   }
   return etiquetas
 }
@@ -458,12 +460,15 @@ function texto(valor: string): string | null {
   return recortado ? recortado : null
 }
 
-/** Cuerpo de la vista previa: vigentes no eliminadas y nuevas; nunca las históricas. */
+/**
+ * Cuerpo de la vista previa: vigentes no eliminadas y nuevas; nunca las históricas. TAREA-26d-2: las nuevas van por
+ * `codigoEkon` (nunca `empleadoId`); las vigentes solo por `id` (codigoEkon null: su empleado no cambia).
+ */
 export function aSolicitudPersonal(estado: EstadoEdicionPersonal): SolicitudActualizarPersonal {
   const principales: PrincipalEdicionSolicitud[] = principalesEnviados(estado).map((p) => ({
     clave: p.clave,
     id: p.id,
-    empleadoId: p.empleado.id,
+    codigoEkon: p.id === null ? p.empleado.codigoEkon : null,
     jornada: p.jornada,
     fechaInicio: p.fechaInicio,
     fechaFin: p.fechaFin,
@@ -473,7 +478,7 @@ export function aSolicitudPersonal(estado: EstadoEdicionPersonal): SolicitudActu
   const backs: BackEdicionSolicitud[] = backsEnviados(estado).map((b) => ({
     clave: b.clave,
     id: b.id,
-    empleadoId: b.empleado.id,
+    codigoEkon: b.id === null ? b.empleado.codigoEkon : null,
     tipoRegistro: b.tipoRegistro,
     fechaInicio: b.fechaInicio,
     fechaFin: b.fechaFin,

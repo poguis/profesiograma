@@ -153,8 +153,8 @@ export function crearEstadoReactivacion(dto: Reactivacion, hoy: string, finPlani
       id: null,
       rol: ROL_PRINCIPAL,
       numero: null,
+      // TAREA-26d-2: persona nueva → viaja por codigoEkon (aSolicitudPersonal).
       empleado: {
-        id: propuesto.empleado.id,
         codigoEkon: propuesto.empleado.codigoEkon,
         nombreCompleto: propuesto.empleado.nombreCompleto,
         cargo: null,

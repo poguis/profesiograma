@@ -55,3 +55,14 @@ describe('unirTramosContiguos (pendiente 26)', () => {
     expect(tramos[0].fin).toBe('2026-10-01')
   })
 })
+
+describe('TAREA-26d-2: personas sin fila (empleadoId negativo)', () => {
+  it('un Id temporal negativo se une como cualquier otro y no se mezcla con otro temporal', () => {
+    const nuevo = { empleadoId: -1, codigoEkon: '900001', nombreEmpleado: 'PERSONA FICTICIA 1' }
+    expect(unirTramosContiguos([tramo('2026-10-01', '2026-10-03', 3, nuevo), tramo('2026-10-04', '2026-10-05', 2, nuevo)])).toEqual([
+      tramo('2026-10-01', '2026-10-05', 5, nuevo),
+    ])
+    const otro = { ...nuevo, empleadoId: -2, codigoEkon: '900002' }
+    expect(unirTramosContiguos([tramo('2026-10-01', '2026-10-03', 3, nuevo), tramo('2026-10-04', '2026-10-05', 2, otro)])).toHaveLength(2)
+  })
+})

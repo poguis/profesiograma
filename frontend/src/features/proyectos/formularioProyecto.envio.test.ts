@@ -23,7 +23,6 @@ const PLANTA = { codigo: 'PLANTA', requiereProyectoErp: false, requiereDimension
 const MAX = 20
 
 const empleado = (id: number): EmpleadoFila => ({
-  id,
   codigoEkon: `DEV00${id}`,
   nombreCompleto: `EMPLEADO PRUEBA 0${id}`,
   cargo: null,

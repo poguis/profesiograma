@@ -18,7 +18,13 @@ import type {
 /** Grupo elegido con sus flags del catálogo (RN02: nunca se comparan nombres de grupo). */
 export type GrupoSeleccionado = Pick<GrupoProyectoCatalogo, 'codigo' | 'requiereProyectoErp' | 'requiereDimension'>
 
-export type EmpleadoFila = Pick<EmpleadoBusqueda, 'id' | 'codigoEkon' | 'nombreCompleto' | 'cargo'>
+/** TAREA-26d-2: el empleado se identifica por `codigoEkon` (puede no tener fila en la base todavía). */
+export type EmpleadoFila = Pick<EmpleadoBusqueda, 'codigoEkon' | 'nombreCompleto' | 'cargo'>
+
+/** Clave de un empleado para comparar y marcar: código EKON sin espacios extremos y en mayúsculas (como el servidor). */
+export function claveEmpleado(codigoEkon: string): string {
+  return codigoEkon.trim().toUpperCase()
+}
 
 /** Fechas "yyyy-MM-dd"; horas "HH:mm" (nunca "HH:mm:ss" en el formulario). */
 export interface CabeceraFormulario {
@@ -269,12 +275,13 @@ export function numeroPrincipal(principales: FilaPrincipal[], clave: string | nu
   return indice < 0 ? null : indice + 1
 }
 
-/** Etiquetas de cada empleado ya agregado ("P1", "Back 2") para marcarlo en el buscador (R6). */
-export function etiquetasPorEmpleado(estado: EstadoFormulario): Map<number, string[]> {
-  const etiquetas = new Map<number, string[]>()
-  const agregar = (id: number, etiqueta: string) => etiquetas.set(id, [...(etiquetas.get(id) ?? []), etiqueta])
-  estado.principales.forEach((p, i) => agregar(p.empleado.id, `P${i + 1}`))
-  estado.backs.forEach((b, i) => agregar(b.empleado.id, `Back ${i + 1}`))
+/** Etiquetas de cada empleado ya agregado ("P1", "Back 2") por `claveEmpleado` para marcarlo en el buscador (R6). */
+export function etiquetasPorEmpleado(estado: EstadoFormulario): Map<string, string[]> {
+  const etiquetas = new Map<string, string[]>()
+  const agregar = (codigo: string, etiqueta: string) =>
+    etiquetas.set(claveEmpleado(codigo), [...(etiquetas.get(claveEmpleado(codigo)) ?? []), etiqueta])
+  estado.principales.forEach((p, i) => agregar(p.empleado.codigoEkon, `P${i + 1}`))
+  estado.backs.forEach((b, i) => agregar(b.empleado.codigoEkon, `Back ${i + 1}`))
   return etiquetas
 }
 
@@ -353,7 +360,7 @@ export function aSolicitud(estado: EstadoFormulario): SolicitudCrearProyecto {
   const usaDimension = c.grupo?.requiereDimension === true
 
   const principales: PrincipalSolicitud[] = estado.principales.map((p) => ({
-    empleadoId: p.empleado.id,
+    codigoEkon: p.empleado.codigoEkon,
     jornada: texto(p.jornada),
     fechaInicio: p.fechaInicio,
     fechaFin: p.fechaFin,
@@ -361,7 +368,7 @@ export function aSolicitud(estado: EstadoFormulario): SolicitudCrearProyecto {
   }))
 
   const backs: BackSolicitud[] = estado.backs.map((b) => ({
-    empleadoId: b.empleado.id,
+    codigoEkon: b.empleado.codigoEkon,
     tipoRegistro: b.tipoRegistro,
     diasDescanso: b.tipoRegistro === 'DESCANSO' ? 0 : b.diasDescanso,
     fechaInicio: b.fechaInicio,
@@ -462,7 +469,7 @@ export function distribuirErrores(errores: Record<string, string[]>, claves: Cla
   return resultado
 }
 
-/** Mensajes de campos que la tarjeta no muestra (p. ej. "empleadoId"): se muestran en la tarjeta. */
+/** Mensajes de campos que la tarjeta no muestra (p. ej. "codigoEkon"): se muestran en la tarjeta. */
 export function mensajesSinCampo(errores: ErroresFila, camposVisibles: string[]): string[] {
   return Object.entries(errores)
     .filter(([campo, mensaje]) => mensaje && !camposVisibles.includes(campo))

@@ -182,13 +182,25 @@ export interface HorarioErp {
   tipo: string | null
 }
 
-/** Item de GET /api/empleados (sin cédula ni correo). */
+/**
+ * Item de GET /api/empleados (sin cédula ni correo). TAREA-26d: viene de la API de empleados (caché en memoria del
+ * servidor); la clave es `codigoEkon` (la persona puede no tener fila en la base todavía: no hay `id`).
+ */
 export interface EmpleadoBusqueda {
-  id: number
   codigoEkon: string
   nombreCompleto: string
   cargo: string | null
   departamento: string | null
+  unidad: string | null
+}
+
+/** 200 de GET /api/empleados. `avisoErp`: el ERP no respondió y se usa la lista anterior (aviso no bloqueante). */
+export interface ResultadoBusquedaEmpleados {
+  items: EmpleadoBusqueda[]
+  pagina: number
+  tamano: number
+  total: number
+  avisoErp: string | null
 }
 
 export interface FiltroEmpleados {
@@ -217,8 +229,9 @@ export interface SolicitudCrearProyecto {
   backs: BackSolicitud[]
 }
 
+/** TAREA-26d-2: la persona va por `codigoEkon` (el servidor acepta `empleadoId` solo hasta la 26d-3; no se envía). */
 export interface PrincipalSolicitud {
-  empleadoId: number | null
+  codigoEkon: string | null
   jornada: string | null
   fechaInicio: string | null
   fechaFin: string | null
@@ -226,7 +239,7 @@ export interface PrincipalSolicitud {
 }
 
 export interface BackSolicitud {
-  empleadoId: number | null
+  codigoEkon: string | null
   tipoRegistro: TipoRegistroBack
   diasDescanso: number
   fechaInicio: string | null
@@ -244,7 +257,10 @@ export interface PersonaCronograma {
   numero: number
 }
 
-/** Tramo. rol = PRINCIPAL | BACK | DESCANSO; tipo = AUTO | MANUAL. */
+/**
+ * Tramo. rol = PRINCIPAL | BACK | DESCANSO; tipo = AUTO | MANUAL. TAREA-26d: `empleadoId` negativo = persona sin fila en
+ * la base todavía (Id temporal de la vista previa; se da de alta al registrar). No es un error.
+ */
 export interface TramoCronograma {
   rol: string
   tipo: string
@@ -513,6 +529,7 @@ export interface CabeceraActualizada {
 // ------------------------------------------------------------------ Actualización de personal (contrato TAREA-17; pantalla en la TAREA-19b)
 // Origen: backend/src/App.Application/Proyectos/Personal/EdicionPersonalDtos.cs y EdicionPersonalContratos.cs.
 
+/** `id` negativo en una vista previa = persona nueva sin fila en la base todavía (TAREA-26d). */
 export interface EmpleadoEdicion {
   id: number
   codigoEkon: string
@@ -576,7 +593,8 @@ export interface EdicionPersonal {
 export interface PrincipalEdicionSolicitud {
   clave: string | null
   id: number | null
-  empleadoId: number | null
+  /** TAREA-26d-2: solo en las NUEVAS; null en las vigentes (se identifican por `id`). No se envía `empleadoId`. */
+  codigoEkon: string | null
   jornada: string | null
   fechaInicio: string | null
   fechaFin: string | null
@@ -587,7 +605,8 @@ export interface PrincipalEdicionSolicitud {
 export interface BackEdicionSolicitud {
   clave: string | null
   id: number | null
-  empleadoId: number | null
+  /** TAREA-26d-2: solo en las NUEVAS; null en las vigentes. */
+  codigoEkon: string | null
   tipoRegistro: string | null
   fechaInicio: string | null
   fechaFin: string | null

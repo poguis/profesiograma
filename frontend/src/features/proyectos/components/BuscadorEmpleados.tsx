@@ -9,7 +9,9 @@ import {
   DialogTitle,
   Field,
   MessageBar,
+  MessageBarActions,
   MessageBarBody,
+  MessageBarTitle,
   SearchBox,
   Spinner,
   Switch,
@@ -19,9 +21,9 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular } from '@fluentui/react-icons'
 import { useState } from 'react'
-import { EstadoError } from '../../../components/EstadoError'
 import { Paginacion } from '../../../components/Paginacion'
 import { useValorConRetardo } from '../../../hooks/useValorConRetardo'
+import { aEmpleadoFila, detalleEmpleado, errorBuscador, marcasEmpleado } from '../buscadorEmpleados'
 import type { EmpleadoFila } from '../formularioProyecto'
 import { useBusquedaEmpleados } from '../hooks'
 import type { EmpleadoBusqueda } from '../tipos'
@@ -53,15 +55,18 @@ export interface BuscadorEmpleadosProps {
   abierto: boolean
   /** "Agregar principal" | "Agregar back" */
   titulo: string
-  /** Empleado → etiquetas donde ya está ("P1", "Back 2"). Se marca, pero no se bloquea (E6). */
-  etiquetas: Map<number, string[]>
+  /** claveEmpleado(código) → etiquetas donde ya está ("P1", "Back 2"). Se marca, pero no se bloquea (E6). */
+  etiquetas: Map<string, string[]>
   /** false al llegar al máximo (R9). */
   puedeAgregar: boolean
   onSeleccionar: (empleado: EmpleadoFila) => void
   onCerrar: () => void
 }
 
-/** Búsqueda de empleados activos (GET /api/empleados) con espera al escribir y paginación. Queda abierto para agregar varios. */
+/**
+ * Búsqueda de empleados activos (GET /api/empleados) con espera al escribir y paginación. Queda abierto para agregar
+ * varios. TAREA-26d-2: clave `codigoEkon`; `avisoErp` como aviso no bloqueante; 503 con "Reintentar".
+ */
 export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, onSeleccionar, onCerrar }: BuscadorEmpleadosProps) {
   const estilos = useEstilos()
   const [texto, setTexto] = useState('')
@@ -70,13 +75,13 @@ export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, on
   const [tamano, setTamano] = useState(10)
   const textoBusqueda = useValorConRetardo(texto.trim(), ESPERA_TEXTO_MS)
 
-  const { data, error, isPending, isFetching } = useBusquedaEmpleados(
+  const { data, error, isPending, isFetching, refetch } = useBusquedaEmpleados(
     { texto: textoBusqueda || undefined, soloMisDepartamentos: !verOtros, pagina, tamano },
     abierto,
   )
 
-  const agregar = (e: EmpleadoBusqueda) =>
-    onSeleccionar({ id: e.id, codigoEkon: e.codigoEkon, nombreCompleto: e.nombreCompleto, cargo: e.cargo })
+  const agregar = (e: EmpleadoBusqueda) => onSeleccionar(aEmpleadoFila(e))
+  const fallo = error ? errorBuscador(error) : null
 
   return (
     <Dialog open={abierto} onOpenChange={(_, d) => !d.open && onCerrar()}>
@@ -112,7 +117,27 @@ export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, on
               </MessageBar>
             )}
 
-            {error && <EstadoError error={error} />}
+            {fallo && (
+              <MessageBar intent="error">
+                <MessageBarBody>
+                  <MessageBarTitle>{fallo.titulo}</MessageBarTitle>
+                  {fallo.detalle}
+                </MessageBarBody>
+                {fallo.reintentable && (
+                  <MessageBarActions>
+                    <Button disabled={isFetching} onClick={() => void refetch()}>
+                      Reintentar
+                    </Button>
+                  </MessageBarActions>
+                )}
+              </MessageBar>
+            )}
+
+            {!error && data?.avisoErp && (
+              <MessageBar intent="warning">
+                <MessageBarBody>{data.avisoErp}</MessageBarBody>
+              </MessageBar>
+            )}
 
             {data && data.total === 0 && (
               <Text>
@@ -124,12 +149,12 @@ export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, on
             {data && data.items.length > 0 && (
               <ul className={estilos.lista} aria-label="Empleados encontrados">
                 {data.items.map((e) => {
-                  const marcas = etiquetas.get(e.id) ?? []
+                  const marcas = marcasEmpleado(etiquetas, e)
                   return (
-                    <li key={e.id} className={estilos.item}>
+                    <li key={e.codigoEkon} className={estilos.item}>
                       <div className={estilos.datos}>
                         <Text weight="semibold">{e.nombreCompleto}</Text>
-                        <Text size={200}>{[e.codigoEkon, e.cargo, e.departamento].filter(Boolean).join(' · ')}</Text>
+                        <Text size={200}>{detalleEmpleado(e)}</Text>
                         {marcas.length > 0 && (
                           <div className={estilos.marcas}>
                             {marcas.map((m) => (

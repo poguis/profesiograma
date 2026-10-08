@@ -1,7 +1,9 @@
 # TAREA-26d-1 — Backend: empleados desde la API (opción C) y retiro de la 26b
 
-**Fecha:** 2026-10-07 (Fase A de la TAREA-26d y Fase B de la 26d-1)
-**Resultado:** implementada. Falta la verificación del usuario (V1, V2, V3, V8, V9, V10; sección 6).
+**Fecha:** 2026-10-07 (Fase A de la TAREA-26d y Fase B de la 26d-1); cierre 2026-10-08
+**Resultado:** ✅ **cerrada.** Verificación del usuario del 08/10/2026 (modo Http y Simulado): V1, V2, V3, V8, V9 y V10 OK (sección 6). Defecto del 500 en la vista previa corregido (sección 8).
+
+Al implementarse (07/10/2026):
 - `dotnet build Profesiograma.slnx -c Release`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **581/581**. Son las 549 del commit de la 26a (547 sin cambios en sus aserciones y 2 retiradas: las de traducción de la búsqueda local) más 34 nuevas.
 - `dotnet ef migrations has-pending-model-changes … --configuration Release`: "No changes have been made to the model since the last migration." **Sin migraciones.**
@@ -135,12 +137,12 @@ Requisitos:
 
 | # | Caso | Pasos | Esperado | ¿Escribe? | Resultado |
 |---|---|---|---|---|---|
-| V1 | Buscador desde la API | `buscar.cmd` (con `set TEXTO=<apellido con tilde>`) | 200. Con `soloMisDepartamentos=true`, total ≈ 85 (SIG); con `false`, ≈ 1633; `avisoErp` "(ninguno)"; las variantes con y sin tildes dan el mismo total; solo códigos | No | |
-| V2 | Caché | Ejecutar `buscar.cmd` dos veces en menos de 10 min y revisar la consola de la API | Una sola línea `ERP empleados: HTTP 200 en … ms` | No | |
-| V3 | Crear con empleados reales | `crear-proyecto-1.json` con datos ERP y códigos reales → `crear-proyecto.cmd` → escribir `REGISTRAR` | Vista previa 200 (empleados sin fila con `empleadoId` negativo); registro 201 con id y código | **Sí (proyecto nuevo + filas `Empleado` + `CargoInfor`)** | |
-| V8 | Modo Simulado | Quitar `ServiciosExternos:Modo` → reiniciar → `buscar.cmd`; `crear-proyecto.cmd` con códigos `SIM…` y los datos del simulado (9001, DEV-ERP-001, DEV.01, horario 1) | Buscador con DEV001–DEV008 y SIM001…; creación sin cruces. Volver a Http después | **Sí (si registra)** | |
-| V9 | Tabla `Empleado` | `conteos.sql` (SSMS, solo lectura) | Solo los DEV y las personas de V3/V8; `NoDevConCedula = 0`; `NoDevSinAsignacion = 0`; cargos nuevos sin código Infor | No | |
-| V10 | Transición `empleadoId` / `codigoEkon` | `set EMPLEADO_ID=<Id de V9>`, `set CODIGO_EKON=<código activo>` → `transicion.cmd` | a) y b) 200; c) 400 `principales[0].codigoEkon` "Indique codigoEkon o empleadoId, no ambos."; d) 400 `principales[0].empleadoId` "El empleado es obligatorio." | No | |
+| V1 | Buscador desde la API | `buscar.cmd` (con `set TEXTO=<apellido con tilde>`) | 200. Con `soloMisDepartamentos=true`, total ≈ 85 (SIG); con `false`, ≈ 1633; `avisoErp` "(ninguno)"; las variantes con y sin tildes dan el mismo total; solo códigos | No | ✅ 08/10/2026: SIG = 85; todos = 1629; sin `avisoErp`. Con tildes: Todos/tilde = 18 y todos/texto sin tildes = 18, sin `avisoErp` |
+| V2 | Caché | Ejecutar `buscar.cmd` dos veces en menos de 10 min y revisar la consola de la API | Una sola línea `ERP empleados: HTTP 200 en … ms` | No | ✅ 2511 ms la primera búsqueda; 14 ms la segunda (caché) |
+| V3 | Crear con empleados reales | `crear-proyecto-1.json` con datos ERP y códigos reales → `crear-proyecto.cmd` → escribir `REGISTRAR` | Vista previa 200 (empleados sin fila con `empleadoId` negativo); registro 201 con id y código | **Sí (proyecto nuevo + filas `Empleado` + `CargoInfor`)** | ✅ Id 15, PRY-20261008-f5f7d6; personas 9940 (principal) y 11358 (back) con Id temporales −2 y −1 en la vista previa y alta puntual al registrar. El primer intento (09:04) dio 500 por `"actividadId": 20` (número): ver sección 8 |
+| V8 | Modo Simulado | Quitar `ServiciosExternos:Modo` → reiniciar → `buscar.cmd`; `crear-proyecto.cmd` con códigos `SIM…` y los datos del simulado (9001, DEV-ERP-001, DEV.01, horario 1) | Buscador con DEV001–DEV008 y SIM001…; creación sin cruces. Volver a Http después | **Sí (si registra)** | ✅ Completo: proyecto Id 16, PRY-20261008-d1d3a0 |
+| V9 | Tabla `Empleado` | `conteos.sql` (SSMS, solo lectura) | Solo los DEV y las personas de V3/V8; `NoDevConCedula = 0`; `NoDevSinAsignacion = 0`; cargos nuevos sin código Infor | No | ✅ Empleado = 10 (8 DEV + 2 reales); `NoDevConCedula = 0`; `EstadoErp` A; ambas con `UltimaCopiaApiUtc` y 1 proyecto; `CargoInfor` = 4 (1 sin código Infor) |
+| V10 | Transición `empleadoId` / `codigoEkon` | `set EMPLEADO_ID=<Id de V9>`, `set CODIGO_EKON=<código activo>` → `transicion.cmd` | a) y b) 200; c) 400 `principales[0].codigoEkon` "Indique codigoEkon o empleadoId, no ambos."; d) 400 `principales[0].empleadoId` "El empleado es obligatorio." | No | ✅ 200 / 200 / 400 / 400 |
 
 **Cubierto por pruebas** (difícil de provocar sin alterar el ERP):
 - lista anterior con aviso y error a los 60 min;
@@ -152,7 +154,51 @@ Requisitos:
 Los casos V4–V7 (personal, reactivación, avisos y API caída en pantalla) quedan para la 26d-2 y la 26d-3.
 
 ## 7. Pendientes
-- **Verificación del usuario** (sección 6). Después: TAREA-26d-2 (frontend) y 26d-3 (avisos y retiro de `empleadoId`).
-- **Pendiente 39:** resuelto en Simulado; en Http, tras la verificación.
+- TAREA-26d-2 (frontend) y 26d-3 (avisos y retiro de `empleadoId`).
+- **Pendiente 39:** ✅ resuelto en Http (V3, V9) y en Simulado (V8).
 - **Pendiente 2:** acotado a los puestos de las personas asignadas.
 - [PENDIENTE DE CONFIRMAR] Fase 3: si un cuerpo con `estado` vacío devuelve también a los inactivos (alta de personas históricas de SharePoint).
+
+## 8. Defecto V3: vista previa con 500 (08/10/2026)
+**Síntoma:** `crear-proyecto.cmd` (09:04, modo Http) → `POST /api/proyectos/previsualizar` HTTP 500 "An error occurred while processing your request." en 122 ms. A las 09:15, con `"actividadId": "20"`, respondió 200 (V3 ✅).
+
+**Causa raíz:**
+- `actividadId` es texto en `CrearProyectoSolicitud`, pero el cuerpo lo enviaba como número (`20`). System.Text.Json no convierte un número en texto, así que el enlace del cuerpo falla antes de llegar al servicio. No intervienen la API de empleados ni los Id temporales.
+- En Development, `RouteHandlerOptions.ThrowOnBadRequest = true` convierte ese fallo en `BadHttpRequestException`, que ningún `IExceptionHandler` atendía: `UseExceptionHandler` respondía 500 genérico. En otros entornos era un 400 sin cuerpo.
+- `companiaId: "1001"` (texto) sí se acepta: las opciones web de JSON leen números desde texto.
+
+**Reproducción:** `tests/App.Api.Tests/SolicitudIlegibleTests.cs`, un proyecto de pruebas nuevo de la capa Api.
+- Arma el pipeline **en memoria**, sin Kestrel, sin TestServer y sin red: `UseExceptionHandler`, el enlace real del cuerpo con `RequestDelegateFactory` y `ThrowOnBadRequest = true`.
+- Usa el cuerpo de V3 con códigos EKON ficticios.
+- Antes de la corrección: 8 de 10 pruebas en rojo, con 500 en lugar de 400.
+
+**Corrección (solo `App.Api`):**
+- `Configuracion/SolicitudIlegibleExceptionHandler.cs`: `BadHttpRequestException` → 400 (o 415) `ValidationProblem` con el título "La solicitud no tiene el formato esperado." y el mensaje en español en su campo.
+  - **Tipo incorrecto:** el campo sale de la ruta JSON (`actividadId`, `principales[0].fechaInicio`, `backs[0].diasDescanso`…) y el mensaje del tipo esperado:
+    - "Debe ser texto entre comillas (p. ej. "20").";
+    - "Debe ser un número entero sin comillas.";
+    - "Debe ser una fecha con formato aaaa-mm-dd entre comillas.";
+    - "Debe ser una lista ([ … ]).".
+  - **JSON mal formado:** `cuerpo` "El cuerpo no es un JSON válido (línea n): revise comas, comillas y llaves.".
+  - **Sin Content-Type JSON:** 415 en `cuerpo`.
+  - **Cuerpo vacío:** 400 en `solicitud`.
+  - No devuelve el texto en inglés de System.Text.Json.
+- `Configuracion/ErroresApiExtensions.cs` (`AddErroresApi`): registra los 3 manejadores y `ProblemDetails`, y fija `ThrowOnBadRequest = true` en **todos** los entornos (así el 400 lleva siempre el mensaje). `Program.cs` lo usa.
+- **Campos desconocidos:** se siguen ignorando (comportamiento por defecto de System.Text.Json); no son error. `principalRelacionado` sí es un campo de `BackSolicitud` (posición 1..n del principal).
+- **Datos válidos en tipo pero inexistentes** (por ejemplo, una actividad que no está en el proyecto ERP): ya daban 400 en su campo desde el validador ("La actividad no existe en el proyecto ERP."). Un fallo del ERP sigue dando 503.
+
+**Otras rutas:** el manejador es global, así que cubre también el registro (`POST /api/proyectos`), personal (`…/personal[/previsualizar]`) y reactivación (`…/reactivacion[/previsualizar]`).
+- Pruebas de `ActualizarPersonalSolicitud` (`principales[0].codigoEkon` numérico) y `ReactivarProyectoSolicitud` (`versionProyecto` como texto).
+- Con el tipo correcto, los Id temporales ya estaban cubiertos por `EmpleadosApiTests` y verificados en V3 (−2 / −1).
+
+**Script:** el `LEEME.md` de `tarea26d` indica el tipo y el origen de cada valor:
+- `actividadId`: texto, `id` de `/api/erp/companias/{c}/proyectos/{p}/actividades`;
+- `companiaId` y `horarioCodigo`: números;
+- `principalRelacionado`: posición del principal.
+
+`crear-proyecto.ejemplo.json` ya usaba los nombres exactos de `CrearProyectoSolicitud`, con `actividadId` como texto.
+
+**Comandos:**
+- `dotnet build Profesiograma.slnx -c Release`: 0 advertencias, 0 errores.
+- `dotnet test --solution Profesiograma.slnx -c Release`: **591/591** (581 + 10 nuevas en `App.Api.Tests`).
+- Ninguna llamada a una API.

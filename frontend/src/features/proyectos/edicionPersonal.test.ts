@@ -10,6 +10,7 @@ import {
   clavesDelEnvioEdicion,
   crearEstadoEdicionPersonal,
   etiquetaFila,
+  etiquetasPorEmpleadoEdicion,
   interpretarErrorPersonal,
   mensajeExitoPersonal,
   motivoSinRegistroPersonal,
@@ -68,7 +69,7 @@ const dto = (personal: PersonaEdicion[] = [P1H, K1H, P2, K2, K3]): EdicionPerson
   versionProyecto: 3,
 })
 
-const empleado = (id: number) => ({ id, codigoEkon: `DEV00${id}`, nombreCompleto: `EMPLEADO PRUEBA 0${id}`, cargo: null })
+const empleado = (id: number) => ({ codigoEkon: `DEV00${id}`, nombreCompleto: `EMPLEADO PRUEBA 0${id}`, cargo: null })
 
 function aplicar(estado: EstadoEdicionPersonal, ...acciones: AccionEdicionPersonal[]) {
   return acciones.reduce(reducerEdicionPersonal, estado)
@@ -80,7 +81,7 @@ const vistaDe = (revision: number, cambios: Partial<PrevisualizacionPersonal> = 
   revision,
   datos: {
     corte: '2026-10-06',
-    personal: [{ clave: 'p33', id: 33, rol: 'PRINCIPAL', numero: 2, empleado: empleado(7), clase: 'VIGENTE', accion: 'MODIFICADO' }],
+    personal: [{ clave: 'p33', id: 33, rol: 'PRINCIPAL', numero: 2, empleado: { id: 7, ...empleado(7) }, clase: 'VIGENTE', accion: 'MODIFICADO' }],
     tramos: [],
     cruces: [],
     resumen: [],
@@ -148,7 +149,7 @@ describe('reducer', () => {
       { tipo: 'cambiarEmpleado', clave: 'kn1', empleado: empleado(2) },
     )
     const nuevo = e.backs.at(-1)!
-    expect([nuevo.empleado.id, nuevo.fechaFin, nuevo.observacion]).toEqual([2, '2026-10-30', 'Nota'])
+    expect([nuevo.empleado.codigoEkon, nuevo.fechaFin, nuevo.observacion]).toEqual(['DEV002', '2026-10-30', 'Nota'])
     expect(aplicar(e, { tipo: 'cambiarEmpleado', clave: 'k34', empleado: empleado(2) })).toBe(e)
   })
 
@@ -262,15 +263,15 @@ describe('solicitud', () => {
     )
     expect(aSolicitudPersonal(e)).toEqual({
       principales: [
-        { clave: 'p33', id: 33, empleadoId: 7, jornada: 'TIPO_2', fechaInicio: '2026-10-04', fechaFin: '2026-11-29', cargo: null },
+        { clave: 'p33', id: 33, codigoEkon: null, jornada: 'TIPO_2', fechaInicio: '2026-10-04', fechaFin: '2026-11-29', cargo: null },
       ],
       backs: [
         {
-          clave: 'k35', id: 35, empleadoId: 4, tipoRegistro: 'JORNADA', fechaInicio: '2026-10-25', fechaFin: '2026-10-26',
+          clave: 'k35', id: 35, codigoEkon: null, tipoRegistro: 'JORNADA', fechaInicio: '2026-10-25', fechaFin: '2026-10-26',
           diasDescanso: 2, principalClave: null, principalId: 31, observacion: null,
         },
         {
-          clave: 'kn1', id: null, empleadoId: 8, tipoRegistro: 'JORNADA', fechaInicio: '2026-10-06', fechaFin: '2026-11-29',
+          clave: 'kn1', id: null, codigoEkon: 'DEV008', tipoRegistro: 'JORNADA', fechaInicio: '2026-10-06', fechaFin: '2026-11-29',
           diasDescanso: 0, principalClave: 'p33', principalId: null, observacion: null,
         },
       ],
@@ -416,5 +417,27 @@ describe('interpretarErrorPersonal', () => {
 
   it('404: listado', () => {
     expect(interpretarErrorPersonal({ tipo: 'noEncontrado', titulo: 'x' }, claves).dialogo.noEncontrado).toBe(true)
+  })
+})
+
+describe('TAREA-26d-2: empleados por codigoEkon', () => {
+  it('las nuevas van por codigoEkon y las vigentes solo por id; nunca empleadoId', () => {
+    const s = aSolicitudPersonal(aplicar(inicial(), { tipo: 'agregar', rol: 'BACK', empleado: empleado(8), maximo: 20 }))
+    const filas = [...s.principales!, ...s.backs!]
+    expect(filas.filter((f) => f.id === null).map((f) => f.codigoEkon)).toEqual(['DEV008'])
+    expect(filas.filter((f) => f.id !== null).every((f) => f.codigoEkon === null)).toBe(true)
+    expect(filas.some((f) => 'empleadoId' in f)).toBe(false)
+  })
+
+  it('cambiar al mismo código (otra capitalización) no cambia nada', () => {
+    const e = aplicar(inicial(), { tipo: 'agregar', rol: 'BACK', empleado: empleado(8), maximo: 20 })
+    const mismo = { codigoEkon: ' dev008 ', nombreCompleto: 'EMPLEADO PRUEBA 08', cargo: null }
+    expect(aplicar(e, { tipo: 'cambiarEmpleado', clave: 'kn1', empleado: mismo })).toBe(e)
+  })
+
+  it('las etiquetas del buscador van por código, con las históricas', () => {
+    const etiquetas = etiquetasPorEmpleadoEdicion(aplicar(inicial(), { tipo: 'agregar', rol: 'BACK', empleado: empleado(8), maximo: 20 }))
+    expect(etiquetas.get('DEV007')).toContain('P1 (histórico)')
+    expect(etiquetas.get('DEV008')).toHaveLength(1)
   })
 })

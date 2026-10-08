@@ -23,7 +23,11 @@ Las salidas `resultado-*.txt` y los `*.json` que no sean `*.ejemplo.json` están
 ## Orden
 1. **V1** — `buscar.cmd` (opcional: `set TEXTO=<un apellido con tilde>`).
 2. **V3** — Copie `crear-proyecto.ejemplo.json` a `crear-proyecto-1.json` y complete los datos:
-   - `companiaId`, `proyectoErpId`, `actividadId` y `horarioCodigo` reales (los de "Nuevo proyecto" en modo Http, o los del Id 14);
+   - `companiaId`, `proyectoErpId`, `actividadId` y `horarioCodigo` reales (los de "Nuevo proyecto" en modo Http, o los del Id 14):
+     - `companiaId` y `horarioCodigo`: números sin comillas (`Id` de `/api/erp/companias`, `codigo` de `/api/erp/horarios`);
+     - `proyectoErpId`: texto entre comillas, `id` de `/api/erp/companias/{companiaId}/proyectos`;
+     - `actividadId`: **texto entre comillas** (p. ej. `"20"`), `id` de `/api/erp/companias/{companiaId}/proyectos/{proyectoErpId}/actividades` del proyecto elegido. Un número sin comillas da 400 en `actividadId` ("Debe ser texto entre comillas"; antes de la corrección del 08/10/2026 daba 500);
+     - `principalRelacionado` del back: número (posición 1..n del principal en `principales`), como en `CrearProyectoSolicitud`;
    - `codigoEkon` reales del principal y del back (por ejemplo, de `buscar.cmd`);
    - fechas futuras.
 

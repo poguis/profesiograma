@@ -19,7 +19,6 @@ const PLANTA = { codigo: 'PLANTA', requiereProyectoErp: false, requiereDimension
 const MAX = 20
 
 const empleado = (id: number): EmpleadoFila => ({
-  id,
   codigoEkon: `DEV00${id}`,
   nombreCompleto: `EMPLEADO PRUEBA 0${id}`,
   cargo: null,
@@ -179,7 +178,7 @@ describe('R8: principales y backs', () => {
   it('al reordenar, la referencia sigue a la misma persona', () => {
     const estado = aplicar(conPersonal(), { tipo: 'moverPrincipal', clave: 'p2', direccion: -1 })
     const s = aSolicitud(estado)
-    expect(s.principales.map((p) => p.empleadoId)).toEqual([7, 6])
+    expect(s.principales.map((p) => p.codigoEkon)).toEqual(['DEV007', 'DEV006'])
     expect(s.backs[0].principalRelacionado).toBe(1)
   })
 
@@ -228,7 +227,7 @@ describe('R8: principales y backs', () => {
   it('la misma persona puede ser principal y back (E6); el buscador la marca', () => {
     const estado = aplicar(conPersonal(), { tipo: 'agregarBack', empleado: empleado(6), maximo: MAX })
     expect(estado.backs).toHaveLength(2)
-    expect(etiquetasPorEmpleado(estado).get(6)).toEqual(['P1', 'Back 2'])
+    expect(etiquetasPorEmpleado(estado).get('DEV006')).toEqual(['P1', 'Back 2'])
   })
 
   it('numeroPrincipal de una clave inexistente es null', () => {
@@ -344,5 +343,28 @@ describe('TAREA-19y: principal opcional (parámetro en 0)', () => {
     const soloBack = aplicar(conCabeceraCampo(), { tipo: 'agregarBack', empleado: empleado(2), maximo: MAX })
     expect(aSolicitud(soloBack).backs[0].principalRelacionado).toBeNull()
     expect(aSolicitud(soloBack).principales).toEqual([])
+  })
+})
+
+describe('TAREA-26d-2: empleados por codigoEkon', () => {
+  const conDos = () =>
+    aplicar(
+      conCabeceraCampo(),
+      { tipo: 'agregarPrincipal', empleado: empleado(6), maximo: MAX },
+      { tipo: 'agregarBack', empleado: { codigoEkon: '900001', nombreCompleto: 'PERSONA FICTICIA 1', cargo: null }, maximo: MAX },
+    )
+
+  it('la solicitud envía codigoEkon y nunca empleadoId', () => {
+    const s = aSolicitud(conDos())
+    expect(s.principales[0].codigoEkon).toBe('DEV006')
+    expect(s.backs[0].codigoEkon).toBe('900001')
+    expect([...s.principales, ...s.backs].some((p) => 'empleadoId' in p)).toBe(false)
+  })
+
+  it('las etiquetas del buscador van por código', () => {
+    expect([...etiquetasPorEmpleado(conDos()).entries()]).toEqual([
+      ['DEV006', ['P1']],
+      ['900001', ['Back 1']],
+    ])
   })
 })

@@ -77,7 +77,7 @@ const inicial = (cambios: Partial<Reactivacion> = {}, fin: string | null = FIN) 
 
 const aplicar = (estado: EstadoReactivacion, ...acciones: AccionReactivacion[]) => acciones.reduce(reducerReactivacion, estado)
 const personal = (accion: AccionEdicionPersonal): AccionReactivacion => ({ tipo: 'personal', accion })
-const empleado = (id: number) => ({ id, codigoEkon: `DEV00${id}`, nombreCompleto: `EMPLEADO PRUEBA 0${id}`, cargo: null })
+const empleado = (id: number) => ({ codigoEkon: `DEV00${id}`, nombreCompleto: `EMPLEADO PRUEBA 0${id}`, cargo: null })
 const agregar = (rol: 'PRINCIPAL' | 'BACK', id: number) => personal({ tipo: 'agregar', rol, empleado: empleado(id), maximo: 20 })
 
 const etapa = (version: number, tipoMovimiento: string, fechaFin: string): EtapaProyecto => ({
@@ -128,7 +128,7 @@ describe('estado inicial', () => {
     expect(e.personal.principales[0]).toMatchObject({
       clave: 'pn1',
       id: null,
-      empleado: { id: 7, cargo: null },
+      empleado: { codigoEkon: 'DEV007', cargo: null },
       jornada: 'TIPO_2',
       cargo: 'PUESTO 7',
       fechaInicio: HOY,
@@ -299,15 +299,15 @@ describe('solicitud', () => {
     expect(s.fecha).toBe(HOY)
     expect(s.fechaFin).toBe(FIN)
     expect(s.principales).toEqual([
-      { clave: 'pn1', id: null, empleadoId: 7, jornada: 'TIPO_2', fechaInicio: HOY, fechaFin: FIN, cargo: 'PUESTO 7' },
+      { clave: 'pn1', id: null, codigoEkon: 'DEV007', jornada: 'TIPO_2', fechaInicio: HOY, fechaFin: FIN, cargo: 'PUESTO 7' },
     ])
     expect(s.backs).toEqual([
       {
-        clave: 'kn2', id: null, empleadoId: 3, tipoRegistro: 'JORNADA', fechaInicio: HOY, fechaFin: FIN, diasDescanso: 0,
+        clave: 'kn2', id: null, codigoEkon: 'DEV003', tipoRegistro: 'JORNADA', fechaInicio: HOY, fechaFin: FIN, diasDescanso: 0,
         principalClave: 'pn1', principalId: null, observacion: 'Cubre',
       },
       {
-        clave: 'kn3', id: null, empleadoId: 4, tipoRegistro: 'DESCANSO', fechaInicio: HOY, fechaFin: FIN, diasDescanso: 0,
+        clave: 'kn3', id: null, codigoEkon: 'DEV004', tipoRegistro: 'DESCANSO', fechaInicio: HOY, fechaFin: FIN, diasDescanso: 0,
         principalClave: null, principalId: 31, observacion: null,
       },
     ])
@@ -443,5 +443,13 @@ describe('diálogo de cambio de estado (P1)', () => {
     expect(opcionesDestino('SUSPENDIDO').filter((o) => esReactivacion(o.codigo)).map((o) => o.etiqueta)).toEqual(['Reactivar'])
     expect(esReactivacion('TERMINADO')).toBe(false)
     expect(esReactivacion('SUSPENDIDO')).toBe(false)
+  })
+})
+
+describe('TAREA-26d-2: el propuesto (R7) es una persona nueva', () => {
+  it('viaja por codigoEkon, sin empleadoId', () => {
+    const [propuesto] = aSolicitudReactivar(inicial()).principales!
+    expect(propuesto).toMatchObject({ id: null, codigoEkon: 'DEV007' })
+    expect('empleadoId' in propuesto).toBe(false)
   })
 })
