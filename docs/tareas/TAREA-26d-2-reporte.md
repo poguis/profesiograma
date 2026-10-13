@@ -1,7 +1,7 @@
 # TAREA-26d-2 — Frontend: empleados por `codigoEkon` (opción C)
 
 **Fecha:** 2026-10-08
-**Resultado:** implementada. Falta la verificación visual del usuario (W1–W6, sección 6).
+**Resultado:** ✅ **cerrada.** Verificación visual del usuario W1–W6 OK (08/10 y 13/10/2026; sección 8).
 - `npm run build`: compila.
 - `npm run lint` (oxlint): sin errores ni advertencias.
 - `npm test`: **217/217**. Son las 205 de la 19c/26d-1: 6 con aserciones ajustadas de forma mecánica (sección 4.1) y el resto sin cambios. Más 12 nuevas.
@@ -87,5 +87,19 @@ Antes de empezar: reinicie la API (incluye el paso 0) y `npm run dev`.
 | W6 | Listado y detalle | Abrir el listado y el detalle de los Id 1–15 | Sin errores | No | |
 
 ## 7. Pendientes
-- **Verificación del usuario** (W1–W6).
 - **TAREA-26d-3:** avisos "guardado frente al ERP" por persona en edición y reactivación, y retiro de `empleadoId` en el backend.
+- **Fase 3:** el ERP puede devolver `CorreoEmpresa` sin formato de correo (p. ej. "SC" en 11358); validar el formato antes de usarlo (pendiente 45 de `00_ESTADO_ACTUAL.md`).
+
+## 8. Verificación visual
+Usuario gestor; modo Http salvo W5. Fechas: 08/10 y 13/10/2026.
+
+| # | Resultado | Evidencia |
+|---|---|---|
+| W1 | OK | Id 17, alta de 8811 + cargo AUDITOR |
+| W2 | OK | Id 15 v2 y v3 (alta de 5195) |
+| W3 | OK | Id 17 v2–v5, alta de 7255 sin duplicar cargo |
+| W4 | OK | 503 + Reintentar, sin escrituras |
+| W5 | OK | Id 18 en Simulado |
+| W6 | OK | Ids 3 y 5 solo visibles para el admin (R1) |
+
+**Línea base de la BD de desarrollo tras la verificación:** Empleado = 17, CargoInfor = 6, último Proyecto = 18. La cifra anterior (10 / 4, V9 de la 26d-1) omitía las filas de V8.
