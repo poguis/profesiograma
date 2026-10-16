@@ -1,0 +1,15 @@
+[
+  { "codigo": 9101, "descripcion": "DIURNO 07:00 - 16:00 (PRUEBA)", "horaEntrada": "07:00:00", "horaSalida": "16:00:00", "minutosJornada": 540, "minutosTrabajados": 480, "tipo": "M" },
+  { "codigo": 9102, "descripcion": "NOCTURNO 22:00 - 06:00 (PRUEBA)", "horaEntrada": "22:00:00", "horaSalida": "06:00:00", "minutosJornada": 480, "minutosTrabajados": 420, "tipo": "M" },
+  { "codigo": 9103, "descripcion": "TARDE HASTA 2400 (PRUEBA)", "horaEntrada": "16:00:00", "horaSalida": null, "minutosJornada": 480, "minutosTrabajados": 420, "tipo": "D" },
+  { "codigo": 9104, "descripcion": "TARDE 16:00 - 00:00 (PRUEBA)", "horaEntrada": "16:00:00", "horaSalida": "00:00:00", "minutosJornada": 480, "minutosTrabajados": 420, "tipo": "M" },
+  { "codigo": 9105, "descripcion": "LIBRE", "horaEntrada": "00:00:00", "horaSalida": "00:00:00", "minutosJornada": 0, "minutosTrabajados": 0, "tipo": "M" },
+  { "codigo": 9106, "descripcion": "Feriado", "horaEntrada": "00:00:00", "horaSalida": "00:00:00", "minutosJornada": null, "minutosTrabajados": null, "tipo": "M" },
+  { "codigo": 9107, "descripcion": "VACÍO", "horaEntrada": null, "horaSalida": null, "minutosJornada": 0, "minutosTrabajados": 0, "tipo": "D" },
+  { "codigo": 9108, "descripcion": "VACACIONES", "horaEntrada": "08:00:00", "horaSalida": "17:00:00", "minutosJornada": 540, "minutosTrabajados": 480, "tipo": "M" },
+  { "codigo": 9109, "descripcion": "PERMISO  MÉDICO", "horaEntrada": "08:00:00", "horaSalida": "08:00:00", "minutosJornada": 1440, "minutosTrabajados": 0, "tipo": "M" },
+  { "codigo": 9110, "descripcion": " calamidad doméstica ", "horaEntrada": "07:00:00", "horaSalida": "16:00:00", "minutosJornada": 540, "minutosTrabajados": 0, "tipo": "" },
+  { "codigo": 9111, "descripcion": "DIA LIBRE (PRUEBA)", "horaEntrada": "07:00:00", "horaSalida": "16:00:00", "minutosJornada": 540, "minutosTrabajados": 480, "tipo": "M" },
+  { "codigo": 9112, "descripcion": "MAÑANA 06:00 - 14:00 (PRUEBA)", "horaEntrada": "06:00:00", "horaSalida": "14:00:00", "minutosJornada": 600, "minutosTrabajados": 540, "tipo": "D" },
+  { "codigo": 9113, "descripcion": null, "horaEntrada": "08:00:00", "horaSalida": "17:00:00", "minutosJornada": 540, "minutosTrabajados": 480, "tipo": null }
+]
