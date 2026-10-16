@@ -36,10 +36,10 @@ public interface IDatosReferenciaProyecto
     Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct);
 
     /// <summary>
-    /// Filas de Empleado por Id, sin filtrar por estado (TAREA-26d: transición con empleadoId; si el empleado está activo
-    /// lo decide la API).
+    /// Datos laborales guardados en Empleado por Id, sin filtrar por estado ni datos sensibles (TAREA-26d-3: comparación
+    /// "guardado frente al ERP"; si el empleado está activo lo decide la API).
     /// </summary>
-    Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
+    Task<IReadOnlyList<EmpleadoGuardado>> ObtenerEmpleadosGuardadosAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
 
     /// <summary>Id de las filas de Empleado por CodigoEkon (sin distinguir mayúsculas). Los que no tienen fila no aparecen.</summary>
     Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct);

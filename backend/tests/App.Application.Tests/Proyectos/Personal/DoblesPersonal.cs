@@ -47,15 +47,15 @@ internal static class DoblesPersonal
     }
 
     // Cuerpos de solicitud
-    public static PrincipalEdicionSolicitud SolP1(string jornada = "TIPO_3", DateOnly? fin = null, int? empleado = 6, DateOnly? inicio = null) =>
+    public static PrincipalEdicionSolicitud SolP1(string jornada = "TIPO_3", DateOnly? fin = null, string? empleado = "DEV006", DateOnly? inicio = null) =>
         new("p1", 91, empleado, jornada, inicio ?? Inicio, fin ?? Fin, null);
 
     public static BackEdicionSolicitud SolK1(DateOnly? inicio = null) =>
-        new("k1", 93, 7, "JORNADA", inicio ?? K1.FechaInicio, K1.FechaFin, 2, "p1", null, "Back de prueba");
+        new("k1", 93, "DEV007", "JORNADA", inicio ?? K1.FechaInicio, K1.FechaFin, 2, "p1", null, "Back de prueba");
 
     public static BackEdicionSolicitud BackNuevo(string clave, int empleado, string desde, string hasta, string? principalClave = null,
         int? principalId = null) =>
-        new(clave, null, empleado, "JORNADA", DateOnly.Parse(desde, System.Globalization.CultureInfo.InvariantCulture),
+        new(clave, null, $"DEV{empleado:000}", "JORNADA", DateOnly.Parse(desde, System.Globalization.CultureInfo.InvariantCulture),
             DateOnly.Parse(hasta, System.Globalization.CultureInfo.InvariantCulture), 0, principalClave, principalId, null);
 }
 

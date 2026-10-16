@@ -229,7 +229,7 @@ export interface SolicitudCrearProyecto {
   backs: BackSolicitud[]
 }
 
-/** TAREA-26d-2: la persona va por `codigoEkon` (el servidor acepta `empleadoId` solo hasta la 26d-3; no se envía). */
+/** TAREA-26d-2: la persona va por `codigoEkon` (desde la TAREA-26d-3 el servidor ya no tiene `empleadoId`). */
 export interface PrincipalSolicitud {
   codigoEkon: string | null
   jornada: string | null
@@ -654,6 +654,35 @@ export interface PersonalActualizado {
 
 // ------------------------------------------------------------------ Reactivación (contrato TAREA-17b; pantalla TAREA-19c)
 // Origen: backend/src/App.Application/Proyectos/Reactivacion/ReactivacionDtos.cs y ReactivacionContratos.cs.
+
+// ------------------------------------------------------------------ Comparación con el ERP (TAREA-26d-3)
+// Origen: backend/src/App.Application/Empleados/ComparacionEmpleadosErp.cs. Solo informa: nunca bloquea.
+
+/** NO_ACTIVO | CAMBIO_NOMBRE | CAMBIO_CARGO | CAMBIO_DEPARTAMENTO (este incluye la unidad). */
+export type TipoAvisoErp = 'NO_ACTIVO' | 'CAMBIO_NOMBRE' | 'CAMBIO_CARGO' | 'CAMBIO_DEPARTAMENTO'
+
+export interface AvisoErp {
+  tipo: TipoAvisoErp
+  mensaje: string
+  /** Valor guardado y valor del ERP (null en NO_ACTIVO o si está vacío). */
+  guardado: string | null
+  erp: string | null
+}
+
+export interface AvisosPersonaErp {
+  codigoEkon: string
+  avisos: AvisoErp[]
+}
+
+/**
+ * GET /api/proyectos/{id}/personal/comparacion-erp. `personas`: solo las guardadas con avisos. `avisoGeneral`: ERP caído
+ * ("No se pudo comparar con el ERP.") o lista anterior. Siempre 200 salvo 404 (no visible).
+ */
+export interface ComparacionErp {
+  comparadoUtc: string | null
+  avisoGeneral: string | null
+  personas: AvisosPersonaErp[]
+}
 
 /** activo = false: se propone con advertencia y el registro lo rechazará. */
 export interface EmpleadoPropuesto {

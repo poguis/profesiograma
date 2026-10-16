@@ -78,7 +78,7 @@ public class CrearProyectoServicioTests
         var e = Crear();
         var s = Dobles.SolicitudCampo();
         // El back es la misma persona que el principal 1 (emp 6) en días de trabajo de este.
-        var r = await e.Servicio.RegistrarAsync(s with { Backs = [s.Backs![0] with { EmpleadoId = 6, FechaInicio = new DateOnly(2026, 12, 2), FechaFin = new DateOnly(2026, 12, 3) }] }, Ct);
+        var r = await e.Servicio.RegistrarAsync(s with { Backs = [s.Backs![0] with { CodigoEkon = "DEV006", FechaInicio = new DateOnly(2026, 12, 2), FechaFin = new DateOnly(2026, 12, 3) }] }, Ct);
 
         Assert.Equal(EstadoCrearProyecto.Conflicto, r.Estado);
         Assert.All(r.Previsualizacion!.Cruces, c => Assert.Equal(CalculadorCruces.OrigenInterno, c.Origen));

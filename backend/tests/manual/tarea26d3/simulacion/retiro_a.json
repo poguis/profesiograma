@@ -1,0 +1,10 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Los datos del proyecto no son válidos.",
+  "status": 400,
+  "errors": {
+    "principales[0].codigoEkon": [
+      "El empleado es obligatorio."
+    ]
+  }
+}

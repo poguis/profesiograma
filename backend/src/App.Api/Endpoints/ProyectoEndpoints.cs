@@ -1,4 +1,5 @@
 using App.Application.Comun;
+using App.Application.Empleados;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
@@ -110,6 +111,11 @@ public static class ProyectoEndpoints
         proyectos.MapGet("/{id:int}/edicion", async Task<Results<Ok<EdicionPersonalDto>, NotFound>> (
             int id, EdicionPersonalServicio servicio, CancellationToken ct) =>
             await servicio.ObtenerEdicionAsync(id, ct) is { } edicion ? TypedResults.Ok(edicion) : TypedResults.NotFound());
+
+        // TAREA-26d-3: avisos "guardado frente al ERP" por persona (solo informan). ERP caído → 200 con avisoGeneral, nunca 503.
+        proyectos.MapGet("/{id:int}/personal/comparacion-erp", async Task<Results<Ok<ComparacionErpDto>, NotFound>> (
+            int id, ComparacionErpServicio servicio, CancellationToken ct) =>
+            await servicio.CompararAsync(id, ct) is { } comparacion ? TypedResults.Ok(comparacion) : TypedResults.NotFound());
 
         proyectos.MapPost("/{id:int}/personal/previsualizar",
             async Task<Results<Ok<PrevisualizacionPersonalDto>, ValidationProblem, NotFound, ProblemHttpResult>> (

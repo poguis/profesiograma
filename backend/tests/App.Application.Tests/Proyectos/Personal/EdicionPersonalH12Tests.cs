@@ -43,7 +43,7 @@ public class EdicionPersonalH12Tests
         new(new RepositorioEdicionFalso(proyecto), new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(),
             new TransaccionFalsa(), new UsuarioFalso(), new RelojFijo(Ahora), new EmpleadosErpFalsos());
 
-    private static PrincipalEdicionSolicitud SolP2() => new("p2", 103, 7, "TIPO_2", Corte, Fin, null);
+    private static PrincipalEdicionSolicitud SolP2() => new("p2", 103, "DEV007", "TIPO_2", Corte, Fin, null);
 
     [Fact]
     public async Task H12_BackRecortadoSinDescansoGuardado_EsHistorico_YNoSeRegeneraSuDescanso()
@@ -69,7 +69,7 @@ public class EdicionPersonalH12Tests
         var edicion = (await servicio.ObtenerEdicionAsync(9, Ct))!;
         Assert.Equal("VIGENTE", edicion.Personal.Single(p => p.Id == 102).Clase);
 
-        var k1 = new BackEdicionSolicitud("k1", 102, 8, "JORNADA", K1.FechaInicio, K1.FechaFin, 3, null, 101, null);
+        var k1 = new BackEdicionSolicitud("k1", 102, "DEV008", "JORNADA", K1.FechaInicio, K1.FechaFin, 3, null, 101, null);
         var r = await servicio.PrevisualizarAsync(9, new ActualizarPersonalSolicitud([SolP2()], [k1]), Ct);
 
         Assert.Equal(EstadoEdicion.Previsualizado, r.Estado);

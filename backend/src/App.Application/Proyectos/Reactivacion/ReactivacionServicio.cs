@@ -33,8 +33,11 @@ public sealed class ReactivacionServicio(
     public const string AdvertenciaInactivo = "El empleado del principal propuesto no está activo; elige otro principal.";
     public const string AdvertenciaSinPrincipales = "El proyecto no tiene principales; agrega uno.";
     public const string AdvertenciaDiasTranscurridos = "Se generarán días ya transcurridos.";
-    /// <summary>TAREA-26d: la API de empleados no respondió al proponer el principal (no bloquea; el registro valida).</summary>
-    public const string AdvertenciaErpNoVerificado = "No se pudo verificar los datos en el ERP.";
+    /// <summary>
+    /// TAREA-26d: la API de empleados no respondió al proponer el principal (no bloquea; el registro valida). TAREA-26d-3
+    /// (D4): mismo texto que la comparación con el ERP (la pantalla lo muestra una sola vez).
+    /// </summary>
+    public const string AdvertenciaErpNoVerificado = ComparacionEmpleadosErp.MensajeNoComparado;
 
     // ------------------------------------------------------------------ GET reactivacion
 
@@ -226,8 +229,8 @@ public sealed class ReactivacionServicio(
 
         // Datos de referencia: jornadas, límites y empleados activos en la API (todas las personas son nuevas; TAREA-26d).
         var activos = empleados ?? await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
-            (s.Principales ?? []).Where(p => p.Id is null).Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
-                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            (s.Principales ?? []).Where(p => p.Id is null).Select(p => p.CodigoEkon)
+                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => b.CodigoEkon)),
             fresco, ct);
         var jornadas = await datos.ObtenerJornadasAsync(ct);
         var limites = await datos.ObtenerLimitesAsync(ct);

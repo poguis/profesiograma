@@ -1,4 +1,5 @@
 using System.Globalization;
+using App.Application.Empleados;
 using App.Application.Proyectos.Crear;
 using App.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
@@ -37,8 +38,8 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     internal static bool LeerExigePrincipal(string? valor) =>
         valor?.Trim() is { } v && (v == "1" || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
 
-    public async Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
-        await ConsultaEmpleadosPorIds(db, ids).ToDictionaryAsync(e => e.Id, ct);
+    public async Task<IReadOnlyList<EmpleadoGuardado>> ObtenerEmpleadosGuardadosAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
+        await ConsultaEmpleadosPorIds(db, ids).ToListAsync(ct);
 
     public async Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct) =>
         (await ConsultaIdsPorCodigos(db, codigos).ToListAsync(ct))
@@ -68,13 +69,13 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     }
 
     /// <summary>
-    /// TAREA-26d: filas de Empleado por Id SIN filtrar por estado (transición con empleadoId). Si el empleado está activo
-    /// lo decide la API, no la base. Sin cédula ni correo.
+    /// TAREA-26d-3: datos laborales guardados en Empleado por Id SIN filtrar por estado (comparación "guardado frente al
+    /// ERP"; si el empleado está activo lo decide la API, no la base). Sin cédula ni correo.
     /// </summary>
-    internal static IQueryable<EmpleadoAsignable> ConsultaEmpleadosPorIds(ProfesiogramaDbContext db, IReadOnlyCollection<int> ids) =>
+    internal static IQueryable<EmpleadoGuardado> ConsultaEmpleadosPorIds(ProfesiogramaDbContext db, IReadOnlyCollection<int> ids) =>
         db.Empleados.AsNoTracking()
             .Where(e => ids.Contains(e.Id))
-            .Select(e => new EmpleadoAsignable(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, null));
+            .Select(e => new EmpleadoGuardado(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, e.Departamento, e.Unidad));
 
     /// <summary>TAREA-26d: Id de las filas de Empleado por CodigoEkon (collation CI de la base).</summary>
     internal static IQueryable<FilaCodigoEmpleado> ConsultaIdsPorCodigos(ProfesiogramaDbContext db, IReadOnlyCollection<string> codigos) =>

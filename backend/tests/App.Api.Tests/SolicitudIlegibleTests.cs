@@ -103,6 +103,18 @@ public sealed class SolicitudIlegibleTests
     }
 
     [Fact]
+    public async Task EmpleadoIdRetirado_SeIgnora_LaPersonaQuedaSinCodigo()
+    {
+        // TAREA-26d-3: empleadoId ya no es parte del contrato. Se ignora como cualquier campo desconocido; el validador
+        // responde después 400 "El empleado es obligatorio." en principales[0].codigoEkon (CrearProyectoValidadorTests).
+        var r = await EnviarAsync(Crear, "{ \"principales\": [ { \"empleadoId\": 6, \"jornada\": \"TIPO_2\" } ] }");
+
+        Assert.Equal(StatusCodes.Status200OK, r.Estado);
+        var s = Assert.IsType<CrearProyectoSolicitud>(r.Leido);
+        Assert.Null(s.Principales![0].CodigoEkon);
+    }
+
+    [Fact]
     public async Task PersonalYReactivacion_TipoIncorrecto_400EnSuCampo()
     {
         var personal = await EnviarAsync(Personal,

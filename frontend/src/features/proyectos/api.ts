@@ -3,6 +3,7 @@ import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
   ActividadErp,
+  ComparacionErp,
   CabeceraActualizada,
   CabeceraEdicion,
   CambioEstadoRealizado,
@@ -42,6 +43,8 @@ export const clavesProyectos = {
   cabecera: (id: number) => ['proyectos', 'cabecera', id] as const,
   /** GET …/edicion (TAREA-19b): bajo 'proyectos', se refresca al invalidar `todos`. */
   edicion: (id: number) => ['proyectos', 'edicion', id] as const,
+  /** GET …/personal/comparacion-erp (TAREA-26d-3): bajo 'proyectos', se refresca al invalidar `todos`. */
+  comparacionErp: (id: number) => ['proyectos', 'comparacion-erp', id] as const,
   /** GET …/reactivacion (TAREA-19c): bajo 'proyectos', se refresca al invalidar `todos`. */
   reactivacion: (id: number) => ['proyectos', 'reactivacion', id] as const,
   catalogos: ['catalogos'] as const,
@@ -151,6 +154,11 @@ export function registrarCabecera(id: number, solicitud: SolicitudEditarCabecera
 /** Datos de "Actualizar personal" (TAREA-17): corte, personal por clase con permisos, límites y token. 404 si no es visible. */
 export function obtenerEdicionPersonal(id: number, signal?: AbortSignal) {
   return apiGet<EdicionPersonal>(`/proyectos/${id}/edicion`, { signal })
+}
+
+/** TAREA-26d-3: avisos "guardado frente al ERP" de las personas guardadas. ERP caído → 200 con avisoGeneral. */
+export function obtenerComparacionErp(id: number, signal?: AbortSignal) {
+  return apiGet<ComparacionErp>(`/proyectos/${id}/personal/comparacion-erp`, { signal })
 }
 
 /** Vista previa de la actualización de personal (no guarda; 200 aunque haya cruces). 400 / 404 / 409 / 503. */

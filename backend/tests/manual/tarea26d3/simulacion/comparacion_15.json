@@ -1,0 +1,34 @@
+{
+  "comparadoUtc": "2026-10-13T15:30:00+00:00",
+  "avisoGeneral": null,
+  "personas": [
+    {
+      "codigoEkon": "900001",
+      "avisos": [
+        {
+          "tipo": "CAMBIO_CARGO",
+          "mensaje": "El cargo en el ERP cambió: PUESTO FICTICIO A → PUESTO FICTICIO B.",
+          "guardado": "PUESTO FICTICIO A",
+          "erp": "PUESTO FICTICIO B"
+        },
+        {
+          "tipo": "CAMBIO_DEPARTAMENTO",
+          "mensaje": "El departamento o la unidad en el ERP cambió: DEPTO A → DEPTO B.",
+          "guardado": "DEPTO A",
+          "erp": "DEPTO B"
+        }
+      ]
+    },
+    {
+      "codigoEkon": "DEV003",
+      "avisos": [
+        {
+          "tipo": "NO_ACTIVO",
+          "mensaje": "Ya no está activo en el ERP.",
+          "guardado": null,
+          "erp": null
+        }
+      ]
+    }
+  ]
+}

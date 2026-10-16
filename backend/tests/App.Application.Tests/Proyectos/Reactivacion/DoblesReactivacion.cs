@@ -48,11 +48,11 @@ internal static class DoblesReactivacion
 
     public static PrincipalEdicionSolicitud Principal(string clave = "p1", int empleado = 7, DateOnly? inicio = null, DateOnly? fin = null,
         string jornada = "TIPO_2", int? id = null) =>
-        new(clave, id, empleado, jornada, inicio ?? R, fin ?? FinNueva, null);
+        new(clave, id, $"DEV{empleado:000}", jornada, inicio ?? R, fin ?? FinNueva, null);
 
     public static BackEdicionSolicitud Back(string clave, int empleado, DateOnly inicio, DateOnly fin, string? principalClave = null,
         int? principalId = null, int diasDescanso = 0) =>
-        new(clave, null, empleado, "JORNADA", inicio, fin, diasDescanso, principalClave, principalId, null);
+        new(clave, null, $"DEV{empleado:000}", "JORNADA", inicio, fin, diasDescanso, principalClave, principalId, null);
 
     public static ReactivarProyectoSolicitud Cuerpo(DateOnly? fecha = null, DateOnly? fechaFin = null,
         PrincipalEdicionSolicitud[]? principales = null, BackEdicionSolicitud[]? backs = null) =>

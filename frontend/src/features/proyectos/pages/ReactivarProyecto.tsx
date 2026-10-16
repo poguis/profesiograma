@@ -28,10 +28,19 @@ import { formatearFecha, hoyEnNegocio } from '../../../utils/formato'
 import { clavesProyectos } from '../api'
 import { BuscadorEmpleados } from '../components/BuscadorEmpleados'
 import { ListaPersonalEdicion } from '../components/ListaPersonalEdicion'
+import { NotaComparacionErp } from '../components/NotaComparacionErp'
+import { avisosErpFilas, avisosErpHistoricas, sinNotaErp } from '../comparacionErp'
 import { VistaPreviaReactivacion } from '../components/VistaPreviaReactivacion'
 import { type AccionEdicionPersonal, type FilaEdicion, ROL_PRINCIPAL, backsEnviados, etiquetasPorEmpleadoEdicion, principalesEnviados } from '../edicionPersonal'
 import type { ErroresFila } from '../formularioProyecto'
-import { useCatalogos, usePrevisualizarReactivacion, useProyecto, useReactivacion, useRegistrarReactivacion } from '../hooks'
+import {
+  useCatalogos,
+  useComparacionErp,
+  usePrevisualizarReactivacion,
+  useProyecto,
+  useReactivacion,
+  useRegistrarReactivacion,
+} from '../hooks'
 import {
   type ErroresReactivacion,
   MOTIVO_INICIO_EN_R,
@@ -350,6 +359,21 @@ function FormularioReactivacion({ dto, finPlanificado, jornadas, rutaDetalle, ru
     }
   }
 
+  // ---------------------------------------------------------------- comparación con el ERP (TAREA-26d-3)
+  // D3: el propuesto (R7) y las históricas. Las filas nuevas solo tienen avisos si su código es de una persona guardada
+  // (la comparación solo trae personas guardadas): así el propuesto los recibe. Solo informan; no bloquean nada.
+  const comparacion = useComparacionErp(dto.id)
+  const erpFilas = useMemo(
+    () => avisosErpFilas([...estado.personal.principales, ...estado.personal.backs], comparacion.data),
+    [estado.personal.principales, estado.personal.backs, comparacion.data],
+  )
+  const erpHistoricas = useMemo(
+    () => avisosErpHistoricas(estado.personal.historicas, comparacion.data),
+    [estado.personal.historicas, comparacion.data],
+  )
+  // D4: la nota del ERP se muestra una sola vez (en NotaComparacionErp), no también entre las advertencias del GET.
+  const advertencias = sinNotaErp(dto.advertencias)
+
   // ---------------------------------------------------------------- buscador
   const etiquetas = useMemo(() => etiquetasPorEmpleadoEdicion(estado.personal), [estado.personal])
   const puedeAgregar =
@@ -370,15 +394,22 @@ function FormularioReactivacion({ dto, finPlanificado, jornadas, rutaDetalle, ru
         el primer principal empieza en esa fecha y será el principal inicial (responsable).
       </Text>
 
-      {dto.advertencias.length > 0 && (
+      {advertencias.length > 0 && (
         <MessageBar intent="warning">
           <MessageBarBody>
-            {dto.advertencias.map((a) => (
+            {advertencias.map((a) => (
               <div key={a}>{a}</div>
             ))}
           </MessageBarBody>
         </MessageBar>
       )}
+
+      <NotaComparacionErp
+        comparacion={comparacion.data}
+        error={comparacion.error}
+        cargando={comparacion.isFetching}
+        onReintentar={() => void comparacion.refetch()}
+      />
 
       {generales.length > 0 && (
         <MessageBar intent="error">
@@ -465,6 +496,8 @@ function FormularioReactivacion({ dto, finPlanificado, jornadas, rutaDetalle, ru
         fechaMaxima={estado.fechaFin}
         inicialesHistoricas={estado.inicialesHistoricas}
         avisosFila={avisosFilaReactivacion(estado)}
+        erpFilas={erpFilas}
+        erpHistoricas={erpHistoricas}
         ayudasSeccion={{ backs: ayudaBacks }}
         textoSinFilas={{ principales: 'Sin principales nuevos.', backs: 'Sin backs nuevos.' }}
       />

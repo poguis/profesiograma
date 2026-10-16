@@ -14,6 +14,7 @@ import {
   listarProyectos,
   listarProyectosErp,
   obtenerCabecera,
+  obtenerComparacionErp,
   obtenerEdicionPersonal,
   obtenerCatalogos,
   obtenerOpcionesFormulario,
@@ -215,6 +216,19 @@ export function useEdicionPersonal(id: number) {
     queryKey: clavesProyectos.edicion(id),
     queryFn: ({ signal }) => obtenerEdicionPersonal(id, signal),
     enabled: Number.isInteger(id) && id > 0,
+  })
+}
+
+/**
+ * TAREA-26d-3: comparación con el ERP de las personas guardadas. Se carga aparte para no demorar la pantalla (la primera
+ * lectura de la API puede tardar); nunca bloquea la vista previa ni el registro.
+ */
+export function useComparacionErp(id: number, habilitada = true) {
+  return useQuery({
+    queryKey: clavesProyectos.comparacionErp(id),
+    queryFn: ({ signal }) => obtenerComparacionErp(id, signal),
+    enabled: habilitada && Number.isInteger(id) && id > 0,
+    staleTime: 5 * 60_000,
   })
 }
 

@@ -178,8 +178,8 @@ public sealed class EdicionPersonalServicio(
 
         // Datos de referencia: jornadas, límites y empleados activos en la API de las personas NUEVAS (D4, TAREA-26d).
         var activos = empleados ?? await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
-            (s.Principales ?? []).Where(p => p.Id is null).Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
-                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            (s.Principales ?? []).Where(p => p.Id is null).Select(p => p.CodigoEkon)
+                .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => b.CodigoEkon)),
             fresco, ct);
         var jornadas = await datos.ObtenerJornadasAsync(ct);
         var limites = await datos.ObtenerLimitesAsync(ct);

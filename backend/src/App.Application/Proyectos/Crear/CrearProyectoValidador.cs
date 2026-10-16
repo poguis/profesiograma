@@ -176,8 +176,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         // TAREA-26d: empleados de la API (fresca al registrar), con Id real o temporal (alta puntual al registrar).
         var empleados = await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
-            principales.Select(p => new ReferenciaEmpleado(p.EmpleadoId, p.CodigoEkon))
-                .Concat(backs.Select(b => new ReferenciaEmpleado(b.EmpleadoId, b.CodigoEkon))),
+            principales.Select(p => p.CodigoEkon).Concat(backs.Select(b => b.CodigoEkon)),
             empleadosFrescos, ct);
         var jornadas = principales.Count == 0
             ? new Dictionary<string, JornadaRef>()
@@ -190,7 +189,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         {
             var p = principales[i];
             var clave = $"principales[{i}]";
-            var empleado = empleados.Validar(p.EmpleadoId, p.CodigoEkon, clave, e);
+            var empleado = empleados.Validar(p.CodigoEkon, clave, e);
 
             var jornada = ValidarJornada(p.Jornada, clave, jornadas, e);
 
@@ -211,7 +210,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
         {
             var b = backs[i];
             var clave = $"backs[{i}]";
-            var empleado = empleados.Validar(b.EmpleadoId, b.CodigoEkon, clave, e);
+            var empleado = empleados.Validar(b.CodigoEkon, clave, e);
 
             var tipo = ValidarTipoRegistro(b.TipoRegistro, clave, e);
             var diasDescanso = ValidarDiasDescanso(b.DiasDescanso, clave, limites.MaxDiasDescansoBack, e);

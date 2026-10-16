@@ -205,7 +205,7 @@ public class ReactivacionServicioTests
     public async Task IdPresente_400_UnSoloErrorEnId()
     {
         var e = await Errores(Cuerpo(principales: [Principal(id: 101)],
-            backs: [new BackEdicionSolicitud("k1", 102, 8, "JORNADA", R, D("2026-10-15"), 0, "p1", null, null)]));
+            backs: [new BackEdicionSolicitud("k1", 102, "DEV008", "JORNADA", R, D("2026-10-15"), 0, "p1", null, null)]));
 
         Assert.Equal(["principales[0].id", "backs[0].id"], e.Keys.Order(StringComparer.Ordinal).Reverse());
         Assert.Equal([EdicionPersonalValidador.MensajeIdReactivacion], e["principales[0].id"]);
@@ -216,7 +216,7 @@ public class ReactivacionServicioTests
     public async Task EmpleadoInactivo_400()
     {
         var e = await Errores(Cuerpo(principales: [Principal(empleado: 9)]));
-        Assert.Equal(["El empleado 9 no existe o no está activo."], e["principales[0].empleadoId"]);
+        Assert.Equal(["El empleado DEV009 no existe o no está activo."], e["principales[0].codigoEkon"]);
     }
 
     [Fact]

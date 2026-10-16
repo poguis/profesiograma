@@ -15,19 +15,18 @@ public sealed record ActualizarPersonalSolicitud(
 
 /// <summary>
 /// Principal. Id presente = vigente existente; ausente = nuevo. Cargo null en un vigente = se conserva.
-/// TAREA-26d: una persona nueva va por CodigoEkon (P2); EmpleadoId se acepta hasta la 26d-3 (excluyentes).
+/// TAREA-26d: una persona nueva va por CodigoEkon (P2); en una vigente es opcional y, si llega, debe ser el suyo.
 /// </summary>
 public sealed record PrincipalEdicionSolicitud(
-    string? Clave, int? Id, int? EmpleadoId, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo,
-    string? CodigoEkon = null);
+    string? Clave, int? Id, string? CodigoEkon, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo);
 
 /// <summary>
 /// Back. PrincipalClave = clave de un principal del cuerpo (vigente o nuevo); PrincipalId = Id de un principal
-/// HISTÓRICO del proyecto (D3). Son excluyentes. TAREA-26d: persona nueva por CodigoEkon o, hasta la 26d-3, EmpleadoId.
+/// HISTÓRICO del proyecto (D3). Son excluyentes. TAREA-26d: persona nueva por CodigoEkon (P2).
 /// </summary>
 public sealed record BackEdicionSolicitud(
-    string? Clave, int? Id, int? EmpleadoId, string? TipoRegistro, DateOnly? FechaInicio, DateOnly? FechaFin,
-    int? DiasDescanso, string? PrincipalClave, int? PrincipalId, string? Observacion, string? CodigoEkon = null);
+    string? Clave, int? Id, string? CodigoEkon, string? TipoRegistro, DateOnly? FechaInicio, DateOnly? FechaFin,
+    int? DiasDescanso, string? PrincipalClave, int? PrincipalId, string? Observacion);
 
 // ------------------------------------------------------------------ lectura
 

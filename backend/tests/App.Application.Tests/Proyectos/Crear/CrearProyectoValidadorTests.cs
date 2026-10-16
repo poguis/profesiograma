@@ -111,8 +111,8 @@ public class CrearProyectoValidadorTests
 
     public static TheoryData<string, Func<CrearProyectoSolicitud, CrearProyectoSolicitud>, string, string> CasosPersonal => new()
     {
-        { "empleado obligatorio", s => s with { Principales = [s.Principales![0] with { EmpleadoId = null }] }, "principales[0].empleadoId", "El empleado es obligatorio." },
-        { "empleado inactivo o inexistente", s => s with { Principales = [s.Principales![0] with { EmpleadoId = 9 }] }, "principales[0].empleadoId", "El empleado 9 no existe o no está activo." },
+        { "empleado obligatorio", s => s with { Principales = [s.Principales![0] with { CodigoEkon = null }] }, "principales[0].codigoEkon", "El empleado es obligatorio." },
+        { "empleado inactivo o inexistente", s => s with { Principales = [s.Principales![0] with { CodigoEkon = "DEV009" }] }, "principales[0].codigoEkon", "El empleado DEV009 no existe o no está activo." },
         { "jornada obligatoria", s => s with { Principales = [s.Principales![0] with { Jornada = null }] }, "principales[0].jornada", "La jornada es obligatoria." },
         { "jornada inexistente", s => s with { Principales = [s.Principales![0] with { Jornada = "TIPO_9" }] }, "principales[0].jornada", "La jornada 'TIPO_9' no existe." },
         { "principal antes del proyecto", s => s with { Principales = [s.Principales![0] with { FechaInicio = new DateOnly(2026, 11, 30) }] }, "principales[0].fechaInicio", "Las fechas deben estar dentro del rango del proyecto (01/12/2026 – 31/12/2026)." },
@@ -127,7 +127,7 @@ public class CrearProyectoValidadorTests
         { "principal relacionado inexistente", s => s with { Backs = [s.Backs![0] with { PrincipalRelacionado = 5 }] }, "backs[0].principalRelacionado", "El principal relacionado 5 no existe entre los principales enviados." },
         { "principal relacionado cero", s => s with { Backs = [s.Backs![0] with { PrincipalRelacionado = 0 }] }, "backs[0].principalRelacionado", "El principal relacionado 0 no existe entre los principales enviados." },
         { "back fuera del rango", s => s with { Backs = [s.Backs![0] with { FechaFin = new DateOnly(2027, 1, 2) }] }, "backs[0].fechaFin", "Las fechas deben estar dentro del rango del proyecto (01/12/2026 – 31/12/2026)." },
-        { "back empleado inexistente", s => s with { Backs = [s.Backs![0] with { EmpleadoId = 99 }] }, "backs[0].empleadoId", "El empleado 99 no existe o no está activo." },
+        { "back empleado inexistente", s => s with { Backs = [s.Backs![0] with { CodigoEkon = "X99" }] }, "backs[0].codigoEkon", "El empleado X99 no existe o no está activo." },
         { "observación larga", s => s with { Backs = [s.Backs![0] with { Observacion = new string('X', 501) }] }, "backs[0].observacion", "La observación admite como máximo 500 caracteres." },
     };
 

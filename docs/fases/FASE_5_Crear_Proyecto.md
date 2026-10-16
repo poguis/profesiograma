@@ -158,7 +158,7 @@ Mismo cuerpo:
 ```
 
 - Nombres, descripciones, RUC, datos del horario y de la actividad **no los envía el navegador**: el servidor los obtiene de `ICatalogoErp` por Id (evita datos manipulados).
-- **TAREA-26d:** el empleado va por `codigoEkon` (P2). Hasta la 26d-3 se acepta `empleadoId` (Id de una fila de `Empleado`) como alternativa excluyente: ambos → 400 `…codigoEkon` "Indique codigoEkon o empleadoId, no ambos."; ninguno → 400 `…empleadoId` "El empleado es obligatorio."; no activo en la API → 400 "El empleado {identificador} no existe o no está activo.". La API de empleados caída al registrar → 503 "Servicio de empleados no disponible" sin abrir la transacción; duplicado en la alta puntual → 409. En la vista previa, una persona sin fila aparece con un `empleadoId` temporal negativo.
+- **TAREA-26d:** el empleado va **solo** por `codigoEkon` (P2; la transición con `empleadoId` se retiró en la TAREA-26d-3: el campo ya no es parte del contrato y, si llega, se ignora). Sin código → 400 `…codigoEkon` "El empleado es obligatorio."; no activo en la API → 400 `…codigoEkon` "El empleado {código} no existe o no está activo.". La API de empleados caída al registrar → 503 "Servicio de empleados no disponible" sin abrir la transacción; duplicado en la alta puntual → 409. En la vista previa, una persona sin fila aparece con un `empleadoId` temporal negativo.
 - `previsualizar` → 200 `{ tramos[], dias[] (resumido por persona), cruces[], resumen }`. No guarda nada.
 - `POST /api/proyectos` → 201 `{ id, codigo }` + `Location`; 400 validación; 409 cruces; 503 ERP no disponible.
 

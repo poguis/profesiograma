@@ -18,10 +18,10 @@ internal static class Dobles
         HorarioCodigo: 1, SalidaAlmuerzo: "13:00", RegresoAlmuerzo: "14:00", DepartamentoId: null,
         Principales:
         [
-            new PrincipalSolicitud(6, "TIPO_2", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null),
-            new PrincipalSolicitud(7, "TIPO_3", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), "CARGO MANUAL"),
+            new PrincipalSolicitud("DEV006", "TIPO_2", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null),
+            new PrincipalSolicitud("DEV007", "TIPO_3", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), "CARGO MANUAL"),
         ],
-        Backs: [new BackSolicitud(8, "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), 1, "Cubre al principal 1", null)]);
+        Backs: [new BackSolicitud("DEV008", "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), 1, "Cubre al principal 1", null)]);
 
     public static CrearProyectoSolicitud SolicitudPlanta() => SolicitudCampo() with
     {
@@ -93,8 +93,17 @@ internal sealed class DatosFalsos : IDatosReferenciaProyecto
 
     public Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct) => Task.FromResult(Limites);
 
-    public Task<IReadOnlyDictionary<int, EmpleadoAsignable>> ObtenerEmpleadosPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
-        Task.FromResult<IReadOnlyDictionary<int, EmpleadoAsignable>>(ids.Where(Empleados.ContainsKey).ToDictionary(i => i, i => Empleados[i]));
+    /// <summary>TAREA-26d-3: filas de Empleado guardadas (sin departamento ni unidad, como EmpleadosErpFalsos.Activo).</summary>
+    public Dictionary<int, EmpleadoGuardado> Guardados { get; } = Empleados.Values
+        .ToDictionary(e => e.Id, e => new EmpleadoGuardado(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, null, null));
+
+    public int LecturasGuardados { get; private set; }
+
+    public Task<IReadOnlyList<EmpleadoGuardado>> ObtenerEmpleadosGuardadosAsync(IReadOnlyCollection<int> ids, CancellationToken ct)
+    {
+        LecturasGuardados++;
+        return Task.FromResult<IReadOnlyList<EmpleadoGuardado>>(ids.Where(Guardados.ContainsKey).Select(i => Guardados[i]).ToList());
+    }
 
     public Task<IReadOnlyDictionary<string, int>> ObtenerIdsPorCodigosAsync(IReadOnlyCollection<string> codigos, CancellationToken ct) =>
         Task.FromResult<IReadOnlyDictionary<string, int>>(Empleados.Values

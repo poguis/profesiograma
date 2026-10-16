@@ -22,22 +22,21 @@ public sealed record CrearProyectoSolicitud(
 
 /// <summary>
 /// Principal. El servidor le asigna Numero = posición en la lista (1..n). TAREA-26d: el empleado va por CodigoEkon
-/// (P2); EmpleadoId se acepta hasta la 26d-3 como alternativa excluyente.
+/// (P2). La transición con EmpleadoId se retiró en la TAREA-26d-3.
 /// </summary>
 public sealed record PrincipalSolicitud(
-    int? EmpleadoId, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo, string? CodigoEkon = null);
+    string? CodigoEkon, string? Jornada, DateOnly? FechaInicio, DateOnly? FechaFin, string? Cargo);
 
 /// <summary>
-/// Back. Numero = posición (1..n). PrincipalRelacionado = número (posición) del principal que cubre. TAREA-26d:
-/// CodigoEkon (P2) o, hasta la 26d-3, EmpleadoId (excluyentes).
+/// Back. Numero = posición (1..n). PrincipalRelacionado = número (posición) del principal que cubre. TAREA-26d: el
+/// empleado va por CodigoEkon (P2).
 /// </summary>
 public sealed record BackSolicitud(
-    int? EmpleadoId,
+    string? CodigoEkon,
     string? TipoRegistro,
     int? DiasDescanso,
     DateOnly? FechaInicio,
     DateOnly? FechaFin,
     int? PrincipalRelacionado,
     string? Observacion,
-    string? Cargo,
-    string? CodigoEkon = null);
+    string? Cargo);

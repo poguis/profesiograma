@@ -11,8 +11,8 @@ using App.Application.Tests.Proyectos.Reactivacion;
 namespace App.Application.Tests.Empleados;
 
 /// <summary>
-/// TAREA-26d (opción C): empleados desde la API. Mapeo, búsqueda en memoria, catálogo de la solicitud (transición
-/// empleadoId / codigoEkon, Id temporales) y su uso en crear, personal y reactivación. Todos los datos son FICTICIOS.
+/// TAREA-26d (opción C): empleados desde la API. Mapeo, búsqueda en memoria, catálogo de la solicitud (por codigoEkon,
+/// Id temporales) y su uso en crear, personal y reactivación. Todos los datos son FICTICIOS.
 /// </summary>
 public class EmpleadosApiTests
 {
@@ -94,22 +94,22 @@ public class EmpleadosApiTests
         Assert.Equal("Lista de empleados de las 10:30; el ERP no respondió.", r.AvisoErp); // 15:30 UTC = 10:30 en Ecuador
     }
 
-    // ------------------------------------------------------------------ CatalogoEmpleados (P2: transición, Id temporales, P5)
+    // ------------------------------------------------------------------ CatalogoEmpleados (P2: por código, Id temporales, P5)
 
-    private static Task<CatalogoEmpleados> Catalogo(EmpleadosErpFalsos fuente, bool fresco, params ReferenciaEmpleado[] refs) =>
-        CatalogoEmpleados.CargarAsync(new DatosFalsos(), fuente, refs, fresco, Ct);
+    private static Task<CatalogoEmpleados> Catalogo(EmpleadosErpFalsos fuente, bool fresco, params string?[] codigos) =>
+        CatalogoEmpleados.CargarAsync(new DatosFalsos(), fuente, codigos, fresco, Ct);
 
     [Fact]
     public async Task Catalogo_PorCodigo_IdRealSiTieneFila_TemporalNegativoSiNo_ConDatosDeLaApi()
     {
         var fuente = new EmpleadosErpFalsos(EmpleadosErpFalsos.Activo("900002", "PERSONA FICTICIA 2", "PUESTO X"),
             EmpleadosErpFalsos.Activo("900001", "PERSONA FICTICIA 1", null));
-        var c = await Catalogo(fuente, false, new(null, "DEV006"), new(null, "900002"), new(null, "900001"));
+        var c = await Catalogo(fuente, false, "DEV006", "900002", "900001");
         var e = new Dictionary<string, List<string>>();
 
-        var conFila = c.Validar(null, " DEV006 ", "principales[0]", e)!;
-        var nuevo1 = c.Validar(null, "900001", "principales[1]", e)!;
-        var nuevo2 = c.Validar(null, "900002", "backs[0]", e)!;
+        var conFila = c.Validar(" DEV006 ", "principales[0]", e)!;
+        var nuevo1 = c.Validar("900001", "principales[1]", e)!;
+        var nuevo2 = c.Validar("900002", "backs[0]", e)!;
 
         Assert.Empty(e);
         Assert.Equal((6, "DEV006", "EMPLEADO PRUEBA 06"), (conFila.Id, conFila.CodigoEkon, conFila.NombreCompleto));
@@ -120,23 +120,23 @@ public class EmpleadosApiTests
     }
 
     [Fact]
-    public async Task Catalogo_Transicion_EmpleadoIdOCodigo_AmbosONinguno400()
+    public async Task Catalogo_SoloCodigoEkon_ObligatorioEInactivo400_EnCodigoEkon()
     {
-        var c = await Catalogo(new EmpleadosErpFalsos(), true, new(6, null), new(7, "DEV007"), new(9, null), new(null, "DEV009"));
+        // TAREA-26d-3: reemplaza a la prueba de transición empleadoId / codigoEkon (retirada).
+        var c = await Catalogo(new EmpleadosErpFalsos(), true, "DEV006", "DEV009", "X99");
         var e = new Dictionary<string, List<string>>();
 
-        Assert.Equal(6, c.Validar(6, null, "principales[0]", e)!.Id);
-        Assert.Null(c.Validar(7, "DEV007", "principales[1]", e));
-        Assert.Null(c.Validar(null, null, "principales[2]", e));
-        Assert.Null(c.Validar(9, null, "backs[0]", e));          // fila existe pero no está activa en la API
-        Assert.Null(c.Validar(null, "DEV009", "backs[1]", e));
-        Assert.Null(c.Validar(99, null, "backs[2]", e));          // no existe
+        Assert.Equal(6, c.Validar("dev006", "principales[0]", e)!.Id);
+        Assert.Null(c.Validar(null, "principales[1]", e));
+        Assert.Null(c.Validar("  ", "principales[2]", e));
+        Assert.Null(c.Validar("DEV009", "backs[0]", e));      // fila existe pero no está activa en la API
+        Assert.Null(c.Validar("X99", "backs[1]", e));         // no existe
 
-        Assert.Equal(["Indique codigoEkon o empleadoId, no ambos."], e["principales[1].codigoEkon"]);
-        Assert.Equal(["El empleado es obligatorio."], e["principales[2].empleadoId"]);
-        Assert.Equal(["El empleado 9 no existe o no está activo."], e["backs[0].empleadoId"]);
-        Assert.Equal(["El empleado DEV009 no existe o no está activo."], e["backs[1].codigoEkon"]);
-        Assert.Equal(["El empleado 99 no existe o no está activo."], e["backs[2].empleadoId"]);
+        Assert.Equal(["El empleado es obligatorio."], e["principales[1].codigoEkon"]);
+        Assert.Equal(["El empleado es obligatorio."], e["principales[2].codigoEkon"]);
+        Assert.Equal(["El empleado DEV009 no existe o no está activo."], e["backs[0].codigoEkon"]);
+        Assert.Equal(["El empleado X99 no existe o no está activo."], e["backs[1].codigoEkon"]);
+        Assert.DoesNotContain(e.Keys, k => k.EndsWith(".empleadoId", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -144,9 +144,9 @@ public class EmpleadosApiTests
     {
         var fuente = new EmpleadosErpFalsos { Error = new ErpNoDisponibleException("empleados", "sin red") };
 
-        Assert.Same(CatalogoEmpleados.Vacio, await Catalogo(fuente, true, new ReferenciaEmpleado(null, " ")));
+        Assert.Same(CatalogoEmpleados.Vacio, await Catalogo(fuente, true, " ", null));
         Assert.Equal(0, fuente.Lecturas + fuente.LecturasFrescas);
-        await Assert.ThrowsAsync<ErpNoDisponibleException>(() => Catalogo(fuente, true, new ReferenciaEmpleado(null, "DEV006")));
+        await Assert.ThrowsAsync<ErpNoDisponibleException>(() => Catalogo(fuente, true, "DEV006"));
     }
 
     // ------------------------------------------------------------------ Crear proyecto (validación fresca, Id temporales, cruces)
@@ -167,10 +167,10 @@ public class EmpleadosApiTests
     {
         Principales =
         [
-            new PrincipalSolicitud(null, "TIPO_2", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null, "900001"),
-            new PrincipalSolicitud(7, "TIPO_3", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null),
+            new PrincipalSolicitud("900001", "TIPO_2", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null),
+            new PrincipalSolicitud("DEV007", "TIPO_3", new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 31), null),
         ],
-        Backs = [new BackSolicitud(null, "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), 1, null, null, "DEV008")],
+        Backs = [new BackSolicitud("DEV008", "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), 1, null, null)],
     };
 
     [Fact]
@@ -198,7 +198,7 @@ public class EmpleadosApiTests
         var principales = c.Repo.Agregado!.Value.Proyecto.Datos.Principales;
         Assert.Equal((-1, "900001", "PUESTO X"), (principales[0].Empleado.Id, principales[0].Empleado.CodigoEkon, principales[0].Cargo));
         Assert.NotNull(principales[0].Empleado.Erp); // la alta puntual recibe los datos de la API
-        Assert.Equal(7, principales[1].Empleado.Id);  // transición por empleadoId: Id real
+        Assert.Equal(7, principales[1].Empleado.Id);  // código con fila: Id real
     }
 
     [Fact]
@@ -227,8 +227,8 @@ public class EmpleadosApiTests
         var tx = new TransaccionFalsa();
         var servicio = new EdicionPersonalServicio(repo, new DatosFalsos(), new CrucesEdicionFalsos(), new EdicionPersonalValidador(), tx,
             new UsuarioFalso(), new RelojFijo(DoblesPersonal.Ahora), fuente);
-        var nuevo = new BackEdicionSolicitud("kn", null, null, "JORNADA", new DateOnly(2026, 10, 10), new DateOnly(2026, 10, 12), 0, "p1",
-            null, null, "900001");
+        var nuevo = new BackEdicionSolicitud("kn", null, "900001", "JORNADA", new DateOnly(2026, 10, 10), new DateOnly(2026, 10, 12), 0, "p1",
+            null, null);
 
         var r = await servicio.RegistrarAsync(1,
             new ActualizarPersonalSolicitud([DoblesPersonal.SolP1()], [DoblesPersonal.SolK1(), nuevo]).ConVersion(repo), Ct);

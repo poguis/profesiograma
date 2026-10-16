@@ -27,6 +27,7 @@ import { formatearFecha } from '../../../utils/formato'
 import { clavesProyectos } from '../api'
 import { BuscadorEmpleados } from '../components/BuscadorEmpleados'
 import { ListaPersonalEdicion } from '../components/ListaPersonalEdicion'
+import { NotaComparacionErp } from '../components/NotaComparacionErp'
 import { VistaPreviaPersonal } from '../components/VistaPreviaPersonal'
 import {
   type AccionEdicionPersonal,
@@ -53,8 +54,16 @@ import {
   validarEdicionPersonal,
   vistaPersonalVigente,
 } from '../edicionPersonal'
+import { avisosErpFilas } from '../comparacionErp'
 import type { ErroresFila } from '../formularioProyecto'
-import { useCatalogos, useEdicionPersonal, usePrevisualizarPersonal, useProyecto, useRegistrarPersonal } from '../hooks'
+import {
+  useCatalogos,
+  useComparacionErp,
+  useEdicionPersonal,
+  usePrevisualizarPersonal,
+  useProyecto,
+  useRegistrarPersonal,
+} from '../hooks'
 import type { EdicionPersonal, JornadaCatalogo, ProyectoDetalle } from '../tipos'
 import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro } from '../tokenConcurrencia'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
@@ -185,6 +194,16 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
   const [confirmarRecarga, setConfirmarRecarga] = useState(false)
   const previsualizar = usePrevisualizarPersonal(dto.id)
   const registrar = useRegistrarPersonal(dto.id)
+  // TAREA-26d-3: avisos "guardado frente al ERP" (D3: solo las vigentes). Solo informan; no bloquean nada.
+  const comparacion = useComparacionErp(dto.id)
+  const erpFilas = useMemo(
+    () =>
+      avisosErpFilas(
+        [...estado.principales, ...estado.backs].filter((f) => f.id !== null),
+        comparacion.data,
+      ),
+    [estado.principales, estado.backs, comparacion.data],
+  )
   // Refs: se leen en el mismo instante del clic o de la navegación, antes del siguiente render.
   const enviandoRef = useRef(false)
   const registradoRef = useRef(false)
@@ -381,6 +400,13 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
 
       {ayuda && <Text>{ayuda}</Text>}
 
+      <NotaComparacionErp
+        comparacion={comparacion.data}
+        error={comparacion.error}
+        cargando={comparacion.isFetching}
+        onReintentar={() => void comparacion.refetch()}
+      />
+
       <ListaPersonalEdicion
         estado={estado}
         dispatch={dispatch}
@@ -390,6 +416,7 @@ function FormularioPersonal({ dto, proyecto, jornadas, rutaDetalle, rutaListado,
         secciones={errores.servidor.secciones}
         onAgregar={(rol) => setBuscador({ modo: 'agregar', rol })}
         onCambiarEmpleado={(clave) => setBuscador({ modo: 'cambiar', clave })}
+        erpFilas={erpFilas}
       />
 
       <Card className={estilos.seccion}>

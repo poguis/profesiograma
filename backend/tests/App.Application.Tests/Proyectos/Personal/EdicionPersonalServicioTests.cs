@@ -183,7 +183,7 @@ public class EdicionPersonalServicioTests
     [Fact]
     public async Task P8_HistoricoEnviado_400()
     {
-        var historico = new PrincipalEdicionSolicitud("p2", 92, 7, "TIPO_2", Inicio, new DateOnly(2026, 9, 30), null);
+        var historico = new PrincipalEdicionSolicitud("p2", 92, "DEV007", "TIPO_2", Inicio, new DateOnly(2026, 9, 30), null);
         var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo([SolP1(), historico]), Ct);
 
         Assert.Equal(["La persona P2 es histórica (terminó el 30/09/2026) y no se puede modificar."], r.Errores!["principales[1].id"]);
@@ -193,7 +193,7 @@ public class EdicionPersonalServicioTests
     public async Task P8_HistoricoEnviado_SoloUnError_EnId()
     {
         // Corrección tras la prueba HTTP del 05/10/2026: un Id inválido detiene la validación de su fila.
-        var historico = new PrincipalEdicionSolicitud("p2", 92, 7, "TIPO_2", Inicio, new DateOnly(2026, 9, 30), null);
+        var historico = new PrincipalEdicionSolicitud("p2", 92, "DEV007", "TIPO_2", Inicio, new DateOnly(2026, 9, 30), null);
         var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo([SolP1(), historico]), Ct);
 
         Assert.Equal(["principales[1].id"], r.Errores!.Keys);
@@ -202,7 +202,7 @@ public class EdicionPersonalServicioTests
     [Fact]
     public async Task IdDeLaOtraLista_SoloUnError_EnId()
     {
-        var principalComoBack = new BackEdicionSolicitud("k9", 91, 6, "XYZ", null, null, 99, "nadie", null, null);
+        var principalComoBack = new BackEdicionSolicitud("k9", 91, "DEV006", "XYZ", null, null, 99, "nadie", null, null);
         var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo(backs: [SolK1(), principalComoBack]), Ct);
 
         Assert.Equal(["backs[1].id"], r.Errores!.Keys);
@@ -212,10 +212,10 @@ public class EdicionPersonalServicioTests
     [Fact]
     public async Task P9_CambioDeEmpleadoDeUnVigente_400()
     {
-        var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo([SolP1(empleado: 7)]), Ct);
+        var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo([SolP1(empleado: "DEV007")]), Ct);
 
         Assert.Equal(["No se puede cambiar el empleado de una persona vigente. Para reemplazarla, acorte su fecha fin y agregue una persona nueva."],
-            r.Errores!["principales[0].empleadoId"]);
+            r.Errores!["principales[0].codigoEkon"]);
     }
 
     [Fact]
@@ -276,7 +276,7 @@ public class EdicionPersonalServicioTests
     {
         var e = Crear();
         var cuerpo = Cuerpo(
-            [SolP1(), new PrincipalEdicionSolicitud("p3", null, 4, "TIPO_3", new DateOnly(2026, 11, 1), Fin, null)],
+            [SolP1(), new PrincipalEdicionSolicitud("p3", null, "DEV004", "TIPO_3", new DateOnly(2026, 11, 1), Fin, null)],
             [SolK1(), BackNuevo("k2", 8, "2026-11-02", "2026-11-03", principalClave: "p3"), BackNuevo("k3", 3, "2026-11-04", "2026-11-04", principalId: 92)]);
 
         // DEV004 (P3 nuevo) sin cruces externos en los dobles; se registra para ver las relaciones.
@@ -311,7 +311,7 @@ public class EdicionPersonalServicioTests
         var r = await Crear().Servicio.PrevisualizarAsync(ProyectoId, Cuerpo(backs: [SolK1(), BackNuevo("k1", 9, "2026-11-02", "2026-11-03")]), Ct);
 
         Assert.Equal(["La clave 'k1' está repetida."], r.Errores!["backs[1].clave"]);
-        Assert.Equal(["El empleado 9 no existe o no está activo."], r.Errores["backs[1].empleadoId"]);
+        Assert.Equal(["El empleado DEV009 no existe o no está activo."], r.Errores["backs[1].codigoEkon"]);
     }
 
     // ------------------------------------------------------------------ registro (P13–P14)

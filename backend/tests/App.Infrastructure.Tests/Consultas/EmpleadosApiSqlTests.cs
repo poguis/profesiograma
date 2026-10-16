@@ -21,6 +21,24 @@ public class EmpleadosApiSqlTests(ITestOutputHelper salida) : BaseSql(salida)
     }
 
     [Fact]
+    public void EmpleadosGuardadosPorIds_DatosLaborales_SinFiltroDeEstado_NiDatosSensibles()
+    {
+        // TAREA-26d-3: comparación "guardado frente al ERP" (ConsultaEmpleadosPorIds ampliada).
+        var sql = Sql(DatosReferenciaProyecto.ConsultaEmpleadosPorIds(Db, [6, 7, 8]));
+
+        Assert.Contains("FROM [dbo].[Empleado]", sql);
+        Assert.Contains("[Id] IN", sql);
+        foreach (var columna in new[] { "[CodigoEkon]", "[NombreCompleto]", "[Puesto]", "[Departamento]", "[Unidad]" })
+        {
+            Assert.Contains(columna, sql);
+        }
+
+        Assert.DoesNotContain("[EstadoErp]", sql);
+        Assert.DoesNotContain("[Cedula]", sql);
+        Assert.DoesNotContain("[CorreoEmpresa]", sql);
+    }
+
+    [Fact]
     public void AltaPuntual_EmpleadosPorCodigo_YCargosExistentes()
     {
         Assert.Contains("[CodigoEkon] IN", Sql(AltaPuntualEmpleados.ConsultaPorCodigosSeguimiento(Db, ["DEV001", "900001"])));

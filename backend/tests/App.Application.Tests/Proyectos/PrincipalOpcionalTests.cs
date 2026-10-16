@@ -43,7 +43,7 @@ public class PrincipalOpcionalTests
     // ------------------------------------------------------------------ creación
 
     private static readonly BackSolicitud BackSinRelacion =
-        new(8, "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), null, null, null);
+        new("DEV008", "JORNADA", 2, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 15), null, null, null);
 
     private static CrearProyectoSolicitud SoloBacks() => Dobles.SolicitudCampo() with { Principales = [], Backs = [BackSinRelacion] };
 
@@ -120,12 +120,12 @@ public class PrincipalOpcionalTests
     private static readonly PersonaGuardada PrincipalFuturoNoInicial = Guardada(304, RolCronograma.Principal, 2, 6, "2026-10-15", "2026-11-30");
 
     private static BackEdicionSolicitud Enviar(PersonaGuardada b) =>
-        new($"k{b.Id}", b.Id, b.EmpleadoId, "JORNADA", b.FechaInicio, b.FechaFin, b.DiasDescanso, null, null, null);
+        new($"k{b.Id}", b.Id, b.CodigoEkon, "JORNADA", b.FechaInicio, b.FechaFin, b.DiasDescanso, null, null, null);
 
     private static PrincipalEdicionSolicitud EnviarPrincipal(PersonaGuardada p) =>
-        new($"p{p.Id}", p.Id, p.EmpleadoId, p.JornadaCodigo, p.FechaInicio, p.FechaFin, null);
+        new($"p{p.Id}", p.Id, p.CodigoEkon, p.JornadaCodigo, p.FechaInicio, p.FechaFin, null);
 
-    private static readonly PrincipalEdicionSolicitud PrincipalNuevo = new("pn", null, 7, "TIPO_3", D("2026-10-25"), D("2026-11-30"), null);
+    private static readonly PrincipalEdicionSolicitud PrincipalNuevo = new("pn", null, "DEV007", "TIPO_3", D("2026-10-25"), D("2026-11-30"), null);
 
     private static (EdicionPersonalServicio Servicio, RepositorioEdicionFalso Repo) Edicion(DatosEdicion proyecto, DatosFalsos? datos = null)
     {

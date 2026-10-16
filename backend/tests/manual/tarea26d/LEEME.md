@@ -14,7 +14,7 @@
 |---|---|---|
 | `buscar.cmd` | V1: GET `/api/empleados` como gestor. Muestra el total, la página, si hay `avisoErp` y los códigos de los primeros 10. Con `set TEXTO=<apellido>` prueba también el texto con y sin tildes | No |
 | `crear-proyecto.cmd` | V3: vista previa y, **solo si confirma** (escribiendo `REGISTRAR` o con `set REGISTRAR=SI`), creación del proyecto con empleados reales por `codigoEkon` | **Sí, al confirmar** |
-| `transicion.cmd` | V10: vista previa con solo `empleadoId`, solo `codigoEkon`, ambos (400) y ninguno (400) | No |
+| `transicion.cmd` | ~~V10: vista previa con solo `empleadoId`, solo `codigoEkon`, ambos (400) y ninguno (400)~~ **OBSOLETO desde la TAREA-26d-3** (se retiró `empleadoId`; V10 se verificó el 08/10/2026). Use `..\tarea26d3\retiro.cmd` | No |
 | `conteos.sql` | V9: conteos de `Empleado` y `CargoInfor`, en SSMS | No (solo lectura) |
 | `crear-proyecto.ejemplo.json` | Plantilla del cuerpo de creación | — |
 
@@ -33,7 +33,7 @@ Las salidas `resultado-*.txt` y los `*.json` que no sean `*.ejemplo.json` están
 
    JSON válido, sin comentarios. Ejecute `crear-proyecto.cmd`: primero muestra la vista previa (los `empleadoId` negativos son personas sin fila, que se darán de alta al registrar) y después pide confirmación.
 3. **V9** — `conteos.sql` en SSMS. Deben aparecer los empleados del paso 2, con su `UltimaCopiaApiUtc`, asignados a 1 proyecto, y con `NoDevConCedula = 0`.
-4. **V10** — `set EMPLEADO_ID=<Id de la consulta 3 de conteos.sql>`, `set CODIGO_EKON=<un código activo>` y `transicion.cmd`.
+4. ~~**V10** — `set EMPLEADO_ID=<Id de la consulta 3 de conteos.sql>`, `set CODIGO_EKON=<un código activo>` y `transicion.cmd`.~~ **Obsoleto (TAREA-26d-3):** el contrato ya no tiene `empleadoId`; ver `..\tarea26d3\LEEME.md`.
 5. **V8** (modo Simulado: `dotnet user-secrets remove "ServiciosExternos:Modo" --project src/App.Api` y reiniciar la API):
    - `buscar.cmd` → DEV001–DEV008 y SIM001…;
    - `crear-proyecto.cmd` con códigos `SIM…` (sin cruces) y la compañía 9001 / DEV-ERP-001 / DEV.01 / horario 1 del simulado.

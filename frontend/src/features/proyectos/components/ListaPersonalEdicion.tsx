@@ -37,6 +37,7 @@ import {
 import { type ErroresFila, mensajesSinCampo } from '../formularioProyecto'
 import type { JornadaCatalogo, LimitesEdicion, PersonaEdicion } from '../tipos'
 import { CAMPOS_VISIBLES_BACK, CAMPOS_VISIBLES_PRINCIPAL } from '../camposVisibles'
+import type { AvisosErpFila } from '../comparacionErp'
 import { CamposBack, CamposPrincipal } from './CamposPersona'
 import { TarjetaPersona } from './TarjetaPersona'
 
@@ -75,6 +76,10 @@ export interface ListaPersonalEdicionProps {
   inicialesHistoricas?: ReadonlySet<number>
   /** Avisos adicionales por fila (clave → mensajes). */
   avisosFila?: Record<string, string[]>
+  /** TAREA-26d-3: avisos "guardado frente al ERP" por fila (clave → insignia y detalle). Solo informan. */
+  erpFilas?: Record<string, AvisosErpFila>
+  /** TAREA-26d-3: lo mismo para la tabla de históricas (Id de la persona → insignia y detalle). */
+  erpHistoricas?: Record<number, AvisosErpFila>
   /** Ayudas por sección que no bloquean. */
   ayudasSeccion?: { principales?: string; backs?: string }
   /** Texto de una sección sin filas (reemplaza "Sin … vigentes."). */
@@ -109,6 +114,8 @@ function SeccionRol({
   fechaMaxima,
   inicialesHistoricas,
   avisosFila,
+  erpFilas,
+  erpHistoricas,
   ayudasSeccion,
   textoSinFilas,
 }: ListaPersonalEdicionProps & { rol: FilaEdicion['rol'] }) {
@@ -154,7 +161,9 @@ function SeccionRol({
         </MessageBar>
       )}
 
-      {historicas.length > 0 && <TablaHistoricas historicas={historicas} jornadas={jornadas} iniciales={inicialesHistoricas} />}
+      {historicas.length > 0 && (
+        <TablaHistoricas historicas={historicas} jornadas={jornadas} iniciales={inicialesHistoricas} erp={erpHistoricas} />
+      )}
 
       {filas.length === 0 && <Text size={200}>{sinFilas}</Text>}
 
@@ -174,6 +183,7 @@ function SeccionRol({
           fechaMinimaFinNuevas={fechaMinimaFinNuevas}
           fechaMaxima={fechaMaxima === undefined ? estado.fechaFinProyecto : (fechaMaxima ?? undefined)}
           avisos={avisosFila?.[f.clave]}
+          erp={erpFilas?.[f.clave]}
         />
       ))}
     </section>
@@ -184,11 +194,14 @@ function TablaHistoricas({
   historicas,
   jornadas,
   iniciales,
+  erp,
 }: {
   historicas: PersonaEdicion[]
   jornadas: JornadaCatalogo[]
   /** TAREA-19c: marca "Inicial" en los principales históricos iniciales. */
   iniciales?: ReadonlySet<number>
+  /** TAREA-26d-3: insignia y detalle "guardado frente al ERP" por persona (sin columna nueva). */
+  erp?: Record<number, AvisosErpFila>
 }) {
   const estilos = useEstilos()
   const esPrincipal = historicas[0].rol === ROL_PRINCIPAL
@@ -217,6 +230,7 @@ function TablaHistoricas({
                     </Badge>
                   </>
                 )}
+                {erp?.[h.id] && <DetalleErp avisos={erp[h.id]} />}
               </TableCell>
               <TableCell>
                 {esPrincipal ? (jornadas.find((j) => j.codigo === h.jornada)?.nombre ?? h.jornada ?? '—') : h.tipoRegistro}
@@ -228,6 +242,23 @@ function TablaHistoricas({
         </TableBody>
       </Table>
     </div>
+  )
+}
+
+/** Insignia y detalle "guardado frente al ERP" de una persona guardada (TAREA-26d-3). */
+function DetalleErp({ avisos }: { avisos: AvisosErpFila }) {
+  return (
+    <>
+      {' '}
+      <Badge appearance="tint" color={avisos.insignia.color} title={avisos.mensajes.join(' ')}>
+        {avisos.insignia.texto}
+      </Badge>
+      {avisos.mensajes.map((m) => (
+        <Text key={m} as="p" size={200} block>
+          {m}
+        </Text>
+      ))}
+    </>
   )
 }
 
@@ -246,6 +277,8 @@ interface TarjetaEdicionProps {
   fechaMinimaFinNuevas?: string
   fechaMaxima?: string
   avisos?: string[]
+  /** TAREA-26d-3: insignia y detalle "guardado frente al ERP". */
+  erp?: AvisosErpFila
 }
 
 function TarjetaEdicion({
@@ -262,6 +295,7 @@ function TarjetaEdicion({
   fechaMinimaFinNuevas,
   fechaMaxima,
   avisos = [],
+  erp,
 }: TarjetaEdicionProps) {
   const estilos = useEstilos()
   const etiqueta = etiquetaFila(estado, fila)
@@ -302,7 +336,7 @@ function TarjetaEdicion({
     <TarjetaPersona
       etiqueta={etiqueta}
       empleado={fila.empleado}
-      advertencias={[...(fila.avisoRelacion ? [AVISO_RELACION] : []), ...avisos]}
+      advertencias={[...(fila.avisoRelacion ? [AVISO_RELACION] : []), ...avisos, ...(erp?.mensajes ?? [])]}
       errores={mensajesSinCampo(errores, visibles)}
       acciones={
         <>
@@ -310,6 +344,11 @@ function TarjetaEdicion({
             {nueva && <Badge appearance="tint" color="brand">Nuevo</Badge>}
             {yaEmpezo && <Badge appearance="tint" color="informative">Ya empezó</Badge>}
             {seraInicial && <Badge appearance="tint" color="success">Será el principal inicial (responsable)</Badge>}
+            {erp && (
+              <Badge appearance="tint" color={erp.insignia.color}>
+                {erp.insignia.texto}
+              </Badge>
+            )}
           </span>
           {nueva && esPrincipal && (
             <>

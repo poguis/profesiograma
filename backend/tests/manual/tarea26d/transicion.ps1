@@ -1,4 +1,5 @@
 # ==========================================================================
+# OBSOLETO desde la TAREA-26d-3 (se retiro empleadoId; ver ..\tarea26d3\retiro.ps1).
 # TAREA-26d-1 - V10: transicion empleadoId / codigoEkon (P2) contra POST /api/proyectos/previsualizar (NO escribe).
 #   Usa crear-proyecto-1.json como base y cambia SOLO el empleado del primer principal:
 #     a) solo empleadoId = %EMPLEADO_ID%   (Id de una fila de Empleado de un empleado ACTIVO en la API; ver conteos.sql)

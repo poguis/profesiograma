@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<CambioEstadoServicio>();
         services.AddScoped<EdicionPersonalValidador>();
         services.AddScoped<EdicionPersonalServicio>();
+        services.AddScoped<ComparacionErpServicio>(); // TAREA-26d-3
         services.AddScoped<ReactivacionValidador>();
         services.AddScoped<ReactivacionServicio>();
         services.AddScoped<EdicionCabeceraValidador>();
