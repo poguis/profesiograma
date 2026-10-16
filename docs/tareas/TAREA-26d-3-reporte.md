@@ -1,7 +1,7 @@
 # TAREA-26d-3 — Comparación "guardado frente al ERP" y retiro de `empleadoId`
 
 **Fecha:** 2026-10-13 (Fase A y Fase B)
-**Resultado:** implementada. Falta la verificación del usuario (sección 6).
+**Resultado:** ✅ **cerrada.** Verificación del usuario C1–C6 OK (14 y 16/10/2026; sección 8). En el cierre solo se ajustaron el script `retiro.ps1` y el `LEEME.md` de `tarea26d3` (sección 8.2), sin tocar código de la aplicación.
 - `dotnet build Profesiograma.slnx -c Release`: **0 advertencias, 0 errores**.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **604/604** (591 + 13 nuevas; 8 pruebas de transición retiradas o reescritas, sección 4.1).
 - Frontend: `npm run build` OK; `npm run lint` (oxlint) sin hallazgos; `npm test` **222/222** (217 + 5 nuevas; ninguna ajustada).
@@ -123,8 +123,32 @@ Requisitos: API reiniciada con este código y `npm run dev`. Scripts en `backend
 | X6 | Scripts | `comparacion.cmd` (C1, C2, C6) y `retiro.cmd` (C5) | Según `tarea26d3/LEEME.md` | No | |
 
 ## 7. Pendientes
-- **Verificación del usuario** (sección 6).
 - **Pendiente 46 (opcional, D1):** acción "Actualizar datos guardados del empleado".
 - **Supuestos:**
   - en "Reactivar", una fila nueva recibe avisos si su código es de una persona guardada del proyecto (así los recibe el propuesto R7);
   - en "Actualizar personal" solo se muestran en las vigentes (D3).
+
+## 8. Verificación del usuario (14 y 16/10/2026)
+### 8.1 Resultados
+| # | Caso | Resultado |
+|---|---|---|
+| C1 | (b) No activo (proyectos con DEV001–DEV008 en modo Http) | ✅ OK |
+| C2 | Sin diferencias (Id 15 y 17) | ✅ OK |
+| C3 | (a) Cambio de cargo y departamento (`caso_a_preparar.sql` → comparación → `caso_a_revertir.sql`) | ✅ OK |
+| C4 | (c) ERP caído: 200 con "No se pudo comparar con el ERP.", nunca 503 | ✅ OK |
+| C5 | Retiro de `empleadoId` (`retiro.cmd`) | ✅ OK |
+| C6 | No visible → 404 | ✅ OK |
+
+**Nota de C3:** la primera ejecución de `caso_a_revertir.sql` se hizo con un valor original equivocado. Se corrigió con los valores del SELECT "ANTES" y se verificó con `comparacion.cmd`: sin avisos.
+
+### 8.2 Hallazgos de los scripts (corregidos en el cierre)
+1. **`retiro.ps1`:** cuando un caso no obtenía el código esperado, solo se veía el código HTTP. Ahora muestra:
+   - "NO ESPERADO";
+   - el `title` y el `detail` del ProblemDetails;
+   - **todas** las claves de `errors` con sus mensajes.
+   - Nunca muestra valores de la solicitud.
+   - Distingue el 400 de cuerpo ilegible (sin errores por campo).
+   - Validado solo con `SIMULAR=1`: `simulacion/retiro_b.json` + `retiro_b.codigo` es ahora un 400 de cuerpo ilegible ficticio, y el caso a) sigue con su 400 esperado.
+2. **`LEEME.md` de `tarea26d3`:**
+   - requisito: en `crear-proyecto-1.json`, `proyectoErpId` y `actividadId` son texto entre comillas;
+   - C4: usar `https://localhost:1` como URL inválida de `ServiciosExternos:ErpBase7048` y restaurar con `dotnet user-secrets remove "ServiciosExternos:ErpBase7048"`, porque el valor real viene de `appsettings.json`.
