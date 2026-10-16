@@ -25,8 +25,8 @@ try {
     Add-Type -AssemblyName System.Web.Extensions
     $serializador = New-Object System.Web.Script.Serialization.JavaScriptSerializer
     $casos = @(
-        @{ Nombre = 'retiro_a'; Descripcion = 'a) solo empleadoId (esperado 400 en codigoEkon)'; SoloId = $true },
-        @{ Nombre = 'retiro_b'; Descripcion = 'b) solo codigoEkon (esperado 200)'; SoloId = $false }
+        @{ Nombre = 'retiro_a'; Descripcion = 'a) solo empleadoId (esperado 400 en codigoEkon)'; SoloId = $true; Esperado = 400 },
+        @{ Nombre = 'retiro_b'; Descripcion = 'b) solo codigoEkon (esperado 200)'; SoloId = $false; Esperado = 200 }
     )
     foreach ($caso in $casos) {
         $cuerpo = Leer-Json ([IO.File]::ReadAllText($archivo, [Text.Encoding]::UTF8))
@@ -46,11 +46,24 @@ try {
             -Encabezados @{ 'X-Dev-User' = 'gestor' } -TimeoutSegundos 120 -NombreSimulacion $caso.Nombre
         Escribir ''
         Escribir "-- $($caso.Descripcion): $(Describir-Respuesta $r)"
-        if ($r.Codigo -eq 400 -and $r.Texto) {
-            $p = Leer-Json $r.Texto
-            if ($p['errors']) {
-                foreach ($k in ($p['errors'].Keys | Where-Object { $_ -like 'principales*0*' })) {
-                    Escribir ("   {0}: {1}" -f $k, (Texto-Linea (@($p['errors'][$k]) -join ' ')))
+        $esperado = $r.Codigo -eq $caso.Esperado
+        if (-not $esperado) { Escribir "   NO ESPERADO (se esperaba HTTP $($caso.Esperado))." }
+        if ($r.Codigo -ge 400 -and $r.Texto) {
+            # Solo lo que devuelve la API (ProblemDetails): title/detail y errores por campo; nunca la solicitud.
+            $p = $null
+            try { $p = Leer-Json $r.Texto } catch { Escribir '   (respuesta no es JSON)' }
+            if ($p -is [Collections.IDictionary]) {
+                if (-not $esperado) {
+                    if ($p.ContainsKey('title')) { Escribir "   title: $(Texto-Linea $p['title'])" }
+                    if ($p.ContainsKey('detail') -and $p['detail']) { Escribir "   detail: $(Texto-Linea $p['detail'])" }
+                }
+                if ($p.ContainsKey('errors') -and $p['errors']) {
+                    # Esperado: solo principales[0]; no esperado: todas las claves.
+                    $claves = if ($esperado) { $p['errors'].Keys | Where-Object { $_ -like 'principales*0*' } } else { $p['errors'].Keys }
+                    foreach ($k in $claves) { Escribir ("   {0}: {1}" -f $k, (Texto-Linea (@($p['errors'][$k]) -join ' '))) }
+                }
+                elseif (-not $esperado) {
+                    Escribir '   (sin errores por campo: cuerpo ilegible o error general; ver title/detail)'
                 }
             }
         }
