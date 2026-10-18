@@ -2,6 +2,7 @@
 // Concentra la limpieza de campos dependientes (R3), las referencias back → principal (R8) y la revisión que
 // invalida la vista previa (R12). El servidor tiene la última palabra en todas las validaciones.
 import { formatearFecha } from '../../utils/formato'
+import { type Turno, validarAlmuerzo } from './almuerzoTurno'
 import { ayudaMinimo, cumpleMinimo } from './minimoPersonal'
 import type {
   BackSolicitud,
@@ -327,19 +328,16 @@ export interface ErroresCliente {
 
 /**
  * R4: ayudas del cliente (no bloquean el envío; D4). Los rangos de RN09 ya los imponen las opciones
- * del endpoint, así que aquí solo se revisa regreso > salida y fin ≥ inicio.
+ * del endpoint, así que aquí solo se revisa el almuerzo según el turno (TAREA-26c) y fin ≥ inicio.
  */
-export function validarCliente(estado: EstadoFormulario): ErroresCliente {
+export function validarCliente(estado: EstadoFormulario, turno?: Turno): ErroresCliente {
   const errores: ErroresCliente = { cabecera: {}, filas: {} }
   const c = estado.cabecera
 
   if (c.fechaInicio !== null && c.fechaFin !== null && c.fechaFin < c.fechaInicio) {
     errores.cabecera.fechaFin = 'La fecha fin debe ser mayor o igual a la fecha de inicio.'
   }
-  // "HH:mm" se compara como texto.
-  if (c.salidaAlmuerzo !== null && c.regresoAlmuerzo !== null && c.regresoAlmuerzo <= c.salidaAlmuerzo) {
-    errores.cabecera.regresoAlmuerzo = 'El regreso de almuerzo debe ser posterior a la salida.'
-  }
+  Object.assign(errores.cabecera, validarAlmuerzo(turno, c.salidaAlmuerzo, c.regresoAlmuerzo))
   for (const fila of [...estado.principales, ...estado.backs]) {
     if (fila.fechaInicio !== null && fila.fechaFin !== null && fila.fechaFin < fila.fechaInicio) {
       errores.filas[fila.clave] = { fechaFin: 'La fecha fin debe ser mayor o igual a la fecha de inicio.' }

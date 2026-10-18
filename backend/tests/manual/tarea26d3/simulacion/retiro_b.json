@@ -1,6 +1,3 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "La solicitud no tiene el formato esperado.",
-  "status": 400,
-  "detail": "Respuesta ficticia de simulacion: cuerpo ilegible sin errores por campo."
+  "nota": "Respuesta ficticia de simulacion: vista previa correcta (el script solo muestra el codigo HTTP)."
 }

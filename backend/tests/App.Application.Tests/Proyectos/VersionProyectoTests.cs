@@ -115,7 +115,7 @@ public class VersionProyectoTests
     {
         var repo = new RepositorioCabeceraFalso(DoblesCabecera.Proyecto()) { UltimaVersion = ultimaVersion };
         var tx = new TransaccionFalsa();
-        return (new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso()), tx, new UsuarioFalso(),
+        return (new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso(), new DatosFalsos()), tx, new UsuarioFalso(),
             new RelojFijo(DoblesCabecera.Ahora)), repo, tx);
     }
 

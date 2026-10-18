@@ -28,7 +28,7 @@ Título del `ValidationProblem`: "Los datos de la cabecera no son válidos.".
 | C3 | Ampliar la fecha fin: el personal no cambia; las actividades que terminaban en el fin anterior se extienden al nuevo (H14; `AmpliacionProyecto`, Domain) |
 | C4 | Acortar la fecha fin (y H15, §7.1): `RecorteProyecto` (TAREA-14) con F = nueva fin, sin cambio de estado: días > F, personal que empieza después (eliminado) o termina después (recortado), actividades, backs sin principal (advertencia). Si el recorte elimina a **todos** los principales con `EsPrincipalInicial`: advertencia "El proyecto quedará sin principal inicial." (no bloquea). Escritura con el orden de la TAREA-14 (`EscrituraRecorte`) |
 | P2 | La nueva fecha fin debe ser ≥ hoy (al acortar y al ampliar) y ≥ el inicio resultante: "La fecha fin no puede ser anterior a hoy (dd/MM/yyyy)." / "La fecha fin debe ser mayor o igual a la fecha de inicio." |
-| C5 | Horario: código del catálogo ERP (solo status "A"), con los mismos campos que guarda la creación. Almuerzo: `ReglasAlmuerzo` con los mismos mensajes que la creación (`ReglasHorarioAlmuerzo`, extraído de `CrearProyectoValidador`). Solo se validan los rangos de las horas enviadas; "regreso > salida" se valida con los valores resultantes. No afectan al cronograma |
+| C5 | Horario: código del catálogo ERP (solo status "A" y laborable, TAREA-26c), con los mismos campos que guarda la creación. Almuerzo: `ReglasAlmuerzo` con los mismos mensajes que la creación (`ReglasHorarioAlmuerzo`, extraído de `CrearProyectoValidador`). Solo se validan los rangos de las horas enviadas; "regreso > salida" se valida con los valores resultantes. No afectan al cronograma. **TAREA-26c:** turno nocturno, almuerzo opcional y D3/D7, ver §9 |
 | C6 | Cambio de actividad: solo grupos con `RequiereProyectoErp` ("El grupo X no usa actividad."); actividad del catálogo ERP del proyecto ERP del proyecto ("La actividad no existe en el proyecto ERP."); `desde` dentro de [inicio, fin resultantes]. Como el original: las actividades que empiezan antes de `desde` y llegan a él se recortan a `desde − 1`; se **eliminan** las que empiezan en `desde` o después; la nueva va de `desde` al fin, versión máx + 1 sobre todas las existentes, TipoMovimiento CAMBIO_ACTIVIDAD (`CambioActividad`, Domain). La misma actividad que la vigente en `desde` → 400 `actividad.actividadId` "La actividad X ya está vigente el dd/MM/yyyy.". `desde` < hoy: advertencia "La nueva actividad aplica desde una fecha ya transcurrida.". Combinado con la fecha fin: primero la fecha fin y después la actividad |
 | C7 | Una etapa por registro: solo cambia la actividad → CAMBIO_ACTIVIDAD; cualquier otro cambio → EDICION_CABECERA. Estado sin cambios; `FechaInicio`/`FechaFin` = las resultantes; `FechaCorte` = hoy; snapshot del personal resultante (`SnapshotPersonal`) |
 | P3 | Actividad de la etapa: la vigente en `max(hoy, inicio resultante)` (la de mayor versión, contando la nueva). **TAREA-18b:** reemplazada por la regla común de etapas (O3, §7.3) y, en CAMBIO_ACTIVIDAD, por la actividad nueva (O2, §7.2) |
@@ -145,3 +145,18 @@ Título del `ValidationProblem`: "Los datos de la cabecera no son válidos.".
 la pestaña B, con el mismo cambio que ya registró A, recibe ahora 409 en lugar de 400 "No hay cambios para
 registrar.". La relectura con `RowVer` (C8) se conserva, pero no detecta una actualización de personal intermedia; el
 token sí.
+
+## 9. Horarios no laborales y turno nocturno (TAREA-26c)
+Reglas comunes con la creación: `FASE_5_Crear_Proyecto.md` §13. En la edición, además:
+- **D3:**
+  - un horario guardado que ya no es seleccionable (no laboral o inactivo) se conserva si no se cambia: editar otras cosas no lo valida;
+  - elegir un horario no laboral distinto del guardado → 400 `horarioCodigo` "El horario no es laborable o no está activo.";
+  - el diálogo muestra "Este horario ya no está disponible para nuevos proyectos; se conserva si no elige otro.".
+- **D7:** al cambiar el horario, el almuerzo resultante (enviado o guardado) se revalida contra el nuevo turno; si deja de ser válido, error por campo. El frontend limpia la hora que queda fuera del nuevo turno.
+- **Almuerzo:**
+  - `null` = sin cambio;
+  - `""` = sin almuerzo, aceptado solo si el horario resultante no lo descuenta (jornada = trabajados); si no, "La hora de … es obligatoria.".
+  - Un proyecto guardado sin almuerzo que cambia a un horario con almuerzo debe enviar las dos horas.
+- `GET …/cabecera` devuelve `horario.minutosJornada` y `horario.minutosTrabajados` del horario guardado.
+- `CabeceraGuardada` lee `HorasJornadaMin` / `HorasTrabajadasMin`; sin cambio de esquema.
+

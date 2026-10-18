@@ -22,12 +22,16 @@ public sealed record EditarCabeceraSolicitud(
 
 // ------------------------------------------------------------------ lectura
 
-/// <summary>Cabecera guardada del proyecto (sin datos sensibles). RowVer para detectar cambios entre lecturas.</summary>
+/// <summary>
+/// Cabecera guardada del proyecto (sin datos sensibles). RowVer para detectar cambios entre lecturas. Minutos de jornada y
+/// trabajados del horario guardado: deciden si el almuerzo es opcional (TAREA-26c).
+/// </summary>
 public sealed record CabeceraGuardada(
     int Id, string Codigo, string EstadoCodigo, DateOnly FechaInicio, DateOnly FechaFin,
     string GrupoCodigo, bool RequiereProyectoErp, int CompaniaId, string? ProyectoErpId,
     int? HorarioCodigo, string? HorarioDescripcion, TimeOnly? HoraEntrada, TimeOnly? HoraSalida,
-    TimeOnly? SalidaAlmuerzo, TimeOnly? RegresoAlmuerzo, byte[] RowVer);
+    TimeOnly? SalidaAlmuerzo, TimeOnly? RegresoAlmuerzo, byte[] RowVer,
+    short? MinutosJornada = null, short? MinutosTrabajados = null);
 
 /// <summary>Actividad guardada (ProyectoActividad) con descripción, tipo y tipo de movimiento.</summary>
 public sealed record ActividadGuardada(

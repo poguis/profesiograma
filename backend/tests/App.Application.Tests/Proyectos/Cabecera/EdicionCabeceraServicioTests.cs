@@ -1,3 +1,4 @@
+using App.Application.Erp;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Personal;
 using App.Application.Seguridad;
@@ -16,11 +17,11 @@ public class EdicionCabeceraServicioTests
 
     private sealed record Entorno(EdicionCabeceraServicio Servicio, RepositorioCabeceraFalso Repo, TransaccionFalsa Tx);
 
-    private static Entorno Crear(RepositorioCabeceraFalso? repo = null, IUsuarioActual? usuario = null)
+    private static Entorno Crear(RepositorioCabeceraFalso? repo = null, IUsuarioActual? usuario = null, DatosFalsos? referencia = null)
     {
         repo ??= new RepositorioCabeceraFalso(Proyecto());
         var tx = new TransaccionFalsa();
-        var servicio = new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso()), tx,
+        var servicio = new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso(), referencia ?? new DatosFalsos()), tx,
             usuario ?? new UsuarioFalso(), new RelojFijo(Ahora));
         return new Entorno(servicio, repo, tx);
     }
@@ -217,7 +218,7 @@ public class EdicionCabeceraServicioTests
     public async Task C5_HorarioInexistenteOInactivo_400()
     {
         var e = await Errores(S(horario: 3));
-        Assert.Equal(["El horario no existe o no está activo."], e["horarioCodigo"]);
+        Assert.Equal(["El horario no es laborable o no está activo."], e["horarioCodigo"]);
     }
 
     [Theory]
@@ -241,6 +242,126 @@ public class EdicionCabeceraServicioTests
         Assert.Empty(p.DiasEliminados);
         Assert.Equal("SIN_CAMBIO", p.Actividades.Single().Accion);
         Assert.Equal("EDICION_CABECERA", p.TipoEtapa);
+    }
+
+    // ------------------------------------------------------------------ TAREA-26c: no laborales (D3), turno nocturno y D7
+
+    /// <summary>Proyecto C con otro horario guardado (y, opcionalmente, otro almuerzo).</summary>
+    private static DatosCabecera ConHorarioGuardado(HorarioErp h, TimeOnly? salida, TimeOnly? regreso)
+    {
+        var p = Proyecto();
+        return p with
+        {
+            Cabecera = p.Cabecera with
+            {
+                HorarioCodigo = h.Codigo, HorarioDescripcion = h.Descripcion, HoraEntrada = h.HoraEntrada, HoraSalida = h.HoraSalida,
+                MinutosJornada = h.MinutosJornada, MinutosTrabajados = h.MinutosTrabajados, SalidaAlmuerzo = salida, RegresoAlmuerzo = regreso,
+            },
+        };
+    }
+
+    [Theory]
+    [InlineData(113)]
+    [InlineData(160)]
+    [InlineData(9005)]
+    public async Task D3_ElegirHorarioNoLaboral_400(int codigo)
+    {
+        var e = await Errores(S(horario: codigo));
+        Assert.Equal(["El horario no es laborable o no está activo."], e["horarioCodigo"]);
+    }
+
+    [Fact]
+    public async Task D3_HorarioNoLaboralGuardado_SeConservaAlEditarOtrosCampos()
+    {
+        var guardado = ConHorarioGuardado(HorariosPrueba.Vacaciones113, new TimeOnly(13, 0), new TimeOnly(14, 0));
+        var p = await Vista(S(fin: "2026-12-05", salida: "12:00"), guardado);
+
+        Assert.Equal(["fechaFin", "salidaAlmuerzo"], p.Cambios.Select(c => c.Campo));
+        Assert.Equal(113, (await Crear(new RepositorioCabeceraFalso(guardado)).Servicio.ObtenerAsync(ProyectoId, Ct))!.Horario.Codigo);
+    }
+
+    [Fact]
+    public async Task D3_HorarioNoLaboralGuardado_ElegirloDeNuevoNoEsCambio()
+    {
+        var p = await Vista(S(horario: 113, fin: "2026-12-05"), ConHorarioGuardado(HorariosPrueba.Vacaciones113, new TimeOnly(13, 0), new TimeOnly(14, 0)));
+        Assert.Equal(["fechaFin"], p.Cambios.Select(c => c.Campo));
+    }
+
+    [Fact]
+    public async Task D7_CambiarANocturno_ConElAlmuerzoGuardadoFueraDelTurno_ErrorPorCampo()
+    {
+        var e = await Errores(S(horario: 73)); // almuerzo guardado 13:00–14:00
+        Assert.Equal(["El almuerzo debe estar dentro del turno (17:00–04:00)."], e["salidaAlmuerzo"]);
+        Assert.Equal(["El almuerzo debe estar dentro del turno (17:00–04:00)."], e["regresoAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task D7_CambiarANocturno_ConAlmuerzoDentro_Valido()
+    {
+        var p = await Vista(S(horario: 73, salida: "01:00", regreso: "02:00"));
+        Assert.Equal(["horario", "salidaAlmuerzo", "regresoAlmuerzo"], p.Cambios.Select(c => c.Campo));
+    }
+
+    [Fact]
+    public async Task D7_CambiarANocturno_AlmuerzoQueCruzaLaMedianoche_400()
+    {
+        var e = await Errores(S(horario: 118, salida: "23:00", regreso: "01:00"));
+        Assert.Equal(["El almuerzo no puede cruzar la medianoche."], e["regresoAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task D7_CambiarAHorarioSinAlmuerzo_QuitarElAlmuerzo_Valido()
+    {
+        var e = Crear();
+        var r = await e.Servicio.RegistrarAsync(ProyectoId, S(horario: 118, salida: "", regreso: "").ConVersion(e.Repo), Ct);
+
+        Assert.Equal(EstadoEdicion.Realizado, r.Estado);
+        Assert.Equal((null, null), (e.Repo.Aplicado!.SalidaAlmuerzo, e.Repo.Aplicado.RegresoAlmuerzo));
+        Assert.Equal(118, e.Repo.Aplicado.Horario!.Codigo);
+    }
+
+    [Fact]
+    public async Task D7_CambiarAHorarioSinAlmuerzo_ConservarElAlmuerzoDiurno_FueraDelTurno()
+    {
+        var e = await Errores(S(horario: 118));
+        Assert.Equal(["El almuerzo debe estar dentro del turno (22:00–06:00)."], e["salidaAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task SinAlmuerzoGuardado_EditarFechas_Valido()
+    {
+        var p = await Vista(S(fin: "2026-12-05"), ConHorarioGuardado(HorariosPrueba.Nocturno118, null, null));
+        Assert.Equal(["fechaFin"], p.Cambios.Select(c => c.Campo));
+    }
+
+    [Fact]
+    public async Task SinAlmuerzoGuardado_CambiarAHorarioConAlmuerzo_AmbasObligatorias()
+    {
+        var e = await Errores(S(horario: 2), ConHorarioGuardado(HorariosPrueba.Nocturno118, null, null));
+        Assert.Equal(["La hora de salida a almuerzo es obligatoria."], e["salidaAlmuerzo"]);
+        Assert.Equal(["La hora de regreso de almuerzo es obligatoria."], e["regresoAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task QuitarAlmuerzo_HorarioConAlmuerzo_Obligatoria()
+    {
+        var e = await Errores(S(salida: ""));
+        Assert.Equal(["La hora de salida a almuerzo es obligatoria."], e["salidaAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task NocturnoGuardado_CambiarSoloElRegreso_ValidaContraElTurnoGuardado()
+    {
+        var guardado = ConHorarioGuardado(HorariosPrueba.Nocturno73, new TimeOnly(1, 0), new TimeOnly(2, 0));
+        Assert.Equal(["regresoAlmuerzo"], (await Vista(S(regreso: "03:00"), guardado)).Cambios.Select(c => c.Campo));
+        Assert.Equal(["El almuerzo debe estar dentro del turno (17:00–04:00)."], (await Errores(S(regreso: "05:00"), guardado))["regresoAlmuerzo"]);
+    }
+
+    [Fact]
+    public async Task Obtener_DevuelveLosMinutosDelHorarioGuardado()
+    {
+        var d = await Crear(new RepositorioCabeceraFalso(ConHorarioGuardado(HorariosPrueba.Nocturno118, null, null))).Servicio.ObtenerAsync(ProyectoId, Ct);
+        Assert.Equal(((short?)480, (short?)480), (d!.Horario.MinutosJornada, d.Horario.MinutosTrabajados));
     }
 
     // ------------------------------------------------------------------ C6: actividad

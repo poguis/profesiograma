@@ -1,0 +1,10 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Uno o más campos no son válidos.",
+  "status": 400,
+  "errors": {
+    "regresoAlmuerzo": [
+      "El almuerzo no puede cruzar la medianoche."
+    ]
+  }
+}

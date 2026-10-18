@@ -43,7 +43,7 @@ public sealed record ResultadoValidacionCabecera(PlanCabecera? Plan, IReadOnlyDi
 /// (C3 ampliar / C4 acortar con RecorteProyecto) → actividad (C6) sobre el resultado. Horario y almuerzo (C5) con
 /// ReglasHorarioAlmuerzo (mismos mensajes que la creación). Ver docs/fases/FASE_5_Edicion_Cabecera.md.
 /// </summary>
-public sealed class EdicionCabeceraValidador(ICatalogoErp erp)
+public sealed class EdicionCabeceraValidador(ICatalogoErp erp, IDatosReferenciaProyecto referencia)
 {
     public const string TipoEdicionCabecera = "EDICION_CABECERA";
     public const string TipoCambioActividad = "CAMBIO_ACTIVIDAD";
@@ -110,22 +110,27 @@ public sealed class EdicionCabeceraValidador(ICatalogoErp erp)
             actividades = [.. movimiento.Actividades];
         }
 
-        // --- Horario y almuerzo (C5)
+        // --- Horario y almuerzo (C5). TAREA-26c (D3): el horario guardado se conserva aunque ya no sea seleccionable;
+        // solo se valida el que se elige.
         HorarioErp? horarioNuevo = null;
         if (s.HorarioCodigo is int codigoHorario && codigoHorario != c.HorarioCodigo)
         {
-            horarioNuevo = await ReglasHorarioAlmuerzo.ValidarHorarioAsync(codigoHorario, erp, e, ct);
+            horarioNuevo = await ReglasHorarioAlmuerzo.ValidarHorarioAsync(codigoHorario, erp, referencia, e, ct);
         }
 
-        var salida = s.SalidaAlmuerzo is null
-            ? c.SalidaAlmuerzo
-            : ReglasHorarioAlmuerzo.LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", ReglasHorarioAlmuerzo.MensajeSalidaObligatoria, e);
-        var regreso = s.RegresoAlmuerzo is null
-            ? c.RegresoAlmuerzo
-            : ReglasHorarioAlmuerzo.LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", ReglasHorarioAlmuerzo.MensajeRegresoObligatorio, e);
-        if (s.SalidaAlmuerzo is not null || s.RegresoAlmuerzo is not null)
+        // Almuerzo: null = sin cambio; "" = sin almuerzo (solo si es opcional). D7: al cambiar el horario se revalida el
+        // almuerzo resultante (enviado o guardado) contra el nuevo turno.
+        var (entradaTurno, salidaTurno, jornada, trabajados) = horarioNuevo is { } h
+            ? (h.HoraEntrada, h.HoraSalida, h.MinutosJornada, h.MinutosTrabajados)
+            : (c.HoraEntrada, c.HoraSalida, c.MinutosJornada, c.MinutosTrabajados);
+        var salida = s.SalidaAlmuerzo is null ? c.SalidaAlmuerzo : ReglasHorarioAlmuerzo.LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", e);
+        var regreso = s.RegresoAlmuerzo is null ? c.RegresoAlmuerzo : ReglasHorarioAlmuerzo.LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", e);
+        var validarSalida = s.SalidaAlmuerzo is not null || horarioNuevo is not null;
+        var validarRegreso = s.RegresoAlmuerzo is not null || horarioNuevo is not null;
+        if (validarSalida || validarRegreso)
         {
-            ReglasHorarioAlmuerzo.ValidarAlmuerzo(salida, regreso, s.SalidaAlmuerzo is not null, s.RegresoAlmuerzo is not null, e);
+            ReglasHorarioAlmuerzo.ValidarPresencia(salida, regreso, ReglasAlmuerzo.EsOpcional(jornada, trabajados), e);
+            ReglasHorarioAlmuerzo.ValidarAlmuerzo(salida, regreso, validarSalida, validarRegreso, entradaTurno, salidaTurno, e);
         }
 
         var cambiaAlmuerzo = salida != c.SalidaAlmuerzo || regreso != c.RegresoAlmuerzo;

@@ -6,6 +6,7 @@
 #     b) solo codigoEkon (el del archivo)     -> esperado 200
 #   Muestra codigo HTTP y, si hay, los errores de principales[0].* (nunca nombres).
 # Salida: resultado-retiro.txt. Simulacion: SIMULAR=1 (simulacion\retiro_a.json, retiro_b.json + .codigo).
+#   set RETIRO_B_SIMULACION=retiro_b_ilegible   (solo simulacion: caso b con un 400 de cuerpo ilegible)
 # ==========================================================================
 . (Join-Path $PSScriptRoot '..\tarea26a\comun.ps1')
 if (-not $env:SIMULACION) { $script:CarpetaSimulacion = Join-Path $PSScriptRoot 'simulacion' }
@@ -43,7 +44,8 @@ try {
             [void]$principal.Remove('empleadoId')
         }
         $r = Solicitar -Metodo 'POST' -Base $base -Ruta 'api/proyectos/previsualizar' -Cuerpo ($serializador.Serialize($cuerpo)) `
-            -Encabezados @{ 'X-Dev-User' = 'gestor' } -TimeoutSegundos 120 -NombreSimulacion $caso.Nombre
+            -Encabezados @{ 'X-Dev-User' = 'gestor' } -TimeoutSegundos 120 `
+            -NombreSimulacion $(if ($caso.Nombre -eq 'retiro_b' -and $env:RETIRO_B_SIMULACION) { $env:RETIRO_B_SIMULACION } else { $caso.Nombre })
         Escribir ''
         Escribir "-- $($caso.Descripcion): $(Describir-Respuesta $r)"
         $esperado = $r.Codigo -eq $caso.Esperado

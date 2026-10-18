@@ -34,6 +34,7 @@ La caché de la API dura 10 min: tras `caso_a_preparar.sql` el aviso aparece ens
 ## Modo simulación (sin red)
 `set SIMULAR=1` antes de ejecutar un `.cmd`. Las respuestas se leen de `%SIMULACION%` (por defecto `.\simulacion`):
 - `comparacion_<id>.json`: el 15 trae avisos ficticios y el 17 el aviso general; un Id sin archivo da 404;
-- `retiro_a.json` (con `retiro_a.codigo` = 400) y `retiro_b.json` (con `retiro_b.codigo` = 400: un 400 de cuerpo ilegible, para ver cómo el script muestra un resultado no esperado con su title/detail).
+- `retiro_a.json` (con `retiro_a.codigo` = 400) y `retiro_b.json` (con `retiro_b.codigo` = 200: el resultado esperado);
+- `retiro_b_ilegible.json` (con `.codigo` = 400: cuerpo ilegible). Se usa con `set RETIRO_B_SIMULACION=retiro_b_ilegible`, para ver cómo el script muestra un resultado no esperado con su title/detail (TAREA-26c).
 
 En simulación, `retiro.cmd` usa `..\tarea26d\crear-proyecto.ejemplo.json` (valores ficticios), nunca su `crear-proyecto-1.json`. Ninguna función abre conexiones (ver `..\tarea26a\comun.ps1`).

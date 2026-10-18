@@ -21,9 +21,16 @@ internal static class ReglasErp
     public static string NombreCompania(string? nombre, string? nombreComercial) =>
         (string.IsNullOrWhiteSpace(nombreComercial) ? nombre : nombreComercial)?.Trim() ?? string.Empty;
 
-    /// <summary>"0700" (formato real del ERP: HHmm) o "07:00" → TimeOnly. Vacío o inválido → null.</summary>
-    public static TimeOnly? AHora(string? valor) =>
-        LeerHorasMinutos(valor) is (int h, int m) && h < 24 ? new TimeOnly(h, m) : null;
+    /// <summary>
+    /// "0700" (formato real del ERP: HHmm) o "07:00" → TimeOnly. "2400" → 00:00 (fin del día; TAREA-26c, defensa: la B1
+    /// no encontró ninguno). Vacío o inválido → null.
+    /// </summary>
+    public static TimeOnly? AHora(string? valor) => LeerHorasMinutos(valor) switch
+    {
+        (int h, int m) when h < 24 => new TimeOnly(h, m),
+        (24, 0) => TimeOnly.MinValue,
+        _ => null,
+    };
 
     /// <summary>"1100" (HHmm) o "11:00" → 660 minutos. Vacío o inválido → null.</summary>
     public static short? AMinutos(string? valor) =>

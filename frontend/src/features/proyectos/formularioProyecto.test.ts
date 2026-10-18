@@ -273,6 +273,12 @@ describe('R4: validación del cliente (ayuda)', () => {
     expect(errores.cabecera.regresoAlmuerzo).toBe('El regreso de almuerzo debe ser posterior a la salida.')
   })
 
+  it('TAREA-26c: turno nocturno (17:00–04:00): cruzar la medianoche', () => {
+    const estado = aplicar(conCabeceraCampo(), { tipo: 'cabecera', cambios: { salidaAlmuerzo: '23:00', regresoAlmuerzo: '01:00' } })
+    const turno = { horaEntrada: '17:00:00', horaSalida: '04:00:00', minutosJornada: 660, minutosTrabajados: 600 }
+    expect(validarCliente(estado, turno).cabecera).toEqual({ regresoAlmuerzo: 'El almuerzo no puede cruzar la medianoche.' })
+  })
+
   it('datos válidos: sin errores', () => {
     const estado = aplicar(conCabeceraCampo(), {
       tipo: 'cabecera',

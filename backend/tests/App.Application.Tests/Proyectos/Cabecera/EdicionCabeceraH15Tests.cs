@@ -20,7 +20,7 @@ public class EdicionCabeceraH15Tests
     private static (EdicionCabeceraServicio Servicio, RepositorioCabeceraFalso Repo) Crear()
     {
         var repo = new RepositorioCabeceraFalso(Proyecto());
-        return (new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso()), new TransaccionFalsa(),
+        return (new EdicionCabeceraServicio(repo, new EdicionCabeceraValidador(new ErpCabeceraFalso(), new DatosFalsos()), new TransaccionFalsa(),
             new UsuarioFalso(), new RelojFijo(Ahora)), repo);
     }
 

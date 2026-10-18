@@ -13,6 +13,7 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     private const string ClaveMaxBacks = "PROYECTO_MAX_BACKS";
     private const string ClaveMaxDiasDescansoBack = "BACK_MAX_DIAS_DESCANSO";
     private const string ClaveExigePrincipal = "PROYECTO_EXIGE_PRINCIPAL"; // TAREA-19y
+    internal const string ClaveHorariosNoLaborales = "HORARIOS_NO_LABORALES"; // TAREA-26c
     private const int PorDefecto = 20; // valor de las semillas si el parámetro faltara
 
     public Task<GrupoRef?> ObtenerGrupoAsync(string codigo, CancellationToken ct) =>
@@ -37,6 +38,14 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     /// <summary>PROYECTO_EXIGE_PRINCIPAL: "1" o "true" (sin importar mayúsculas) = true; otro valor o ausente = false (inicial 0).</summary>
     internal static bool LeerExigePrincipal(string? valor) =>
         valor?.Trim() is { } v && (v == "1" || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Sin caché: un cambio del parámetro aplica en la siguiente lista o validación (TAREA-26c).</summary>
+    public async Task<IReadOnlyList<string>> ObtenerHorariosNoLaboralesAsync(CancellationToken ct) =>
+        SepararLista(await ConsultaHorariosNoLaborales(db).FirstOrDefaultAsync(ct));
+
+    /// <summary>"A, B,,C" → ["A", "B", "C"]; null → vacía.</summary>
+    internal static IReadOnlyList<string> SepararLista(string? valor) =>
+        valor?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
 
     public async Task<IReadOnlyList<EmpleadoGuardado>> ObtenerEmpleadosGuardadosAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
         await ConsultaEmpleadosPorIds(db, ids).ToListAsync(ct);
@@ -67,6 +76,9 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
         string[] claves = [ClaveMaxPrincipales, ClaveMaxBacks, ClaveMaxDiasDescansoBack, ClaveExigePrincipal];
         return db.Parametros.AsNoTracking().Where(p => claves.Contains(p.Clave));
     }
+
+    internal static IQueryable<string> ConsultaHorariosNoLaborales(ProfesiogramaDbContext db) =>
+        db.Parametros.AsNoTracking().Where(p => p.Clave == ClaveHorariosNoLaborales).Select(p => p.Valor);
 
     /// <summary>
     /// TAREA-26d-3: datos laborales guardados en Empleado por Id SIN filtrar por estado (comparación "guardado frente al

@@ -19,6 +19,8 @@ public class EdicionCabeceraSqlTests(ITestOutputHelper salida) : BaseSql(salida)
         Assert.Contains("[RequiereProyectoErp]", sql);
         Assert.Contains("[HorarioCodigo]", sql);
         Assert.Contains("[SalidaAlmuerzo]", sql);
+        Assert.Contains("[HorasJornadaMin]", sql); // TAREA-26c: almuerzo opcional
+        Assert.Contains("[HorasTrabajadasMin]", sql);
         Assert.Contains("[RowVer]", sql);
         Assert.DoesNotContain("[Cedula]", sql);
     }

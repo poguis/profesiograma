@@ -1,6 +1,7 @@
 using App.Application.Erp;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Estados;
+using App.Application.Tests.Proyectos.Crear;
 using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
 
@@ -93,13 +94,17 @@ internal sealed class RepositorioCabeceraFalso(params DatosCabecera?[] respuesta
     }
 }
 
-/// <summary>ERP para la cabecera: horarios 1 y 2 (el 3 está inactivo: no se devuelve); actividades DEV.01 y DEV.02 de DEV-ERP-001.</summary>
+/// <summary>
+/// ERP para la cabecera: horarios 1 y 2 (el 3 está inactivo: no se devuelve) y los de HorariosPrueba.Extra (TAREA-26c);
+/// actividades DEV.01 y DEV.02 de DEV-ERP-001.
+/// </summary>
 internal sealed class ErpCabeceraFalso : ICatalogoErp
 {
     private static readonly HorarioErp[] Horarios =
     [
         new(1, "07:00 - 18:00 (PRUEBA)", new TimeOnly(7, 0), new TimeOnly(18, 0), 660, 600, null),
         new(2, "08:00 - 17:00 (PRUEBA)", new TimeOnly(8, 0), new TimeOnly(17, 0), 540, 480, "D"),
+        .. HorariosPrueba.Extra, // TAREA-26c
     ];
 
     private static readonly ActividadErp[] Actividades =

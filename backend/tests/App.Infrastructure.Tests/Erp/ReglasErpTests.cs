@@ -12,12 +12,15 @@ public class ReglasErpTests
     [InlineData("07:00", 7, 0)]
     [InlineData("7:05", 7, 5)]
     [InlineData(" 1800 ", 18, 0)]
+    [InlineData("2400", 0, 0)] // TAREA-26c: fin del día
+    [InlineData("24:00", 0, 0)]
     public void AHora_Valida(string valor, int hora, int minuto) => Assert.Equal(new TimeOnly(hora, minuto), ReglasErp.AHora(valor));
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    [InlineData("2400")]
+    [InlineData("2430")]
+    [InlineData("2500")]
     [InlineData("0760")]
     [InlineData("700")]
     [InlineData("ab00")]

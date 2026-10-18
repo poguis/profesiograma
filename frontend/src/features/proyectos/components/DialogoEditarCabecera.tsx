@@ -54,8 +54,9 @@ import {
   vistaCabeceraVigente,
 } from '../edicionCabecera'
 import { useActividadesErp, useHorariosErp, useNombresCatalogo, usePrevisualizarCabecera, useRegistrarCabecera } from '../hooks'
+import { almuerzoOpcional, almuerzoParaTurno, opcionesAlmuerzo, type Turno } from '../almuerzoTurno'
 import { textoHorario, textoRango } from '../textos'
-import type { ActividadCabecera, CabeceraEdicion } from '../tipos'
+import type { ActividadCabecera, CabeceraEdicion, HorarioErp } from '../tipos'
 import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro } from '../tokenConcurrencia'
 import { ImpactoCabecera } from './ImpactoCabecera'
 
@@ -137,7 +138,8 @@ export function DialogoEditarCabecera({
   const confirmacion = vigente && requiereConfirmacion(vista!.datos)
 
   // El mensaje del servidor tiene prioridad sobre la ayuda del cliente.
-  const ayudas = useMemo(() => validarEdicionCliente(valores), [valores])
+  const turno = turnoElegido(horarios.data, valores.horarioCodigo, base)
+  const ayudas = useMemo(() => validarEdicionCliente(valores, turno), [valores, turno])
   const mensajes = { ...ayudas, ...errores.campos }
 
   /** Cambiar un campo borra el error del servidor de ese campo. */
@@ -257,6 +259,9 @@ export function DialogoEditarCabecera({
     : valores.horarioCodigo !== null && valores.horarioCodigo === base.horario.codigo
       ? textoHorario({ ...base.horario, descripcion: base.horario.descripcion ?? `Horario ${base.horario.codigo}` })
       : ''
+  const diurnas = base.opcionesAlmuerzo
+  const almuerzo = opcionesAlmuerzo(turno, diurnas)
+  const sinAlmuerzoPosible = almuerzoOpcional(turno)
   const actividadElegida = actividadesErp.data?.find((a) => a.id === valores.actividadId)
   const vigenteActual = base.actividadVigente
 
@@ -306,7 +311,7 @@ export function DialogoEditarCabecera({
                 <Field
                   label="Horario"
                   required
-                  hint={horarioActualInactivo ? 'El horario actual no está activo en el ERP; se conserva si no elige otro.' : undefined}
+                  hint={horarioActualInactivo ? 'Este horario ya no está disponible para nuevos proyectos; se conserva si no elige otro.' : undefined}
                   validationMessage={mensajes.horarioCodigo ?? mensajeCarga(horarios.error)}
                 >
                   <Dropdown
@@ -314,7 +319,14 @@ export function DialogoEditarCabecera({
                     disabled={horarios.isPending}
                     value={textoHorarioElegido}
                     selectedOptions={valores.horarioCodigo === null ? [] : [String(valores.horarioCodigo)]}
-                    onOptionSelect={(_, d) => cambiar({ horarioCodigo: Number(d.optionValue) })}
+                    onOptionSelect={(_, d) => {
+                      const codigo = Number(d.optionValue)
+                      // TAREA-26c (D7): la hora que deja de ser válida para el nuevo turno se limpia.
+                      cambiar({
+                        horarioCodigo: codigo,
+                        ...almuerzoParaTurno(turnoElegido(horarios.data, codigo, base), diurnas, valores.salidaAlmuerzo, valores.regresoAlmuerzo),
+                      })
+                    }}
                   >
                     {(horarios.data ?? []).map((h) => (
                       <Option key={h.codigo} value={String(h.codigo)} text={textoHorario(h)}>
@@ -324,14 +336,20 @@ export function DialogoEditarCabecera({
                   </Dropdown>
                 </Field>
 
-                <Field label="Salida a almuerzo" required validationMessage={mensajes.salidaAlmuerzo}>
+                <Field
+                  label="Salida a almuerzo"
+                  required={!sinAlmuerzoPosible}
+                  hint={sinAlmuerzoPosible ? 'Este horario no descuenta almuerzo: puede dejarlo vacío.' : undefined}
+                  validationMessage={mensajes.salidaAlmuerzo}
+                >
                   <Dropdown
                     placeholder="HH:mm"
+                    clearable={sinAlmuerzoPosible}
                     value={valores.salidaAlmuerzo ?? ''}
                     selectedOptions={valores.salidaAlmuerzo ? [valores.salidaAlmuerzo] : []}
                     onOptionSelect={(_, d) => cambiar({ salidaAlmuerzo: d.optionValue ?? null })}
                   >
-                    {base.opcionesAlmuerzo.salida.map((h) => (
+                    {almuerzo.salida.map((h) => (
                       <Option key={h} value={h}>
                         {h}
                       </Option>
@@ -339,14 +357,15 @@ export function DialogoEditarCabecera({
                   </Dropdown>
                 </Field>
 
-                <Field label="Regreso de almuerzo" required validationMessage={mensajes.regresoAlmuerzo}>
+                <Field label="Regreso de almuerzo" required={!sinAlmuerzoPosible} validationMessage={mensajes.regresoAlmuerzo}>
                   <Dropdown
                     placeholder="HH:mm"
+                    clearable={sinAlmuerzoPosible}
                     value={valores.regresoAlmuerzo ?? ''}
                     selectedOptions={valores.regresoAlmuerzo ? [valores.regresoAlmuerzo] : []}
                     onOptionSelect={(_, d) => cambiar({ regresoAlmuerzo: d.optionValue ?? null })}
                   >
-                    {base.opcionesAlmuerzo.regreso.map((h) => (
+                    {almuerzo.regreso.map((h) => (
                       <Option key={h} value={h}>
                         {h}
                       </Option>
@@ -602,4 +621,9 @@ function mensajeCarga(error: Error | null): string | undefined {
     return undefined
   }
   return error instanceof ErrorApi ? `No se pudo cargar la lista: ${error.titulo}` : 'No se pudo cargar la lista.'
+}
+
+/** Turno del horario elegido: el del catálogo o, si es el guardado (aunque ya no esté en la lista), el de la cabecera. */
+function turnoElegido(horarios: HorarioErp[] | undefined, codigo: number | null, base: CabeceraEdicion): Turno | undefined {
+  return horarios?.find((h) => h.codigo === codigo) ?? (codigo !== null && codigo === base.horario.codigo ? base.horario : undefined)
 }

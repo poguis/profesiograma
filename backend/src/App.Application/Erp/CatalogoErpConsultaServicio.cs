@@ -1,3 +1,5 @@
+using App.Application.Proyectos.Crear;
+
 namespace App.Application.Erp;
 
 /// <summary>Resultado de una consulta al ERP que depende de una compañía o proyecto existente.</summary>
@@ -11,15 +13,20 @@ public sealed record ResultadoErp<T>(T? Valor, string? NoEncontrado)
 /// <summary>
 /// Consultas de catálogos del ERP para la API. Verifica que la compañía (y el proyecto ERP, para actividades)
 /// exista antes de listar: así se distingue "no existe" (404) de "existe pero no tiene datos" (lista vacía).
+/// Horarios: solo los seleccionables (TAREA-26c, ReglasHorario).
 /// </summary>
-public sealed class CatalogoErpConsultaServicio(ICatalogoErp erp)
+public sealed class CatalogoErpConsultaServicio(ICatalogoErp erp, IDatosReferenciaProyecto datos)
 {
     public const string CompaniaNoEncontrada = "Compañía no encontrada.";
     public const string ProyectoNoEncontrado = "Proyecto ERP no encontrado o no está activo.";
 
     public Task<IReadOnlyList<CompaniaErp>> ListarCompaniasAsync(CancellationToken ct) => erp.ListarCompaniasAsync(ct);
 
-    public Task<IReadOnlyList<HorarioErp>> ListarHorariosAsync(CancellationToken ct) => erp.ListarHorariosAsync(ct);
+    public async Task<IReadOnlyList<HorarioErp>> ListarHorariosAsync(CancellationToken ct)
+    {
+        var noLaborales = await datos.ObtenerHorariosNoLaboralesAsync(ct);
+        return (await erp.ListarHorariosAsync(ct)).Where(h => ReglasHorario.EsSeleccionable(h, noLaborales)).ToList();
+    }
 
     public async Task<ResultadoErp<IReadOnlyList<ProyectoErp>>> ListarProyectosAsync(int companiaId, CancellationToken ct) =>
         await erp.ObtenerCompaniaAsync(companiaId, ct) is null

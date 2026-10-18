@@ -2,6 +2,7 @@ import { Dropdown, Field, Option, Text, makeStyles, tokens } from '@fluentui/rea
 import { type Dispatch, useState } from 'react'
 import { ErrorApi } from '../../../api/errores'
 import { SelectorFecha } from '../../../components/SelectorFecha'
+import { almuerzoOpcional, almuerzoParaTurno, opcionesAlmuerzo } from '../almuerzoTurno'
 import type { AccionFormulario, CabeceraFormulario, CampoCabecera } from '../formularioProyecto'
 import { textoHorario } from '../textos'
 import { useActividadesErp, useDimensionesErp, useProyectosErp } from '../hooks'
@@ -46,6 +47,10 @@ export function SeccionCabecera({ cabecera, dispatch, grupos, companias, horario
   const actividad = actividades.data?.find((a) => a.id === cabecera.actividadId)
   const dimension = dimensiones.data?.find((d) => d.uegpId === cabecera.dimensionUegpId)
   const horario = horarios.find((h) => h.codigo === cabecera.horarioCodigo)
+  // TAREA-26c: opciones según el turno (nocturno: dentro del turno) y almuerzo opcional si el ERP no lo descuenta.
+  const diurnas = { salida: opciones.almuerzoSalidaOpciones, regreso: opciones.almuerzoRegresoOpciones }
+  const almuerzo = opcionesAlmuerzo(horario, diurnas)
+  const sinAlmuerzoPosible = almuerzoOpcional(horario)
   const departamentoUnico = opciones.departamentos.length === 1 ? opciones.departamentos[0] : undefined
   const departamento = opciones.departamentos.find((d) => d.id === cabecera.departamentoId)
 
@@ -189,7 +194,15 @@ export function SeccionCabecera({ cabecera, dispatch, grupos, companias, horario
           placeholder="Seleccione el horario"
           value={horario ? textoHorario(horario) : ''}
           selectedOptions={cabecera.horarioCodigo === null ? [] : [String(cabecera.horarioCodigo)]}
-          onOptionSelect={(_, d) => dispatch({ tipo: 'cabecera', cambios: { horarioCodigo: Number(d.optionValue) } })}
+          onOptionSelect={(_, d) => {
+            const codigo = Number(d.optionValue)
+            const nuevo = horarios.find((h) => h.codigo === codigo)
+            // El almuerzo que ya no es una opción del nuevo turno se limpia.
+            dispatch({
+              tipo: 'cabecera',
+              cambios: { horarioCodigo: codigo, ...almuerzoParaTurno(nuevo, diurnas, cabecera.salidaAlmuerzo, cabecera.regresoAlmuerzo) },
+            })
+          }}
         >
           {horarios.map((h) => (
             <Option key={h.codigo} value={String(h.codigo)} text={textoHorario(h)}>
@@ -199,14 +212,20 @@ export function SeccionCabecera({ cabecera, dispatch, grupos, companias, horario
         </Dropdown>
       </Field>
 
-      <Field label="Salida a almuerzo" required validationMessage={errores.salidaAlmuerzo}>
+      <Field
+        label="Salida a almuerzo"
+        required={!sinAlmuerzoPosible}
+        hint={sinAlmuerzoPosible ? 'Este horario no descuenta almuerzo: puede dejarlo vacío.' : undefined}
+        validationMessage={errores.salidaAlmuerzo}
+      >
         <Dropdown
           placeholder="HH:mm"
+          clearable={sinAlmuerzoPosible}
           value={cabecera.salidaAlmuerzo ?? ''}
           selectedOptions={cabecera.salidaAlmuerzo ? [cabecera.salidaAlmuerzo] : []}
           onOptionSelect={(_, d) => dispatch({ tipo: 'cabecera', cambios: { salidaAlmuerzo: d.optionValue ?? null } })}
         >
-          {opciones.almuerzoSalidaOpciones.map((h) => (
+          {almuerzo.salida.map((h) => (
             <Option key={h} value={h}>
               {h}
             </Option>
@@ -214,14 +233,15 @@ export function SeccionCabecera({ cabecera, dispatch, grupos, companias, horario
         </Dropdown>
       </Field>
 
-      <Field label="Regreso de almuerzo" required validationMessage={errores.regresoAlmuerzo}>
+      <Field label="Regreso de almuerzo" required={!sinAlmuerzoPosible} validationMessage={errores.regresoAlmuerzo}>
         <Dropdown
           placeholder="HH:mm"
+          clearable={sinAlmuerzoPosible}
           value={cabecera.regresoAlmuerzo ?? ''}
           selectedOptions={cabecera.regresoAlmuerzo ? [cabecera.regresoAlmuerzo] : []}
           onOptionSelect={(_, d) => dispatch({ tipo: 'cabecera', cambios: { regresoAlmuerzo: d.optionValue ?? null } })}
         >
-          {opciones.almuerzoRegresoOpciones.map((h) => (
+          {almuerzo.regreso.map((h) => (
             <Option key={h} value={h}>
               {h}
             </Option>

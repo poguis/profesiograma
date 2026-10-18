@@ -1,3 +1,4 @@
+using System.Globalization;
 using App.Application.Proyectos.Crear;
 using App.Domain.Proyectos.Cronograma;
 
@@ -88,7 +89,7 @@ public class CrearProyectoValidadorTests
         { "fin obligatorio", s => s with { FechaFin = null }, "fechaFin", "La fecha fin es obligatoria." },
         { "fin antes que inicio", s => s with { FechaFin = new DateOnly(2026, 11, 30) }, "fechaFin", "La fecha fin debe ser mayor o igual a la fecha de inicio." },
         { "horario obligatorio", s => s with { HorarioCodigo = null }, "horarioCodigo", "El horario es obligatorio." },
-        { "horario inexistente", s => s with { HorarioCodigo = 3 }, "horarioCodigo", "El horario no existe o no está activo." },
+        { "horario inexistente", s => s with { HorarioCodigo = 3 }, "horarioCodigo", "El horario no es laborable o no está activo." },
         { "salida obligatoria", s => s with { SalidaAlmuerzo = null }, "salidaAlmuerzo", "La hora de salida a almuerzo es obligatoria." },
         { "regreso obligatorio", s => s with { RegresoAlmuerzo = "" }, "regresoAlmuerzo", "La hora de regreso de almuerzo es obligatoria." },
         { "formato de hora", s => s with { SalidaAlmuerzo = "1pm" }, "salidaAlmuerzo", "Use el formato HH:mm." },
@@ -199,4 +200,88 @@ public class CrearProyectoValidadorTests
         var r = await Validar(Dobles.SolicitudCampo(), usuarioId: null);
         Assert.Equal(["No se pudo identificar al usuario actual."], r.Errores["usuario"]);
     }
+
+    // ------------------------------------------------------------------ TAREA-26c: no laborales, turno nocturno, almuerzo opcional
+
+    private static CrearProyectoSolicitud ConHorario(int codigo, string? salida, string? regreso) =>
+        Dobles.SolicitudCampo() with { HorarioCodigo = codigo, SalidaAlmuerzo = salida, RegresoAlmuerzo = regreso };
+
+    [Theory]
+    [InlineData(113)] // VACACIONES (lista)
+    [InlineData(160)] // PATERNIDAD PROYECTOS (lista)
+    [InlineData(9005)] // por datos
+    public Task HorarioNoLaboral_400(int codigo) =>
+        Error(ConHorario(codigo, "13:00", "14:00"), "horarioCodigo", "El horario no es laborable o no está activo.");
+
+    [Fact]
+    public async Task HorarioNoLaboral_ElCambioDelParametroAplicaAlValidar()
+    {
+        var datos = new DatosFalsos { HorariosNoLaborales = [] };
+        Assert.Empty((await Validar(ConHorario(113, "13:00", "14:00"), datos)).Errores);
+
+        datos.HorariosNoLaborales = ["vacaciones"];
+        await Error(ConHorario(113, "13:00", "14:00"), "horarioCodigo", "El horario no es laborable o no está activo.", datos);
+    }
+
+    public static TheoryData<int, string, string> NocturnosValidos => new()
+    {
+        { 118, "02:00", "03:00" },
+        { 73, "17:00", "18:00" }, // desde la entrada
+        { 73, "03:00", "04:00" }, // hasta la salida del turno
+        { 73, "00:00", "01:00" },
+        { 110, "20:00", "21:00" },
+        { 110, "22:00", "23:00" },
+    };
+
+    [Theory]
+    [MemberData(nameof(NocturnosValidos))]
+    public async Task Nocturno_AlmuerzoDentroDelTurno_Valido(int codigo, string salida, string regreso)
+    {
+        var r = await Validar(ConHorario(codigo, salida, regreso));
+        Assert.Empty(r.Errores);
+        Assert.Equal((TimeOnly.Parse(salida, CultureInfo.InvariantCulture), TimeOnly.Parse(regreso, CultureInfo.InvariantCulture)), (r.Valido!.SalidaAlmuerzo!.Value, r.Valido.RegresoAlmuerzo!.Value));
+    }
+
+    public static TheoryData<int, string, string, string, string> NocturnosInvalidos => new()
+    {
+        { 73, "13:00", "14:00", "salidaAlmuerzo", "El almuerzo debe estar dentro del turno (17:00–04:00)." },
+        { 73, "13:00", "14:00", "regresoAlmuerzo", "El almuerzo debe estar dentro del turno (17:00–04:00)." },
+        { 73, "04:00", "05:00", "salidaAlmuerzo", "El almuerzo debe estar dentro del turno (17:00–04:00)." },
+        { 73, "16:00", "17:00", "regresoAlmuerzo", "El almuerzo debe estar dentro del turno (17:00–04:00)." },
+        { 73, "23:00", "01:00", "regresoAlmuerzo", "El almuerzo no puede cruzar la medianoche." },
+        { 73, "02:00", "01:00", "regresoAlmuerzo", "El regreso de almuerzo debe ser posterior a la salida." },
+        { 118, "05:00", "07:00", "regresoAlmuerzo", "El almuerzo debe estar dentro del turno (22:00–06:00)." },
+        { 110, "23:00", "00:00", "regresoAlmuerzo", "El almuerzo no puede cruzar la medianoche." },
+        { 110, "15:00", "16:00", "salidaAlmuerzo", "El almuerzo debe estar dentro del turno (15:30–00:00)." },
+    };
+
+    [Theory]
+    [MemberData(nameof(NocturnosInvalidos))]
+    public Task Nocturno_AlmuerzoInvalido_400(int codigo, string salida, string regreso, string clave, string mensaje) =>
+        Error(ConHorario(codigo, salida, regreso), clave, mensaje);
+
+    [Fact]
+    public async Task SinAlmuerzo_HorarioOpcional_ValidoYSinHoras()
+    {
+        var r = await Validar(ConHorario(118, null, ""));
+        Assert.Empty(r.Errores);
+        Assert.Null(r.Valido!.SalidaAlmuerzo);
+        Assert.Null(r.Valido.RegresoAlmuerzo);
+    }
+
+    [Fact]
+    public Task SinAlmuerzo_HorarioOpcional_UnaSolaHora_LaOtraEsObligatoria() =>
+        Error(ConHorario(118, "02:00", null), "regresoAlmuerzo", "La hora de regreso de almuerzo es obligatoria.");
+
+    [Fact]
+    public async Task SinAlmuerzo_HorarioConAlmuerzo_AmbasObligatorias()
+    {
+        var r = await Validar(ConHorario(73, null, null));
+        Assert.Equal(["La hora de salida a almuerzo es obligatoria."], r.Errores["salidaAlmuerzo"]);
+        Assert.Equal(["La hora de regreso de almuerzo es obligatoria."], r.Errores["regresoAlmuerzo"]);
+    }
+
+    [Fact]
+    public Task Diurno_RangosRn09SinCambios() =>
+        Error(ConHorario(1, "02:00", "03:00"), "salidaAlmuerzo", "La salida a almuerzo debe estar entre 11:00 y 14:00.");
 }

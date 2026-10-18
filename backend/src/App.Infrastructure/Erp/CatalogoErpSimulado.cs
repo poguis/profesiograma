@@ -42,6 +42,12 @@ internal sealed class CatalogoErpSimulado : CatalogoErpBase
         (1, "07:00 - 18:00 (PRUEBA)", "0700", "1800", "1100", "1000", null, "A"),
         (2, "08:00 - 17:00 (PRUEBA)", "0800", "1700", "0900", "0800", "M", "A"),
         (3, "06:00 - 14:00 (INACTIVO)", "0600", "1400", "0800", "0700", "M", "I"),
+        // TAREA-26c: el ERP los devuelve como activos; la aplicación excluye el 4 (lista) y el 5 (datos) con ReglasHorario.
+        (4, "PATERNIDAD PROYECTOS", "0800", "1700", "0900", "0800", "M", "A"),
+        (5, "DESCANSO (PRUEBA)", "0000", "0000", "0000", "0000", "M", "A"),
+        (6, "22:00 - 06:00 NOCTURNO (PRUEBA)", "2200", "0600", "0800", "0700", "M", "A"),
+        (7, "15:30 - 24:00 (PRUEBA)", "1530", "2400", "0830", "0730", "M", "A"),
+        (8, "07:00 - 15:00 SIN ALMUERZO (PRUEBA)", "0700", "1500", "0800", "0800", "M", "A"),
     ];
 
     public override Task<IReadOnlyList<CompaniaErp>> ListarCompaniasAsync(CancellationToken ct) =>

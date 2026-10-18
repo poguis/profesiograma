@@ -33,7 +33,8 @@ fecha de corte (RN11), novedades y reporte Excel.
 | RN04–RN06 | Motor de cronograma (sección 5) | **Domain, lógica pura** |
 | RN07 | Cruces internos y con otros proyectos (sección 6) | Domain (internos) + Infrastructure (externos) |
 | RN08 | Fechas de todo el personal dentro del rango del proyecto; fin ≥ inicio | Application |
-| RN09 | Almuerzo: salida 11:00–14:00, regreso 12:00–15:00 y regreso > salida (ya existe `CK_Proyecto_Almuerzo`) | Application + BD |
+| RN09 | Almuerzo. **Turno diurno:** salida 11:00–14:00, regreso 12:00–15:00 y regreso > salida (ya existe `CK_Proyecto_Almuerzo`). **TAREA-26c, turno nocturno** (salida del horario < entrada; la salida 00:00 es el fin del día): almuerzo dentro del turno en tiempo circular, regreso posterior en ese eje y sin cruzar la medianoche. **Almuerzo opcional** si minutos de jornada = minutos trabajados. Ver §13 | Application + BD |
+| RN19 | **TAREA-26c:** solo horarios seleccionables: no laboral = descripción en `Parametro` `HORARIOS_NO_LABORALES` o entrada = salida con 0 minutos trabajados (o nulos). Ver §13 | Application |
 | RN12 | Etapa versión 1 `CREACION`, estado `ACTIVO`, `FechaCorte = FechaInicio`, snapshot JSON del personal | Application |
 | RN13 | Actividad versión 1 `CREACION` (solo si hay actividad), vigencia = rango del proyecto | Application |
 | RN18 | Máximo de principales y backs desde `Parametro` (20 / 20) | Application |
@@ -51,12 +52,16 @@ Las APIs del ERP (`https://backstack.sedemi.com`, puertos 7048/7055, sin autenti
 | Proyectos ERP (solo `status = "Activo"`) | `GET :7048/api/Project/GetProject/{companyId}` | `GET /api/erp/companias/{id}/proyectos` |
 | Dimensiones (UEGP) | `GET :7048/api/Uegp/GetUegpCompany/{companyId}` | `GET /api/erp/companias/{id}/dimensiones` |
 | Actividades | `GET :7055/api/Activity/GetActivitiesProject/{projectId}/{companyId}` | `GET /api/erp/companias/{id}/proyectos/{projectId}/actividades` |
-| Horarios (solo `status = "A"`) | `GET :7055/api/PayrollSchedule/ListPayrollSchedule` | `GET /api/erp/horarios` |
+| Horarios (solo `status = "A"` y laborables, TAREA-26c) | `GET :7055/api/PayrollSchedule/ListPayrollSchedule` | `GET /api/erp/horarios` |
 
 - Contrato en Application: `ICatalogoErp`. Dos implementaciones en Infrastructure, elegidas por configuración `ServiciosExternos:Modo`:
   - `Http` → llama a las APIs reales (HttpClient con timeout y manejo de error → 503 "Servicio ERP no disponible").
   - `Simulado` → datos fijos de prueba coherentes con la compañía 9001 y `DEV-ERP-001` (solo Development).
 - Al registrar, la compañía elegida se guarda/actualiza en la tabla `Compania` (caché).
+- **Horarios (TAREA-26c):**
+  - El catálogo (Http y Simulado) solo filtra `status = "A"`; los no laborales los excluye `ReglasHorario.EsSeleccionable` (Application) en `GET /api/erp/horarios` y en la validación de crear y de editar la cabecera.
+  - La lista del ERP está en caché 10 min, pero `HORARIOS_NO_LABORALES` se lee de la base **en cada lista y en cada validación** (sin caché): un cambio del parámetro aplica en la siguiente solicitud.
+  - `"2400"` se lee como 00:00 (fin del día); la B1 no encontró ninguno.
 - **Empleados (TAREA-26d, opción C):** se buscan en la API EvolutionEmployee (caché en memoria de 10 min; sin datos sensibles); ya no en la tabla `Empleado`, que solo tiene a las personas asignadas. Al registrar, las personas se validan con una lectura **fresca** de la API y se dan de alta (o se refrescan) en `Empleado` dentro de la transacción ("alta puntual", con su puesto en `CargoInfor`). En modo Simulado la "API" trae DEV001–DEV008 y SIM001–SIM200. Ver `FASE_4_Empleados_API.md`.
 
 ## 5. Motor de cronograma (RN04–RN06) — replica exacta de la app original
@@ -231,3 +236,33 @@ es opcional y basta **1 persona (principal o back)**.
   errores. El listado muestra "Sin responsable".
 - **Motor:** `Generar` y `Regenerar` funcionan solo con backs (pruebas B6b, B6c y X18).
 - Fase 3: los proyectos sin principal y los backs sin principal relacionado se cargan tal cual.
+
+## 13. Horarios no laborales y turno nocturno (TAREA-26c, pendientes 41 y 42)
+
+**Evidencia (B1, 16/10/2026, solo catálogo):**
+- 72 horarios activos; 11 cruzan la medianoche; ningún "2400"; la jornada del ERP coincide con `(salida − entrada + 24h) mod 24h` en todos.
+- La regla por datos (entrada = salida y 0 trabajados) solo marca LIBRE, FERIADO y VACIO. VACACIONES, PERMISO MEDICO y CALAMIDAD DOMESTICA tienen horas normales: hace falta la lista.
+- 110 y 138 terminan a las 00:00.
+- 9 horarios tienen jornada = trabajados (sin almuerzo descontado).
+
+**No laborales (RN19, D2):**
+- No laboral = descripción en `Parametro` Id 11 `HORARIOS_NO_LABORALES` (LIST separada por comas; migración solo de datos `ParametroHorariosNoLaborales`) **o** entrada = salida con 0 minutos trabajados (o nulos).
+- Valores iniciales: LIBRE, FERIADO, VACIO, VACACIONES, PERMISO MEDICO, CALAMIDAD DOMESTICA, PATERNIDAD PROYECTOS, PATERNIDAD PLANTA.
+- Comparación sin distinguir mayúsculas ni tildes y con los espacios colapsados (`ComparacionEmpleadosErp.Iguales`, la misma normalización del buscador).
+- Mensaje: 400 `horarioCodigo` "El horario no es laborable o no está activo." (reemplaza "El horario no existe o no está activo.").
+
+**Turno nocturno (RN09 ampliada, D4 y D6):**
+- Nocturno = salida < entrada (00:00 como salida = fin del día). Posición = `(t − entrada + 24h) mod 24h`.
+- Salida a almuerzo: posición < duración del turno. Regreso: 0 < posición ≤ duración. Mensaje por campo: "El almuerzo debe estar dentro del turno (HH:mm–HH:mm).".
+- Regreso con posición ≤ la de la salida: "El regreso de almuerzo debe ser posterior a la salida.".
+- Regreso ≤ salida en el reloj (cruza la medianoche): "El almuerzo no puede cruzar la medianoche.". Así se respeta `CK_Proyecto_Almuerzo` sin cambiar el esquema.
+- Las opciones del formulario son horas en punto dentro del turno (`almuerzoTurno.ts` en el frontend); el servidor no exige horas en punto, igual que en el diurno.
+- Sin regla nueva de duración ni márgenes [PENDIENTE RR. HH.].
+
+**Almuerzo opcional:**
+- Si `MinutosJornada = MinutosTrabajados`, el almuerzo no se exige (se guarda null).
+- Si se envía, cumple las reglas del turno; con una sola hora, la otra es obligatoria.
+- En los demás horarios, las dos horas siguen siendo obligatorias.
+
+**Horas:** `HorasJornadaMin` / `HorasTrabajadasMin` se siguen copiando del ERP (la B1 confirmó que coinciden con el cálculo).
+

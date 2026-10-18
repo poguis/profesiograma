@@ -1,4 +1,5 @@
 using App.Application.Erp;
+using App.Application.Tests.Proyectos.Crear;
 
 namespace App.Application.Tests.Erp;
 
@@ -6,7 +7,7 @@ namespace App.Application.Tests.Erp;
 public class CatalogoErpConsultaServicioTests
 {
     private static readonly CatalogoFalso Catalogo = new();
-    private readonly CatalogoErpConsultaServicio servicio = new(Catalogo);
+    private readonly CatalogoErpConsultaServicio servicio = new(Catalogo, new DatosFalsos());
     private static readonly CancellationToken Ct = CancellationToken.None;
 
     [Fact]

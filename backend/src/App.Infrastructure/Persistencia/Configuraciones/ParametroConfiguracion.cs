@@ -35,7 +35,11 @@ internal sealed class ParametroConfiguracion : IEntityTypeConfiguration<Parametr
             Nuevo(9, "ZONA_HORARIA", "SA Pacific Standard Time", "TEXT", "Zona horaria de negocio (Ecuador, UTC-5)"),
             // TAREA-19y (pendiente 33): principal opcional; 1 vuelve a la regla C10.
             Nuevo(10, "PROYECTO_EXIGE_PRINCIPAL", "0", "BOOL",
-                "1 = creación, actualización de personal y reactivación exigen al menos 1 principal (C10); 0 = basta 1 persona (principal o back)"));
+                "1 = creación, actualización de personal y reactivación exigen al menos 1 principal (C10); 0 = basta 1 persona (principal o back)"),
+            // TAREA-26c (pendiente 41): horarios del ERP que no se pueden elegir (además de entrada = salida sin horas trabajadas).
+            Nuevo(11, "HORARIOS_NO_LABORALES",
+                "LIBRE,FERIADO,VACIO,VACACIONES,PERMISO MEDICO,CALAMIDAD DOMESTICA,PATERNIDAD PROYECTOS,PATERNIDAD PLANTA", "LIST",
+                "Descripciones de horarios del ERP que no se pueden elegir (sin distinguir mayúsculas ni tildes)"));
     }
 
     private static Parametro Nuevo(int id, string clave, string valor, string tipo, string descripcion) => new()

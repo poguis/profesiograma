@@ -1,0 +1,13 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Uno o más campos no son válidos.",
+  "status": 400,
+  "errors": {
+    "salidaAlmuerzo": [
+      "El almuerzo debe estar dentro del turno (17:00–04:00)."
+    ],
+    "regresoAlmuerzo": [
+      "El almuerzo debe estar dentro del turno (17:00–04:00)."
+    ]
+  }
+}

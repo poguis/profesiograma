@@ -35,6 +35,9 @@ public interface IDatosReferenciaProyecto
 
     Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct);
 
+    /// <summary>TAREA-26c: descripciones de Parametro HORARIOS_NO_LABORALES (LIST separada por comas); vacía si falta.</summary>
+    Task<IReadOnlyList<string>> ObtenerHorariosNoLaboralesAsync(CancellationToken ct);
+
     /// <summary>
     /// Datos laborales guardados en Empleado por Id, sin filtrar por estado ni datos sensibles (TAREA-26d-3: comparación
     /// "guardado frente al ERP"; si el empleado está activo lo decide la API).
@@ -80,7 +83,7 @@ public sealed record PersonalValidado(
     string? Cargo,
     string? Observacion);
 
-/// <summary>Solicitud validada con los datos del ERP obtenidos por Id.</summary>
+/// <summary>Solicitud validada con los datos del ERP obtenidos por Id. Almuerzo null: horario sin almuerzo (TAREA-26c).</summary>
 public sealed record ProyectoValidado(
     CompaniaErp Compania,
     GrupoRef Grupo,
@@ -90,8 +93,8 @@ public sealed record ProyectoValidado(
     DateOnly FechaInicio,
     DateOnly FechaFin,
     HorarioErp Horario,
-    TimeOnly SalidaAlmuerzo,
-    TimeOnly RegresoAlmuerzo,
+    TimeOnly? SalidaAlmuerzo,
+    TimeOnly? RegresoAlmuerzo,
     int? DepartamentoId,
     int PropietarioUsuarioId,
     IReadOnlyList<PersonalValidado> Principales,

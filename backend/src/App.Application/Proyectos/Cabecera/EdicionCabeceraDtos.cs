@@ -5,7 +5,9 @@ namespace App.Application.Proyectos.Cabecera;
 
 // ------------------------------------------------------------------ GET /api/proyectos/{id}/cabecera
 
-public sealed record HorarioCabeceraDto(int? Codigo, string? Descripcion, TimeOnly? HoraEntrada, TimeOnly? HoraSalida);
+/// <summary>Horario guardado. Minutos de jornada y trabajados: el formulario decide si el almuerzo es opcional (TAREA-26c).</summary>
+public sealed record HorarioCabeceraDto(int? Codigo, string? Descripcion, TimeOnly? HoraEntrada, TimeOnly? HoraSalida,
+    short? MinutosJornada, short? MinutosTrabajados);
 
 public sealed record ActividadCabeceraDto(
     int Version, string Codigo, string? Descripcion, string? Tipo, string TipoMovimiento, DateOnly FechaInicio, DateOnly FechaFin);

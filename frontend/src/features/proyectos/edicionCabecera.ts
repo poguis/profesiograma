@@ -2,6 +2,7 @@
 // El servidor tiene la última palabra (C1–C11); aquí solo se arma el cuerpo con los campos cambiados, se dan ayudas
 // y se decide cuándo se puede registrar. Ver docs/fases/FASE_5_Edicion_Cabecera.md.
 import { formatearFecha } from '../../utils/formato'
+import { type Turno, validarAlmuerzo } from './almuerzoTurno'
 import { type ErrorRespuesta, type ErroresDialogo, interpretarErrorDialogo, sinErrores } from './erroresDialogo'
 import type { CabeceraEdicion, PrevisualizacionCabecera, SolicitudEditarCabecera } from './tipos'
 import { MENSAJE_CAMBIO_POR_OTRO, cambioPorOtro, conToken } from './tokenConcurrencia'
@@ -82,14 +83,16 @@ export function reducerEdicion(estado: EstadoEdicion, accion: AccionEdicion): Es
 export function aSolicitudCabecera(estado: EstadoEdicion): SolicitudEditarCabecera {
   const { original: o, valores: v } = estado
   const distinto = <T>(nuevo: T | null, anterior: T | null) => (nuevo !== null && nuevo !== anterior ? nuevo : null)
+  // TAREA-26c: almuerzo quitado (horario sin almuerzo) → "" ; el servidor lo acepta solo si el almuerzo es opcional.
+  const almuerzo = (nuevo: string | null, anterior: string | null) => (nuevo === anterior ? null : (nuevo ?? ''))
   // Con actividad o "desde" se envía el bloque: si falta uno, el servidor responde 400 en ese campo.
   const conActividad = v.actividadId !== null || v.actividadDesde !== null
   return {
     fechaInicio: distinto(v.fechaInicio, o.fechaInicio),
     fechaFin: distinto(v.fechaFin, o.fechaFin),
     horarioCodigo: distinto(v.horarioCodigo, o.horarioCodigo),
-    salidaAlmuerzo: distinto(v.salidaAlmuerzo, o.salidaAlmuerzo),
-    regresoAlmuerzo: distinto(v.regresoAlmuerzo, o.regresoAlmuerzo),
+    salidaAlmuerzo: almuerzo(v.salidaAlmuerzo, o.salidaAlmuerzo),
+    regresoAlmuerzo: almuerzo(v.regresoAlmuerzo, o.regresoAlmuerzo),
     actividad: conActividad ? { actividadId: v.actividadId, desde: v.actividadDesde } : null,
   }
 }
@@ -160,17 +163,15 @@ export function camposIncompletos(valores: ValoresCabecera): ErroresCampos {
   return errores
 }
 
-/** Ayudas del cliente con los mismos textos del servidor (no bloquean: D4 de la TAREA-13). */
-export function validarEdicionCliente(valores: ValoresCabecera): ErroresCampos {
+/** Ayudas del cliente con los mismos textos del servidor (no bloquean: D4 de la TAREA-13). Turno: TAREA-26c. */
+export function validarEdicionCliente(valores: ValoresCabecera, turno?: Turno): ErroresCampos {
   const errores = camposIncompletos(valores)
   const { fechaInicio: inicio, fechaFin: fin } = valores
   // "yyyy-MM-dd" y "HH:mm" se comparan como texto.
   if (inicio !== null && fin !== null && fin < inicio) {
     errores.fechaFin = 'La fecha fin debe ser mayor o igual a la fecha de inicio.'
   }
-  if (valores.salidaAlmuerzo !== null && valores.regresoAlmuerzo !== null && valores.regresoAlmuerzo <= valores.salidaAlmuerzo) {
-    errores.regresoAlmuerzo = 'El regreso de almuerzo debe ser posterior a la salida.'
-  }
+  Object.assign(errores, validarAlmuerzo(turno, valores.salidaAlmuerzo, valores.regresoAlmuerzo))
   const desde = valores.actividadDesde
   if (desde !== null && inicio !== null && fin !== null && (desde < inicio || desde > fin)) {
     errores['actividad.desde'] =

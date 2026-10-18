@@ -35,7 +35,7 @@ const cabecera = (cambios: Partial<CabeceraEdicion> = {}): CabeceraEdicion => ({
   grupo: 'CAMPO',
   fechaInicio: '2026-10-11',
   fechaFin: '2026-10-16',
-  horario: { codigo: 1, descripcion: 'HORARIO 1', horaEntrada: '08:00:00', horaSalida: '17:00:00' },
+  horario: { codigo: 1, descripcion: 'HORARIO 1', horaEntrada: '08:00:00', horaSalida: '17:00:00', minutosJornada: 540, minutosTrabajados: 480 },
   salidaAlmuerzo: '12:00',
   regresoAlmuerzo: '13:00',
   actividadVigente: null,
@@ -150,6 +150,11 @@ describe('aSolicitudCabecera (C1: solo lo que cambia)', () => {
     })
   })
 
+  it('TAREA-26c: quitar el almuerzo envía "" (sin almuerzo); el servidor decide si es opcional', () => {
+    const e = aplicar(crearEstadoEdicion(cabecera()), campos({ horarioCodigo: 118, salidaAlmuerzo: null, regresoAlmuerzo: null }))
+    expect(aSolicitudCabecera(e)).toMatchObject({ horarioCodigo: 118, salidaAlmuerzo: '', regresoAlmuerzo: '' })
+  })
+
   it('volver al valor guardado deja el campo en null', () => {
     const e = aplicar(crearEstadoEdicion(cabecera()), campos({ horarioCodigo: 2 }), campos({ horarioCodigo: 1 }))
     expect(aSolicitudCabecera(e).horarioCodigo).toBeNull()
@@ -195,6 +200,15 @@ describe('rangos y ayudas', () => {
       fechaFin: 'La fecha fin debe ser mayor o igual a la fecha de inicio.',
       regresoAlmuerzo: 'El regreso de almuerzo debe ser posterior a la salida.',
       'actividad.desde': 'La fecha desde debe estar dentro del rango del proyecto (11/10/2026 – 10/10/2026).',
+    })
+  })
+
+  it('TAREA-26c: con turno nocturno, el almuerzo debe estar dentro del turno', () => {
+    const e = aplicar(crearEstadoEdicion(cabecera()), campos({ horarioCodigo: 118 }))
+    const turno = { horaEntrada: '22:00:00', horaSalida: '06:00:00', minutosJornada: 480, minutosTrabajados: 480 }
+    expect(validarEdicionCliente(e.valores, turno)).toEqual({
+      salidaAlmuerzo: 'El almuerzo debe estar dentro del turno (22:00–06:00).',
+      regresoAlmuerzo: 'El almuerzo debe estar dentro del turno (22:00–06:00).',
     })
   })
 

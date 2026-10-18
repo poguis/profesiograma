@@ -1164,6 +1164,16 @@ namespace App.Infrastructure.Persistencia.Migraciones
                             FechaCreacion = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             TipoDato = "BOOL",
                             Valor = "0"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Clave = "HORARIOS_NO_LABORALES",
+                            CreadoPorId = 1,
+                            Descripcion = "Descripciones de horarios del ERP que no se pueden elegir (sin distinguir mayúsculas ni tildes)",
+                            FechaCreacion = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            TipoDato = "LIST",
+                            Valor = "LIBRE,FERIADO,VACIO,VACACIONES,PERMISO MEDICO,CALAMIDAD DOMESTICA,PATERNIDAD PROYECTOS,PATERNIDAD PLANTA"
                         });
                 });
 

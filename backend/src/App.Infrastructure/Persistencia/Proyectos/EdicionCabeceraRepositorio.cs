@@ -40,7 +40,7 @@ internal sealed class EdicionCabeceraRepositorio(ProfesiogramaDbContext db) : IC
         return new DatosCabecera(
             new CabeceraGuardada(c.Id, c.Codigo, c.EstadoCodigo, c.FechaInicio, c.FechaFin, c.GrupoCodigo, c.RequiereProyectoErp,
                 c.CompaniaId, c.ProyectoErpId, c.HorarioCodigo, c.HorarioDescripcion, c.HoraEntrada, c.HoraSalida,
-                c.SalidaAlmuerzo, c.RegresoAlmuerzo, c.RowVer),
+                c.SalidaAlmuerzo, c.RegresoAlmuerzo, c.RowVer, c.HorasJornadaMin, c.HorasTrabajadasMin),
             personal.Select(p => new PersonalCambio(
                 new PersonaCorte(p.Id, (RolCronograma)p.RolAsignacionId, p.Numero, p.EmpleadoId, p.FechaInicio, p.FechaFin, p.PrincipalRelacionadoId),
                 p.CodigoEkon, p.NombreCompleto, p.JornadaCodigo, p.DiasTrabajo, p.DiasDescanso, p.TipoRegistro)).ToList(),
@@ -179,6 +179,8 @@ internal sealed class EdicionCabeceraRepositorio(ProfesiogramaDbContext db) : IC
         public string? HorarioDescripcion { get; init; }
         public TimeOnly? HoraEntrada { get; init; }
         public TimeOnly? HoraSalida { get; init; }
+        public short? HorasJornadaMin { get; init; }
+        public short? HorasTrabajadasMin { get; init; }
         public TimeOnly? SalidaAlmuerzo { get; init; }
         public TimeOnly? RegresoAlmuerzo { get; init; }
         public byte[] RowVer { get; init; } = [];
@@ -220,6 +222,8 @@ internal sealed class EdicionCabeceraRepositorio(ProfesiogramaDbContext db) : IC
             HorarioDescripcion = p.HorarioDescripcion,
             HoraEntrada = p.HoraEntrada,
             HoraSalida = p.HoraSalida,
+            HorasJornadaMin = p.HorasJornadaMin,
+            HorasTrabajadasMin = p.HorasTrabajadasMin,
             SalidaAlmuerzo = p.SalidaAlmuerzo,
             RegresoAlmuerzo = p.RegresoAlmuerzo,
             RowVer = p.RowVer,

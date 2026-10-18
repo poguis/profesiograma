@@ -171,7 +171,10 @@ export interface ActividadErp {
   tipo: string | null
 }
 
-/** GET /api/erp/horarios (solo activos). Horas "HH:mm:ss": mostrar con formatearHora, no mezclar con el formulario. */
+/**
+ * GET /api/erp/horarios (solo activos y laborables: TAREA-26c). Horas "HH:mm:ss": mostrar con formatearHora, no mezclar
+ * con el formulario.
+ */
 export interface HorarioErp {
   codigo: number
   descripcion: string
@@ -445,7 +448,15 @@ export interface CabeceraEdicion {
   grupo: string
   fechaInicio: string
   fechaFin: string
-  horario: { codigo: number | null; descripcion: string | null; horaEntrada: string | null; horaSalida: string | null }
+  /** TAREA-26c: con los minutos del horario guardado (deciden si el almuerzo es opcional). */
+  horario: {
+    codigo: number | null
+    descripcion: string | null
+    horaEntrada: string | null
+    horaSalida: string | null
+    minutosJornada: number | null
+    minutosTrabajados: number | null
+  }
   salidaAlmuerzo: string | null
   regresoAlmuerzo: string | null
   actividadVigente: ActividadCabecera | null
@@ -460,6 +471,7 @@ export interface CabeceraEdicion {
 
 /**
  * Cuerpo de POST /api/proyectos/{id}/cabecera[/previsualizar] (EditarCabeceraSolicitud). null = no cambia.
+ * Almuerzo "" = sin almuerzo (TAREA-26c: solo si el horario no lo descuenta).
  * versionProyecto: token de concurrencia (TAREA-19x); obligatorio al registrar. Se envía el token BASE (TAREA-19b2:
  * el del GET …/cabecera), no el de la vista previa.
  */

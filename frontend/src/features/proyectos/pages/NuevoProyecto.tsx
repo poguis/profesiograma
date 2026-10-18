@@ -181,7 +181,8 @@ function FormularioNuevoProyecto({ catalogos, opciones, companias, horarios }: F
   }, [sucio])
 
   // ---------------------------------------------------------------- errores y avisos
-  const erroresCliente = useMemo(() => validarCliente(estado), [estado])
+  const horarioElegido = horarios.find((h) => h.codigo === estado.cabecera.horarioCodigo)
+  const erroresCliente = useMemo(() => validarCliente(estado, horarioElegido), [estado, horarioElegido])
   const advertencias = useMemo(() => advertenciasFechas(estado), [estado])
   const etiquetas = useMemo(() => etiquetasPorEmpleado(estado), [estado])
   const rangoListo = tieneRangoProyecto(estado.cabecera)

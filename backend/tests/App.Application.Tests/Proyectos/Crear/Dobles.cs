@@ -55,8 +55,10 @@ internal sealed class ErpFalso : ICatalogoErp
     public Task<DimensionErp?> ObtenerDimensionAsync(int c, string id, CancellationToken ct) => R(Dimensiones.FirstOrDefault(d => c == Compania.Id && d.UegpId == id));
     public Task<IReadOnlyList<ActividadErp>> ListarActividadesAsync(int c, string p, CancellationToken ct) => L(Actividad);
     public Task<ActividadErp?> ObtenerActividadAsync(int c, string p, string id, CancellationToken ct) => R(p == Proyecto.Id && id == Actividad.Id ? Actividad : null);
-    public Task<IReadOnlyList<HorarioErp>> ListarHorariosAsync(CancellationToken ct) => L(Horario);
-    public Task<HorarioErp?> ObtenerHorarioAsync(int codigo, CancellationToken ct) => R(codigo == Horario.Codigo ? Horario : null);
+    private static readonly HorarioErp[] Horarios = [Horario, .. HorariosPrueba.Extra]; // TAREA-26c
+
+    public Task<IReadOnlyList<HorarioErp>> ListarHorariosAsync(CancellationToken ct) => L(Horarios);
+    public Task<HorarioErp?> ObtenerHorarioAsync(int codigo, CancellationToken ct) => R(Horarios.FirstOrDefault(h => h.Codigo == codigo));
 
     private static Task<IReadOnlyList<T>> L<T>(params T[] items) => Task.FromResult<IReadOnlyList<T>>(items);
     private static Task<T?> R<T>(T? valor) where T : class => Task.FromResult(valor);
@@ -92,6 +94,18 @@ internal sealed class DatosFalsos : IDatosReferenciaProyecto
         Task.FromResult<IReadOnlyDictionary<string, JornadaRef>>(Jornadas.ToDictionary(j => j.Codigo, StringComparer.OrdinalIgnoreCase));
 
     public Task<LimitesProyecto> ObtenerLimitesAsync(CancellationToken ct) => Task.FromResult(Limites);
+
+    /// <summary>TAREA-26c: valores iniciales de Parametro HORARIOS_NO_LABORALES.</summary>
+    public List<string> HorariosNoLaborales { get; set; } =
+        ["LIBRE", "FERIADO", "VACIO", "VACACIONES", "PERMISO MEDICO", "CALAMIDAD DOMESTICA", "PATERNIDAD PROYECTOS", "PATERNIDAD PLANTA"];
+
+    public int LecturasNoLaborales { get; private set; }
+
+    public Task<IReadOnlyList<string>> ObtenerHorariosNoLaboralesAsync(CancellationToken ct)
+    {
+        LecturasNoLaborales++;
+        return Task.FromResult<IReadOnlyList<string>>(HorariosNoLaborales.ToList());
+    }
 
     /// <summary>TAREA-26d-3: filas de Empleado guardadas (sin departamento ni unidad, como EmpleadosErpFalsos.Activo).</summary>
     public Dictionary<int, EmpleadoGuardado> Guardados { get; } = Empleados.Values

@@ -146,11 +146,15 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         // --- Horario (ERP) y almuerzo (RN09)
         // Reglas comunes con la edición de cabecera (ReglasHorarioAlmuerzo, mismos mensajes).
-        var horario = await ReglasHorarioAlmuerzo.ValidarHorarioAsync(s.HorarioCodigo, erp, e, ct);
-        var salida = ReglasHorarioAlmuerzo.LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", ReglasHorarioAlmuerzo.MensajeSalidaObligatoria, e);
-        var regreso = ReglasHorarioAlmuerzo.LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", ReglasHorarioAlmuerzo.MensajeRegresoObligatorio, e);
-        // RN09: rangos en ReglasAlmuerzo (misma fuente que las opciones del formulario).
-        ReglasHorarioAlmuerzo.ValidarAlmuerzo(salida, regreso, validarSalida: true, validarRegreso: true, e);
+        var horario = await ReglasHorarioAlmuerzo.ValidarHorarioAsync(s.HorarioCodigo, erp, datos, e, ct);
+        var salida = ReglasHorarioAlmuerzo.LeerHora(s.SalidaAlmuerzo, "salidaAlmuerzo", e);
+        var regreso = ReglasHorarioAlmuerzo.LeerHora(s.RegresoAlmuerzo, "regresoAlmuerzo", e);
+        // TAREA-26c: sin almuerzo solo si el horario no descuenta tiempo (jornada = trabajados).
+        ReglasHorarioAlmuerzo.ValidarPresencia(salida, regreso,
+            horario is not null && ReglasAlmuerzo.EsOpcional(horario.MinutosJornada, horario.MinutosTrabajados), e);
+        // RN09: rangos en ReglasAlmuerzo (misma fuente que las opciones del formulario); turno nocturno: dentro del turno.
+        ReglasHorarioAlmuerzo.ValidarAlmuerzo(salida, regreso, validarSalida: true, validarRegreso: true,
+            horario?.HoraEntrada, horario?.HoraSalida, e);
 
         // --- Departamento (P5)
         var departamentos = await datos.ObtenerDepartamentosDeUsuarioAsync(usuarioId, ct);
@@ -240,7 +244,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         return new ResultadoValidacionProyecto(
             new ProyectoValidado(compania!, grupo!, proyectoErp, actividad, dimension, s.FechaInicio!.Value, s.FechaFin!.Value,
-                horario!, salida!.Value, regreso!.Value, departamentoId, usuarioId, principalesValidos, backsValidos),
+                horario!, salida, regreso, departamentoId, usuarioId, principalesValidos, backsValidos),
             new Dictionary<string, string[]>());
     }
 

@@ -46,7 +46,7 @@ public sealed class EdicionCabeceraServicio(
 
         return new CabeceraDto(
             c.Id, c.Codigo, c.EstadoCodigo, motivo is null, motivo, c.GrupoCodigo, c.FechaInicio, c.FechaFin,
-            new HorarioCabeceraDto(c.HorarioCodigo, c.HorarioDescripcion, c.HoraEntrada, c.HoraSalida),
+            new HorarioCabeceraDto(c.HorarioCodigo, c.HorarioDescripcion, c.HoraEntrada, c.HoraSalida, c.MinutosJornada, c.MinutosTrabajados),
             Hora(c.SalidaAlmuerzo), Hora(c.RegresoAlmuerzo),
             vigente is null ? null : Actividad(datos.Actividades.Single(a => a.Id == vigente.Id)),
             datos.Actividades.OrderBy(a => a.Version).Select(Actividad).ToList(),

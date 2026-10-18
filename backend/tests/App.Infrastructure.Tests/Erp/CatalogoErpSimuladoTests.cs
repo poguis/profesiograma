@@ -36,6 +36,12 @@ public class CatalogoErpSimuladoTests
         [
             new HorarioErp(1, "07:00 - 18:00 (PRUEBA)", new TimeOnly(7, 0), new TimeOnly(18, 0), 660, 600, null),
             new HorarioErp(2, "08:00 - 17:00 (PRUEBA)", new TimeOnly(8, 0), new TimeOnly(17, 0), 540, 480, "M"),
+            // TAREA-26c: el catálogo no filtra los no laborales (lo hace ReglasHorario en Application); "2400" → 00:00.
+            new HorarioErp(4, "PATERNIDAD PROYECTOS", new TimeOnly(8, 0), new TimeOnly(17, 0), 540, 480, "M"),
+            new HorarioErp(5, "DESCANSO (PRUEBA)", TimeOnly.MinValue, TimeOnly.MinValue, 0, 0, "M"),
+            new HorarioErp(6, "22:00 - 06:00 NOCTURNO (PRUEBA)", new TimeOnly(22, 0), new TimeOnly(6, 0), 480, 420, "M"),
+            new HorarioErp(7, "15:30 - 24:00 (PRUEBA)", new TimeOnly(15, 30), TimeOnly.MinValue, 510, 450, "M"),
+            new HorarioErp(8, "07:00 - 15:00 SIN ALMUERZO (PRUEBA)", new TimeOnly(7, 0), new TimeOnly(15, 0), 480, 480, "M"),
         ],
         await catalogo.ListarHorariosAsync(Ct));
 
