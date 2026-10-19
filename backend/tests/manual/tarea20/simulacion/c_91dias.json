@@ -1,0 +1,10 @@
+{
+ "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+ "title": "Parámetros de consulta no válidos.",
+ "status": 400,
+ "errors": {
+  "hasta": [
+   "El rango no puede superar 90 días."
+  ]
+ }
+}

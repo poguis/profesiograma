@@ -53,6 +53,18 @@ public static class LectorParametros
         return porDefecto;
     }
 
+    /// <summary>Id opcional (entero ≥ 1); vacío → null; ilegible → error en el campo (TAREA-20).</summary>
+    public static int? LeerId(string? valor, string campo, IDictionary<string, string[]> errores)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return null;
+        }
+
+        var id = LeerEntero(valor, campo, 0, 1, int.MaxValue, $"El valor de '{campo}' debe ser un número entero mayor o igual a 1.", errores);
+        return id == 0 ? null : id;
+    }
+
     /// <summary>Texto recortado; vacío o solo espacios → null.</summary>
     public static string? Normalizar(string? valor)
         => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();

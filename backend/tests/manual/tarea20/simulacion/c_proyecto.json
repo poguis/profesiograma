@@ -1,0 +1,113 @@
+{
+ "desde": "2026-10-01",
+ "hasta": "2026-10-31",
+ "maxDias": 90,
+ "proyectos": [
+  {
+   "id": 1,
+   "codigo": "PRY-FICTICIO-1",
+   "nombre": "PROYECTO FICTICIO 1",
+   "estado": "ACTIVO",
+   "grupo": "CAMPO",
+   "companiaId": 9001,
+   "proyectoErpId": "DEV-ERP-001",
+   "dimensionUegpId": null,
+   "horario": {
+    "codigo": 1,
+    "descripcion": "07:00 - 18:00",
+    "entrada": "07:00:00",
+    "salida": "18:00:00",
+    "cruzaMedianoche": false
+   },
+   "almuerzo": {
+    "salida": "13:00:00",
+    "regreso": "14:00:00"
+   }
+  }
+ ],
+ "personas": [
+  {
+   "codigoEkon": "900001",
+   "nombre": "PERSONA FICTICIA 01",
+   "asignadoEn": [
+    {
+     "proyectoId": 1,
+     "cargo": "CARGO FICTICIO"
+    }
+   ],
+   "dias": [
+    {
+     "fecha": "2026-10-01",
+     "estado": "PROYECTO",
+     "asignaciones": [
+      {
+       "proyectoId": 1,
+       "rol": "PRINCIPAL",
+       "actividad": "DEV.01"
+      }
+     ],
+     "otrosProyectos": 0,
+     "novedad": null,
+     "novedadesExtra": 0
+    },
+    {
+     "fecha": "2026-10-02",
+     "estado": "CHOQUE",
+     "asignaciones": [
+      {
+       "proyectoId": 1,
+       "rol": "PRINCIPAL",
+       "actividad": "DEV.01"
+      }
+     ],
+     "otrosProyectos": 1,
+     "novedad": null,
+     "novedadesExtra": 0
+    },
+    {
+     "fecha": "2026-10-03",
+     "estado": "NOVEDAD",
+     "asignaciones": [
+      {
+       "proyectoId": 1,
+       "rol": "PRINCIPAL",
+       "actividad": "DEV.01"
+      }
+     ],
+     "otrosProyectos": 0,
+     "novedad": {
+      "tipo": "VACACIONES",
+      "sigla": "V",
+      "color": "#0277BD",
+      "aplicacion": "PERSONA",
+      "origen": "PROFESIOGRAMA",
+      "estadoReporte": "LIBRE",
+      "observacionReporte": "VACACIONES"
+     },
+     "novedadesExtra": 1
+    },
+    {
+     "fecha": "2026-10-04",
+     "estado": "DESCANSO",
+     "asignaciones": [
+      {
+       "proyectoId": 1,
+       "rol": "PRINCIPAL",
+       "actividad": "DEV.01"
+      }
+     ],
+     "otrosProyectos": 0,
+     "novedad": null,
+     "novedadesExtra": 0
+    }
+   ]
+  }
+ ],
+ "leyendaNovedades": [
+  {
+   "tipo": "VACACIONES",
+   "sigla": "V",
+   "color": "#0277BD"
+  }
+ ]
+}

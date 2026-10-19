@@ -1,3 +1,4 @@
+using App.Application.Cronograma;
 using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Proyectos;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ReactivacionServicio>();
         services.AddScoped<EdicionCabeceraValidador>();
         services.AddScoped<EdicionCabeceraServicio>();
+        services.AddScoped<CronogramaConsultaServicio>(); // TAREA-20
         return services;
     }
 }

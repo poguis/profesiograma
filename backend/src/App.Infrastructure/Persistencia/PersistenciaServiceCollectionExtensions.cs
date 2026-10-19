@@ -1,4 +1,5 @@
 using App.Application.Catalogos;
+using App.Application.Cronograma;
 using App.Application.Empleados;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
@@ -47,6 +48,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<IEmpleadoConsultas, EmpleadoConsultas>();
         services.AddScoped<IDatosReferenciaProyecto, DatosReferenciaProyecto>();
         services.AddScoped<IConsultaCrucesExternos, ConsultaCrucesExternos>();
+        services.AddScoped<ICronogramaConsultas, CronogramaConsultas>(); // TAREA-20
         services.AddScoped<IProyectoRepositorio, ProyectoRepositorio>();
         services.AddScoped<ITransaccionAsignaciones, TransaccionAsignaciones>();
         services.AddScoped<ICambioEstadoRepositorio, CambioEstadoRepositorio>();

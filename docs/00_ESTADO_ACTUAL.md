@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-16 (TAREA-26a ✅; TAREA-26b DESCARTADA; TAREA-26d-1 ✅ (empleados desde la API, backend; corregido el 500 de la vista previa con un tipo JSON incorrecto); TAREA-26d-2 ✅ (frontend por `codigoEkon`; W1–W6 OK, 08/10 y 13/10/2026); TAREA-26d-3 ✅ (comparación "guardado frente al ERP" y retiro de `empleadoId`; C1–C6 OK, 14 y 16/10/2026). TAREA-26c ✅ (horarios no laborales y almuerzo en turnos nocturnos, pendientes 41 y 42; verificada por el usuario: 7/7 y visual OK, 19/10/2026). **Siguiente tarea: TAREA-20** (cronograma: consulta))
+**Última actualización:** 2026-10-19 (TAREA-20 implementada (consulta del cronograma, backend), **pendiente de la verificación del usuario** (`backend/tests/manual/tarea20/cronograma.cmd`); TAREA-26a ✅; TAREA-26b DESCARTADA; TAREA-26d-1 ✅ (empleados desde la API, backend; corregido el 500 de la vista previa con un tipo JSON incorrecto); TAREA-26d-2 ✅ (frontend por `codigoEkon`; W1–W6 OK, 08/10 y 13/10/2026); TAREA-26d-3 ✅ (comparación "guardado frente al ERP" y retiro de `empleadoId`; C1–C6 OK, 14 y 16/10/2026). TAREA-26c ✅ (horarios no laborales y almuerzo en turnos nocturnos, pendientes 41 y 42; verificada por el usuario: 7/7 y visual OK, 19/10/2026). **Siguiente tarea: TAREA-20** (cronograma: consulta))
 
 ## 1. Documentos del proyecto (en orden)
 
@@ -13,6 +13,7 @@
 | `docs/fases/FASE_5_Crear_Proyecto.md` | Diseño de "Crear proyecto": motor de cronograma, cruces, API y decisiones P1–P6. |
 | `docs/fases/FASE_5_Estados_Proyecto.md` | Máquina de estados, suspensión y cierre (E1–E6), hallazgos H1–H6 y diferencias D1–D8 con el original (TAREA-14); §8: reactivación (R1–R10, H9–H12, D9–D13, TAREA-17b). |
 | `docs/fases/FASE_5_Edicion_Cronograma.md` | Motor con fecha de corte (RN11): reglas R1–R8, M1–M4, hallazgos H7–H8, invariante y reglas de edición; §8: actualización de personal (TAREA-17), H12 (§8.4) y C9 (§8.5). |
+| `docs/fases/FASE_5_Cronograma.md` | Cronograma (TAREA-20): contrato de `GET /api/cronograma` y `GET /api/proyectos/{id}/cronograma`, precedencia de la celda, decisiones D1–D13 y mapeo de la plantilla del reporte (D14–D16 para la TAREA-22). |
 | `docs/fases/FASE_5_Edicion_Cabecera.md` | Edición de cabecera (fechas, horario, almuerzo) y cambio de actividad: C1–C11, P1–P3, hallazgos H13–H14 y diferencias D14–D22 con el original (TAREA-18). |
 
 ## 2. Alcance acordado (primera entrega)
@@ -112,7 +113,8 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 | 26d-2 | Empleados desde la API, frontend: buscador por código, solicitudes con `codigoEkon`, 503 con "Reintentar" y `avisoErp` — ✅ verificada por el usuario (W1–W6 OK, 08/10 y 13/10/2026) |
 | 26d-3 | Avisos "guardado frente al ERP" en edición y reactivación; retiro de `empleadoId` en las solicitudes — ✅ verificada por el usuario (C1–C6 OK, 14 y 16/10/2026) |
 | 26c | Horarios del ERP: excluir los no laborales de las listas (pendiente 41) y RN09 con horarios que cruzan la medianoche (pendiente 42) — ✅ verificada por el usuario (7/7 y visual OK, 19/10/2026) |
-| 20–21 | Cronograma: consulta y vista — **siguiente tarea: TAREA-20 (consulta)** |
+| 20 | Cronograma: consulta (backend) — implementada (19/10/2026), **pendiente de la verificación del usuario**. Ver `FASE_5_Cronograma.md` |
+| 21 | Cronograma: vista (frontend) |
 | 22 | Reporte Excel (ClosedXML; requiere la plantilla, pendiente 4) |
 | 23–24 | Novedades: backend y frontend |
 | 25 | Administración de permisos por departamento |
@@ -126,7 +128,7 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
 2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz). **TAREA-26d-1:** la alta puntual da de alta en `CargoInfor` el puesto de cada persona asignada (mayúsculas, sin espacios extremos, `CodigoInfor` vacío, nunca se borran). Queda acotado a los puestos de las personas asignadas; un futuro "Importar puestos desde la API" en la administración (TAREA-25) cubriría el resto. La asignación del código Infor sigue pendiente (interfaz o Excel).
 3. **Resuelto:** Frontend: React + Vite (decidido 2026-09-30).
-4. Plantilla Excel y Office Script del reporte de cronograma.
+4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). **TAREA-20:** la plantilla ya está en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (hoja `'PROYECTO '`, `Tabla1`, 14 columnas; nombres definidos `LABORABLE`/`LIBRE` rotos, `#REF!`); el análisis está en `FASE_5_Cronograma.md` §6. Falta el Office Script.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 6. [Fase 5] El acceso a proyectos se decidirá por App Role `Gestor` o por `UsuarioDepartamento` (Fase 1 indica `UsuarioDepartamento`).
 7. [Fase 7] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.)
@@ -175,6 +177,10 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
     - la duración del almuerzo y los márgenes respecto de la entrada y la salida (hoy no hay regla: solo dentro del turno, o los rangos RN09 en el diurno);
     - la lista de horarios no laborales (`HORARIOS_NO_LABORALES`).
 50. [TAREA-20–24, cronograma, reporte y novedades/asistencia] En los turnos nocturnos (salida < entrada), las horas después de las 00:00 pertenecen al **día de entrada**. Ningún cálculo actual usa `HoraEntrada`/`HoraSalida` por fecha (el motor del cronograma solo usa días), pero el cronograma, el reporte y la asistencia deben respetarlo.
+51. [TAREA-22, D15] CEDULA en el reporte: `Empleado.Cedula` siempre está en NULL (opción C, dato sensible). Decidir si se deja vacía o se lee de la API al exportar, sin guardarla. [PENDIENTE DE DECISIÓN DEL USUARIO / nómina]
+52. [TAREA-22, D16] Almuerzo nulo (horario sin almuerzo, TAREA-26c) en un día LABORABLE: ¿`00:00:00` o vacío en INGRESO/SALIDA ALMUERZO? [PENDIENTE DE CONFIRMAR con RR. HH. / Infor]
+53. [TAREA-22] Columna PROYECTO para PLANTA/OFICINAS (sin ProjectId del ERP): ¿vacía, la dimensión UEGP u otro valor? [PENDIENTE DE CONFIRMAR]
+54. [TAREA-22] SALIDA DE JORNADA en turnos nocturnos: la hora de salida es menor que la de ingreso (p. ej. 17:00–04:00). Confirmar cómo lo interpreta Infor (¿mismo día, día siguiente?). [PENDIENTE DE CONFIRMAR]
 
 ## 7.1 Reglas técnicas obligatorias
 
@@ -204,6 +210,7 @@ Reset de la base de desarrollo: `dotnet ef database update 0` (NUNCA `database d
 | TAREA-26b (2026-10-07) | Sincronización masiva de empleados (`POST /api/admin/empleados/sincronizar`) | **DESCARTADA** el 07/10/2026 (opción C, TAREA-26d). Nunca se ejecutó contra la base; su código se retiró en la TAREA-26d-1 (se conservaron el cliente HTTP con DTO de campos permitidos y sus pruebas). Ver `docs/tareas/TAREA-26b-reporte.md` |
 | TAREA-26d-1 (2026-10-07) | Empleados desde la API (opción C), backend: `IFuenteEmpleadosErp` con `CacheEmpleadosErp` (singleton, TTL 10 min, descarga única, lista anterior < 60 min con `avisoErp` para el buscador, lectura fresca al registrar) sobre `FuenteEmpleadosErpHttp` (Http) o `EmpleadosErpSimulado` (DEV + SIM001–SIM200); `GET /api/empleados` desde la API (filtro en memoria sin tildes ni mayúsculas; `codigoEkon` como clave); `codigoEkon` en las personas nuevas de crear/personal/reactivar con `empleadoId` de transición (`CatalogoEmpleados`, Id temporales negativos); alta puntual (`AltaPuntualEmpleados`) dentro de `ITransaccionAsignaciones` con `CargoInfor`; 503 "Servicio de empleados no disponible"; R7 contra la API (sin 503 si cae). Retiro de la 26b. Sin migraciones. | ✅ build 0/0; tests **581/581** al implementarse (34 nuevas). Verificación del usuario del 08/10/2026 V1, V2, V3, V8, V9 y V10 OK (Id 15 PRY-20261008-f5f7d6 en Http con 9940 y 11358; Id 16 PRY-20261008-d1d3a0 en Simulado; Empleado = 10, `NoDevConCedula = 0`, `CargoInfor` = 4 en el conteo de V9, que omitía las filas de V8; ver la línea base corregida en la fila de la TAREA-26d-2). **Defecto corregido (08/10/2026):** `"actividadId": 20` (número en un campo de texto) daba 500 en Development; ahora `SolicitudIlegibleExceptionHandler` responde 400 con el mensaje en español en su campo (`AddErroresApi`, `ThrowOnBadRequest` en todos los entornos); proyecto nuevo `App.Api.Tests` (pipeline en memoria): tests **591/591**. Ver `docs/tareas/TAREA-26d-1-reporte.md` |
 | TAREA-26c (2026-10-16) | Horarios del ERP (pendientes 41 y 42): `ReglasHorario.EsSeleccionable` (Application; lista de `GET /api/erp/horarios` y validación de crear/editar), `Parametro` 11 `HORARIOS_NO_LABORALES` (migración solo de datos `ParametroHorariosNoLaborales`, leído sin caché con su ToQueryString), RN09 ampliada con turno nocturno y almuerzo opcional (`ReglasAlmuerzo`, `ReglasHorarioAlmuerzo`), D3/D7 en la edición de cabecera, `AHora("2400")` → 00:00, simulado con 5 horarios nuevos. Sin cambios de esquema | ✅ Verificada por el usuario (19/10/2026) |
+| TAREA-20 (2026-10-19) | Consulta del cronograma: `GET /api/cronograma` (desde/hasta, proyectoId, departamentoId, codigoEkon; mes actual por defecto; máx. `CRONOGRAMA_MAX_DIAS` → 400) y `GET /api/proyectos/{id}/cronograma` (404 si no es visible; sin fechas, desde el inicio, máx. 90 días). `ArmadoCronograma` (precedencia PERSONA > GENERAL > PROYECTO > CHOQUE > PROYECTO > DESCANSO, D1/D2/D9; respuesta dispersa), `CronogramaConsultaServicio` (R1), `CronogramaConsultas` (7 consultas con ToQueryString). Sin cambios de esquema | Implementada; pendiente de la verificación del usuario (`tests/manual/tarea20/cronograma.cmd`) |
 | Pendiente | Crear proyecto, editar, cambios de estado, cronograma (+ reporte Excel), novedades, administración de permisos por departamento. | — |
 
 Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `TimeProvider.System` + servicios de aplicación), `App.Application/Comun` (`PaginaResultado<T>`, `ResultadoConsulta<T>`).

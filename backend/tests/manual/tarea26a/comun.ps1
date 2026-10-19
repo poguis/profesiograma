@@ -34,6 +34,10 @@ function Iniciar-Salida([string]$Nombre) {
     if ($script:Simular) {
         Escribir "MODO SIMULACION (SIMULAR=1): sin llamadas de red; respuestas leidas de $script:CarpetaSimulacion"
     }
+    else {
+        # TAREA-20 (regla de CLAUDE.md): el modo siempre visible al inicio.
+        Escribir 'MODO REAL: llamadas reales a la API (SIMULAR no esta en 1).'
+    }
     Escribir ("Fecha: " + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
 }
 
