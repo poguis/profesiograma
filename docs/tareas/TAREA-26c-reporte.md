@@ -1,7 +1,7 @@
 # TAREA-26c — Horarios del ERP: no laborales (pendiente 41) y turno nocturno (pendiente 42)
 
 **Fecha:** 2026-10-16 (Fase A: plan; B1: evidencia; B2: implementación)
-**Resultado:** implementada; **pendiente de la verificación del usuario** (`backend/tests/manual/tarea26c/verificacion.cmd`, después de aplicar la migración).
+**Resultado:** ✅ implementada y **verificada por el usuario el 19/10/2026** (§7).
 - `dotnet build Profesiograma.slnx -c Release`: 0 advertencias, 0 errores.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **691/691** (607 anteriores: 2 cambiadas por el mensaje nuevo; 84 nuevas).
 - Frontend:
@@ -187,18 +187,19 @@ Fuente: `resultado-horarios-analisis.txt` del usuario, resumido por él en el ch
 3. **Respuesta vacía en `verificacion`/`horarios-analisis`:** no se repitió. El caso ya estaba corregido en la B1.
 4. **Secuencias de escape de Python** (`\t`, `\v`) en un `LEEME.md` editado con un script. Se corrigieron con el editor y se verificó que no quedaran caracteres de control.
 
-## 7. Verificación del usuario (pendiente)
-1. Desde `backend/`:
-   ```
-   dotnet ef database update --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext --configuration Release
-   ```
-   Inserta el `Parametro` 11; no cambia el esquema.
-2. Reinicie la API.
-3. Ejecute `backend/tests/manual/tarea26c/verificacion.cmd`:
-   - `set PERFIL=http` con el ERP real, o `simulado`;
-   - `set PROYECTO_ID=<proyecto ACTIVO con almuerzo diurno>`.
-4. Pegue `resultado-verificacion.txt`.
-5. En pantalla, opcional: los no laborales no aparecen; las opciones de almuerzo de un nocturno son horas del turno; el 118 permite dejar el almuerzo vacío; aparece el aviso del horario guardado no disponible.
+## 7. Verificación del usuario (19/10/2026) ✅
+| Paso | Resultado |
+|---|---|
+| Migración `20261016164745_ParametroHorariosNoLaborales` | Aplicada en PROFESIOGRAMA_DEV: `Parametro` Id 11, LIST, 8 valores |
+| `verificacion.cmd` contra la API real | **7/7**. La primera corrida salió en simulación porque la consola tenía `SIMULAR` de una sesión anterior; se repitió sin simulación |
+| Visual: listas de horarios | OK: los no laborales no aparecen y los nocturnos sí |
+| Visual: almuerzo según el turno | OK: el almuerzo se limpia al cambiar el horario y las opciones quedan dentro del turno |
+| Visual: horario 118 | OK: se registra con el almuerzo vacío |
+| Visual: edición de cabecera, cambio al 73 | OK: aviso y bloqueo, porque el almuerzo guardado queda fuera del turno |
+
+**Nota aceptada por el usuario:** en los turnos nocturnos el servidor no exige horas en punto, igual que en el diurno; solo las opciones del formulario son en punto.
+
+**Reglas nuevas en `CLAUDE.md`** (incidentes de la 26d-3, `retiro.ps1`, y de la 26c, el `grep` de §6.1): simular en una copia en el scratchpad; prohibido leer los archivos del usuario; solo plantillas ficticias en simulación; modo visible al inicio.
 
 ## 8. Pendientes
 - **49 (RR. HH.):** duración del almuerzo, márgenes y lista de no laborales.

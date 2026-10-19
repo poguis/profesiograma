@@ -63,6 +63,15 @@ dotnet test --solution Profesiograma.slnx -c Release   (pruebas: xUnit v3 sobre 
   un `curl.cmd` en la carpeta actual NO reemplaza a `curl.exe`).
 - Si una prueba local pudo haber tocado la API real, detenerse y reportarlo de inmediato.
   (Origen: incidente de la TAREA-17, 05/10/2026, ver `docs/tareas/TAREA-17-reporte.md` §6.5.)
+- Simular siempre en una COPIA de los scripts en el scratchpad, nunca dentro de `backend/tests/manual/`
+  (la simulación escribe `resultado-*.txt` y puede pisar o mezclarse con los archivos del usuario).
+- Prohibido leer (grep, cat, find con contenido, Get-Content, Select-String o cualquier otra lectura) los
+  `resultado-*.txt`, `crear-proyecto-*.json` u otros archivos que el usuario haya generado o completado. Para comprobar
+  que existen o que no cambiaron, solo fecha y tamaño.
+- En simulación, los scripts usan solo plantillas ficticias (`*.ejemplo.json` o la carpeta `simulacion\`).
+- El script debe mostrar al inicio, de forma visible, "MODO SIMULACION" o "MODO REAL".
+  (Origen: incidentes de la TAREA-26d-3, `retiro.ps1`, y de la TAREA-26c, un `grep` sobre un resultado del usuario;
+  ver `docs/tareas/TAREA-26c-reporte.md` §6.1.)
 
 ## Frontend (desde frontend/)
 npm install
