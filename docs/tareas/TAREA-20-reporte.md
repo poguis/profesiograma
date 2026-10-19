@@ -1,7 +1,7 @@
 # TAREA-20 — Consulta del cronograma (backend)
 
 **Fecha:** 2026-10-19 (Fase A: plan; Fase B: implementación)
-**Resultado:** implementada; **pendiente de la verificación del usuario** (`backend/tests/manual/tarea20/cronograma.cmd`).
+**Resultado:** ✅ implementada y **verificada por el usuario el 19/10/2026** (§6): `cronograma.cmd` en MODO REAL, 8/8.
 - `dotnet build Profesiograma.slnx -c Release`: 0 advertencias, 0 errores.
 - `dotnet test --solution Profesiograma.slnx -c Release`: **740/740** (691 anteriores sin cambios + 49 nuevas).
 - **Sin cambios de esquema ni migraciones.** Las consultas usan los índices existentes.
@@ -118,10 +118,23 @@ Las D1–D13 del usuario (19/10/2026), detalladas en `docs/fases/FASE_5_Cronogra
    - un caso de "91 días" que en realidad tenía 90;
    - una aserción sobre la consulta 1b sin días, en la que la consulta no se ejecuta.
 
-## 6. Verificación del usuario (pendiente)
-1. Con la API corriendo, ejecute `backend/tests/manual/tarea20/cronograma.cmd`. La primera línea debe decir **MODO REAL**; si dice SIMULACION, ejecute `set SIMULAR=`.
-2. Opcional: `PROYECTO_ID`, `PROYECTO_NO_VISIBLE`, `CODIGO_EKON` y `DEV_USER` (ver `LEEME.md`).
-3. Pegue `resultado-cronograma.txt`: solo conteos, códigos EKON, Id, estados y siglas.
+## 6. Verificación del usuario (19/10/2026) ✅
+`cronograma.cmd` en **MODO REAL: 8/8** como se esperaba.
+
+| Caso | Resultado |
+|---|---|
+| Mes actual, gestor | 200: 12 personas, 8 proyectos; `OTRO_PROYECTO` = 4 (días en proyectos de otros usuarios, D2) |
+| Mes actual, admin | 200: 13 personas, 9 proyectos; `OTRO_PROYECTO` = 0 (todo es visible) |
+| Filtro `proyectoId=17` | 200 |
+| Filtro `codigoEkon=7255` | 200 |
+| 91 días | 400 en `hasta` |
+| `hasta` anterior a `desde` | 400 en `hasta` |
+| Por proyecto no visible | 404 |
+| Por proyecto 17 sin fechas (D12) | 200; el rango empieza en su `FechaInicio` (01/10) |
+
+**Notas:**
+- **Primera corrida: 500 en todos los casos.** La API no alcanzaba la base porque la VPN estaba desconectada; no es un defecto de la tarea. Con la base inaccesible, la API tarda ~15 s y responde un 500 genérico (pendiente nuevo en `00_ESTADO_ACTUAL.md`).
+- **El estado `OTRO_PROYECTO` se acepta** como ampliación de D2.
 
 ## 7. Pendientes
 - **51 (D15):** CEDULA en el reporte.
