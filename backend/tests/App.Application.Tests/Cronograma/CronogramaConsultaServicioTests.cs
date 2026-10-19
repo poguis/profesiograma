@@ -53,24 +53,46 @@ public class CronogramaConsultaServicioTests
         Assert.Equal([mensaje], r.Errores![clave]);
     }
 
+    // D5 revisada (TAREA-21, 19/10/2026): un rango mayor que el máximo ya no es 400; se recorta y se informa.
+
     [Fact]
-    public async Task D5_Limite_90DiasValido_91Invalido()
+    public async Task D5_91Dias_SeRecortaA90_ConElHastaSolicitado()
     {
-        var (servicio, _) = Crear();
-        Assert.True((await servicio.ConsultarAsync(S("2026-10-01", "2026-12-29"), Ct)).EsValido);
-        Assert.Equal(["El rango no puede superar 90 días."], (await servicio.ConsultarAsync(S("2026-10-01", "2026-12-30"), Ct)).Errores!["hasta"]);
+        var (servicio, consultas) = Crear();
+        var r = await servicio.ConsultarAsync(S("2026-10-01", "2026-12-30"), Ct);
+
+        Assert.True(r.EsValido);
+        Assert.Equal((new DateOnly(2026, 10, 1), new DateOnly(2026, 12, 29), true, (DateOnly?)new DateOnly(2026, 12, 30)),
+            (r.Valor!.Desde, r.Valor.Hasta, r.Valor.Recortado, r.Valor.HastaSolicitado));
+        Assert.Equal(new DateOnly(2026, 12, 29), consultas.UltimoFiltro!.Hasta); // la consulta usa el rango recortado
     }
 
     [Fact]
-    public async Task D5_UsaElParametro()
+    public async Task D5_LimiteExacto90_SinRecorte()
+    {
+        var r = (await Crear().Servicio.ConsultarAsync(S("2026-10-01", "2026-12-29"), Ct)).Valor!;
+        Assert.Equal((new DateOnly(2026, 12, 29), false, (DateOnly?)null), (r.Hasta, r.Recortado, r.HastaSolicitado));
+    }
+
+    [Fact]
+    public async Task D5_UsaElParametro_7DiasConUnRangoDe10()
     {
         var (servicio, consultas) = Crear();
         consultas.MaxDias = 7;
-        var r = await servicio.ConsultarAsync(S("2026-10-01", "2026-10-08"), Ct);
-        Assert.Equal(["El rango no puede superar 7 días."], r.Errores!["hasta"]);
+        var r = (await servicio.ConsultarAsync(S("2026-10-01", "2026-10-10"), Ct)).Valor!;
+        Assert.Equal((new DateOnly(2026, 10, 7), true, (DateOnly?)new DateOnly(2026, 10, 10), 7),
+            (r.Hasta, r.Recortado, r.HastaSolicitado, r.MaxDias));
 
         consultas.MaxDias = null; // sin parámetro: 90
         Assert.Equal(90, (await servicio.ConsultarAsync(S("2026-10-01", "2026-10-08"), Ct)).Valor!.MaxDias);
+    }
+
+    [Fact]
+    public async Task D5_MesActualSinFechas_SinRecorte()
+    {
+        var r = (await Crear().Servicio.ConsultarAsync(S(), Ct)).Valor!;
+        Assert.False(r.Recortado);
+        Assert.Null(r.HastaSolicitado);
     }
 
     [Fact]
@@ -155,6 +177,7 @@ public class CronogramaConsultaServicioTests
 
         var r = (await servicio.ConsultarProyectoAsync(1, new(null, null), Ct))!.Valor!;
         Assert.Equal((D(3), D(20)), (r.Desde, r.Hasta));
+        Assert.False(r.Recortado); // proyecto corto: sin recorte
         Assert.Equal(1, consultas.UltimoFiltro!.SoloProyectoId);
     }
 
@@ -166,6 +189,28 @@ public class CronogramaConsultaServicioTests
 
         var r = (await servicio.ConsultarProyectoAsync(1, new(null, null), Ct))!.Valor!;
         Assert.Equal((new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31)), (r.Desde, r.Hasta));
+        // D5 revisada: D12 también informa el recorte, con el fin del proyecto como "hasta solicitado".
+        Assert.Equal((true, (DateOnly?)new DateOnly(2026, 12, 31)), (r.Recortado, r.HastaSolicitado));
+    }
+
+    [Fact]
+    public async Task PorProyecto_FechasExplicitasDe120Dias_SeRecortan()
+    {
+        var (servicio, consultas) = Crear();
+        consultas.Rangos[1] = new RangoProyecto(1, D(1), D(31));
+
+        var r = (await servicio.ConsultarProyectoAsync(1, new("2026-10-01", "2027-01-28"), Ct))!.Valor!; // 120 días
+        Assert.Equal((new DateOnly(2026, 12, 29), true, (DateOnly?)new DateOnly(2027, 1, 28)), (r.Hasta, r.Recortado, r.HastaSolicitado));
+    }
+
+    [Fact]
+    public async Task PorProyecto_HastaAnteriorADesde_400()
+    {
+        var (servicio, consultas) = Crear();
+        consultas.Rangos[1] = new RangoProyecto(1, D(1), D(31));
+
+        var r = await servicio.ConsultarProyectoAsync(1, new("2026-10-10", "2026-10-09"), Ct);
+        Assert.Equal(["La fecha 'hasta' no puede ser anterior a la fecha 'desde'."], r!.Errores!["hasta"]);
     }
 
     [Fact]
@@ -176,6 +221,7 @@ public class CronogramaConsultaServicioTests
 
         var r = (await servicio.ConsultarProyectoAsync(1, new("2026-11-01", null), Ct))!.Valor!;
         Assert.Equal((new DateOnly(2026, 11, 1), new DateOnly(2027, 1, 29)), (r.Desde, r.Hasta));
+        Assert.False(r.Recortado); // desde posterior al fin: 90 días desde esa fecha, no es un recorte
     }
 
     [Fact]

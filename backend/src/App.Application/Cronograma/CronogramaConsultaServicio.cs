@@ -4,7 +4,7 @@ using App.Application.Seguridad;
 namespace App.Application.Cronograma;
 
 /// <summary>
-/// Consulta del cronograma (TAREA-20): valida el rango (D5, D6, D12), aplica la visibilidad R1 (D10: Admin todo; si no,
+/// Consulta del cronograma (TAREA-20): valida el rango (D5 revisada en la TAREA-21: recorta; D6, D12), aplica la visibilidad R1 (D10: Admin todo; si no,
 /// solo los proyectos propios) y arma la respuesta con <see cref="ArmadoCronograma"/>. Ver docs/fases/FASE_5_Cronograma.md.
 /// </summary>
 public sealed class CronogramaConsultaServicio(ICronogramaConsultas consultas, IUsuarioActual usuario, TimeProvider reloj)
@@ -30,21 +30,23 @@ public sealed class CronogramaConsultaServicio(ICronogramaConsultas consultas, I
         // D6: sin fechas, el mes actual en Ecuador; con una sola, el mes de esa fecha.
         var referencia = desde ?? hasta ?? FechaNegocio.Hoy(reloj);
         var inicio = desde ?? new DateOnly(referencia.Year, referencia.Month, 1);
-        var fin = hasta ?? new DateOnly(inicio.Year, inicio.Month, 1).AddMonths(1).AddDays(-1);
-        if (ValidarRango(inicio, fin, maxDias) is { } invalido)
+        var pedido = hasta ?? new DateOnly(inicio.Year, inicio.Month, 1).AddMonths(1).AddDays(-1);
+        if (pedido < inicio)
         {
-            return invalido;
+            return HastaAnterior();
         }
 
+        var (fin, hastaSolicitado) = Recortar(inicio, pedido, maxDias);
         if (!TryObtenerVisibilidad(out var propietario))
         {
-            return ResultadoConsulta<CronogramaDto>.Ok(new CronogramaDto(inicio, fin, maxDias, [], [], []));
+            return ResultadoConsulta<CronogramaDto>.Ok(Recorte(new CronogramaDto(inicio, fin, maxDias, [], [], []), hastaSolicitado));
         }
 
         var filtro = new FiltroCronograma(inicio, fin, propietario, ProyectoId: proyectoId, DepartamentoId: departamentoId,
             CodigoEkon: LectorParametros.Normalizar(s.CodigoEkon));
         // D2: para el Admin todo es visible; para los demás, se cuentan los días en proyectos de otros propietarios.
-        return ResultadoConsulta<CronogramaDto>.Ok(await ArmarAsync(filtro, maxDias, propietario, salvoProyectoId: null, ct));
+        return ResultadoConsulta<CronogramaDto>.Ok(
+            Recorte(await ArmarAsync(filtro, maxDias, propietario, salvoProyectoId: null, ct), hastaSolicitado));
     }
 
     /// <summary>GET /api/proyectos/{id}/cronograma. Null si el proyecto no existe o no es visible (404, nunca 403).</summary>
@@ -67,17 +69,19 @@ public sealed class CronogramaConsultaServicio(ICronogramaConsultas consultas, I
             return ResultadoConsulta<CronogramaDto>.Invalido(errores);
         }
 
-        // D12: sin fechas, desde el inicio del proyecto hasta su fin, como máximo CRONOGRAMA_MAX_DIAS días.
+        // D12: sin fechas, desde el inicio del proyecto hasta su fin; si pasa de CRONOGRAMA_MAX_DIAS se recorta y se informa.
+        // Si "desde" es posterior al fin del proyecto, se muestran CRONOGRAMA_MAX_DIAS días desde esa fecha, sin recorte.
         var inicio = desde ?? proyecto.FechaInicio;
-        var finMaximo = inicio.AddDays(maxDias - 1);
-        var fin = hasta ?? (proyecto.FechaFin >= inicio && proyecto.FechaFin < finMaximo ? proyecto.FechaFin : finMaximo);
-        if (ValidarRango(inicio, fin, maxDias) is { } invalido)
+        var pedido = hasta ?? (proyecto.FechaFin >= inicio ? proyecto.FechaFin : inicio.AddDays(maxDias - 1));
+        if (pedido < inicio)
         {
-            return invalido;
+            return HastaAnterior();
         }
 
+        var (fin, hastaSolicitado) = Recortar(inicio, pedido, maxDias);
         var filtro = new FiltroCronograma(inicio, fin, propietario, SoloProyectoId: proyectoId);
-        return ResultadoConsulta<CronogramaDto>.Ok(await ArmarAsync(filtro, maxDias, propietarioOtros: null, salvoProyectoId: proyectoId, ct));
+        return ResultadoConsulta<CronogramaDto>.Ok(
+            Recorte(await ArmarAsync(filtro, maxDias, propietarioOtros: null, salvoProyectoId: proyectoId, ct), hastaSolicitado));
     }
 
     private async Task<CronogramaDto> ArmarAsync(FiltroCronograma filtro, int maxDias, int? propietarioOtros, int? salvoProyectoId,
@@ -103,19 +107,19 @@ public sealed class CronogramaConsultaServicio(ICronogramaConsultas consultas, I
         return ArmadoCronograma.Armar(filtro.Desde, filtro.Hasta, maxDias, dias, otros, novedades, actividades, cabeceras);
     }
 
-    /// <summary>D5: hasta ≥ desde y como máximo CRONOGRAMA_MAX_DIAS días; si no, 400 en "hasta".</summary>
-    private static ResultadoConsulta<CronogramaDto>? ValidarRango(DateOnly desde, DateOnly hasta, int maxDias)
-    {
-        if (hasta < desde)
+    /// <summary>D5 revisada (TAREA-21): más de CRONOGRAMA_MAX_DIAS días → los primeros maxDias, con el fin pedido.</summary>
+    private static (DateOnly Fin, DateOnly? HastaSolicitado) Recortar(DateOnly desde, DateOnly hasta, int maxDias) =>
+        hasta.DayNumber - desde.DayNumber + 1 > maxDias ? (desde.AddDays(maxDias - 1), hasta) : (hasta, null);
+
+    private static CronogramaDto Recorte(CronogramaDto dto, DateOnly? hastaSolicitado) =>
+        hastaSolicitado is null ? dto : dto with { Recortado = true, HastaSolicitado = hastaSolicitado };
+
+    /// <summary>Hasta anterior a desde: 400 en "hasta" (se mantiene en la D5 revisada).</summary>
+    private static ResultadoConsulta<CronogramaDto> HastaAnterior() =>
+        ResultadoConsulta<CronogramaDto>.Invalido(new Dictionary<string, string[]>
         {
-            return Error("La fecha 'hasta' no puede ser anterior a la fecha 'desde'.");
-        }
-
-        return hasta.DayNumber - desde.DayNumber + 1 > maxDias ? Error($"El rango no puede superar {maxDias} días.") : null;
-
-        static ResultadoConsulta<CronogramaDto> Error(string mensaje) =>
-            ResultadoConsulta<CronogramaDto>.Invalido(new Dictionary<string, string[]> { ["hasta"] = [mensaje] });
-    }
+            ["hasta"] = ["La fecha 'hasta' no puede ser anterior a la fecha 'desde'."],
+        });
 
     private async Task<int> MaxDiasAsync(CancellationToken ct) =>
         await consultas.ObtenerMaxDiasAsync(ct) is int n && n > 0 ? n : MaxDiasPorDefecto;

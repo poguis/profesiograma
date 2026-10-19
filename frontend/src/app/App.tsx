@@ -30,6 +30,11 @@ const router = createBrowserRouter([
         path: 'proyectos/:id/reactivar',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/ReactivarProyecto')).ReactivarProyecto }),
       },
+      // TAREA-21: cronograma persona × día (la política Gestor la impone la API).
+      {
+        path: 'cronograma',
+        lazy: async () => ({ Component: (await import('../features/cronograma/pages/PaginaCronograma')).PaginaCronograma }),
+      },
       {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),

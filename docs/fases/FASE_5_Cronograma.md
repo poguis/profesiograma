@@ -5,7 +5,7 @@ La consulta alimenta la vista persona × día (TAREA-21) y el reporte Excel (TAR
 ## 1. Comportamiento original (resumen)
 | Tema | Original | Nuevo |
 |---|---|---|
-| Rango | Mes actual; más de 90 días se **recorta** con aviso (l. 573–590) | Mes actual en Ecuador (D6); más de `CRONOGRAMA_MAX_DIAS` → 400 (D5) |
+| Rango | Mes actual; más de 90 días se **recorta** con aviso (l. 573–590) | Mes actual en Ecuador (D6); más de `CRONOGRAMA_MAX_DIAS` → **se recorta** a los primeros días y se informa con `recortado` / `hastaSolicitado` (D5 revisada el 19/10/2026, TAREA-21; antes, 400) |
 | Visibilidad | SuperAdmin todo; los demás, por `CORREO_CREADOR` (l. 609–627) | R1: Admin todo; los demás, sus proyectos (D10) |
 | Estados del proyecto | No filtra | Todos los no eliminados |
 | Novedades | Todas, sin filtrar `ESTADO_NOVEDAD` (C17) | Solo no anuladas; cualquier origen (D11) |
@@ -26,7 +26,8 @@ La consulta alimenta la vista persona × día (TAREA-21) y el reporte Excel (TAR
 - Un valor ilegible responde 400 en su campo, con el mismo formato que el listado: «La fecha 'desde' debe tener el formato yyyy-MM-dd.», «El valor de 'proyectoId' debe ser un número entero mayor o igual a 1.».
 - **Rango:**
   - `hasta < desde` → 400 `hasta` «La fecha 'hasta' no puede ser anterior a la fecha 'desde'.»;
-  - más de `CRONOGRAMA_MAX_DIAS` (Parametro Id 4, 90; 90 si falta) → 400 `hasta` «El rango no puede superar 90 días.».
+  - más de `CRONOGRAMA_MAX_DIAS` (Parametro Id 4, 90; 90 si falta) → **200 con el rango recortado**: `hasta` = desde + maxDias − 1, `recortado` = true y `hastaSolicitado` = el fin pedido. Así lo decide la D5 revisada (TAREA-21, 19/10/2026); antes era 400 «El rango no puede superar 90 días.», mensaje retirado.
+  - Por proyecto: la misma regla con `desde`/`hasta` explícitos. Sin fechas (D12), si el proyecto pasa de maxDias también se informa el recorte, con su `FechaFin` como `hastaSolicitado`. Con un `desde` posterior al fin del proyecto se muestran maxDias días desde esa fecha, sin recorte.
 - **Sin fechas:**
   - global: el mes actual en Ecuador; con una sola fecha, el mes de esa fecha (D6);
   - por proyecto: desde su `FechaInicio` hasta su `FechaFin`, como máximo 90 días (D12).
@@ -37,7 +38,7 @@ La consulta alimenta la vista persona × día (TAREA-21) y el reporte Excel (TAR
 **Respuesta dispersa (D7):** los días LIBRE no se envían.
 ```json
 {
-  "desde": "2026-10-01", "hasta": "2026-10-31", "maxDias": 90,
+  "desde": "2026-10-01", "hasta": "2026-10-31", "maxDias": 90, "recortado": false, "hastaSolicitado": null,
   "proyectos": [{ "id": 14, "codigo": "PRY-…", "nombre": "…", "estado": "ACTIVO", "grupo": "CAMPO", "companiaId": 9001,
                   "proyectoErpId": "…", "dimensionUegpId": null,
                   "horario": { "codigo": 73, "descripcion": "…", "entrada": "17:00:00", "salida": "04:00:00", "cruzaMedianoche": true },
@@ -112,7 +113,7 @@ La consulta alimenta la vista persona × día (TAREA-21) y el reporte Excel (TAR
 | D2 | CHOQUE cuenta los proyectos no visibles; consulta 1b, solo cantidades (`otrosProyectos`) |
 | D3 | CHOQUE incluye proyectos TERMINADO e INACTIVO |
 | D4 | Las personas con solo novedades no aparecen |
-| D5 | Rango mayor que `CRONOGRAMA_MAX_DIAS` → 400 en `hasta` |
+| D5 | ~~Rango mayor que `CRONOGRAMA_MAX_DIAS` → 400 en `hasta`~~. **Revisada el 19/10/2026 (TAREA-21):** se recorta a los primeros maxDias días y se informa (`recortado`, `hastaSolicitado`); el 400 se mantiene para `hasta < desde` y para fechas o Id ilegibles |
 | D6 | Sin fechas: el mes actual en Ecuador |
 | D7 | Respuesta dispersa (sin días LIBRE) |
 | D8 | Colores de los proyectos en el frontend |
@@ -153,3 +154,75 @@ El original (l. 974) arma una fila por EKON + proyecto + día. Prevalece el trab
 - **D14:** origen de CARGO INFOR. (Recomiendo `Empleado.Puesto`.)
 - **D15:** CEDULA. (Recomiendo dejarla vacía o leerla de la API al exportar, sin guardarla.)
 - **D16:** almuerzo nulo en un día laborable. (Recomiendo `00:00:00`.)
+
+## 7. Vista (TAREA-21, frontend)
+`/cronograma` (carga diferida; entrada "Cronograma" en el menú lateral; la política Gestor la impone la API, un 403 se muestra con `EstadoError`). Código en `frontend/src/features/cronograma/`.
+
+**Filtros (en la URL, como `/proyectos`):**
+- `desde` y `hasta` con `SelectorFecha`. Los selectores muestran el **rango efectivo** de la respuesta: el mes actual sin fechas (D6) o el recortado (D5 revisada). La URL conserva el rango que pidió el usuario.
+- **Al cambiar una sola fecha** (corrección del 19/10/2026), se escriben en la URL **las dos** (`fechasAlCambiar`). Con una sola, el backend aplicaría D6 (el mes de esa fecha) y movería la que el usuario no tocó: p. ej. cambiar solo «hasta» a noviembre hacía saltar «desde» al 01/11.
+  - La fecha cambiada se escribe tal cual.
+  - La otra se toma en este orden: la de la URL; la de la última respuesta (para «hasta», la **solicitada** si hubo recorte, no la recortada); y, si todavía no hay respuesta, la del mes actual en Ecuador (`hoyEnNegocio`), como D6.
+  - Los accesos «Mes anterior» y «Mes siguiente» ya escribían las dos fechas. «Mes actual» quita las dos (D6).
+- **Rango recortado:** una MessageBar `warning` encima de la cuadrícula: «El rango supera {maxDias} días. Se muestra del {desde} al {hasta} (solicitado hasta el {hastaSolicitado}).» (`textoAvisoRecorte`).
+- Accesos "Mes anterior", "Mes actual" (quita las fechas) y "Mes siguiente".
+- `proyectoId` y `departamentoId` van al servidor. Las opciones de proyecto son los de la respuesta más el seleccionado (P8); los departamentos salen de `GET /api/catalogos`.
+- `persona` filtra **solo en el cliente** (P9), por nombre o código EKON, sin tildes ni mayúsculas y con espacios colapsados (`normalizarTexto`); no se envía a la API.
+
+**Cuadrícula (P1: tabla HTML con sticky, sin virtualización):**
+- Columna de la persona (240 px, sticky a la izquierda): nombre, EKON y los códigos de sus proyectos (`asignadoEn`).
+- Dos filas de encabezado sticky arriba: mes (banda) y día (inicial; martes y miércoles abreviados, como el original l. 832; número en rojo en fin de semana).
+- Fines de semana sombreados; hoy en Ecuador marcado (borde de acento).
+- La respuesta dispersa se expande en el cliente (`expandirDias` × `indexarCeldas`).
+- Filas memorizadas; celdas como `<button>` simple (sin un componente de Fluent por celda).
+
+| Estado | Forma (P2) | Texto |
+|---|---|---|
+| PROYECTO | Relleno sólido del color del proyecto | Abreviatura (P7: 2 caracteres del nombre sin "PLANTA - ") |
+| NOVEDAD | Ficha redondeada con el color de la novedad y borde blanco de 2 px | Sigla en negrita y "+n" (`novedadesExtra`, D9) |
+| DESCANSO | Color del proyecto atenuado al 35 % (P6) | "D-" + abreviatura |
+| CHOQUE | `#201F1E` | "C" + total (asignaciones visibles con rol ≠ DESCANSO + `otrosProyectos`) |
+| OTRO_PROYECTO | Rayado gris | Sin texto ("Otro proyecto" en `aria-label`, detalle y leyenda; sin datos del ajeno, D2) |
+
+- El color del texto lo calcula `contrasteTexto`: negro o blanco, el de mayor contraste (≥ 4,5 con cualquier fondo; mínimo medido 4,64).
+- **Detalle (P4):** un único Popover de Fluent, anclado a la celda pulsada (clic o Enter). Muestra fecha, estado, persona, novedad (tipo, aplicación, origen, "+n"), asignaciones (código, nombre, rol, actividad) y "Asignado además en n proyecto(s) de otros usuarios.". Al cerrarlo, el foco vuelve a la celda.
+- **Leyenda:** proyectos con color, abreviatura, código, nombre, horario y la marca **"Nocturno"** si `cruzaMedianoche` (pendiente 50); las novedades de la respuesta; Choque, Descanso del proyecto y Otro proyecto.
+- **Estados de la consulta:**
+  - 400 en su filtro, sin reintento (`hasta < desde` y fechas o Id ilegibles; el rango largo ya no es 400);
+  - 403 con `EstadoError`;
+  - 5xx o red con `EstadoError` y "Reintentar";
+  - **sin reintentos automáticos (P10)**, porque con la base caída cada intento tarda ~15 s (pendiente 55);
+  - vacío: "No hay asignaciones en el rango.".
+
+**Colores de proyectos (P2, `coloresProyecto.ts`, código del usuario corregido el 19/10/2026):**
+- **Zonas prohibidas:** ±18,5° (margen interno) alrededor de los tonos de las novedades con saturación ≥ 25 %. Son `COLORES_NOVEDAD_BASE` (semillas de `TipoNovedad`) unidas a `leyendaNovedades`; el gris de D (`#607D8B`) no ocupa tono. Con las semillas actuales quedan **5 tramos libres que suman 175°**.
+- **Id 1..12:** 12 **huecos** calculados desde el arco libre (`huecosTono`).
+  - Se reparten por tramo según su largo (D'Hondt), sin pasar de la capacidad con 20° de separación: un tramo de largo L admite ⌊L/20⌋ + 1 huecos.
+  - Dentro de un tramo: 1 hueco al centro; 2 o más, de borde a borde y equidistantes.
+  - Los Id recorren los huecos con un salto de 5, para que Id consecutivos queden lejos.
+- **Id 13 en adelante:** el ángulo áureo (id × 137,508°) repartido sobre el arco libre: la fracción `(id × 137,508 / 360) mod 1` se recorre a lo largo de los tramos. Ningún tono se mueve al borde de una zona.
+- **Saturación** 62 %. **Luminosidad**: 38, 46 o 54 %, empezando por `id mod 3`; se toma la primera con ΔE (CIE76) ≥ 20 frente a todos los colores de novedad. Si ninguna llega, la más lejana.
+- **Estabilidad:** el color depende solo del Id y de la lista de colores de novedad. Con las semillas actuales es el mismo en cualquier rango o filtro; un color de novedad nuevo cambia las zonas y, con ellas, los colores de los proyectos.
+- **Sin paleta fija ni prueba de colisión.**
+- **Medido (Id 1..200):**
+  - ΔE mínimo 20,14 (Id 78 frente a CD);
+  - distancia de tono mínima a una novedad 18,32°;
+  - separación entre los Id 1..12 de 20,28°;
+  - contraste mínimo del texto 4,72;
+  - 198 colores distintos.
+- **Historia:** la versión entregada movía el tono al borde de la zona (`ajustarTono`) y juntaba los tonos (10,91° entre los Id 1..12; 125 colores distintos). Se reemplazó por los huecos y el arco libre (TAREA-21 §6.1).
+
+**Decisiones de la vista (19/10/2026):**
+
+| # | Decisión |
+|---|---|
+| P1 | Tabla HTML con sticky, sin virtualización |
+| P2 | Colores dinámicos por Id (12 huecos del arco libre para los Id 1..12 y ángulo áureo sobre el arco libre para el resto; zonas de ±18,5°, S 62 %, 3 luminosidades, ΔE ≥ 20); forma por estado (tabla de arriba) |
+| P3 | Pestaña "Cronograma" en el detalle del proyecto → TAREA-21b |
+| P4 | Un Popover compartido, por clic o Enter |
+| P5 | Se mantienen las semillas de `TipoNovedad` |
+| P6 | DESCANSO: color del proyecto atenuado al 35 % |
+| P7 | Abreviatura de 2 caracteres sin el prefijo "PLANTA - " (el único prefijo del código: `NombreVisualProyecto.PrefijoDimension`, también para OFICINAS) |
+| P8 | Opciones de proyecto: los de la respuesta + el seleccionado |
+| P9 | Persona por nombre o código, solo en el cliente, en la URL |
+| P10 | `useCronograma` con `retry: false` |

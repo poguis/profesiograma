@@ -1,5 +1,5 @@
 import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
-import { Briefcase24Regular, Home24Regular } from '@fluentui/react-icons'
+import { Briefcase24Regular, CalendarLtr24Regular, Home24Regular } from '@fluentui/react-icons'
 import { NavLink } from 'react-router'
 
 const useEstilos = makeStyles({
@@ -39,6 +39,15 @@ export function MenuLateral() {
         >
           <Briefcase24Regular aria-hidden />
           Proyectos
+        </NavLink>
+      </li>
+      <li>
+        <NavLink
+          to="/cronograma"
+          className={({ isActive }) => mergeClasses(estilos.item, estilos.enlace, isActive && estilos.activo)}
+        >
+          <CalendarLtr24Regular aria-hidden />
+          Cronograma
         </NavLink>
       </li>
     </ul>

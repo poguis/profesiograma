@@ -38,9 +38,13 @@ public sealed record PersonaCronogramaDto(string CodigoEkon, string Nombre, IRea
 
 public sealed record LeyendaNovedadDto(string Tipo, string Sigla, string Color);
 
+/// <param name="Hasta">Fin efectivo (recortado si el rango pedido superaba MaxDias).</param>
+/// <param name="Recortado">D5 revisada (TAREA-21): el rango superaba MaxDias y se muestran los primeros MaxDias días.</param>
+/// <param name="HastaSolicitado">Fin pedido (o el fin del proyecto con D12) cuando hubo recorte; null si no.</param>
 public sealed record CronogramaDto(
     DateOnly Desde, DateOnly Hasta, int MaxDias, IReadOnlyList<ProyectoCronogramaDto> Proyectos,
-    IReadOnlyList<PersonaCronogramaDto> Personas, IReadOnlyList<LeyendaNovedadDto> LeyendaNovedades);
+    IReadOnlyList<PersonaCronogramaDto> Personas, IReadOnlyList<LeyendaNovedadDto> LeyendaNovedades,
+    bool Recortado = false, DateOnly? HastaSolicitado = null);
 
 // ------------------------------------------------------------------ lectura (Infrastructure)
 

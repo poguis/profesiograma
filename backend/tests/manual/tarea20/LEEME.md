@@ -28,12 +28,13 @@ Lo ejecuta el **usuario**. El script **solo lee**: hace `GET /api/cronograma` y 
 | Mes actual | `GET /api/cronograma` | admin | 200 con todos los proyectos |
 | Filtro de proyecto | `?proyectoId=<PROYECTO_ID>` | `DEV_USER` | 200: las personas de ese proyecto, con todos sus proyectos visibles |
 | Filtro de persona | `?codigoEkon=<código>` | `DEV_USER` | 200: solo esa persona |
-| 91 días | `?desde=<día 1 del mes>&hasta=<+90 días>` | `DEV_USER` | 400 en `hasta`: «El rango no puede superar 90 días.» |
+| 91 días | `?desde=<día 1 del mes>&hasta=<+90 días>` | `DEV_USER` | **200 con el rango recortado** (D5 revisada, TAREA-21): `recortado` = true, `hasta` = desde + 89 y `hastaSolicitado` = el pedido. La salida muestra «RECORTADO: solicitado hasta …» |
 | Rango invertido | `hasta` anterior a `desde` | `DEV_USER` | 400 en `hasta` |
 | Por proyecto | `GET /api/proyectos/<PROYECTO_ID>/cronograma` | `DEV_USER` | 200; sin fechas, desde el inicio del proyecto (máximo 90 días) |
 | Por proyecto no visible | `GET /api/proyectos/<PROYECTO_NO_VISIBLE>/cronograma` | gestor | 404 |
 
 **Cómo leer la salida:**
+- `RECORTADO: solicitado hasta …`: el rango superaba el máximo y se muestran los primeros 90 días.
 - `celdas <ESTADO>`: NOVEDAD, CHOQUE, PROYECTO, OTRO_PROYECTO o DESCANSO. Los días libres no se envían.
 - `sigla`: siglas de novedades (V, F, P, PM…).
 - `otrosProyectos`: días en proyectos que no vienen en la respuesta (D2). Para el gestor son proyectos de otros usuarios; en el endpoint por proyecto, los demás proyectos.

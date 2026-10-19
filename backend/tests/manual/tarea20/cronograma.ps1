@@ -4,7 +4,7 @@
 #   set PROYECTO_NO_VISIBLE=3    (proyecto que el gestor NO ve: esperado 404; por defecto 3)
 #   set CODIGO_EKON=12345        (filtro codigoEkon; por defecto el primer codigo de la respuesta del gestor)
 #   set DEV_USER=gestor          (usuario de los casos filtrados; por defecto gestor)
-#   Por respuesta 200 muestra SOLO: rango, cantidad de personas, codigos EKON, Id de proyectos, celdas por estado,
+#   Por respuesta 200 muestra SOLO: rango (y si se recorto), cantidad de personas, codigos EKON, Id de proyectos, celdas por estado,
 #   siglas de novedades, otrosProyectos y novedadesExtra. NUNCA nombres de personas ni de proyectos.
 # Salida: resultado-cronograma.txt. Simulacion: SIMULAR=1 (simulacion\c_<caso>.json + .codigo, ficticios).
 # ==========================================================================
@@ -28,6 +28,7 @@ function Resumir($Texto) {
     $personas = @($c['personas'])
     $celdas = @($personas | ForEach-Object { @($_['dias']) })
     Escribir ("   rango: {0} a {1} (maximo {2} dias)" -f $c['desde'], $c['hasta'], $c['maxDias'])
+    if ($c['recortado']) { Escribir ("   RECORTADO: solicitado hasta {0}" -f $c['hastaSolicitado']) }
     Escribir ("   personas: {0}; proyectos visibles (Id): {1}" -f $personas.Count, ((@($c['proyectos']) | ForEach-Object { $_['id'] }) -join ', '))
     $codigos = @($personas | ForEach-Object { $_['codigoEkon'] })
     $mas = if ($codigos.Count -gt 30) { " ... y $($codigos.Count - 30) mas" } else { '' }
@@ -41,7 +42,8 @@ function Resumir($Texto) {
     return $codigos
 }
 
-function Caso([string]$Nombre, [string]$Texto, [string]$Ruta, [string]$Usuario, [int]$Esperado, [string]$Clave) {
+# $Verificar (opcional): recibe la respuesta 200 ya leida y devuelve un texto de error, o $null si esta bien.
+function Caso([string]$Nombre, [string]$Texto, [string]$Ruta, [string]$Usuario, [int]$Esperado, [string]$Clave, [scriptblock]$Verificar) {
     $r = Solicitar -Metodo 'GET' -Base $base -Ruta $Ruta -Encabezados @{ 'X-Dev-User' = $Usuario } -TimeoutSegundos 120 -NombreSimulacion $Nombre
     $ok = $r.Codigo -eq $Esperado
     $errores = $null
@@ -49,9 +51,15 @@ function Caso([string]$Nombre, [string]$Texto, [string]$Ruta, [string]$Usuario, 
         try { $pd = Leer-Json $r.Texto; if ($pd -is [Collections.IDictionary] -and $pd.ContainsKey('errors')) { $errores = $pd['errors'] } } catch { }
         if ($ok -and $Clave -and -not ($errores -and $errores.ContainsKey($Clave))) { $ok = $false }
     }
+    $detalle = $null
+    if ($ok -and $Verificar -and $r.Codigo -eq 200 -and $r.Texto) {
+        $detalle = & $Verificar (Leer-Json $r.Texto)
+        if ($detalle) { $ok = $false }
+    }
     if (-not $ok) { $script:Fallos++ }
     Escribir ''
-    Escribir ("-- {0} [{1}]: {2} -> {3}" -f $Texto, $Usuario, (Describir-Respuesta $r), $(if ($ok) { 'OK' } else { "NO ESPERADO (se esperaba HTTP $Esperado$(if ($Clave) { " en $Clave" }))" }))
+    $estado = if ($ok) { 'OK' } elseif ($detalle) { "NO ESPERADO ($detalle)" } else { "NO ESPERADO (se esperaba HTTP $Esperado$(if ($Clave) { " en $Clave" }))" }
+    Escribir ("-- {0} [{1}]: {2} -> {3}" -f $Texto, $Usuario, (Describir-Respuesta $r), $estado)
     if ($errores) { foreach ($k in $errores.Keys) { Escribir ("   {0}: {1}" -f $k, (Texto-Linea (@($errores[$k]) -join ' '))) } }
     if ($r.Codigo -eq 200 -and $r.Texto) { return (Resumir $r.Texto) }
     return @()
@@ -71,7 +79,18 @@ try {
     else {
         Escribir ''; Escribir '-- codigoEkon: omitido (sin personas en el mes; use set CODIGO_EKON=...)'
     }
-    [void](Caso 'c_91dias' "91 dias ($desde91 a $hasta91)" "api/cronograma?desde=$desde91&hasta=$hasta91" $usuario 400 'hasta')
+    # D5 revisada (TAREA-21): 200 con el rango recortado a 90 dias y el hasta pedido en hastaSolicitado.
+    [void](Caso 'c_91dias' "91 dias ($desde91 a $hasta91, se recorta)" "api/cronograma?desde=$desde91&hasta=$hasta91" $usuario 200 '' {
+        param($c)
+        if (-not $c['recortado']) { return 'recortado no es true' }
+        # Relativo al desde de la respuesta (en modo real es el pedido): hasta = desde + 89, hastaSolicitado = desde + 90.
+        $d = [DateTime]::ParseExact($c['desde'], 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)
+        $esperadoHasta = & $f $d.AddDays(89)
+        $esperadoSolicitado = & $f $d.AddDays(90)
+        if ($c['hasta'] -ne $esperadoHasta) { return "hasta $($c['hasta']) en lugar de $esperadoHasta" }
+        if ($c['hastaSolicitado'] -ne $esperadoSolicitado) { return "hastaSolicitado $($c['hastaSolicitado']) en lugar de $esperadoSolicitado" }
+        return $null
+    })
     [void](Caso 'c_invertido' 'hasta anterior a desde' "api/cronograma?desde=$hasta91&hasta=$desde91" $usuario 400 'hasta')
     [void](Caso 'c_por_proyecto' "por proyecto $proyectoId (sin fechas: desde su inicio)" "api/proyectos/$proyectoId/cronograma" $usuario 200)
     [void](Caso 'c_no_visible' "por proyecto $noVisible (no visible)" "api/proyectos/$noVisible/cronograma" 'gestor' 404)

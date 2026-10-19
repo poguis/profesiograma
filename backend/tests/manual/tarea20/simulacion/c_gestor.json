@@ -143,5 +143,7 @@
    "sigla": "V",
    "color": "#0277BD"
   }
- ]
+ ],
+ "recortado": false,
+ "hastaSolicitado": null
 }

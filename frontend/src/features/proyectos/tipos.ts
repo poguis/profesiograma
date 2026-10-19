@@ -113,6 +113,8 @@ export interface Catalogos {
   gruposProyecto: GrupoProyectoCatalogo[]
   tiposMovimiento: ItemCatalogo[]
   jornadas: JornadaCatalogo[]
+  /** GET /api/catalogos (CatalogosDto.Departamentos). TAREA-21: filtro del cronograma. */
+  departamentos?: { id: number; nombre: string; nombreCorto: string; tipo: string; orden: number }[]
 }
 
 /** Filtros del listado tal como viven en la URL y se envían a la API. */
