@@ -33,6 +33,9 @@ Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `d
 ## Datos sensibles
 - `docs/origen/sharepoint/muestras/` contiene datos personales: solo lectura, nunca copiar valores a código, semillas ni reportes.
 - La caché `Empleado` no guarda salario, BPR, fecha de nacimiento, teléfono, correo personal ni dirección.
+- La cédula (D15, TAREA-22-1) se guarda SOLO en `Empleado.Cedula`: nunca en un DTO, la caché de empleados, logs, mensajes
+  de excepción ni respuestas de la API (salvo el reporte Excel de la TAREA-22-2). Viaja aparte en `CedulasEmpleados`, no
+  en los `record` (su ToString la imprimiría). En pruebas y simulación, solo cédulas ficticias.
 
 ## Archivos de referencia
 - `docs/referencia/` contiene archivos para FUSIONAR a mano (Program.cs, appsettings.json). No copiarlos tal cual.

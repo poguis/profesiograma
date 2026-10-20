@@ -244,7 +244,7 @@ public sealed class CrearProyectoValidador(IDatosReferenciaProyecto datos, ICata
 
         return new ResultadoValidacionProyecto(
             new ProyectoValidado(compania!, grupo!, proyectoErp, actividad, dimension, s.FechaInicio!.Value, s.FechaFin!.Value,
-                horario!, salida, regreso, departamentoId, usuarioId, principalesValidos, backsValidos),
+                horario!, salida, regreso, departamentoId, usuarioId, principalesValidos, backsValidos, empleados.Cedulas),
             new Dictionary<string, string[]>());
     }
 

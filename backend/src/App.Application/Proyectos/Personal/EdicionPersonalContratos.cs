@@ -1,3 +1,4 @@
+using App.Application.Empleados;
 using App.Application.Proyectos.Crear;
 using App.Domain.Proyectos.Cronograma;
 using App.Domain.Proyectos.Estados;
@@ -99,7 +100,8 @@ public sealed record ReactivacionAplicar(string? ClavePrincipalInicial, DateOnly
 /// Reactivacion = null en ACTUALIZACION_PERSONAL. ClaveInicialNueva: P3 de la TAREA-19y (primer principal nuevo que se
 /// guarda como inicial en la actualización de personal; null = ninguno). AltasEmpleados (TAREA-26d): empleados de las
 /// personas nuevas con sus datos de la API, para la alta puntual (Id real o temporal negativo; PersonaNueva.EmpleadoId
-/// usa el mismo Id).
+/// usa el mismo Id). Cedulas (TAREA-22-1, D15): las de la API de esas personas, para la alta puntual (su ToString no
+/// muestra valores).
 /// </summary>
 public sealed record CambioPersonal(
     int ProyectoId,
@@ -116,7 +118,8 @@ public sealed record CambioPersonal(
     IReadOnlyList<DiaParaInsertar> Dias,
     ReactivacionAplicar? Reactivacion = null,
     string? ClaveInicialNueva = null,
-    IReadOnlyList<EmpleadoAsignable>? AltasEmpleados = null);
+    IReadOnlyList<EmpleadoAsignable>? AltasEmpleados = null,
+    CedulasEmpleados? Cedulas = null);
 
 public interface IEdicionPersonalRepositorio
 {

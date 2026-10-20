@@ -11,7 +11,8 @@ namespace App.Infrastructure.Erp;
 ///  - P4: si la API no responde y la lista anterior tiene menos de CacheEmpleadosMaxAntiguedadMinutos (60), el buscador
 ///    y la vista previa la usan (EsAnterior = true). Tras un fallo no se reintenta durante <see cref="EsperaTrasFallo"/>
 ///    (el buscador no espera el timeout en cada tecla).
-///  - Lectura fresca (registro, P5): siempre descarga; nunca usa la lista anterior.
+///  - Lectura fresca (registro, P5): siempre descarga; nunca usa la lista anterior. Es la única que devuelve las cédulas
+///    (TAREA-22-1, D15); la lista que queda en caché va SIN ellas (el buscador y la vista previa nunca las ven).
 /// Solo se guardan los registros válidos y normalizados (MapeoEmpleado); ~1633 registros, unos 1–2 MB.
 /// </summary>
 internal sealed class CacheEmpleadosErp(
@@ -52,7 +53,7 @@ internal sealed class CacheEmpleadosErp(
 
             try
             {
-                return await DescargarAsync(ct);
+                return await DescargarAsync(conCedulas: false, ct);
             }
             catch (ErpNoDisponibleException) when (Anterior() is not null)
             {
@@ -78,7 +79,7 @@ internal sealed class CacheEmpleadosErp(
         await cerrojo.WaitAsync(ct);
         try
         {
-            return await DescargarAsync(ct);
+            return await DescargarAsync(conCedulas: true, ct);
         }
         catch (ErpNoDisponibleException)
         {
@@ -93,9 +94,11 @@ internal sealed class CacheEmpleadosErp(
 
     public void Dispose() => cerrojo.Dispose();
 
-    private async Task<ListaEmpleadosErp> DescargarAsync(CancellationToken ct)
+    /// <param name="conCedulas">Lectura fresca: devuelve las cédulas de los válidos; la lista en caché queda sin ellas.</param>
+    private async Task<ListaEmpleadosErp> DescargarAsync(bool conCedulas, CancellationToken ct)
     {
-        var registros = await descarga().DescargarAsync(ct);
+        var fuente = descarga();
+        var (registros, cedulas) = conCedulas ? await fuente.DescargarConCedulasAsync(ct) : (await fuente.DescargarAsync(ct), CedulasEmpleados.Vacio);
         var validos = registros.Where(MapeoEmpleado.EsValido).Select(MapeoEmpleado.Normalizado).ToList();
         if (validos.Count == 0)
         {
@@ -105,7 +108,9 @@ internal sealed class CacheEmpleadosErp(
         var lista = new ListaEmpleadosErp(validos, reloj.GetUtcNow());
         Volatile.Write(ref actual, lista);
         ultimoFallo = null;
-        return lista;
+        return conCedulas
+            ? new ListaEmpleadosErp(lista.Activos, lista.ObtenidaUtc, cedulas: cedulas.Solo(validos.Select(v => v.CodigoEkon!)))
+            : lista;
     }
 
     private ListaEmpleadosErp? Vigente(ListaEmpleadosErp? lista) =>

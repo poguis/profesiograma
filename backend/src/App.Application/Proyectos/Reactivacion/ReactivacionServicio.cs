@@ -295,7 +295,8 @@ public sealed class ReactivacionServicio(
             CalculoPersonal.Snapshot(c.Plan), vigentes, nuevas, [], CalculoPersonal.Dias(c.Regeneracion),
             // R6: el primer principal nuevo es el inicial; solo con backs no hay inicial nuevo (TAREA-19y, antes fallaba).
             new ReactivacionAplicar(c.Plan.Principales.FirstOrDefault()?.Clave, c.FechaFin, actividad),
-            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan)); // TAREA-26d
+            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan), // TAREA-26d
+            Cedulas: c.Empleados.Cedulas); // TAREA-22-1 (D15)
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

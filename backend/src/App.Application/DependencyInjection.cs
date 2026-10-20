@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<EdicionCabeceraValidador>();
         services.AddScoped<EdicionCabeceraServicio>();
         services.AddScoped<CronogramaConsultaServicio>(); // TAREA-20
+        services.AddScoped<CompletarCedulasServicio>(); // TAREA-22-1
         return services;
     }
 }

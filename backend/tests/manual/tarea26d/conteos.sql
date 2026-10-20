@@ -6,6 +6,8 @@
 SET NOCOUNT ON;
 
 -- 1) Totales: DEV (prueba), no DEV (alta puntual) y empleados no DEV con cédula (esperado 0: la alta nunca la escribe).
+--    OBSOLETO desde la TAREA-22-1 (D15): la alta puntual y «completar cédulas» guardan la cédula, así que NoDevConCedula
+--    ya no tiene que ser 0. Se conserva por historia; los conteos vigentes están en tarea22-1\conteos-cedula.sql.
 SELECT COUNT(*) AS Total,
        SUM(CASE WHEN CodigoEkon LIKE 'DEV%' THEN 1 ELSE 0 END) AS Dev,
        SUM(CASE WHEN CodigoEkon NOT LIKE 'DEV%' THEN 1 ELSE 0 END) AS NoDev,

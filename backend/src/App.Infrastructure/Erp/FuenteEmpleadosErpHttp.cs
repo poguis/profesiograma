@@ -14,6 +14,14 @@ internal interface IDescargaEmpleadosErp
 {
     /// <exception cref="ErpNoDisponibleException">La API no respondió o la respuesta no sirve (incluido result vacío).</exception>
     Task<IReadOnlyList<EmpleadoErp>> DescargarAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Lo mismo, con las cédulas aparte (TAREA-22-1, D15). Solo para la lectura fresca de <see cref="CacheEmpleadosErp"/>.
+    /// Por defecto, sin cédulas.
+    /// </summary>
+    /// <exception cref="ErpNoDisponibleException">La API no respondió o la respuesta no sirve (incluido result vacío).</exception>
+    async Task<(IReadOnlyList<EmpleadoErp> Registros, CedulasEmpleados Cedulas)> DescargarConCedulasAsync(CancellationToken ct) =>
+        (await DescargarAsync(ct), CedulasEmpleados.Vacio);
 }
 
 /// <summary>
@@ -21,7 +29,8 @@ internal interface IDescargaEmpleadosErp
 /// POST {ErpBase7048}/api/EvolutionEmployee/EmployeesEvolution, cuerpo fijo (todos los activos de todas las empresas),
 /// sin autenticación, envoltura { statusCode, isSuccess, errorMessages, result[] }, ~1633 registros, ~2,5 MB, sin paginación.
 /// DATOS SENSIBLES: se deserializa SOLO a <see cref="EmpleadoJson"/>, que tiene únicamente los campos permitidos; el
-/// resto de la respuesta (cédula, teléfono, dirección, sueldo, BPR, fechas personales…) nunca se materializa.
+/// resto de la respuesta (teléfono, dirección, sueldo, BPR, fechas personales…) nunca se materializa. La cédula (D15,
+/// TAREA-22-1) se lee, pero sale aparte en <see cref="CedulasEmpleados"/>, nunca en EmpleadoErp.
 /// Nunca se registra el cuerpo ni la URL. Sin caché propia (la pone CacheEmpleadosErp).
 /// </summary>
 internal sealed class FuenteEmpleadosErpHttp(
@@ -37,7 +46,9 @@ internal sealed class FuenteEmpleadosErpHttp(
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<IReadOnlyList<EmpleadoErp>> DescargarAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<EmpleadoErp>> DescargarAsync(CancellationToken ct) => (await DescargarConCedulasAsync(ct)).Registros;
+
+    public async Task<(IReadOnlyList<EmpleadoErp> Registros, CedulasEmpleados Cedulas)> DescargarConCedulasAsync(CancellationToken ct)
     {
         var uri = new Uri(new Uri(opciones.ErpBase7048.TrimEnd('/') + "/"), Ruta);
         HttpResponseMessage respuesta;
@@ -83,10 +94,12 @@ internal sealed class FuenteEmpleadosErpHttp(
             throw Registrar(new ErpNoDisponibleException(Operacion, "respuesta sin resultados (isSuccess = false o result nulo o vacío)"));
         }
 
-        return registros.OfType<EmpleadoJson>().Select(r => new EmpleadoErp(
+        var json = registros.OfType<EmpleadoJson>().ToList();
+        var empleados = json.Select(r => new EmpleadoErp(
             r.CodPersona, r.NombreCompleto, r.Apellidos, r.Nombres, r.MailEmpresa, r.CodEmpresa, r.Empresa, r.CodPuesto, r.Puesto,
             r.CodDepartamento, r.Departamento, r.CodUnidad, r.Unidad, r.CodArea, r.Area, r.CodSeccion, r.Seccion,
             r.FamiliaPuesto, r.Estado)).ToList();
+        return (empleados, new CedulasEmpleados(json.Select(r => (r.CodPersona, r.Cedula))));
     }
 
     private ErpNoDisponibleException Registrar(ErpNoDisponibleException ex)
@@ -104,6 +117,7 @@ internal sealed class FuenteEmpleadosErpHttp(
     /// <summary>
     /// SOLO los campos permitidos (docs/fases/FASE_4_Empleados_API.md §3). "nombrecompleto" llega en minúsculas: se lee
     /// sin distinguir mayúsculas (JsonSerializerDefaults.Web). Los códigos pueden llegar como texto o como número.
+    /// Cedula (D15, TAREA-22-1): solo texto (<see cref="SoloTexto"/>); ToString no la imprime.
     /// </summary>
     internal sealed record EmpleadoJson(
         [property: JsonConverter(typeof(TextoONumero))] string? CodPersona,
@@ -124,7 +138,12 @@ internal sealed class FuenteEmpleadosErpHttp(
         [property: JsonConverter(typeof(TextoONumero))] string? CodSeccion,
         string? Seccion,
         string? FamiliaPuesto,
-        string? Estado);
+        string? Estado,
+        [property: JsonConverter(typeof(SoloTexto))] string? Cedula = null)
+    {
+        /// <summary>Sin la cédula (dato sensible): un ToString accidental en un log no la expone.</summary>
+        public override string ToString() => $"{nameof(EmpleadoJson)}({CodPersona})";
+    }
 
     /// <summary>Lee un código que puede venir como texto o como número (texto invariante).</summary>
     internal sealed class TextoONumero : JsonConverter<string?>
@@ -139,6 +158,28 @@ internal sealed class FuenteEmpleadosErpHttp(
                 JsonTokenType.Null => null,
                 _ => throw new JsonException("Código con un tipo no admitido."),
             };
+
+        public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options) =>
+            writer.WriteStringValue(value);
+    }
+
+    /// <summary>
+    /// Cédula (D15): TOLERANTE, nunca lanza. Texto → sin espacios extremos (vacío → null). Número, booleano, objeto o
+    /// arreglo → null: un número habría perdido los ceros iniciales y no se reconstruye; una cédula rara no debe invalidar
+    /// al empleado ni a la lista (daría 503 a todo).
+    /// </summary>
+    internal sealed class SoloTexto : JsonConverter<string?>
+    {
+        public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                return MapeoEmpleado.Normalizar(reader.GetString());
+            }
+
+            reader.Skip(); // objeto o arreglo: se salta completo; un valor simple no avanza
+            return null;
+        }
 
         public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options) =>
             writer.WriteStringValue(value);

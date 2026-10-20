@@ -1,6 +1,6 @@
 # FASE 4 — Empleados desde la API (EvolutionEmployee), opción C
 
-**Fecha:** 2026-10-07; actualizado el 2026-10-13 (TAREA-26d-3). Contrato verificado con un sondeo de solo agregados (TAREA-26a); diseño en la Fase A de la TAREA-26d; backend en la TAREA-26d-1; frontend en la TAREA-26d-2; comparación con el ERP y retiro de `empleadoId` en la TAREA-26d-3.
+**Fecha:** 2026-10-07; actualizado el 2026-10-13 (TAREA-26d-3) y el 2026-10-20 (TAREA-22-1: cédula, D15). Contrato verificado con un sondeo de solo agregados (TAREA-26a); diseño en la Fase A de la TAREA-26d; backend en la TAREA-26d-1; frontend en la TAREA-26d-2; comparación con el ERP y retiro de `empleadoId` en la TAREA-26d-3.
 **Decisión del usuario (07/10/2026):** la API EvolutionEmployee es la **única fuente** de los empleados. No hay sincronización masiva ni tarea programada; la TAREA-26b se descartó. Motivo: no depender de una réplica que puede desincronizarse; la API es el contrato.
 **Reemplaza** a FASE_2 J1 ("Empleado como caché sincronizada") y a `FASE_4_Sincronizacion_Empleados.md`.
 
@@ -38,15 +38,23 @@
 | `codUnidad` / `unidad`, `codArea` / `area`, `codSeccion` / `seccion` | Columnas homónimas | VARCHAR(10) / NVARCHAR(200) |
 | `familiaPuesto` | `FamiliaPuesto` | NVARCHAR(100) |
 | `estado` | `EstadoErp` | CHAR(1) |
+| `cedula` (solo texto; D15, TAREA-22-1) | `Cedula` (aparte, ver abajo) | VARCHAR(20), NULL |
 
 - **Normalización:** espacios extremos fuera; vacío → null; los textos se recortan a su columna (`MapeoEmpleado`).
 - **Registro válido:** activo (`"A"`), con código de ≤ 20 caracteres, con nombre y con todos los `cod*` de ≤ 10 caracteres. Los no válidos no entran a la lista: para la app, "no existe o no está activo".
 
 **Datos sensibles (C31): nunca en el DTO, ni en la base, ni en los logs.**
-- Campos excluidos: `cedula`, `cedulaReportaA`, `telefono`, `mailPersonal`, `provincia`, `canton`, `barrio`, `callePrincipal`, `calleSecundaria`, `numeroCasa`, `fechaNacimiento`, `fechaAntiguedad`, `salario`, `bpr`, `sexo`, `nivelDireccion`, `nombresReportaA`, `reportaA`.
+- Campos excluidos: `cedulaReportaA`, `telefono`, `mailPersonal`, `provincia`, `canton`, `barrio`, `callePrincipal`, `calleSecundaria`, `numeroCasa`, `fechaNacimiento`, `fechaAntiguedad`, `salario`, `bpr`, `sexo`, `nivelDireccion`, `nombresReportaA`, `reportaA`.
 - El cliente deserializa solo a `EmpleadoJson` (campos permitidos) y nunca registra el cuerpo ni la URL.
-- La columna `Empleado.Cedula` existe, pero la alta puntual no la escribe.
 - El buscador no devuelve cédula ni correo.
+
+**Cédula (D15, TAREA-22-1, 20/10/2026): se GUARDA solo en `Empleado.Cedula`** (para la columna CEDULA del reporte Excel de la TAREA-22-2). Nunca en un DTO, la caché, un log, un mensaje de excepción ni una respuesta de la API (salvo ese reporte).
+- **Lectura:** `EmpleadoJson.Cedula` con un convertidor TOLERANTE (`SoloTexto`), que nunca lanza:
+  - texto → sin espacios extremos; vacío o solo espacios → null;
+  - número, null, ausente, objeto o arreglo → null. Un número no se convierte a texto (habría perdido los ceros iniciales) y no invalida al empleado ni a la lista.
+- **Tipo aparte:** `CedulasEmpleados` (código → cédula; clase sellada sin enumeración; `ToString()` = "CedulasEmpleados(n)"). `EmpleadoErp`, `DatosEmpleado` y `EmpleadoAsignable` (records) **no** la llevan; `EmpleadoJson.ToString()` tampoco la muestra.
+- **Solo en la lectura fresca** (§4): `ObtenerActivosFrescosAsync` → `CatalogoEmpleados.Cedulas` (solo las de los códigos de la solicitud) → `ProyectoValidado.Cedulas` / `CambioPersonal.Cedulas` → alta puntual (§6).
+- **Modo Simulado:** cédulas FICTICIAS: DEV001–DEV008, la misma de su fila del sembrador ("99999999" + n, así la alta puntual no cambia esas filas); SIM001–SIM200, 10 dígitos que empiezan en "00".
 
 ## 4. Caché en memoria (`CacheEmpleadosErp`, singleton)
 | Regla | Detalle |
@@ -54,7 +62,8 @@
 | TTL (P3) | `ServiciosExternos:CacheEmpleadosMinutos` = 10: dentro del TTL no se llama a la API |
 | Descarga única | Un `SemaphoreSlim`: las peticiones simultáneas esperan la misma descarga |
 | Lista anterior (P4) | Si la API no responde y la lista anterior tiene menos de `CacheEmpleadosMaxAntiguedadMinutos` (60), el buscador y la vista previa la usan. El buscador devuelve `avisoErp` "Lista de empleados de las HH:mm; el ERP no respondió." (hora de Ecuador). Tras un fallo no se reintenta durante 1 minuto. Sin lista utilizable → 503 |
-| Lectura fresca (P5) | Al **registrar** se descarga siempre (y se renueva la caché); nunca se usa la lista anterior. Si falla → 503 **sin abrir la transacción** |
+| Lectura fresca (P5) | Al **registrar** (y en «completar cédulas») se descarga siempre (y se renueva la caché); nunca se usa la lista anterior. Si falla → 503 **sin abrir la transacción**. Es la **única** que devuelve las cédulas (TAREA-22-1) |
+| Cédulas (D15) | La lista que queda en caché va **sin** cédulas, aunque la haya renovado una lectura fresca: el buscador, la vista previa y la comparación nunca las ven |
 | Memoria | Solo los registros válidos y normalizados: ~1633, unos 1–2 MB |
 | 503 | `ErpNoDisponibleException("empleados", …)` → "Servicio de empleados no disponible" |
 
@@ -73,17 +82,25 @@
   - se carga antes de validar con los códigos de las personas nuevas (fresco al registrar, en caché en la vista previa);
   - entrega el Id real si la persona tiene fila o un **Id temporal negativo** (-1, -2…) si no;
   - el motor, los tramos y los cruces internos usan esos Id; los cruces externos solo se consultan para los Id positivos (una persona sin fila no tiene asignaciones).
-- **Dentro del applock** no se vuelve a llamar a la API: se reutiliza el catálogo validado fuera.
+- **Dentro del applock** no se vuelve a llamar a la API: se reutiliza el catálogo validado fuera (con sus cédulas, si fue fresco).
+- **Cédulas (TAREA-22-1):** el catálogo fresco (registro) guarda las cédulas de las personas nuevas; el de la vista previa, ninguna.
 
 ## 6. Alta puntual (`AltaPuntualEmpleados`, dentro de `ITransaccionAsignaciones`)
 1. Antes de crear `ProyectoPersonal`: **upsert** por `CodigoEkon` de los empleados de las personas nuevas, con los datos de la API leídos frescos fuera de la transacción.
    - Fila existente → se refrescan los datos laborales, `EstadoErp = "A"` y `FechaSincronizacion` (P6).
    - Fila nueva → se crea.
-   - La cédula no se toca.
+   - **Cédula (D15, TAREA-22-1):** fila nueva → la de la API sin espacios extremos y recortada a 20; sin dato → NULL. Refresco → una cédula no vacía la actualiza; vacía o ausente **no pisa** la guardada.
 2. **`CargoInfor`** (P8): alta del puesto normalizado si no existe.
 3. `SaveChanges` → conversión de Id temporal a Id real en el personal y los días (`IdReal`: **nunca se persiste un Id negativo**).
 4. Duplicado en `UQ_Empleado_CodigoEkon` (o `UQ_CargoInfor_Cargo`) → 409: "Otro registro se guardó al mismo tiempo; vuelva a intentarlo." en la creación, y "El proyecto cambió; vuelve a cargarlo." en personal y reactivación.
 5. Auditoría: `AuditoriaInterceptor`, con el usuario que asigna.
+
+### 6.1 «Completar cédulas» (TAREA-22-1)
+`POST /api/empleados/completar-cedulas` (Politica.Admin, sin cuerpo) llena `Empleado.Cedula` de las filas **guardadas** que la tienen en NULL (las anteriores a la D15; la alta puntual solo la escribe al asignar).
+1. Lectura **fresca** de la API, fuera de la transacción. Si falla → 503 «Servicio de empleados no disponible», sin abrir la transacción ni escribir.
+2. Dentro de `ITransaccionAsignaciones` (el applock de asignaciones, donde ya ocurren todas las escrituras de `Empleado`: no se cruza con una alta puntual simultánea): carga **con seguimiento** las filas con `Cedula` NULL (la auditoría llena ModificadoPor) y completa solo las que la API trae con cédula no vacía. Nunca sobrescribe una no nula: es idempotente.
+3. Respuesta 200 `{ revisadas, completadas, sinCedulaEnApi, noEncontradasEnApi }`, **solo conteos** (sin cédulas ni códigos). `noEncontradasEnApi` = el código no está entre los activos de la API. Un log Information con los 4 conteos y el Id del usuario.
+4. Gestor → 403. Verificación manual: `backend/tests/manual/tarea22-1/LEEME.md` (M1–M9).
 
 ## 7. Modo Simulado (SOLO Development)
 - `EmpleadosErpSimulado` devuelve **DEV001–DEV008** con datos idénticos a las filas del sembrador (definición común en `EmpleadosPrueba`): la alta puntual no cambia sus filas.

@@ -73,11 +73,13 @@ public class FuenteEmpleadosErpHttpTests
         var serializado = JsonSerializer.Serialize(empleados);
         Assert.DoesNotContain("SENSIBLE", serializado);
 
-        // Ni el registro de Application ni el DTO interno del cliente tienen propiedades sensibles.
+        // Ni el registro de Application ni el DTO interno del cliente tienen propiedades sensibles. Ajuste TAREA-22-1 (D15):
+        // EmpleadoJson SÍ lee "cedula" (sale aparte en CedulasEmpleados); para los demás tipos sigue prohibida.
         foreach (var tipo in new[] { typeof(EmpleadoErp), typeof(DatosEmpleado), typeof(FuenteEmpleadosErpHttp.EmpleadoJson) })
         {
             var propiedades = tipo.GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => p.Name).ToList();
-            foreach (var sensible in CamposSensibles)
+            var prohibidos = tipo == typeof(FuenteEmpleadosErpHttp.EmpleadoJson) ? CamposSensibles.Where(c => c != "cedula") : CamposSensibles;
+            foreach (var sensible in prohibidos)
             {
                 Assert.DoesNotContain(propiedades, p => string.Equals(p, sensible, StringComparison.OrdinalIgnoreCase));
             }
@@ -133,6 +135,49 @@ public class FuenteEmpleadosErpHttpTests
         var opciones = new ServiciosExternosOpciones();
 
         Assert.Equal((60, 10, 60), (opciones.TimeoutEmpleadosSegundos, opciones.CacheEmpleadosMinutos, opciones.CacheEmpleadosMaxAntiguedadMinutos));
+    }
+
+    // ------------------------------------------------------------------ cédula (TAREA-22-1, D15)
+
+    /// <summary>Cédulas FICTICIAS: texto, número, null, ausente, solo espacios, objeto y arreglo.</summary>
+    private const string JsonCedulas = """
+        {"statusCode":200,"isSuccess":true,"errorMessages":null,"result":[
+          {"codPersona":"90001","nombrecompleto":"UNO","estado":"A","cedula":"  0000000001  "},
+          {"codPersona":"90002","nombrecompleto":"DOS","estado":"A","cedula":912345678},
+          {"codPersona":"90003","nombrecompleto":"TRES","estado":"A","cedula":null},
+          {"codPersona":"90004","nombrecompleto":"CUATRO","estado":"A"},
+          {"codPersona":"90005","nombrecompleto":"CINCO","estado":"A","cedula":"   "},
+          {"codPersona":"90006","nombrecompleto":"SEIS","estado":"A","cedula":{"x":"0000000006"}},
+          {"codPersona":"90007","nombrecompleto":"SIETE","estado":"A","cedula":["0000000007"]}]}
+        """;
+
+    [Fact]
+    public async Task Cedula_ConvertidorTolerante_NuncaLanza_SoloTexto_YNoInvalidaAlEmpleado()
+    {
+        var (fuente, _) = Crear(_ => Json(JsonCedulas));
+
+        var (empleados, cedulas) = await fuente.DescargarConCedulasAsync(Ct);
+
+        Assert.Equal(7, empleados.Count);
+        Assert.All(empleados, e => Assert.True(MapeoEmpleado.EsValido(e))); // una cédula numérica no invalida al empleado
+        Assert.Equal(1, cedulas.Cantidad);
+        Assert.Equal("0000000001", cedulas.De("90001"));
+        Assert.Null(cedulas.De("90002")); // número: no se convierte a texto (perdería los ceros iniciales)
+        Assert.Equal("CedulasEmpleados(1)", cedulas.ToString());
+        Assert.DoesNotContain("0000000001", JsonSerializer.Serialize(empleados));
+    }
+
+    [Fact]
+    public async Task Cedula_DescargarAsync_SinCedulas_YEmpleadoJsonToStringSinCedula()
+    {
+        var (fuente, _) = Crear(_ => Json(JsonCedulas));
+
+        var empleados = await fuente.DescargarAsync(Ct);
+        var json = new FuenteEmpleadosErpHttp.EmpleadoJson("90001", "UNO", null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null, null, null, "A", "0000000001");
+
+        Assert.Equal(7, empleados.Count);
+        Assert.Equal("EmpleadoJson(90001)", json.ToString());
     }
 
     // ------------------------------------------------------------------ utilidades

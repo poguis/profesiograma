@@ -122,6 +122,54 @@ public class CacheEmpleadosErpTests
         Assert.Equal("empleados", ex.Operacion);
     }
 
+    // ------------------------------------------------------------------ cédulas (TAREA-22-1, D15)
+
+    /// <summary>Descarga con cédulas FICTICIAS (incluida la de un registro no válido, que no debe salir).</summary>
+    private sealed class DescargaConCedulas : IDescargaEmpleadosErp
+    {
+        public Task<IReadOnlyList<EmpleadoErp>> DescargarAsync(CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<EmpleadoErp>>([Erp("1"), Erp("2"), Erp("3", estado: "I")]);
+
+        public async Task<(IReadOnlyList<EmpleadoErp> Registros, CedulasEmpleados Cedulas)> DescargarConCedulasAsync(CancellationToken ct) =>
+            (await DescargarAsync(ct), new CedulasEmpleados([("1", "0000000001"), ("3", "0000000003")]));
+    }
+
+    [Fact]
+    public async Task Cedulas_SoloEnLaLecturaFresca_LaCacheQuedaSinEllas()
+    {
+        var reloj = new RelojMovible();
+        var cache = new CacheEmpleadosErp(() => new DescargaConCedulas(),
+            new ServiciosExternosOpciones { CacheEmpleadosMinutos = 10, CacheEmpleadosMaxAntiguedadMinutos = 60 }, reloj,
+            NullLogger<CacheEmpleadosErp>.Instance);
+
+        var fresca = await cache.ObtenerActivosFrescosAsync(Ct);
+        var enCache = await cache.ObtenerActivosAsync(Ct); // dentro del TTL: la lista que dejó la lectura fresca
+        reloj.Ahora = reloj.Ahora.AddMinutes(30);
+        var anterior = await cache.ObtenerActivosAsync(Ct); // vencida: descarga normal, sin cédulas
+
+        Assert.Equal((1, "0000000001", null), (fresca.Cedulas.Cantidad, fresca.Cedulas.De("1"), fresca.Cedulas.De("3"))); // "3" no es válido
+        Assert.Equal(0, enCache.Cedulas.Cantidad);
+        Assert.Equal(0, anterior.Cedulas.Cantidad);
+        Assert.Equal(0, enCache.ComoAnterior().Cedulas.Cantidad);
+    }
+
+    [Fact]
+    public async Task Simulado_CedulasFicticias_DevComoElSembrador_SimDe10DigitosEn00_Unicas()
+    {
+        var (lista, cedulas) = await ((IDescargaEmpleadosErp)new EmpleadosErpSimulado()).DescargarConCedulasAsync(Ct);
+
+        var valores = lista.Select(e => cedulas.De(e.CodigoEkon)).ToList();
+        Assert.Equal(208, cedulas.Cantidad);
+        Assert.Equal(valores.Count, valores.Distinct().Count());
+        for (var i = 1; i <= 8; i++)
+        {
+            Assert.Equal(EmpleadosPrueba.CrearDev(i, DateTime.MinValue).Cedula, cedulas.De($"DEV{i:000}")); // la alta puntual no cambia la fila
+        }
+
+        Assert.All(lista.Where(e => e.CodigoEkon!.StartsWith("SIM", StringComparison.Ordinal)).Select(e => cedulas.De(e.CodigoEkon)!),
+            c => Assert.Matches("^00[0-9]{8}$", c));
+    }
+
     // ------------------------------------------------------------------ Simulado (P12)
 
     [Fact]

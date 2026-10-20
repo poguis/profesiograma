@@ -13,7 +13,8 @@ namespace App.Infrastructure.Persistencia.Empleados;
 /// una persona NUEVA (crear proyecto, actualizar personal, reactivar) se crea su fila, o se refresca la existente (P6),
 /// con los datos de la API validados FUERA de la transacción (lectura fresca, P5). Se ejecuta DENTRO de
 /// ITransaccionAsignaciones (applock de asignaciones: todas las escrituras de Empleado pasan por ahí), antes de crear
-/// ProyectoPersonal. Mapeo de campos permitidos (MapeoEmpleado); la cédula y los datos sensibles nunca se escriben.
+/// ProyectoPersonal. Mapeo de campos permitidos (MapeoEmpleado); los datos sensibles nunca se escriben, salvo la cédula
+/// (D15, TAREA-22-1), que llega aparte en <see cref="CedulasEmpleados"/> y solo va a Empleado.Cedula.
 /// También da de alta el puesto en CargoInfor (P8). Auditoría: AuditoriaInterceptor (usuario que asigna).
 /// </summary>
 internal static class AltaPuntualEmpleados
@@ -24,9 +25,10 @@ internal static class AltaPuntualEmpleados
     /// Crea o refresca las filas y devuelve el Id real de cada empleado (clave: el Id que trae el plan, real o temporal
     /// negativo). Los que no traen datos de la API (personas guardadas) conservan su Id.
     /// </summary>
+    /// <param name="cedulas">D15: cédulas de la API (lectura fresca) de esas personas.</param>
     /// <exception cref="ConflictoConcurrenciaException">Duplicado en UQ_Empleado_CodigoEkon o UQ_CargoInfor_Cargo (409).</exception>
     public static async Task<IReadOnlyDictionary<int, int>> AplicarAsync(
-        ProfesiogramaDbContext db, IEnumerable<EmpleadoAsignable> empleados, CancellationToken ct)
+        ProfesiogramaDbContext db, IEnumerable<EmpleadoAsignable> empleados, CedulasEmpleados cedulas, CancellationToken ct)
     {
         var altas = empleados.Where(e => e.Erp is not null).DistinctBy(e => e.Id).ToList();
         var ids = new Dictionary<int, int>();
@@ -46,7 +48,7 @@ internal static class AltaPuntualEmpleados
             ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             : (await ConsultaCargosExistentes(db, cargos).ToListAsync(ct)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var preparado = Preparar(altas, existentes, cargosGuardados, fecha);
+        var preparado = Preparar(altas, existentes, cargosGuardados, fecha, cedulas);
         db.Empleados.AddRange(preparado.Nuevas);
         db.CargosInfor.AddRange(preparado.CargosNuevos.Select(c => new CargoInfor { Cargo = c, CodigoInfor = null, Activo = true }));
         var filas = preparado.Filas;
@@ -74,9 +76,11 @@ internal static class AltaPuntualEmpleados
     /// <summary>
     /// Lógica pura (sin base): refresca las filas existentes (por código, sin distinguir mayúsculas) con los datos de la
     /// API, crea las que faltan y calcula los cargos que no están en CargoInfor. Las altas sin datos de la API se ignoran.
+    /// D15: la cédula de <paramref name="cedulas"/> se escribe si viene; sin dato, la fila nueva queda en NULL y la
+    /// existente conserva la suya.
     /// </summary>
     internal static AltaPreparada Preparar(IEnumerable<EmpleadoAsignable> altas, IDictionary<string, Empleado> existentes,
-        IReadOnlySet<string> cargosGuardados, DateTime fechaUtc)
+        IReadOnlySet<string> cargosGuardados, DateTime fechaUtc, CedulasEmpleados? cedulas = null)
     {
         var nuevas = new List<Empleado>();
         var filas = new Dictionary<int, Empleado>();
@@ -90,7 +94,7 @@ internal static class AltaPuntualEmpleados
                 existentes[alta.CodigoEkon] = fila;
             }
 
-            Asignar(fila, MapeoEmpleado.Datos(alta.Erp!), fechaUtc);
+            Asignar(fila, MapeoEmpleado.Datos(alta.Erp!), fechaUtc, cedulas?.De(alta.CodigoEkon));
             filas[alta.Id] = fila;
 
             if (MapeoEmpleado.NormalizarCargo(alta.Erp!.Puesto) is { } cargo && !cargosGuardados.Contains(cargo) && !cargos.Contains(cargo))
@@ -111,7 +115,8 @@ internal static class AltaPuntualEmpleados
             : throw new InvalidOperationException($"El empleado con Id temporal {idPlan} no se dio de alta antes de asignarlo.");
     }
 
-    private static void Asignar(Empleado e, DatosEmpleado d, DateTime fechaUtc)
+    /// <param name="cedula">Ya normalizada (CedulasEmpleados); null = la API no la trae.</param>
+    private static void Asignar(Empleado e, DatosEmpleado d, DateTime fechaUtc, string? cedula)
     {
         e.NombreCompleto = d.NombreCompleto;
         e.Apellidos = d.Apellidos;
@@ -132,7 +137,10 @@ internal static class AltaPuntualEmpleados
         e.FamiliaPuesto = d.FamiliaPuesto;
         e.EstadoErp = MapeoEmpleado.EstadoActivo; // estado en la API al asignarlo
         e.FechaSincronizacion = fechaUtc;         // fecha de la última copia desde la API
-        // Cedula no se toca: la alta puntual nunca la escribe (P10 de la 26b).
+        if (cedula is not null)
+        {
+            e.Cedula = cedula; // D15 (TAREA-22-1): una cédula vacía o ausente en la API no pisa la guardada
+        }
     }
 
     // ------------------------------------------------------------------ consultas (internal: pruebas de traducción con ToQueryString)

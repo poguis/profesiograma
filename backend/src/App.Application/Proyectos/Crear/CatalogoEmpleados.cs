@@ -9,7 +9,9 @@ namespace App.Application.Proyectos.Crear;
 ///  - por codigoEkon (P2; desde la TAREA-26d-3 es la única forma: se retiró la transición con empleadoId);
 ///  - "activo" = está en la lista de la API (fresca al registrar, en caché en la vista previa);
 ///  - Id real si la persona ya tiene fila en Empleado; si no, un Id TEMPORAL negativo (-1, -2…) que la alta puntual
-///    convierte en real dentro de la transacción.
+///    convierte en real dentro de la transacción;
+///  - <see cref="Cedulas"/> (TAREA-22-1, D15): las de esos códigos, solo con la lista fresca (registro); vacías en la vista
+///    previa. Viajan aparte de EmpleadoAsignable (record) hasta la alta puntual.
 /// </summary>
 public sealed class CatalogoEmpleados
 {
@@ -23,10 +25,11 @@ public sealed class CatalogoEmpleados
 
     private CatalogoEmpleados(
         IReadOnlyDictionary<string, int> idPorCodigo, IReadOnlyDictionary<string, EmpleadoErp> activos,
-        IReadOnlyDictionary<string, EmpleadoAsignable>? fijos = null)
+        IReadOnlyDictionary<string, EmpleadoAsignable>? fijos = null, CedulasEmpleados? cedulas = null)
     {
         this.activos = activos;
         this.fijos = fijos;
+        Cedulas = cedulas ?? CedulasEmpleados.Vacio;
 
         // Id real si la persona tiene fila; si no, temporal negativo en orden de aparición (determinista).
         var ids = new Dictionary<string, int>(idPorCodigo, StringComparer.OrdinalIgnoreCase);
@@ -41,6 +44,9 @@ public sealed class CatalogoEmpleados
 
         this.idPorCodigo = ids;
     }
+
+    /// <summary>Cédulas de la API de las personas del catálogo (solo con la lista fresca). Para la alta puntual.</summary>
+    public CedulasEmpleados Cedulas { get; }
 
     /// <summary>
     /// Carga lo necesario para los códigos indicados: la lista de la API (fresca = registro, P5; en caché = vista previa)
@@ -69,7 +75,7 @@ public sealed class CatalogoEmpleados
             ? new Dictionary<string, int>()
             : await datos.ObtenerIdsPorCodigosAsync(activos.Keys.ToList(), ct);
 
-        return new CatalogoEmpleados(idsPorCodigo, activos);
+        return new CatalogoEmpleados(idsPorCodigo, activos, cedulas: api.Cedulas.Solo(activos.Keys));
     }
 
     /// <summary>

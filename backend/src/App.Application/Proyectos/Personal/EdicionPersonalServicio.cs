@@ -240,7 +240,8 @@ public sealed class EdicionPersonalServicio(
             CalculoPersonal.Snapshot(c.Plan),
             vigentes, nuevas, c.Plan.Eliminadas.Select(x => x.Id).ToList(), CalculoPersonal.Dias(c.Regeneracion),
             ClaveInicialNueva: CalculoPersonal.ClaveInicialNueva(c.Datos, c.Plan), // P3 (TAREA-19y)
-            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan)); // TAREA-26d
+            AltasEmpleados: CalculoPersonal.AltasEmpleados(c.Plan), // TAREA-26d
+            Cedulas: c.Empleados.Cedulas); // TAREA-22-1 (D15)
     }
 
     /// <summary>R1: Admin ve todos (null); cualquier otro rol solo sus proyectos.</summary>

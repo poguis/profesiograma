@@ -31,15 +31,18 @@ public sealed record EmpleadoErp(
 /// <summary>
 /// Lista de empleados activos de la API (solo los válidos según <see cref="MapeoEmpleado"/>), con su índice por código.
 /// EsAnterior = la API no respondió y se usa una lista anterior (solo para el buscador, P4).
+/// Cedulas (TAREA-22-1, D15): solo en la lectura fresca; la lista en caché (buscador y vista previa) va siempre sin ellas.
 /// </summary>
 public sealed class ListaEmpleadosErp
 {
-    public ListaEmpleadosErp(IReadOnlyList<EmpleadoErp> activos, DateTimeOffset obtenidaUtc, bool esAnterior = false)
+    public ListaEmpleadosErp(IReadOnlyList<EmpleadoErp> activos, DateTimeOffset obtenidaUtc, bool esAnterior = false,
+        CedulasEmpleados? cedulas = null)
     {
         ArgumentNullException.ThrowIfNull(activos);
         Activos = activos;
         ObtenidaUtc = obtenidaUtc;
         EsAnterior = esAnterior;
+        Cedulas = cedulas ?? CedulasEmpleados.Vacio;
         var porCodigo = new Dictionary<string, EmpleadoErp>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in activos)
         {
@@ -53,6 +56,7 @@ public sealed class ListaEmpleadosErp
     public IReadOnlyDictionary<string, EmpleadoErp> PorCodigo { get; }
     public DateTimeOffset ObtenidaUtc { get; }
     public bool EsAnterior { get; }
+    public CedulasEmpleados Cedulas { get; }
 
     public ListaEmpleadosErp ComoAnterior() => new(Activos, ObtenidaUtc, esAnterior: true);
 }
@@ -67,7 +71,10 @@ public interface IFuenteEmpleadosErp
     /// <exception cref="Erp.ErpNoDisponibleException">La API no respondió y no hay lista anterior utilizable.</exception>
     Task<ListaEmpleadosErp> ObtenerActivosAsync(CancellationToken ct);
 
-    /// <summary>Lectura fresca (renueva la caché). Para VALIDAR un registro (P5): nunca usa una lista anterior.</summary>
+    /// <summary>
+    /// Lectura fresca (renueva la caché). Para VALIDAR un registro (P5): nunca usa una lista anterior. Es la única que trae
+    /// las cédulas (<see cref="ListaEmpleadosErp.Cedulas"/>, TAREA-22-1); la caché se renueva sin ellas.
+    /// </summary>
     /// <exception cref="Erp.ErpNoDisponibleException">Red, timeout, HTTP ≠ 200, JSON inválido, isSuccess = false, result nulo o vacío.</exception>
     Task<ListaEmpleadosErp> ObtenerActivosFrescosAsync(CancellationToken ct);
 }

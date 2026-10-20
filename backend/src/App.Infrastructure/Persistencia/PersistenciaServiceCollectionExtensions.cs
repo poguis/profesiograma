@@ -11,6 +11,7 @@ using App.Application.Seguridad;
 using App.Infrastructure.Consultas;
 using App.Infrastructure.Persistencia.Auditoria;
 using App.Infrastructure.Persistencia.DatosPrueba;
+using App.Infrastructure.Persistencia.Empleados;
 using App.Infrastructure.Persistencia.Proyectos;
 using App.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<IReactivacionRepositorio, EdicionPersonalRepositorio>();
         services.AddScoped<ICabeceraRepositorio, EdicionCabeceraRepositorio>();
         services.AddScoped<IUsuarioProvisionamiento, UsuarioProvisionamiento>();
+        services.AddScoped<ICompletarCedulasRepositorio, CompletarCedulasRepositorio>(); // TAREA-22-1
         services.AddScoped<DatosPruebaSembrador>();
 
         return services;

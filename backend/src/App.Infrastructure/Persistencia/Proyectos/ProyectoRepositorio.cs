@@ -1,3 +1,4 @@
+using App.Application.Empleados;
 using App.Application.Proyectos.Crear;
 using App.Domain.Catalogos;
 using App.Domain.Maestros;
@@ -33,7 +34,8 @@ internal sealed class ProyectoRepositorio(ProfesiogramaDbContext db) : IProyecto
         var d = nuevo.Datos;
 
         // TAREA-26d: alta puntual de los empleados (fila nueva o refrescada) antes del personal; Id temporal → real.
-        var empleados = await AltaPuntualEmpleados.AplicarAsync(db, d.Principales.Concat(d.Backs).Select(x => x.Empleado), ct);
+        var empleados = await AltaPuntualEmpleados.AplicarAsync(db, d.Principales.Concat(d.Backs).Select(x => x.Empleado),
+            d.Cedulas ?? CedulasEmpleados.Vacio, ct);
 
         await UpsertCompaniaAsync(d, ct);
 

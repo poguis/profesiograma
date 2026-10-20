@@ -21,6 +21,20 @@ public static class EmpleadoEndpoints
             .WithTags("Empleados")
             .RequireAuthorization(Politicas.Gestor);
 
+        // TAREA-22-1 (D15): llena Empleado.Cedula de las filas guardadas sin cédula, desde la lectura fresca de la API.
+        // Sin cuerpo. Respuesta y log: SOLO conteos (nunca cédulas ni códigos). ERP caído → 503 sin escribir.
+        app.MapPost("/api/empleados/completar-cedulas", async Task<Ok<ResultadoCompletarCedulasDto>> (
+                CompletarCedulasServicio servicio, IUsuarioActual usuario, ILoggerFactory registro, CancellationToken ct) =>
+            {
+                var r = await servicio.CompletarAsync(ct);
+                registro.CreateLogger(nameof(EmpleadoEndpoints)).LogInformation(
+                    "Completar cédulas (usuario {UsuarioId}): revisadas {Revisadas}, completadas {Completadas}, sin cédula en la API {SinCedulaEnApi}, no encontradas en la API {NoEncontradasEnApi}.",
+                    usuario.UsuarioId, r.Revisadas, r.Completadas, r.SinCedulaEnApi, r.NoEncontradasEnApi);
+                return TypedResults.Ok(r);
+            })
+            .WithTags("Empleados")
+            .RequireAuthorization(Politicas.Admin);
+
         return app;
     }
 }

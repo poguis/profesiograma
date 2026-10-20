@@ -7,7 +7,7 @@ namespace App.Infrastructure.Persistencia.DatosPrueba;
 /// Empleados de prueba (SOLO Development; datos ficticios). Una sola definición para:
 ///  - DatosPruebaSembrador: filas DEV001–DEV008 de la tabla Empleado;
 ///  - EmpleadosErpSimulado (TAREA-26d, P12): la "API" del modo Simulado devuelve los mismos DEV (datos IDÉNTICOS, así la
-///    alta puntual no cambia sus filas) más SIM001–SIM200, sin datos sensibles.
+///    alta puntual no cambia sus filas) más SIM001–SIM200, sin datos sensibles reales (cédulas FICTICIAS: CedulasSimuladas).
 /// </summary>
 internal static class EmpleadosPrueba
 {
@@ -71,4 +71,13 @@ internal static class EmpleadosPrueba
 
         return lista;
     }
+
+    /// <summary>
+    /// Cédulas FICTICIAS del modo Simulado (TAREA-22-1, D15), únicas y deterministas: DEV001–DEV008, la misma de su fila
+    /// del sembrador (<see cref="CrearDev"/>), para que la alta puntual no cambie esas filas; SIM001–SIM200, 10 dígitos que
+    /// empiezan en "00" (código de provincia inexistente, así nunca coinciden con una cédula real).
+    /// </summary>
+    public static CedulasEmpleados CedulasSimuladas() => new(
+        Enumerable.Range(1, CantidadDev).Select(i => CrearDev(i, DateTime.MinValue)).Select(e => ((string?)e.CodigoEkon, e.Cedula))
+            .Concat(Enumerable.Range(1, CantidadSimulados).Select(i => ((string?)$"SIM{i:000}", (string?)$"00{i:00000000}"))));
 }

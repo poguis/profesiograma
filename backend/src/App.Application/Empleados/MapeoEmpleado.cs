@@ -30,6 +30,7 @@ public static class MapeoEmpleado
     public const string EstadoActivo = "A";
     public const int LargoCodigoEkon = 20;
     public const int LargoCodigo = 10;
+    public const int LargoCedula = 20;
 
     public static bool EsValido(EmpleadoErp e)
     {
@@ -75,6 +76,9 @@ public static class MapeoEmpleado
     /// <summary>Cargo de CargoInfor: mayúsculas y sin espacios extremos (UQ_CargoInfor_Cargo), máximo 200.</summary>
     public static string? NormalizarCargo(string? puesto) =>
         Normalizar(puesto) is { } cargo ? Recortar(cargo.ToUpperInvariant(), 200) : null;
+
+    /// <summary>Cédula (D15, TAREA-22-1): sin espacios extremos y recortada a Empleado.Cedula (20); vacía → null.</summary>
+    public static string? NormalizarCedula(string? cedula) => Texto(cedula, LargoCedula);
 
     public static string? Normalizar(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 

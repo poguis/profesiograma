@@ -98,7 +98,8 @@ public sealed record ProyectoValidado(
     int? DepartamentoId,
     int PropietarioUsuarioId,
     IReadOnlyList<PersonalValidado> Principales,
-    IReadOnlyList<PersonalValidado> Backs);
+    IReadOnlyList<PersonalValidado> Backs,
+    CedulasEmpleados? Cedulas = null); // TAREA-22-1 (D15): para la alta puntual; su ToString no muestra valores
 
 /// <summary>Todo lo que se guarda en la transacción de registro.</summary>
 /// <param name="Dias">DiasFinales del motor (con descansos automáticos, deduplicados).</param>
