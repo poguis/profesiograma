@@ -158,3 +158,17 @@ export function coloresDeRespuesta(ids: readonly number[], leyenda: readonly { c
   const novedad = [...new Set([...COLORES_NOVEDAD_BASE, ...leyenda.map(l => l.color.toUpperCase())])]
   return new Map(ids.map(id => [id, colorProyecto(id, novedad)]))
 }
+
+/**
+ * Q4 (TAREA-21b): colores de novedad que no dependen de la respuesta: la base ∪ el catálogo de TipoNovedad
+ * (GET /api/catalogos). Así un proyecto tiene el mismo color en /cronograma y en la pestaña del detalle, aunque sus
+ * leyendas difieran. Sin catálogo (no cargó), solo la base.
+ */
+export function coloresNovedadEstables(tiposNovedad?: readonly { colorHex: string }[]): string[] {
+  return [...new Set([...COLORES_NOVEDAD_BASE, ...(tiposNovedad ?? []).map(t => t.colorHex.toUpperCase())])]
+}
+
+/** Mapa Id → color con los colores de novedad estables (Q4): el mismo en las dos vistas. */
+export function coloresEstables(ids: readonly number[], tiposNovedad?: readonly { colorHex: string }[]): Map<number, string> {
+  return coloresDeRespuesta(ids, coloresNovedadEstables(tiposNovedad).map(color => ({ color })))
+}

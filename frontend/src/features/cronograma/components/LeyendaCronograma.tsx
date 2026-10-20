@@ -1,6 +1,6 @@
 import { Badge, Text, makeStyles, tokens } from '@fluentui/react-components'
 import { formatearHora } from '../../../utils/formato'
-import { ATENUACION_DESCANSO, COLOR_CHOQUE, abreviatura, atenuar, contrasteTexto } from '../cronograma'
+import { ATENUACION_DESCANSO, COLOR_CHOQUE, type ContextoCronograma, abreviatura, atenuar, contrasteTexto } from '../cronograma'
 import type { LeyendaNovedad, ProyectoCronograma } from '../tipos'
 import { FONDO_RAYADO } from './CuadriculaCronograma'
 
@@ -27,10 +27,12 @@ export interface LeyendaCronogramaProps {
   proyectos: ProyectoCronograma[]
   novedades: LeyendaNovedad[]
   colores: ReadonlyMap<number, string>
+  /** Q7 (TAREA-21b): en la pestaña del proyecto, "otro proyecto" es cualquier otro proyecto. Por defecto 'general'. */
+  contexto?: ContextoCronograma
 }
 
 /** Proyectos (con su horario y la marca "Nocturno"), novedades presentes y estados fijos. */
-export function LeyendaCronograma({ proyectos, novedades, colores }: LeyendaCronogramaProps) {
+export function LeyendaCronograma({ proyectos, novedades, colores, contexto = 'general' }: LeyendaCronogramaProps) {
   const estilos = useEstilos()
   const muestra = (fondo: string, texto: string, ficha = false) => (
     <span
@@ -86,7 +88,7 @@ export function LeyendaCronograma({ proyectos, novedades, colores }: LeyendaCron
         </li>
         <li className={estilos.item}>
           {muestra(FONDO_RAYADO, '')}
-          <Text size={200}>Otro proyecto (de otro usuario)</Text>
+          <Text size={200}>{contexto === 'proyecto' ? 'Otro proyecto (cualquier otro)' : 'Otro proyecto (de otro usuario)'}</Text>
         </li>
       </ul>
     </section>

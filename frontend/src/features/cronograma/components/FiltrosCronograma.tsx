@@ -1,11 +1,10 @@
 import { Button, Dropdown, Field, Option, SearchBox, makeStyles, tokens } from '@fluentui/react-components'
-import { ArrowLeft20Regular, ArrowRight20Regular, CalendarToday20Regular, DismissCircle20Regular } from '@fluentui/react-icons'
+import { CalendarToday20Regular, DismissCircle20Regular } from '@fluentui/react-icons'
 import { useEffect, useState } from 'react'
-import { SelectorFecha } from '../../../components/SelectorFecha'
 import { useCatalogos } from '../../proyectos/hooks'
-import { hoyEnNegocio } from '../../../utils/formato'
-import { type FiltrosCronograma, fechasAlCambiar, mesAnterior, mesSiguiente, opcionesProyecto } from '../cronograma'
+import { type FiltrosCronograma, opcionesProyecto } from '../cronograma'
 import type { Cronograma, ProyectoCronograma } from '../tipos'
+import { SelectorRango } from './SelectorRango'
 
 const ESPERA_TEXTO_MS = 300
 const TODOS = ''
@@ -53,52 +52,28 @@ export function FiltrosCronograma({ filtros, rango, ultimaRespuesta, proyectos, 
     return () => clearTimeout(temporizador)
   }, [persona, personaUrl, onCambiar])
 
-  const [errorFormatoDesde, setErrorFormatoDesde] = useState<string>()
-  const [errorFormatoHasta, setErrorFormatoHasta] = useState<string>()
+  // "Limpiar filtros" vuelve a montar el selector de rango, que borra sus errores de formato.
+  const [reinicioRango, setReinicioRango] = useState(0)
 
-  // Los selectores muestran el rango efectivo; la URL conserva el que pidió el usuario (D5 revisada).
-  const desde = rango?.desde ?? filtros.desde
-  const hasta = rango?.hasta ?? filtros.hasta
   const opciones = opcionesProyecto(proyectos, filtros.proyectoId)
   const departamentos = catalogos?.departamentos ?? []
   const textoProyecto = opciones.find((o) => o.id === filtros.proyectoId)?.texto ?? 'Todos'
   const textoDepartamento = departamentos.find((d) => d.id === filtros.departamentoId)?.nombre ?? 'Todos'
   const hayFiltros = Object.values(filtros).some((v) => v !== undefined)
   const errorDe = (campo: string) => erroresApi?.[campo]?.join(' ')
-  // Se escriben las dos fechas: con una sola, el backend aplicaría D6 y movería la que el usuario no tocó.
-  const cambiarFecha = (campo: 'desde' | 'hasta', valor: string | undefined) =>
-    onCambiar(fechasAlCambiar(campo, valor, { desde: filtros.desde, hasta: filtros.hasta }, ultimaRespuesta, hoyEnNegocio()))
 
   return (
     <div className={estilos.contenedor} role="search" aria-label="Filtros del cronograma">
-      <Field label="Desde" className={estilos.campo} validationMessage={errorFormatoDesde ?? errorDe('desde')}>
-        <SelectorFecha valor={desde} onCambiar={(valor) => cambiarFecha('desde', valor)} onErrorFormato={setErrorFormatoDesde} />
-      </Field>
-
-      <Field label="Hasta" className={estilos.campo} validationMessage={errorFormatoHasta ?? errorDe('hasta')}>
-        <SelectorFecha valor={hasta} onCambiar={(valor) => cambiarFecha('hasta', valor)} onErrorFormato={setErrorFormatoHasta} />
-      </Field>
-
-      <div className={estilos.botones}>
-        <Button
-          icon={<ArrowLeft20Regular />}
-          disabled={!desde}
-          onClick={() => desde && onCambiar(mesAnterior(desde))}
-        >
-          Mes anterior
-        </Button>
-        <Button icon={<CalendarToday20Regular />} onClick={() => onCambiar({ desde: undefined, hasta: undefined })}>
-          Mes actual
-        </Button>
-        <Button
-          icon={<ArrowRight20Regular />}
-          iconPosition="after"
-          disabled={!desde}
-          onClick={() => desde && onCambiar(mesSiguiente(desde))}
-        >
-          Mes siguiente
-        </Button>
-      </div>
+      {/* Los selectores muestran el rango efectivo; la URL conserva el que pidió el usuario (D5 revisada). */}
+      <SelectorRango
+        key={reinicioRango}
+        pedido={{ desde: filtros.desde, hasta: filtros.hasta }}
+        efectivo={rango}
+        ultimaRespuesta={ultimaRespuesta}
+        errores={{ desde: errorDe('desde'), hasta: errorDe('hasta') }}
+        onCambiar={onCambiar}
+        reinicio={{ texto: 'Mes actual', icono: <CalendarToday20Regular /> }}
+      />
 
       <Field label="Proyecto" className={estilos.proyecto} validationMessage={errorDe('proyectoId')}>
         <Dropdown
@@ -140,8 +115,7 @@ export function FiltrosCronograma({ filtros, rango, ultimaRespuesta, proyectos, 
           icon={<DismissCircle20Regular />}
           disabled={!hayFiltros}
           onClick={() => {
-            setErrorFormatoDesde(undefined)
-            setErrorFormatoHasta(undefined)
+            setReinicioRango((n) => n + 1)
             onLimpiar()
           }}
         >

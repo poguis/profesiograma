@@ -8,6 +8,8 @@ import {
   contrasteTexto,
   esFinDeSemana,
   etiquetaCelda,
+  enlaceCronogramaGeneral,
+  estadoEnContexto,
   expandirDias,
   fechasAlCambiar,
   filtrarPersonas,
@@ -239,5 +241,40 @@ describe('fechasAlCambiar (el "desde" o el "hasta" que no se tocó se mantiene)'
   it('accesos de mes: escriben las dos fechas', () => {
     expect(Object.keys(mesAnterior('2026-10-01'))).toEqual(['desde', 'hasta'])
     expect(Object.keys(mesSiguiente('2026-10-01'))).toEqual(['desde', 'hasta'])
+  })
+})
+
+describe('pestaña del proyecto (TAREA-21b)', () => {
+  it('estadoEnContexto (Q3): CHOQUE sin asignación del proyecto → OTRO_PROYECTO; con asignación, CHOQUE', () => {
+    const choqueAjeno = celda({ estado: 'CHOQUE', asignaciones: [], otrosProyectos: 2 })
+    const choquePropio = celda({ estado: 'CHOQUE', otrosProyectos: 1 })
+    expect(estadoEnContexto(choqueAjeno, 1)).toBe('OTRO_PROYECTO')
+    expect(estadoEnContexto(choquePropio, 1)).toBe('CHOQUE')
+    expect(estadoEnContexto(choquePropio, 2)).toBe('OTRO_PROYECTO')
+  })
+
+  it('estadoEnContexto: sin proyecto (vista general) y los demás estados, sin cambios', () => {
+    expect(estadoEnContexto(celda({ estado: 'CHOQUE', asignaciones: [] }))).toBe('CHOQUE')
+    expect(estadoEnContexto(celda({}), 1)).toBe('PROYECTO')
+    expect(estadoEnContexto(celda({ estado: 'DESCANSO' }), 1)).toBe('DESCANSO')
+    expect(estadoEnContexto(celda({ estado: 'NOVEDAD', asignaciones: [], novedad: VACACIONES }), 1)).toBe('NOVEDAD')
+    expect(estadoEnContexto(celda({ estado: 'OTRO_PROYECTO', asignaciones: [], otrosProyectos: 1 }), 1)).toBe('OTRO_PROYECTO')
+  })
+
+  it("resumenCelda y etiquetaCelda con contexto 'proyecto' (Q7)", () => {
+    const c = celda({ estado: 'OTRO_PROYECTO', asignaciones: [], otrosProyectos: 2 })
+    expect(resumenCelda(c, PROYECTOS, 'proyecto').otros).toBe('Asignado además en 2 otro(s) proyecto(s).')
+    expect(etiquetaCelda(c, PROYECTOS, 'proyecto')).toBe('05/10/2026. Otro proyecto. Asignado además en 2 otro(s) proyecto(s).')
+    expect(resumenCelda(c, PROYECTOS).otros).toBe('Asignado además en 2 proyecto(s) de otros usuarios.') // por defecto: 'general'
+  })
+
+  it('enlaceCronogramaGeneral (Q9): proyecto y rango efectivo', () => {
+    expect(enlaceCronogramaGeneral(17, '2026-10-01', '2026-10-31')).toBe('/cronograma?desde=2026-10-01&hasta=2026-10-31&proyectoId=17')
+  })
+
+  it('fechasAlCambiar con el estado local de la pestaña: D12 recortado conserva el hasta solicitado', () => {
+    const d12 = { desde: '2026-10-01', hasta: '2026-12-29', hastaSolicitado: '2027-03-15' }
+    expect(fechasAlCambiar('desde', '2026-10-05', {}, d12, '2026-10-20')).toEqual({ desde: '2026-10-05', hasta: '2027-03-15' })
+    expect(fechasAlCambiar('hasta', '2026-11-30', {}, d12, '2026-10-20')).toEqual({ desde: '2026-10-01', hasta: '2026-11-30' })
   })
 })

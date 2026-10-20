@@ -1,5 +1,5 @@
 import { Popover, PopoverSurface, Text, makeStyles, tokens } from '@fluentui/react-components'
-import { resumenCelda } from '../cronograma'
+import { type ContextoCronograma, resumenCelda } from '../cronograma'
 import type { CeldaCronograma, PersonaCronograma, ProyectoCronograma } from '../tipos'
 
 const useEstilos = makeStyles({
@@ -14,13 +14,15 @@ export interface DetalleCeldaProps {
   /** Celda que se pulsó: el Popover se ancla a ella (P4: uno solo para toda la cuadrícula). */
   destino: HTMLElement
   proyectos: ReadonlyMap<number, ProyectoCronograma>
+  /** Q7 (TAREA-21b): texto de "otros proyectos" según la vista. Por defecto 'general'. */
+  contexto?: ContextoCronograma
   onCerrar: () => void
 }
 
 /** Detalle de una celda (clic o Enter). Nunca muestra datos de los proyectos ajenos (D2): solo su cantidad. */
-export function DetalleCelda({ persona, celda, destino, proyectos, onCerrar }: DetalleCeldaProps) {
+export function DetalleCelda({ persona, celda, destino, proyectos, contexto = 'general', onCerrar }: DetalleCeldaProps) {
   const estilos = useEstilos()
-  const r = resumenCelda(celda, proyectos)
+  const r = resumenCelda(celda, proyectos, contexto)
 
   return (
     <Popover

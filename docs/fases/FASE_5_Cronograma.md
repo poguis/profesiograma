@@ -75,10 +75,11 @@ La consulta alimenta la vista persona × día (TAREA-21) y el reporte Excel (TAR
 - Una novedad GENERAL o PERSONA se muestra aunque ese día no haya asignación (`asignaciones` vacío), como el original.
 - La persona debe aparecer en el rango (D4).
 
-**`otrosProyectos` (D2):**
-- Global, no Admin: días de trabajo en proyectos de **otros** propietarios.
-- Por proyecto: días de trabajo en todos los **demás** proyectos.
-- Admin global: 0 (todo es visible) y la consulta no se ejecuta.
+**`otrosProyectos` (D2) y OTRO_PROYECTO, por vista** (aclarado en la TAREA-21b):
+- **Global (`/api/cronograma`), no Admin:** días de trabajo en proyectos de **otros propietarios** (los que el usuario no ve). OTRO_PROYECTO = ese día trabaja solo en un proyecto de otro propietario.
+- **Admin global:** 0 (todo es visible) y la consulta 1b no se ejecuta.
+- **Por proyecto (`/api/proyectos/{id}/cronograma`):** días de trabajo en **todos los demás proyectos**, sean o no del mismo usuario (`SalvoProyectoId`). OTRO_PROYECTO = ese día la persona no está en este proyecto y trabaja en otro.
+- **CHOQUE con `asignaciones` vacío:** en el endpoint por proyecto, un día sin asignación en este proyecto y con 2 o más proyectos ajenos llega como CHOQUE con `asignaciones = []` (fila 4 de la tabla: `activos + otrosProyectos > 1`). El frontend lo muestra como **OTRO_PROYECTO** en la pestaña del detalle (`estadoEnContexto`, Q3 de la TAREA-21b); el backend no cambia.
 - **Solo la cantidad**: nunca el Id, código ni nombre del proyecto ajeno.
 
 **Turno nocturno:** el día pertenece a la fecha de entrada (pendiente 50). `horario.cruzaMedianoche` = salida < entrada (`ReglasAlmuerzo.EsNocturno`).
@@ -226,3 +227,54 @@ El original (l. 974) arma una fila por EKON + proyecto + día. Prevalece el trab
 | P8 | Opciones de proyecto: los de la respuesta + el seleccionado |
 | P9 | Persona por nombre o código, solo en el cliente, en la URL |
 | P10 | `useCronograma` con `retry: false` |
+
+### 7.1 Pestaña "Cronograma" del detalle del proyecto (TAREA-21b, 20/10/2026)
+`/proyectos/:id`, pestaña **Cronograma** después de Personal e Historial (`PestanaCronograma`).
+
+**Consulta:**
+- `GET /api/proyectos/{id}/cronograma` con `useCronogramaProyecto(id, rango, activa)`.
+- Solo con la pestaña activa: el panel se monta solo entonces y el hook lleva `enabled`.
+- `retry: false` (P10) y `keepPreviousData`.
+
+**Rango local, sin URL (Q2):**
+- Al abrir, sin fechas: D12, desde el inicio del proyecto hasta su fin, como máximo 90 días. Si el proyecto es más largo, se avisa del recorte.
+- `SelectorRango` con `fechasAlCambiar` sobre el estado local, "Mes anterior", "Mes siguiente" y **"Todo el proyecto"** (vuelve a D12).
+- Filtro local de persona, por nombre o código y sin tildes (Q6).
+- La pestaña activa sigue siendo estado local (`location.state.pestana` admite `'cronograma'`), sin `?tab=`.
+
+**Vista:**
+- `VistaCronograma` con `contexto="proyecto"` y `proyectoContexto={id}`:
+  - las celdas sin asignación en este proyecto (incluido el CHOQUE entre ajenos) se ven como OTRO_PROYECTO (Q3), con el mismo rayado;
+  - el detalle dice "Asignado además en n otro(s) proyecto(s)." (Q7);
+  - la leyenda dice "Otro proyecto (cualquier otro)".
+- La leyenda no cambia: un elemento con el horario y "Nocturno" (Q8).
+- **Aviso de recorte** + "Use los accesos de mes o abra el cronograma general."
+- **Enlace "Abrir en el cronograma general"**: `/cronograma?desde&hasta&proyectoId={id}` con el rango **efectivo** de la respuesta (Q9). El general muestra a esas personas con todos sus proyectos visibles.
+- **Estados:** cargando; vacío ("El proyecto no tiene asignaciones en el rango."); 400 en su selector; 404 ("Proyecto no encontrado o sin acceso"); 5xx o red con "Reintentar".
+
+**Colores (Q4):**
+- En **las dos vistas**, `coloresEstables(ids, catalogos.tiposNovedad)` calcula con `COLORES_NOVEDAD_BASE` ∪ los `colorHex` del catálogo de `TipoNovedad` (`GET /api/catalogos`), no con la `leyendaNovedades` de cada respuesta.
+- Así un proyecto tiene el mismo color en `/cronograma` y en la pestaña. Sin catálogo (no cargó), solo la base.
+
+**Componentes extraídos (Q1):**
+- `VistaCronograma`: resumen, aviso de recorte, vacío, cuadrícula y leyenda; además, `ErrorCronograma` con "Reintentar".
+- `SelectorRango`: desde/hasta, meses y botón de reinicio configurable ("Mes actual" en `/cronograma`, "Todo el proyecto" en la pestaña).
+- `/cronograma` se comporta igual.
+
+**Invalidación (Q5):**
+- La clave por proyecto es `['proyectos', 'cronograma', id, consulta]`.
+- `invalidarTrasEscritura(queryClient)` invalida `['proyectos']` y `['cronograma']`. La usan los 5 `onSuccess`: crear, cambio de estado, cabecera, personal y reactivación.
+- Así, tras cualquier escritura se refrescan el detalle, la pestaña y `/cronograma`.
+
+| # | Decisión (20/10/2026) |
+|---|---|
+| Q1 | Extraer `VistaCronograma` y `SelectorRango` |
+| Q2 | Pestaña como estado local + `location.state.pestana`; sin `?tab=` |
+| Q3 | Sin asignación en este proyecto (incluido el CHOQUE entre ajenos) → OTRO_PROYECTO, en el frontend (`estadoEnContexto`) |
+| Q4 | Colores con la base ∪ `catalogos.tiposNovedad`, en las dos vistas (`coloresNovedadEstables`) |
+| Q5 | Clave por proyecto bajo `['proyectos']`; `invalidarTrasEscritura` también invalida `['cronograma']` |
+| Q6 | Filtro local de persona en la pestaña |
+| Q7 | Contexto `'proyecto'` → "Asignado además en n otro(s) proyecto(s)."; por defecto `'general'` |
+| Q8 | Leyenda sin cambios |
+| Q9 | Enlace al cronograma general con el rango efectivo |
+

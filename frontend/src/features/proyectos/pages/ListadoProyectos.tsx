@@ -30,7 +30,7 @@ export interface EstadoNavegacionProyectos {
   codigoCreado?: string
   /** TAREA-19b: aviso de éxito y pestaña con que se abre el detalle (p. ej. tras "Actualizar personal"). */
   aviso?: string
-  pestana?: 'personal' | 'historial'
+  pestana?: 'personal' | 'historial' | 'cronograma' // TAREA-21b
 }
 
 const CAMPOS_EN_FILTROS = new Set(['desde', 'hasta'])

@@ -8,6 +8,8 @@ import {
   hexAHsl,
   hslAHex,
   arcosLibres,
+  coloresEstables,
+  coloresNovedadEstables,
   huecosTono,
   tonosProhibidos,
 } from './coloresProyecto'
@@ -104,5 +106,22 @@ describe('coloresProyecto', () => {
   it('Sin colores saturados en la leyenda: todo el círculo es libre', () => {
     expect(arcosLibres([])).toEqual([{ inicio: 0, largo: 360 }])
     expect(tonosProhibidos(['#607D8B'])).toEqual([])
+  })
+
+  it('coloresNovedadEstables (Q4): base ∪ catálogo, sin repetir y en mayúsculas; sin catálogo, la base', () => {
+    expect(coloresNovedadEstables()).toEqual(COLORES_NOVEDAD_BASE)
+    expect(coloresNovedadEstables([{ colorHex: '#d13438' }, { colorHex: '#00b7c3' }])).toEqual([...COLORES_NOVEDAD_BASE, '#00B7C3'])
+  })
+
+  it('Q4: colorProyecto(17) es igual en /cronograma y en la pestaña aunque las leyendas de sus respuestas difieran', () => {
+    const catalogo = [...LEYENDA.map((l) => ({ colorHex: l.color })), { colorHex: '#00B7C3' }]
+    // Leyendas de respuesta distintas (una con una novedad que la otra no trae): ya no intervienen.
+    const general = coloresEstables([3, 17, 25], catalogo).get(17)
+    const pestana = coloresEstables([17], catalogo).get(17)
+    expect(pestana).toBe(general)
+    // Con la leyenda de cada respuesta (como antes) podían diferir:
+    const antesGeneral = coloresDeRespuesta([17], [...LEYENDA, { color: '#00B7C3' }]).get(17)
+    const antesPestana = coloresDeRespuesta([17], LEYENDA).get(17)
+    expect(antesGeneral).not.toBe(antesPestana)
   })
 })

@@ -1,8 +1,10 @@
 import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import {
+  type ContextoCronograma,
   aparienciaCelda,
   esFinDeSemana,
+  estadoEnContexto,
   etiquetaCelda,
   expandirDias,
   indexarCeldas,
@@ -140,6 +142,10 @@ export interface CuadriculaCronogramaProps {
   colores: ReadonlyMap<number, string>
   /** Hoy en Ecuador, "yyyy-MM-dd". */
   hoy: string
+  /** Q7 (TAREA-21b): textos del detalle según la vista. Por defecto 'general' (/cronograma). */
+  contexto?: ContextoCronograma
+  /** Q3 (TAREA-21b): pestaña de un proyecto; sus celdas sin asignación en él se ven como "otro proyecto". */
+  proyectoContexto?: number
 }
 
 interface CeldaAbierta {
@@ -149,7 +155,7 @@ interface CeldaAbierta {
 }
 
 /** Cuadrícula persona × día (P1: tabla HTML con sticky, sin virtualización; P4: un solo Popover compartido). */
-export function CuadriculaCronograma({ datos, personas, colores, hoy }: CuadriculaCronogramaProps) {
+export function CuadriculaCronograma({ datos, personas, colores, hoy, contexto = 'general', proyectoContexto }: CuadriculaCronogramaProps) {
   const clases = useEstilos()
   const dias = useMemo(() => expandirDias(datos.desde, datos.hasta), [datos.desde, datos.hasta])
   const meses = useMemo(() => mesesDelRango(dias), [dias])
@@ -211,6 +217,8 @@ export function CuadriculaCronograma({ datos, personas, colores, hoy }: Cuadricu
               colores={colores}
               hoy={hoy}
               clases={clases}
+              contexto={contexto}
+              proyectoContexto={proyectoContexto}
               onAbrir={abrir}
             />
           ))}
@@ -223,6 +231,7 @@ export function CuadriculaCronograma({ datos, personas, colores, hoy }: Cuadricu
           celda={abierta.celda}
           destino={abierta.destino}
           proyectos={proyectos}
+          contexto={contexto}
           onCerrar={cerrar}
         />
       )}
@@ -237,11 +246,15 @@ interface FilaPersonaProps {
   colores: ReadonlyMap<number, string>
   hoy: string
   clases: Clases
+  contexto: ContextoCronograma
+  proyectoContexto?: number
   onAbrir: (persona: PersonaCronograma, celda: CeldaCronograma, destino: HTMLElement) => void
 }
 
 /** Una fila por persona; memorizada para no volver a pintar todas al abrir un detalle. */
-const FilaPersona = memo(function FilaPersona({ persona, dias, proyectos, colores, hoy, clases, onAbrir }: FilaPersonaProps) {
+const FilaPersona = memo(function FilaPersona({
+  persona, dias, proyectos, colores, hoy, clases, contexto, proyectoContexto, onAbrir,
+}: FilaPersonaProps) {
   const celdas = useMemo(() => indexarCeldas(persona.dias), [persona.dias])
   const codigos = persona.asignadoEn.map((a) => proyectos.get(a.proyectoId)?.codigo ?? `Proyecto ${a.proyectoId}`).join(', ')
 
@@ -263,7 +276,18 @@ const FilaPersona = memo(function FilaPersona({ persona, dias, proyectos, colore
             key={dia}
             className={mergeClasses(clases.celda, esFinDeSemana(dia) && clases.finDeSemana, dia === hoy && clases.columnaHoy)}
           >
-            {celda && <Celda persona={persona} celda={celda} proyectos={proyectos} colores={colores} clases={clases} onAbrir={onAbrir} />}
+            {celda && (
+              <Celda
+                persona={persona}
+                // Q3: en la pestaña del proyecto, el estado en ese contexto (CHOQUE entre ajenos → OTRO_PROYECTO).
+                celda={proyectoContexto === undefined ? celda : { ...celda, estado: estadoEnContexto(celda, proyectoContexto) }}
+                proyectos={proyectos}
+                colores={colores}
+                clases={clases}
+                contexto={contexto}
+                onAbrir={onAbrir}
+              />
+            )}
           </td>
         )
       })}
@@ -277,10 +301,11 @@ interface CeldaProps {
   proyectos: ReadonlyMap<number, ProyectoCronograma>
   colores: ReadonlyMap<number, string>
   clases: Clases
+  contexto: ContextoCronograma
   onAbrir: FilaPersonaProps['onAbrir']
 }
 
-function Celda({ persona, celda, proyectos, colores, clases, onAbrir }: CeldaProps) {
+function Celda({ persona, celda, proyectos, colores, clases, contexto, onAbrir }: CeldaProps) {
   const apariencia = aparienciaCelda(celda, colores)
   const { texto, extra } = textoCelda(celda, proyectos)
   const estiloBoton =
@@ -293,7 +318,7 @@ function Celda({ persona, celda, proyectos, colores, clases, onAbrir }: CeldaPro
       type="button"
       className={clases.boton}
       style={estiloBoton}
-      aria-label={`${persona.nombre}, ${etiquetaCelda(celda, proyectos)}`}
+      aria-label={`${persona.nombre}, ${etiquetaCelda(celda, proyectos, contexto)}`}
       aria-haspopup="dialog"
       onClick={(e) => onAbrir(persona, celda, e.currentTarget)}
     >

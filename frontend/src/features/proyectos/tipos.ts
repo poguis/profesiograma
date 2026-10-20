@@ -115,6 +115,8 @@ export interface Catalogos {
   jornadas: JornadaCatalogo[]
   /** GET /api/catalogos (CatalogosDto.Departamentos). TAREA-21: filtro del cronograma. */
   departamentos?: { id: number; nombre: string; nombreCorto: string; tipo: string; orden: number }[]
+  /** GET /api/catalogos (CatalogosDto.TiposNovedad). TAREA-21b (Q4): colores de novedad estables para los proyectos. */
+  tiposNovedad?: { id: number; codigo: string; nombre: string; siglaCronograma: string; colorHex: string; orden: number }[]
 }
 
 /** Filtros del listado tal como viven en la URL y se envían a la API. */

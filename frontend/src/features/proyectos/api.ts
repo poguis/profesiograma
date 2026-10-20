@@ -47,6 +47,8 @@ export const clavesProyectos = {
   comparacionErp: (id: number) => ['proyectos', 'comparacion-erp', id] as const,
   /** GET …/reactivacion (TAREA-19c): bajo 'proyectos', se refresca al invalidar `todos`. */
   reactivacion: (id: number) => ['proyectos', 'reactivacion', id] as const,
+  /** GET …/cronograma (TAREA-21b, Q5): bajo 'proyectos', se refresca con cualquier escritura del proyecto. */
+  cronograma: (id: number, consulta: string) => ['proyectos', 'cronograma', id, consulta] as const,
   catalogos: ['catalogos'] as const,
   opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
 }

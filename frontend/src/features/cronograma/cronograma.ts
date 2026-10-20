@@ -265,7 +265,28 @@ export interface ResumenCelda {
 }
 
 /** Contenido del detalle. Nunca datos de los proyectos ajenos (D2): solo su cantidad. */
-export function resumenCelda(celda: CeldaCronograma, proyectos: ReadonlyMap<number, ProyectoCronograma>): ResumenCelda {
+/**
+ * Vista en la que se muestra la celda (TAREA-21b, Q7). 'general': /cronograma (otrosProyectos = proyectos de otros
+ * propietarios); 'proyecto': pestaña del detalle (otrosProyectos = todos los demás proyectos).
+ */
+export type ContextoCronograma = 'general' | 'proyecto'
+
+/**
+ * Q3 (TAREA-21b): en la pestaña de un proyecto, el día sin asignación en ESE proyecto es "otro proyecto", también cuando
+ * el backend lo marca CHOQUE (choque entre proyectos ajenos, `asignaciones` vacío). Sin proyecto: el estado tal cual.
+ */
+export function estadoEnContexto(celda: CeldaCronograma, proyectoId?: number): CeldaCronograma['estado'] {
+  if (proyectoId === undefined || celda.estado !== 'CHOQUE') {
+    return celda.estado
+  }
+  return celda.asignaciones.some((a) => a.proyectoId === proyectoId) ? 'CHOQUE' : 'OTRO_PROYECTO'
+}
+
+export function resumenCelda(
+  celda: CeldaCronograma,
+  proyectos: ReadonlyMap<number, ProyectoCronograma>,
+  contexto: ContextoCronograma = 'general',
+): ResumenCelda {
   const [anio, mes, dia] = celda.fecha.split('-')
   const n = celda.novedad
   return {
@@ -281,13 +302,22 @@ export function resumenCelda(celda: CeldaCronograma, proyectos: ReadonlyMap<numb
       ? `${n.observacionReporte} (${APLICACIONES[n.aplicacion] ?? n.aplicacion}, ${n.origen})` +
         (celda.novedadesExtra > 0 ? ` y ${celda.novedadesExtra} novedad(es) más` : '')
       : undefined,
-    otros: celda.otrosProyectos > 0 ? `Asignado además en ${celda.otrosProyectos} proyecto(s) de otros usuarios.` : undefined,
+    otros:
+      celda.otrosProyectos === 0
+        ? undefined
+        : contexto === 'proyecto'
+          ? `Asignado además en ${celda.otrosProyectos} otro(s) proyecto(s).`
+          : `Asignado además en ${celda.otrosProyectos} proyecto(s) de otros usuarios.`,
   }
 }
 
 /** aria-label de la celda: fecha, estado y lo principal. */
-export function etiquetaCelda(celda: CeldaCronograma, proyectos: ReadonlyMap<number, ProyectoCronograma>): string {
-  const r = resumenCelda(celda, proyectos)
+export function etiquetaCelda(
+  celda: CeldaCronograma,
+  proyectos: ReadonlyMap<number, ProyectoCronograma>,
+  contexto: ContextoCronograma = 'general',
+): string {
+  const r = resumenCelda(celda, proyectos, contexto)
   return [r.fecha, r.estado, r.novedad, ...r.asignaciones, r.otros].filter(Boolean).join('. ')
 }
 
@@ -325,6 +355,11 @@ export function aParametrosUrl(filtros: FiltrosCronograma): URLSearchParams {
 export function aConsultaApi(filtros: FiltrosCronograma): string {
   const parametros = aParametrosUrl({ ...filtros, persona: undefined })
   return parametros.toString()
+}
+
+/** Q9 (TAREA-21b): /cronograma con el proyecto y el rango efectivo de la pestaña. */
+export function enlaceCronogramaGeneral(proyectoId: number, desde: string, hasta: string): string {
+  return `/cronograma?${aParametrosUrl({ desde, hasta, proyectoId })}`
 }
 
 /** P8: opciones del filtro de proyecto = proyectos de la respuesta + el seleccionado (aunque no venga). */

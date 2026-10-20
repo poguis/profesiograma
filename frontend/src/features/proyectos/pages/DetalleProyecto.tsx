@@ -23,12 +23,13 @@ import { DialogoCambioEstado } from '../components/DialogoCambioEstado'
 import { DialogoEditarCabecera } from '../components/DialogoEditarCabecera'
 import { TablaHistorial } from '../components/TablaHistorial'
 import { TablaPersonal } from '../components/TablaPersonal'
+import { PestanaCronograma } from '../components/PestanaCronograma'
 import { useCabecera, useEdicionPersonal, useProyecto } from '../hooks'
 import type { CabeceraEdicion, ProyectoDetalle } from '../tipos'
 import { versionDeEtapas } from '../tokenConcurrencia'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
 
-type Pestana = 'personal' | 'historial'
+type Pestana = 'personal' | 'historial' | 'cronograma'
 
 const useEstilos = makeStyles({
   pagina: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL },
@@ -185,12 +186,16 @@ export function DetalleProyecto() {
             <TabList selectedValue={pestana} onTabSelect={(_, datos) => setPestana(datos.value as Pestana)}>
               <Tab value="personal">Personal ({proyecto.personal.length})</Tab>
               <Tab value="historial">Historial ({proyecto.etapas.length})</Tab>
+              <Tab value="cronograma">Cronograma</Tab>
             </TabList>
             <div className={estilos.panel} role="tabpanel">
               {pestana === 'personal' ? (
                 <TablaPersonal personal={proyecto.personal} />
-              ) : (
+              ) : pestana === 'historial' ? (
                 <TablaHistorial etapas={proyecto.etapas} />
+              ) : (
+                // TAREA-21b: solo se monta (y consulta) con la pestaña activa.
+                <PestanaCronograma proyectoId={proyecto.id} activa={pestana === 'cronograma'} />
               )}
             </div>
           </>

@@ -29,6 +29,7 @@ import {
   registrarPersonal,
   registrarReactivacion,
 } from './api'
+import { invalidarTrasEscritura } from './invalidacion'
 import type {
   Catalogos,
   FiltroEmpleados,
@@ -163,7 +164,7 @@ export function useCrearProyecto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: crearProyecto,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+    onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
   })
 }
 
@@ -179,7 +180,7 @@ export function useAplicarCambioEstado(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudCambioEstado) => aplicarCambioEstado(id, solicitud),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+    onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
   })
 }
 
@@ -204,7 +205,7 @@ export function useRegistrarCabecera(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudEditarCabecera) => registrarCabecera(id, solicitud),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+    onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
   })
 }
 
@@ -242,7 +243,7 @@ export function useRegistrarPersonal(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudActualizarPersonal) => registrarPersonal(id, solicitud),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+    onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
   })
 }
 
@@ -267,6 +268,6 @@ export function useRegistrarReactivacion(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudReactivar) => registrarReactivacion(id, solicitud),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesProyectos.todos }),
+    onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
   })
 }
