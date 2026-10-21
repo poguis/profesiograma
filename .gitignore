@@ -21,3 +21,6 @@ backend/tests/manual/**/valores-*.txt
 backend/tests/manual/**/tmp/
 backend/tests/manual/**/*-respuesta.txt
 backend/tests/manual/tarea22-2/*.xlsx
+
+
+graphify-out/
