@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '../../api/clienteHttp'
+import { apiDescargar, apiGet, apiPost } from '../../api/clienteHttp'
 import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
@@ -26,6 +26,7 @@ import type {
   ProyectoErp,
   ProyectoReactivado,
   ProyectoResumen,
+  ResumenReporte,
   Reactivacion,
   ResultadoBusquedaEmpleados,
   SolicitudActualizarPersonal,
@@ -49,6 +50,8 @@ export const clavesProyectos = {
   reactivacion: (id: number) => ['proyectos', 'reactivacion', id] as const,
   /** GET …/cronograma (TAREA-21b, Q5): bajo 'proyectos', se refresca con cualquier escritura del proyecto. */
   cronograma: (id: number, consulta: string) => ['proyectos', 'cronograma', id, consulta] as const,
+  /** GET …/reporte/resumen (TAREA-22b): bajo 'proyectos', se refresca con cualquier escritura del proyecto. */
+  reporteResumen: (id: number, consulta: string) => ['proyectos', 'reporte-resumen', id, consulta] as const,
   catalogos: ['catalogos'] as const,
   opcionesFormulario: ['proyectos', 'opciones-formulario'] as const,
 }
@@ -188,4 +191,16 @@ export function previsualizarReactivacion(id: number, solicitud: SolicitudReacti
 /** Registra la reactivación. 200 { id, estado, version }; 400; 404; 409 (cruces con extensiones, o proyecto cambiado); 503. */
 export function registrarReactivacion(id: number, solicitud: SolicitudReactivar) {
   return apiPost<SolicitudReactivar, ProyectoReactivado>(`/proyectos/${id}/reactivacion`, solicitud)
+}
+
+// ------------------------------------------------------------------ Reporte Excel (backend TAREA-22-2; frontend TAREA-22b)
+
+/** GET /api/proyectos/{id}/reporte/resumen?desde&hasta: solo conteos. 400 / 404. */
+export function obtenerResumenReporte(id: number, consulta: string, signal?: AbortSignal) {
+  return apiGet<ResumenReporte>(`/proyectos/${id}/reporte/resumen?${consulta}`, { signal })
+}
+
+/** GET /api/proyectos/{id}/reporte?desde&hasta: el .xlsx (contiene cédulas: no se guarda en ninguna caché). 400 / 404 / 5xx. */
+export function descargarReporte(id: number, consulta: string, signal?: AbortSignal) {
+  return apiDescargar(`/proyectos/${id}/reporte?${consulta}`, { signal })
 }

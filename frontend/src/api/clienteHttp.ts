@@ -18,14 +18,46 @@ export function apiPost<TReq, TRes>(ruta: string, cuerpo: TReq, opciones?: Opcio
   return solicitar<TRes>('POST', ruta, JSON.stringify(cuerpo), opciones)
 }
 
+/**
+ * Accept de las descargas .xlsx (Z29, TAREA-22b): también ProblemDetails, para que ASP.NET escriba el cuerpo de un error.
+ */
+const ACEPTA_XLSX =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/problem+json, application/json;q=0.9'
+
+/**
+ * GET de un archivo (TAREA-22b): misma autenticación y mismos errores que apiGet. Con fetch el estado se revisa antes de
+ * leer el cuerpo, así que un error se lee como ProblemDetails (no como Blob). El blob no se guarda aquí.
+ */
+export async function apiDescargar(ruta: string, opciones?: OpcionesSolicitud): Promise<{ blob: Blob; encabezados: Headers }> {
+  const respuesta = await enviar('GET', ruta, undefined, ACEPTA_XLSX, opciones)
+  return { blob: await respuesta.blob(), encabezados: respuesta.headers }
+}
+
 async function solicitar<T>(
   metodo: string,
   ruta: string,
   cuerpoJson: string | undefined,
   opciones?: OpcionesSolicitud,
 ): Promise<T> {
+  const respuesta = await enviar(metodo, ruta, cuerpoJson, 'application/json', opciones)
+
+  if (respuesta.status === 204) {
+    return undefined as T
+  }
+
+  return (await respuesta.json()) as T
+}
+
+/** fetch con la identidad y la conversión de errores comunes; devuelve la respuesta exitosa sin leer su cuerpo. */
+async function enviar(
+  metodo: string,
+  ruta: string,
+  cuerpoJson: string | undefined,
+  aceptar: string,
+  opciones?: OpcionesSolicitud,
+): Promise<Response> {
   // La identidad (DevAuth hoy, MSAL en la Fase 7) se obtiene solo en src/auth.
-  const encabezados = new Headers({ Accept: 'application/json', ...(await obtenerEncabezadosAutenticacion()) })
+  const encabezados = new Headers({ Accept: aceptar, ...(await obtenerEncabezadosAutenticacion()) })
   if (cuerpoJson !== undefined) {
     encabezados.set('Content-Type', 'application/json')
   }
@@ -49,11 +81,7 @@ async function solicitar<T>(
     throw await crearErrorApi(respuesta)
   }
 
-  if (respuesta.status === 204) {
-    return undefined as T
-  }
-
-  return (await respuesta.json()) as T
+  return respuesta
 }
 
 const MIEMBROS_ESTANDAR = new Set(['type', 'title', 'status', 'detail', 'instance', 'errors'])

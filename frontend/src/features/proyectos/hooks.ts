@@ -7,6 +7,7 @@ import {
   clavesErp,
   clavesProyectos,
   crearProyecto,
+  descargarReporte,
   listarActividadesErp,
   listarCompaniasErp,
   listarDimensionesErp,
@@ -20,6 +21,7 @@ import {
   obtenerOpcionesFormulario,
   obtenerProyecto,
   obtenerReactivacion,
+  obtenerResumenReporte,
   previsualizarCabecera,
   previsualizarCambioEstado,
   previsualizarPersonal,
@@ -30,6 +32,7 @@ import {
   registrarReactivacion,
 } from './api'
 import { invalidarTrasEscritura } from './invalidacion'
+import { filasDesdeEncabezado, guardarArchivo, nombreDesdeContentDisposition } from './reporteExcel'
 import type {
   Catalogos,
   FiltroEmpleados,
@@ -269,5 +272,43 @@ export function useRegistrarReactivacion(id: number) {
   return useMutation({
     mutationFn: (solicitud: SolicitudReactivar) => registrarReactivacion(id, solicitud),
     onSuccess: () => invalidarTrasEscritura(queryClient), // TAREA-21b (Q5): también el cronograma
+  })
+}
+
+// ------------------------------------------------------------------ Reporte Excel (TAREA-22b)
+
+/** Resumen previo del reporte: solo con el diálogo abierto y el rango válido; sin reintentos (P10). */
+export function useResumenReporte(id: number, consulta: string | undefined, habilitada: boolean) {
+  return useQuery({
+    queryKey: clavesProyectos.reporteResumen(id, consulta ?? ''),
+    queryFn: ({ signal }) => obtenerResumenReporte(id, consulta!, signal),
+    enabled: habilitada && consulta !== undefined && id > 0,
+    retry: false,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export interface SolicitudDescargaReporte {
+  consulta: string
+  /** Nombre si Content-Disposition no se puede leer (p. ej. CORS en la Fase 7). */
+  nombrePorDefecto: string
+  /** Z28: cerrar el diálogo cancela la petición. */
+  signal: AbortSignal
+}
+
+/**
+ * Descarga el .xlsx (mutación: no se reintenta ni invalida nada, es de solo lectura). El blob (con cédulas) solo vive
+ * dentro de mutationFn: se guarda como archivo y se devuelve únicamente la cantidad de filas.
+ */
+export function useDescargarReporte(id: number) {
+  return useMutation({
+    mutationFn: async ({ consulta, nombrePorDefecto, signal }: SolicitudDescargaReporte) => {
+      const { blob, encabezados } = await descargarReporte(id, consulta, signal)
+      if (signal.aborted) {
+        throw new DOMException('Descarga cancelada', 'AbortError') // se cerró el diálogo: no se descarga nada
+      }
+      guardarArchivo(blob, nombreDesdeContentDisposition(encabezados.get('Content-Disposition'), nombrePorDefecto))
+      return { filas: filasDesdeEncabezado(encabezados.get('X-Reporte-Filas')) }
+    },
   })
 }

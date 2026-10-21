@@ -786,3 +786,14 @@ export interface ProyectoReactivado {
   estado: string
   version: number
 }
+
+/** GET /api/proyectos/{id}/reporte/resumen (TAREA-22-2): solo conteos, sin nombres ni cédulas. */
+export interface ResumenReporte {
+  filas: number
+  personas: number
+  personasSinCedula: number
+  personasSinCodigoInfor: number
+  filasSinActividad: number
+  /** Días-persona del reporte en que la persona también trabaja en otro proyecto (informativo). */
+  diasConOtroProyecto: number
+}

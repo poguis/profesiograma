@@ -9,7 +9,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { ArrowLeft20Regular, ArrowSwap20Regular, Edit20Regular, People20Regular } from '@fluentui/react-icons'
+import { ArrowLeft20Regular, ArrowSwap20Regular, DocumentTable20Regular, Edit20Regular, People20Regular } from '@fluentui/react-icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
@@ -21,10 +21,12 @@ import { AccionSegunConsulta } from '../components/AccionSegunConsulta'
 import { CabeceraProyecto } from '../components/CabeceraProyecto'
 import { DialogoCambioEstado } from '../components/DialogoCambioEstado'
 import { DialogoEditarCabecera } from '../components/DialogoEditarCabecera'
+import { DialogoExportarReporte } from '../components/DialogoExportarReporte'
 import { TablaHistorial } from '../components/TablaHistorial'
 import { TablaPersonal } from '../components/TablaPersonal'
 import { PestanaCronograma } from '../components/PestanaCronograma'
 import { useCabecera, useEdicionPersonal, useProyecto } from '../hooks'
+import { textoExito } from '../reporteExcel'
 import type { CabeceraEdicion, ProyectoDetalle } from '../tipos'
 import { versionDeEtapas } from '../tokenConcurrencia'
 import type { EstadoNavegacionProyectos } from './ListadoProyectos'
@@ -37,7 +39,7 @@ const useEstilos = makeStyles({
   panel: { overflowX: 'auto' },
 })
 
-type Dialogo = 'estado' | 'cabecera' | null
+type Dialogo = 'estado' | 'cabecera' | 'reporte' | null
 
 export function DetalleProyecto() {
   const estilos = useEstilos()
@@ -137,6 +139,10 @@ export function DetalleProyecto() {
                       Cambiar estado
                     </Button>
                   )}
+                  {/* TAREA-22b (Z17): en cualquier estado visible; el reporte es de solo lectura. */}
+                  <Button icon={<DocumentTable20Regular />} onClick={() => abrir('reporte')}>
+                    Exportar a Excel
+                  </Button>
                 </>
               }
             />
@@ -180,6 +186,24 @@ export function DetalleProyecto() {
                 onRecargar={async () => {
                   await recargar()
                   return queryClient.getQueryData<CabeceraEdicion>(clavesProyectos.cabecera(proyecto.id))
+                }}
+              />
+            )}
+            {dialogo === 'reporte' && (
+              <DialogoExportarReporte
+                proyecto={{
+                  id: proyecto.id,
+                  codigo: proyecto.codigo,
+                  nombre: proyecto.nombre,
+                  fechaInicio: proyecto.fechaInicio,
+                  fechaFin: proyecto.fechaFin,
+                }}
+                rutaListado={rutaListado}
+                onCerrar={() => setDialogo(null)}
+                onRealizado={(filas) => {
+                  // Z23: el aviso del detalle, sin cambiar de pestaña (a diferencia de alRealizar).
+                  setDialogo(null)
+                  setAvisoCambio(textoExito(filas))
                 }}
               />
             )}

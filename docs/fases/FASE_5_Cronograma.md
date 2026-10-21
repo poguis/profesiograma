@@ -338,6 +338,52 @@ Aquí el libro se descarga.
 - Los `<col width>` son los de la plantilla. ClosedXML suma un margen de 0,710625 al guardar y se descuenta.
 - Sin autor, correo ni los nombres definidos rotos. Una prueba compara la estructura con `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx`.
 - **Licencias:** ClosedXML es MIT; SixLabors.Fonts resuelve a **1.0.0**, que es Apache-2.0.
+- **Z7 validada (R1, 21/10/2026):** la regla número/texto quedó validada con los datos de desarrollo (`conteos-tipos.sql`).
+
+**Frontend (TAREA-22b, 21/10/2026):** `/proyectos/:id` → «Exportar a Excel» (acciones del encabezado, cualquier estado).
+- **Diálogo `DialogoExportarReporte`:**
+  - título «Exportar reporte a Excel · {código}» y el nombre;
+  - Desde y Hasta obligatorios, con `SelectorFecha`, que al abrir valen el inicio y el fin del proyecto y no tienen tope;
+  - aviso fijo «El archivo contiene cédulas. Manéjelo con cuidado.».
+  - Se monta solo al abrirlo: cada apertura empieza con el rango inicial, sin errores ni resultados anteriores.
+- **Validación (`reporteExcel.ts`):** los mismos textos que el backend; el error de formato del selector gana; `hasta < desde` va bajo Hasta.
+- **Resumen previo:** `useResumenReporte`, con la clave `['proyectos', 'reporte-resumen', id, consulta]`, así que se refresca con cualquier escritura del proyecto.
+  - `enabled` solo con el diálogo abierto y el rango válido; `retry: false`; `keepPreviousData`.
+  - Muestra «{filas} fila(s) · {personas} persona(s)» y solo los avisos con n > 0.
+  - Sin filas: «No hay asignaciones en el rango.» y «Descargar» deshabilitado.
+  - Si falla: `EstadoError`, «Reintentar» y «Descargar» deshabilitado.
+- **Descarga:** `useDescargarReporte`, una mutación que no invalida nada (es de solo lectura).
+  1. `apiDescargar` (`clienteHttp.ts`) usa la misma autenticación y los mismos errores que `apiGet`. Accept: xlsx, `application/problem+json` y `application/json;q=0.9`. Con `fetch`, un error se lee como ProblemDetails, no como Blob.
+  2. El nombre sale de `filename*` (UTF-8; si está mal codificado, se pasa al siguiente criterio), luego de `filename` y, si no hay, del nombre por defecto. Una ruta incluida se reduce al nombre.
+  3. Se guarda con un `<a download>` temporal; la URL se revoca a los ~1000 ms.
+  4. El blob solo vive dentro de `mutationFn`, que devuelve `{ filas }` (de `X-Reporte-Filas`).
+  - Sin `localStorage`, `sessionStorage` ni `console`.
+- **Errores de la descarga:**
+  - 400 bajo su selector;
+  - 404 «Proyecto no encontrado o sin acceso» con enlace al listado;
+  - 503, 5xx y red con «Reintentar». Hoy, con la base caída, llega un 500 (pendiente 55).
+- **Doble clic:** `enviandoRef` + `isPending`.
+- **Cancelación (Z28):** cerrar (Cancelar, Esc o la X), o desmontar el diálogo, cancela la petición con `AbortController`, sin error ni descarga.
+- **Éxito:** se cierra el diálogo y el detalle muestra «Reporte generado ({n} filas).», o «Reporte generado.» si no se pudo leer `X-Reporte-Filas`. No cambia de pestaña.
+- Sin botón en `/cronograma` (Z27).
+- **Fase 7 (pendiente 59):** si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`).
+
+| # | Decisión del frontend (21/10/2026) |
+|---|---|
+| Z17 | «Exportar a Excel» en las acciones del encabezado del detalle, en cualquier estado |
+| Z18 | Rango inicial = inicio y fin del proyecto; editable; sin tope |
+| Z19 | Resumen como query (`enabled`, `retry: false`, `keepPreviousData`, clave bajo `['proyectos']`); si falla, «Descargar» deshabilitado |
+| Z20 | Descarga como mutación que guarda el archivo y devuelve solo `{ filas }` |
+| Z21 | `apiDescargar` en `clienteHttp.ts` |
+| Z22 | Nombre: `filename*` → `filename` → por defecto; `decodeURIComponent` dentro de `try/catch` |
+| Z23 | Éxito con la MessageBar del detalle, sin cambiar de pestaña |
+| Z24 | Diálogo sin carga diferida propia (la página ya es diferida) |
+| Z25 | URL revocada ~1000 ms después del `click()`; el blob no se conserva |
+| Z26 | Textos del resumen |
+| Z27 | Sin botón en `/cronograma` |
+| Z28 | Cerrar durante la generación cancela la petición (`AbortController`) |
+| Z29 | Accept de la descarga con xlsx y ProblemDetails |
+
 
 | # | Decisión (20/10/2026) |
 |---|---|
