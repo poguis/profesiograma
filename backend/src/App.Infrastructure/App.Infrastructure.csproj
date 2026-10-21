@@ -3,11 +3,21 @@
     <ProjectReference Include="..\App.Application\App.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <!--
+      TAREA-22-2b: pin TEMPORAL de un paquete transitivo. System.Security.Cryptography.Pkcs 9.0.0–9.0.20 y 10.0.0–10.0.12
+      tienen los avisos GHSA-846f-f764-76mx (alto) y GHSA-2fmv-rv2c-59x7 (moderado); corregidos en 9.0.21 y 10.0.13.
+      Llega por Microsoft.Data.SqlClient (aquí y vía Microsoft.EntityFrameworkCore.SqlServer) y, en App.Api, por
+      Microsoft.Identity.Web (TokenCache). El código no lo usa directamente. Como dependencia directa de este proyecto,
+      la versión fluye a App.Api y a las pruebas.
+      Retirar cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web dependan de una versión corregida.
+    -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="App.Infrastructure.Tests" />

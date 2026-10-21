@@ -138,23 +138,24 @@ El original (l. 974) arma una fila por EKON + proyecto + día. Prevalece el trab
 |---|---|---|---|
 | 1 | EMPRESA | `Proyecto.CompaniaId` | |
 | 2 | EKON | `Empleado.CodigoEkon` | |
-| 3 | CEDULA | **Sin origen** | `Empleado.Cedula` siempre NULL (opción C). **D15 pendiente** |
+| 3 | CEDULA | `Empleado.Cedula` | **D15** (TAREA-22-1): se guarda en la alta puntual; texto tal cual |
 | 4 | NOMBRE | `Empleado.NombreCompleto` | |
-| 5 | FECHA | Fecha del día | El original enviaba el texto `d/m/yyyy`; la columna es texto |
+| 5 | FECHA | Fecha del día | Texto `d/M/yyyy` sin ceros a la izquierda, como el original (`Text(fecha, "d/m/yyyy")`) |
 | 6 | INGRESO DE JORNADA | `Proyecto.HoraEntrada` | `00:00:00` si el día es libre (novedad o descanso) |
-| 7 | INGRESO ALMUERZO | `Proyecto.RegresoAlmuerzo` | Así lo mapeaba el original. Almuerzo nulo: **D16 pendiente** |
-| 8 | SALIDA ALMUERZO | `Proyecto.SalidaAlmuerzo` | El original lo enviaba sin segundos. **D16 pendiente** |
-| 9 | SALIDA DE JORNADA | `Proyecto.HoraSalida` | Nocturno: la salida es menor que el ingreso; confirmar cómo lo lee Infor (pendiente) |
-| 10 | PROYECTO | `Proyecto.ProyectoErpId` | PLANTA/OFICINAS sin ProjectId: pendiente |
-| 11 | `ACTIVIDAD ` (con espacio) | Actividad vigente ese día | Si no hay, la del proyecto (original) |
+| 7 | INGRESO ALMUERZO | `Proyecto.RegresoAlmuerzo` | Así lo mapeaba el original. Almuerzo nulo → `00:00:00` (**D16**) |
+| 8 | SALIDA ALMUERZO | `Proyecto.SalidaAlmuerzo` | El original lo enviaba sin segundos. Almuerzo nulo → `00:00:00` (**D16**) |
+| 9 | SALIDA DE JORNADA | `Proyecto.HoraSalida` | Nocturno: tal cual, menor que el ingreso [SUPUESTO 54, hasta que Infor confirme] |
+| 10 | PROYECTO | `Proyecto.ProyectoErpId` | PLANTA/OFICINAS sin ProjectId: vacío [SUPUESTO 53] |
+| 11 | `ACTIVIDAD ` (con espacio) | Código (ACTIVITY_ID) de la actividad vigente ese día | Si no hay, la de mayor versión (el original usaba la de la cabecera) |
 | 12 | ESTADO | `TipoNovedad.EstadoReporte` / LIBRE (descanso) / LABORABLE | |
 | 13 | OBSERVACION | `TipoNovedad.ObservacionReporte` / "DESCANSO" / grupo | El original usaba `Upper(TipoNovedad)` |
-| 14 | `CARGO INFOR ` (con espacio) | `CargoInfor.CodigoInfor` | **D14 pendiente**: cargo por `Empleado.Puesto` (la clave de `CargoInfor`) o `CargoAsignado` |
+| 14 | `CARGO INFOR ` (con espacio) | `CargoInfor.CodigoInfor` | **D14**: el activo cuyo `Cargo` = `Empleado.Puesto` (el original usaba el cargo de la asignación con 3 valores fijos) |
 
-**Decisiones de la TAREA-22 (no implementadas):**
-- **D14:** origen de CARGO INFOR. (Recomiendo `Empleado.Puesto`.)
-- **D15:** CEDULA. (Recomiendo dejarla vacía o leerla de la API al exportar, sin guardarla.)
-- **D16:** almuerzo nulo en un día laborable. (Recomiendo `00:00:00`.)
+**Decisiones de la TAREA-22 (tomadas el 20/10/2026; implementadas en la 22-1 y la 22-2, ver §8):**
+- **D14:** CARGO INFOR por `Empleado.Puesto`.
+- **D15:** la cédula se guarda en `Empleado.Cedula` en la alta puntual (TAREA-22-1).
+- **D16:** almuerzo nulo en un día laborable → `00:00:00`.
+- El reporte es **por proyecto** (Z1), como el original, que exigía elegir un proyecto.
 
 ## 7. Vista (TAREA-21, frontend)
 `/cronograma` (carga diferida; entrada "Cronograma" en el menú lateral; la política Gestor la impone la API, un 403 se muestra con `EstadoError`). Código en `frontend/src/features/cronograma/`.
@@ -278,3 +279,80 @@ El original (l. 974) arma una fila por EKON + proyecto + día. Prevalece el trab
 | Q8 | Leyenda sin cambios |
 | Q9 | Enlace al cronograma general con el rango efectivo |
 
+## 8. Reporte Excel (TAREA-22-2, backend; 21/10/2026)
+**Origen:**
+- el botón «REPORTE» (`ControlMensualProyectos.pa.yaml` l. 974; bloque activo del `OnSelect` decodificado, l. 541–737);
+- el flujo `ReporteProyectosSIG` (`docs/origen/sharepoint/esquemas/ReporteProyectoSIG.json`): copiaba la plantilla, ejecutaba un Office Script (su código no está en el repo, pendiente 4) y enviaba el archivo por correo.
+
+Aquí el libro se descarga.
+
+**Contrato (política Gestor, visibilidad R1):**
+
+| Ruta | Respuesta |
+|---|---|
+| `GET /api/proyectos/{id:int}/reporte?desde&hasta` | 200 `.xlsx` (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`); 400 en su campo; 404 |
+| `GET /api/proyectos/{id:int}/reporte/resumen?desde&hasta` | 200 `{ filas, personas, personasSinCedula, personasSinCodigoInfor, filasSinActividad, diasConOtroProyecto }`; 400; 404 |
+
+- **Parámetros** (texto, `yyyy-MM-dd`, **obligatorios**, sin tope de días):
+  - «La fecha 'desde' es obligatoria.» (igual para 'hasta');
+  - «La fecha 'desde' debe tener el formato yyyy-MM-dd.» (igual para 'hasta');
+  - `hasta < desde` → 400 en `hasta`.
+- **404:** inexistente, eliminado o no visible. Como en el cronograma por proyecto, se comprueba antes que los parámetros.
+- **Rango:** el pedido se intersecta con [FechaInicio, FechaFin] del proyecto antes de consultar (mismo resultado, menos lectura).
+- **Archivo:** `Reporte_{CódigoProyecto}_{yyyyMMdd}_{yyyyMMdd}.xlsx`, con las fechas pedidas. Los caracteres que no son letra, dígito, `-`, `_` o `.` pasan a `_`.
+- **Encabezados de la respuesta:** `Content-Disposition` con `filename*` UTF-8, `Cache-Control: no-store` y `X-Reporte-Filas`.
+- **Sin filas:** 200, `X-Reporte-Filas: 0` y la tabla vacía (A1:N2).
+- **Log del endpoint:** Id del proyecto, Id del usuario, rango y cantidad de filas. Nunca nombres ni cédulas.
+
+**Reglas de fila (`ArmadoReporte`, Application, lógica pura):**
+- **Una fila por persona + día con asignación** en el proyecto, de cualquier rol (Z4).
+  - Una novedad sin asignación no genera fila.
+  - El día de un turno nocturno es el de la entrada (pendiente 50).
+- **Prioridad:**
+  1. novedad → LIBRE por novedad. Orden PERSONA > GENERAL > PROYECTO de este proyecto; la de Id mayor (D9); solo no anuladas, de cualquier origen (D11);
+  2. si no hay novedad y hay trabajo → LABORABLE;
+  3. si solo hay descanso → LIBRE por descanso.
+
+  Dentro del proyecto, el trabajo gana al descanso.
+- **Columnas:** las de la tabla de §6.
+  - En los días libres, las 4 horas van en `00:00:00`.
+  - ESTADO/OBSERVACION: `TipoNovedad.EstadoReporte`/`ObservacionReporte` con novedad; LIBRE/DESCANSO con descanso; LABORABLE/código del grupo con trabajo.
+- **ACTIVIDAD (Z6):** el código de la actividad (ACTIVITY_ID, como el original) vigente ese día (`ActividadVigente`).
+  - Si no hay vigente, la de mayor versión.
+  - Si no hay ninguna, vacío; cuenta en `filasSinActividad`.
+- **Tipos (Z7) [SUPUESTO mientras falte el Office Script]:**
+  - CEDULA, FECHA y ACTIVIDAD, texto;
+  - EMPRESA, EKON y PROYECTO, **número** solo si tienen únicamente dígitos, no empiezan en "0" y tienen 15 dígitos o menos; si no, texto;
+  - la cédula va tal como está en `Empleado.Cedula`.
+- **Orden (Z15):** EMPRESA, PROYECTO (ordinal, vacíos al final), NOMBRE (es-EC, sin distinguir mayúsculas), FECHA; desempate por EKON.
+- **CARGO INFOR (D14):** consulta (6) `ConsultaEmpleadosReporte`.
+  - `LEFT JOIN CargoInfor` activo con `Cargo = Empleado.Puesto`, por la collation de la base (sin `UPPER`).
+  - Sin código → vacío; cuenta en `personasSinCodigoInfor`.
+  - Es la única consulta del cronograma que lee `[Cedula]`.
+- **`diasConOtroProyecto`:** días-persona del reporte en que la persona también trabaja en otro proyecto. Sale de la consulta 1b con `SalvoProyectoId`; es informativo.
+
+**Libro (`EscritorReporteExcel`, Infrastructure, ClosedXML 0.105.1; Z8):**
+- Se arma en código y en memoria: no se carga ni se distribuye la plantilla.
+- Hoja `'PROYECTO '`, `Tabla1` con `TableStyleMedium2` y autofiltro, y los 14 encabezados exactos.
+- Formatos por columna: `@` en C, E y K; `[h]:mm:ss` (numFmtId 46, valores `TimeSpan`) en F–I.
+- Los `<col width>` son los de la plantilla. ClosedXML suma un margen de 0,710625 al guardar y se descuenta.
+- Sin autor, correo ni los nombres definidos rotos. Una prueba compara la estructura con `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx`.
+- **Licencias:** ClosedXML es MIT; SixLabors.Fonts resuelve a **1.0.0**, que es Apache-2.0.
+
+| # | Decisión (20/10/2026) |
+|---|---|
+| Z1 | Reporte por proyecto; sin reporte global ni filtros por departamento o persona |
+| Z2 | Sin tope de días ni parámetro nuevo; `desde` y `hasta` obligatorios |
+| Z3 | Sin filas → 200, tabla vacía y `X-Reporte-Filas: 0` |
+| Z4 | Una fila por EKON + día con asignación; dentro del proyecto el trabajo gana al descanso |
+| Z5 | Novedades PERSONA > GENERAL > PROYECTO, Id mayor; 4 horas en 00:00:00 en los días libres |
+| Z6 | ACTIVIDAD vigente; si no hay, la de mayor versión; si no hay ninguna, vacío |
+| Z7 | Número solo con dígitos, sin "0" inicial y ≤ 15 dígitos; si no, texto [SUPUESTO] |
+| Z8 | Libro armado en código |
+| Z9 | Endpoint de resumen (solo conteos) |
+| Z10–Z11 | Cédula (D15) y «completar cédulas»: TAREA-22-1 |
+| Z12 | 503 sin base: TAREA-22c |
+| Z13 | División 22-1 / 22-2 / 22b (frontend) / 22c |
+| Z14 | Nombre del archivo con las fechas pedidas |
+| Z15 | Orden de las filas |
+| Z16 | ClosedXML 0.105.1 solo en Infrastructure |

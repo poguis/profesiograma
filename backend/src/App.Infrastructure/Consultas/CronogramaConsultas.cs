@@ -1,5 +1,6 @@
 using System.Globalization;
 using App.Application.Cronograma;
+using App.Application.Cronograma.Reporte;
 using App.Application.Proyectos;
 using App.Domain.Catalogos;
 using App.Infrastructure.Persistencia;
@@ -54,6 +55,14 @@ internal sealed class CronogramaConsultas(ProfesiogramaDbContext db) : ICronogra
 
     public Task<RangoProyecto?> ObtenerRangoProyectoAsync(int proyectoId, int? propietarioUsuarioId, CancellationToken ct) =>
         ConsultaRangoProyecto(db, proyectoId, propietarioUsuarioId).FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<EmpleadoReporte>> ObtenerEmpleadosReporteAsync(IReadOnlyCollection<int> empleadoIds, CancellationToken ct) =>
+        empleadoIds.Count == 0
+            ? []
+            : (await ConsultaEmpleadosReporte(db, empleadoIds).ToListAsync(ct))
+                .Select(e => new EmpleadoReporte(e.Id, e.CodigoEkon, e.NombreCompleto, e.Cedula,
+                    string.IsNullOrWhiteSpace(e.CodigoInfor) ? null : e.CodigoInfor.Trim()))
+                .ToList();
 
     // ------------------------------------------------------------------ consultas
 
@@ -192,7 +201,36 @@ internal sealed class CronogramaConsultas(ProfesiogramaDbContext db) : ICronogra
             .Where(p => p.Id == proyectoId && !p.Eliminado && (propietarioUsuarioId == null || p.PropietarioUsuarioId == propietarioUsuarioId))
             .Select(p => new RangoProyecto(p.Id, p.FechaInicio, p.FechaFin));
 
+    /// <summary>
+    /// (6) TAREA-22-2, reporte Excel: datos de esas personas con su cédula y el código Infor de D14 (CargoInfor ACTIVO cuyo
+    /// Cargo = Empleado.Puesto). La comparación usa la collation de la base (Modern_Spanish_CI_AS, sin UPPER: el predicado
+    /// queda sobre la columna, que tiene el índice único UQ_CargoInfor_Cargo). Es la única consulta del cronograma con [Cedula].
+    /// </summary>
+    internal static IQueryable<FilaEmpleadoReporte> ConsultaEmpleadosReporte(ProfesiogramaDbContext db, IReadOnlyCollection<int> empleadoIds) =>
+        from e in db.Empleados.AsNoTracking()
+        where empleadoIds.Contains(e.Id)
+        join c in db.CargosInfor.AsNoTracking().Where(c => c.Activo) on e.Puesto equals c.Cargo into cargos
+        from c in cargos.DefaultIfEmpty()
+        select new FilaEmpleadoReporte
+        {
+            Id = e.Id,
+            CodigoEkon = e.CodigoEkon,
+            NombreCompleto = e.NombreCompleto,
+            Cedula = e.Cedula,
+            CodigoInfor = c == null ? null : c.CodigoInfor,
+        };
+
     // ------------------------------------------------------------------ filas (clases con init: traducibles por EF)
+
+    /// <summary>Sin ToString propio: es una clase (no un record), no imprime sus valores.</summary>
+    internal sealed class FilaEmpleadoReporte
+    {
+        public int Id { get; init; }
+        public string CodigoEkon { get; init; } = string.Empty;
+        public string NombreCompleto { get; init; } = string.Empty;
+        public string? Cedula { get; init; }
+        public string? CodigoInfor { get; init; }
+    }
 
     internal sealed class FilaDia
     {

@@ -1,4 +1,5 @@
 using App.Application.Cronograma;
+using App.Application.Cronograma.Reporte;
 using App.Application.Proyectos;
 using App.Domain.Catalogos;
 
@@ -89,4 +90,10 @@ internal sealed class CronogramaConsultasFalsas : ICronogramaConsultas
                         && (propietarioUsuarioId is null || PropietarioDe.GetValueOrDefault(proyectoId) == propietarioUsuarioId)
             ? r
             : null);
+
+    // TAREA-22-2 (reporte): datos de las personas (cédulas FICTICIAS).
+    public List<EmpleadoReporte> EmpleadosReporte { get; } = [];
+
+    public Task<IReadOnlyList<EmpleadoReporte>> ObtenerEmpleadosReporteAsync(IReadOnlyCollection<int> empleadoIds, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<EmpleadoReporte>>(EmpleadosReporte.Where(e => empleadoIds.Contains(e.Id)).ToList());
 }

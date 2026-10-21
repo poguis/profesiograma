@@ -1,5 +1,6 @@
 using App.Application.Catalogos;
 using App.Application.Cronograma;
+using App.Application.Cronograma.Reporte;
 using App.Application.Empleados;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
@@ -13,6 +14,7 @@ using App.Infrastructure.Persistencia.Auditoria;
 using App.Infrastructure.Persistencia.DatosPrueba;
 using App.Infrastructure.Persistencia.Empleados;
 using App.Infrastructure.Persistencia.Proyectos;
+using App.Infrastructure.Reportes;
 using App.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +52,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<IDatosReferenciaProyecto, DatosReferenciaProyecto>();
         services.AddScoped<IConsultaCrucesExternos, ConsultaCrucesExternos>();
         services.AddScoped<ICronogramaConsultas, CronogramaConsultas>(); // TAREA-20
+        services.AddSingleton<IEscritorReporteExcel, EscritorReporteExcel>(); // TAREA-22-2 (sin estado)
         services.AddScoped<IProyectoRepositorio, ProyectoRepositorio>();
         services.AddScoped<ITransaccionAsignaciones, TransaccionAsignaciones>();
         services.AddScoped<ICambioEstadoRepositorio, CambioEstadoRepositorio>();

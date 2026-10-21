@@ -48,6 +48,8 @@
 - El cliente deserializa solo a `EmpleadoJson` (campos permitidos) y nunca registra el cuerpo ni la URL.
 - El buscador no devuelve cédula ni correo.
 
+**Medido (sondeo M1 de la TAREA-22-1, solo agregados, 20/10/2026):** 1630 activos, todos con `cedula` como **texto**; largo de 8 a 10 (2 de 8 dígitos y 1628 de 10); 358 empiezan con "0"; sin vacíos ni repetidos. [PENDIENTE DE CONFIRMAR con RR. HH. las 2 cédulas de 8 dígitos.]
+
 **Cédula (D15, TAREA-22-1, 20/10/2026): se GUARDA solo en `Empleado.Cedula`** (para la columna CEDULA del reporte Excel de la TAREA-22-2). Nunca en un DTO, la caché, un log, un mensaje de excepción ni una respuesta de la API (salvo ese reporte).
 - **Lectura:** `EmpleadoJson.Cedula` con un convertidor TOLERANTE (`SoloTexto`), que nunca lanza:
   - texto → sin espacios extremos; vacío o solo espacios → null;

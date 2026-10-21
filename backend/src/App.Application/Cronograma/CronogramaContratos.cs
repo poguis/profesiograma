@@ -1,3 +1,4 @@
+using App.Application.Cronograma.Reporte;
 using App.Application.Proyectos;
 
 namespace App.Application.Cronograma;
@@ -100,4 +101,10 @@ public interface ICronogramaConsultas
 
     /// <summary>(5) Proyecto no eliminado y visible (R1); null si no existe o no es visible (404).</summary>
     Task<RangoProyecto?> ObtenerRangoProyectoAsync(int proyectoId, int? propietarioUsuarioId, CancellationToken ct);
+
+    /// <summary>
+    /// (6) TAREA-22-2, reporte Excel: código, nombre, cédula y código Infor (D14: CargoInfor activo cuyo Cargo = Puesto)
+    /// de esas personas. Es la ÚNICA consulta del cronograma que lee la cédula.
+    /// </summary>
+    Task<IReadOnlyList<EmpleadoReporte>> ObtenerEmpleadosReporteAsync(IReadOnlyCollection<int> empleadoIds, CancellationToken ct);
 }
