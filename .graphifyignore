@@ -1,0 +1,17 @@
+# Datos personales u origen sin depurar
+docs/origen/
+docs/fases/FASE_0_Inventario.md
+docs/fases/FASE_2_modelo_profesiograma.sql
+**/muestras/
+resultado-*.txt
+crear-proyecto-*.json
+
+# Pruebas manuales (decisión del proyecto)
+backend/tests/manual/
+
+# Artefactos
+**/bin/
+**/obj/
+frontend/node_modules/
+frontend/dist/
+graphify-out/

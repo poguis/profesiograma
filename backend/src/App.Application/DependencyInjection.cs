@@ -2,6 +2,7 @@ using App.Application.Cronograma;
 using App.Application.Cronograma.Reporte;
 using App.Application.Empleados;
 using App.Application.Erp;
+using App.Application.Novedades;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
@@ -37,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<CronogramaConsultaServicio>(); // TAREA-20
         services.AddScoped<CompletarCedulasServicio>(); // TAREA-22-1
         services.AddScoped<ReporteProyectoServicio>(); // TAREA-22-2
+        services.AddScoped<NovedadConsultaServicio>(); // TAREA-23-1
+        services.AddScoped<NovedadValidador>();
+        services.AddScoped<NovedadEscrituraServicio>();
+        services.AddScoped<OpcionesFormularioNovedad>();
         return services;
     }
 }

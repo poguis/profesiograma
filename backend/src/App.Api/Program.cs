@@ -27,6 +27,7 @@ app.MapProyectoEndpoints();
 app.MapErpEndpoints();
 app.MapCronogramaEndpoints(); // TAREA-20
 app.MapEmpleadoEndpoints();
+app.MapNovedadEndpoints(); // TAREA-23-1
 
 await app.SembrarDatosPruebaAsync();             // solo Development + DatosPrueba:SembrarAlIniciar
 
