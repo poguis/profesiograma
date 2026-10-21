@@ -1,3 +1,4 @@
+using App.Application.Comun;
 using App.Application.Seguridad;
 using App.Domain.Seguridad;
 using App.Infrastructure.Persistencia;
@@ -33,7 +34,7 @@ internal sealed class UsuarioProvisionamiento(
         {
             resultado = await ResolverEnBaseAsync(entraObjectId, emailNormalizado, nombreMostrar, ct);
         }
-        catch (DbUpdateException ex)
+        catch (DbUpdateException ex) when (ex.InnerException is not BaseDatosNoDisponibleException) // TAREA-22c: base caída → 503
         {
             // Dos peticiones simultáneas del mismo usuario nuevo: la segunda choca con UQ_Usuario_Email.
             logger.LogWarning(ex, "Conflicto al provisionar {Email}; se reintenta la lectura.", emailNormalizado);

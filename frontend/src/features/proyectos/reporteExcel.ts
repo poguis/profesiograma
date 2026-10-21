@@ -106,7 +106,7 @@ export function puedeDescargar(
   return rangoValido(validacion) && estadoResumen === 'listo' && (resumen?.filas ?? 0) > 0 && !enviando
 }
 
-/** «Reintentar» en la descarga: 503, red y también 5xx (hoy la base caída da 500, pendiente 55 / TAREA-22c). */
+/** «Reintentar» en la descarga: 503 (también la base caída, TAREA-22c), red y 5xx. */
 export function ofreceReintento(tipo: TipoErrorApi): boolean {
   return tipo === 'noDisponible' || tipo === 'red' || tipo === 'servidor'
 }

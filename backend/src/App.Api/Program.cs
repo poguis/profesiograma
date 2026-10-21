@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.IsDevelopment());
-builder.Services.AddErroresApi();                // ERP caído / registro ocupado → 503; cuerpo ilegible → 400
+builder.Services.AddErroresApi();                // ERP caído / registro ocupado / base caída → 503; cuerpo ilegible → 400
 builder.AddSeguridadProfesiograma();             // DevAuth / Entra ID + políticas Admin/Gestor
 
 var app = builder.Build();

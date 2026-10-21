@@ -19,6 +19,12 @@ public static class DependencyInjection
             throw new InvalidOperationException(
                 $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. Configúrela con user-secrets (ver README).");
 
+        // TAREA-22c: Connect Timeout corto para EF y el diagnóstico (si la cadena trae uno explícito, gana la cadena).
+        var segundos = configuration[CadenaConexion.ClaveTiempoEspera] is { } valor
+            ? int.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)
+            : CadenaConexion.TiempoEsperaPorDefecto;
+        connectionString = CadenaConexion.ConTiempoEspera(connectionString, segundos);
+
         services.AddSingleton<IDatabaseDiagnostics>(_ => new SqlDatabaseDiagnostics(connectionString));
         services.AddPersistencia(connectionString);   // [PASO 2] EF Core + auditoría + consultas + sembrador
         services.AddCatalogoErp(configuration, esDesarrollo);   // ERP: Http o Simulado (TAREA-11)

@@ -15,8 +15,8 @@ export function obtenerCronograma(consulta: string, signal?: AbortSignal) {
 }
 
 /**
- * GET /api/cronograma. Sin reintentos automáticos (P10): con la base caída cada intento tarda ~15 s (pendiente 55);
- * el usuario reintenta con el botón. Mientras llega el rango nuevo se conserva el anterior (sin parpadeo).
+ * GET /api/cronograma. Sin reintentos automáticos (P10): con la base caída cada intento espera la conexión (hasta ~5 s
+ * y luego 503, TAREA-22c); el usuario reintenta con el botón. Mientras llega el rango nuevo se conserva el anterior (sin parpadeo).
  */
 export function useCronograma(filtros: FiltrosCronograma) {
   const consulta = aConsultaApi(filtros)

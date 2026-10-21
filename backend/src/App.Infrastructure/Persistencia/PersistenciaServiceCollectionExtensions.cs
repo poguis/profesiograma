@@ -17,8 +17,10 @@ using App.Infrastructure.Persistencia.Proyectos;
 using App.Infrastructure.Reportes;
 using App.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace App.Infrastructure.Persistencia;
 
@@ -43,7 +45,10 @@ public static class PersistenciaServiceCollectionExtensions
                 sql.MigrationsHistoryTable("__EFMigrationsHistory", "dbo");
                 sql.CommandTimeout(60);
             });
-            opciones.AddInterceptors(sp.GetRequiredService<AuditoriaInterceptor>());
+            // TAREA-22c: base caída → BaseDatosNoDisponibleException (503 en la API).
+            opciones.AddInterceptors(sp.GetRequiredService<AuditoriaInterceptor>(), FalloBaseDatosInterceptor.Instancia);
+            // El evento ConnectionError de EF nombra la base y el servidor: solo en Debug (el 503 se registra en la API).
+            opciones.ConfigureWarnings(w => w.Log((RelationalEventId.ConnectionError, LogLevel.Debug)));
         });
 
         services.AddScoped<ICatalogoConsultas, CatalogoConsultas>();

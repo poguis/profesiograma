@@ -24,3 +24,28 @@ backend/tests/manual/tarea22-2/*.xlsx
 
 
 graphify-out/
+
+# Datos personales y material de origen
+docs/origen/
+docs/fases/FASE_0_Inventario.md
+docs/fases/FASE_2_modelo_profesiograma.sql
+docs/tareas/
+docs/PLANTILLA_REPORTE_PROYECTOS.xlsx
+
+# Pruebas manuales y archivos generados por el usuario
+backend/tests/manual/
+**/resultado-*.txt
+**/crear-proyecto-*.json
+**/*.xlsx
+**/*.csv
+
+# Secretos y compilados
+**/.env*
+**/*.pfx
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+
+# Ruido generado (opcional)
+backend/src/App.Infrastructure/Persistencia/Migraciones/

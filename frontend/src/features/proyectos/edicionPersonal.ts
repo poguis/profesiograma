@@ -574,6 +574,7 @@ export function mensajeExitoPersonal(version: number): string {
 export interface ErrorRespuestaPersonal {
   tipo: TipoErrorApi
   titulo: string
+  detalle?: string
   errores?: Record<string, string[]>
   extensiones?: Record<string, unknown>
 }

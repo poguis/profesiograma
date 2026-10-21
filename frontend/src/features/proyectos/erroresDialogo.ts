@@ -19,6 +19,8 @@ export interface ErroresDialogo<C extends string> {
 export interface ErrorRespuesta {
   tipo: TipoErrorApi
   titulo: string
+  /** `detail` del ProblemDetails: en los diálogos solo se muestra el del 503 (TAREA-22c). */
+  detalle?: string
   errores?: Record<string, string[]>
 }
 
@@ -64,6 +66,12 @@ export function interpretarErrorDialogo<C extends string>(
     case 'conflicto':
       return { ...sinErrores<C>(), generales: [error.titulo], ofrecerRecarga: true }
     case 'noDisponible':
+      // TAREA-22c: el detail dice si el registro pudo haberse guardado (base caída), así que también se muestra.
+      return {
+        ...sinErrores<C>(),
+        generales: [error.detalle ? `${error.titulo}: ${error.detalle}` : error.titulo],
+        ofrecerReintento: true,
+      }
     case 'red':
       return { ...sinErrores<C>(), generales: [error.titulo], ofrecerReintento: true }
     case 'noEncontrado':
