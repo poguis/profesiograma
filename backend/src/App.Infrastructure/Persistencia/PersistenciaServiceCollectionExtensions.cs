@@ -48,7 +48,11 @@ public static class PersistenciaServiceCollectionExtensions
             // TAREA-22c: base caída → BaseDatosNoDisponibleException (503 en la API).
             opciones.AddInterceptors(sp.GetRequiredService<AuditoriaInterceptor>(), FalloBaseDatosInterceptor.Instancia);
             // El evento ConnectionError de EF nombra la base y el servidor: solo en Debug (el 503 se registra en la API).
-            opciones.ConfigureWarnings(w => w.Log((RelationalEventId.ConnectionError, LogLevel.Debug)));
+            // TAREA-22c-b: QueryIterationFailed (10100) repetía la traza en cada petición con la base caída. Un error real de
+            // consulta sigue en el log: termina en 500 (ExceptionHandlerMiddleware lo registra) y el SQL en CommandError.
+            opciones.ConfigureWarnings(w => w.Log(
+                (RelationalEventId.ConnectionError, LogLevel.Debug),
+                (CoreEventId.QueryIterationFailed, LogLevel.Debug)));
         });
 
         services.AddScoped<ICatalogoConsultas, CatalogoConsultas>();

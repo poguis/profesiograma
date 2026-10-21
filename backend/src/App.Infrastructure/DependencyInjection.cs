@@ -14,20 +14,29 @@ public static class DependencyInjection
     /// <param name="esDesarrollo">Entorno Development (permite ServiciosExternos:Modo = Simulado).</param>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, bool esDesarrollo)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionStringName);
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException(
-                $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. Configúrela con user-secrets (ver README).");
-
-        // TAREA-22c: Connect Timeout corto para EF y el diagnóstico (si la cadena trae uno explícito, gana la cadena).
-        var segundos = configuration[CadenaConexion.ClaveTiempoEspera] is { } valor
-            ? int.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)
-            : CadenaConexion.TiempoEsperaPorDefecto;
-        connectionString = CadenaConexion.ConTiempoEspera(connectionString, segundos);
+        var connectionString = CadenaConexionEfectiva(configuration);
 
         services.AddSingleton<IDatabaseDiagnostics>(_ => new SqlDatabaseDiagnostics(connectionString));
         services.AddPersistencia(connectionString);   // [PASO 2] EF Core + auditoría + consultas + sembrador
         services.AddCatalogoErp(configuration, esDesarrollo);   // ERP: Http o Simulado (TAREA-11)
         return services;
+    }
+
+    /// <summary>
+    /// Cadena que usan EF y el diagnóstico. TAREA-22c: Connect Timeout corto (BaseDatos:TiempoEsperaConexionSegundos, 5;
+    /// gana uno explícito de la cadena). TAREA-22c-b: "tcp:" si BaseDatos:ForzarTcp no es false (sin la clave, true).
+    /// </summary>
+    public static string CadenaConexionEfectiva(IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString(ConnectionStringName);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. Configúrela con user-secrets (ver README).");
+
+        var segundos = configuration[CadenaConexion.ClaveTiempoEspera] is { } valor
+            ? int.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)
+            : CadenaConexion.TiempoEsperaPorDefecto;
+        var forzarTcp = configuration[CadenaConexion.ClaveForzarTcp] is not { } texto || bool.Parse(texto);
+        return CadenaConexion.Ajustar(connectionString, segundos, forzarTcp);
     }
 }

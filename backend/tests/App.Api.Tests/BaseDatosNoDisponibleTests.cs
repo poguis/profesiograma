@@ -111,6 +111,19 @@ public sealed class BaseDatosNoDisponibleTests
         Assert.DoesNotContain(log.Mensajes, m => m.Contains("FICTICI", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task ExcepcionNoClasificada_SeSigueRegistrandoComoError()
+    {
+        // TAREA-22c-b: con QueryIterationFailed (10100) en Debug, un error real de consulta queda en el log por esta vía.
+        var log = new LogEnMemoria();
+        await using var sp = Servicios(log);
+
+        var r = await EnviarAsync(HttpMethods.Get, new InvalidOperationException("consulta rota de prueba"), sp);
+
+        Assert.Equal(StatusCodes.Status500InternalServerError, r.Estado);
+        Assert.Contains(log.Mensajes, m => m.StartsWith("Error:", StringComparison.Ordinal) && m.Contains("consulta rota de prueba", StringComparison.Ordinal));
+    }
+
     private sealed record Respuesta(int Estado, string? Titulo, string? Detalle);
 
     private static ServiceProvider Servicios(LogEnMemoria? log = null)
