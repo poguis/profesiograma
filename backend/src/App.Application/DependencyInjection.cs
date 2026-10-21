@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<NovedadValidador>();
         services.AddScoped<NovedadEscrituraServicio>();
         services.AddScoped<OpcionesFormularioNovedad>();
+        services.AddScoped<NovedadModificacionServicio>(); // TAREA-23-2
         return services;
     }
 }

@@ -62,6 +62,20 @@ public sealed class NovedadDominioTests
     }
 
     [Fact]
+    public void Resultantes_RangoMenosExcluidos_Ordenados()
+    {
+        var inicio = new DateOnly(2026, 11, 1);
+
+        Assert.Equal(5, DiasNovedad.Resultantes(inicio, inicio.AddDays(4), []).Count);
+        Assert.Equal([inicio, inicio.AddDays(2)],
+            DiasNovedad.Resultantes(inicio, inicio.AddDays(2), [inicio.AddDays(1), inicio.AddDays(1)]));
+        // Un excluido fuera del rango no cambia nada aquí (la validación lo rechaza aparte, P2).
+        Assert.Equal([inicio, inicio.AddDays(1)], DiasNovedad.Resultantes(inicio, inicio.AddDays(1), [inicio.AddDays(9)]));
+        Assert.Empty(DiasNovedad.Resultantes(inicio, inicio.AddDays(1), [inicio, inicio.AddDays(1)]));
+        Assert.Equal([inicio], DiasNovedad.Resultantes(inicio, inicio, [])); // inicio = fin
+    }
+
+    [Fact]
     public void Limites_MinimoYMaximo_SinDiasLanza()
     {
         var (inicio, fin) = DiasNovedad.Limites([new(2026, 10, 5), new(2026, 10, 1), new(2026, 10, 9)]);

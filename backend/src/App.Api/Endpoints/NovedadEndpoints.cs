@@ -52,6 +52,29 @@ public static class NovedadEndpoints
             };
         });
 
+        // TAREA-23-2: editar (N8) y anular (N10). 200 { id, version }; 400 (version, origen, campos, general); 403; 404;
+        // 409 (anulada, cambió, duplicado); 503 (registro ocupado o base caída).
+        novedades.MapPut("/{id:int}", async Task<Results<Ok<NovedadEditadaDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+            int id, EditarNovedadSolicitud solicitud, NovedadModificacionServicio servicio, CancellationToken ct) =>
+            Respuesta(await servicio.EditarAsync(id, solicitud, ct), "Los datos de la novedad no son válidos."));
+
+        novedades.MapPost("/{id:int}/anular", async Task<Results<Ok<NovedadEditadaDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
+            int id, AnularNovedadSolicitud solicitud, NovedadModificacionServicio servicio, CancellationToken ct) =>
+            Respuesta(await servicio.AnularAsync(id, solicitud, ct), "Los datos de la anulación no son válidos."));
+
         return app;
     }
+
+    private static Results<Ok<NovedadEditadaDto>, ValidationProblem, NotFound, ProblemHttpResult> Respuesta(
+        ResultadoModificacionNovedad r, string tituloInvalido) => r.Estado switch
+    {
+        EstadoModificacionNovedad.Hecho => TypedResults.Ok(r.Hecho!),
+        EstadoModificacionNovedad.Invalido => TypedResults.ValidationProblem(r.Errores!, title: tituloInvalido),
+        EstadoModificacionNovedad.NoEncontrada => TypedResults.NotFound(),
+        EstadoModificacionNovedad.Prohibido => TypedResults.Problem(title: PermisosNovedad.MensajeSinPermiso, statusCode: StatusCodes.Status403Forbidden),
+        EstadoModificacionNovedad.Duplicado => TypedResults.Problem(
+            title: ResultadoCrearNovedad.MensajeDuplicado, statusCode: StatusCodes.Status409Conflict,
+            extensions: r.CodigoDuplicado is { } codigo ? new Dictionary<string, object?> { ["codigo"] = codigo } : null),
+        _ => TypedResults.Problem(title: r.MensajeConflicto, statusCode: StatusCodes.Status409Conflict),
+    };
 }

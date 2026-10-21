@@ -33,6 +33,10 @@ public sealed class NovedadValidador(
     public static readonly string MensajeMaxDias = $"La novedad no puede superar {DiasNovedad.MaxDias} días.";
     public static readonly string MensajeObservacionLarga = $"La observación no puede superar {LargoObservacion} caracteres.";
 
+    public const string MensajeExcluidosFuera = "Los días excluidos deben estar dentro del rango.";
+    public const string MensajeSinDias = "La novedad debe tener al menos 1 día.";
+    public const string MensajeSinCambios = "No hay cambios para registrar.";
+
     public static string MensajeTipoNoAplica(string aplicacion) => $"El tipo de novedad no aplica a {aplicacion}.";
 
     public static string MensajeNoCorresponde(string aplicacion) => $"No corresponde en una novedad {aplicacion}.";
@@ -159,5 +163,91 @@ public sealed class NovedadValidador(
         return new Validacion(
             new NovedadValidada(aplicacionId!.Value, tipo!, empleado, s.ProyectoId, s.FechaInicio!.Value, s.FechaFin!.Value, observacion, cedulas),
             e);
+    }
+
+    /// <summary>
+    /// TAREA-23-2: campos de la edición (N8) sobre la novedad guardada. Tipo con RN16 de la aplicación GUARDADA; fechas
+    /// obligatorias, fin ≥ inicio, rango ≤ 366; días excluidos dentro del rango (P2, los repetidos se ignoran) y al
+    /// menos 1 día resultante; observación recortada ≤ 500 (null o vacía la borra, P1); sin cambios → 400 `general` (P3).
+    /// No consulta la API de empleados (el sujeto es inmutable).
+    /// </summary>
+    public async Task<(EdicionValidada? Valida, IReadOnlyDictionary<string, string[]> Errores)> ValidarEdicionAsync(
+        NovedadParaModificar guardada, EditarNovedadSolicitud s, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(guardada);
+        ArgumentNullException.ThrowIfNull(s);
+        var e = new Dictionary<string, string[]>();
+
+        TipoNovedadRef? tipo = null;
+        var codigoTipo = LectorParametros.Normalizar(s.TipoNovedad);
+        if (codigoTipo is null)
+        {
+            e["tipoNovedad"] = [MensajeTipoObligatorio];
+        }
+        else
+        {
+            tipo = (await consultas.ObtenerTiposAsync(ct))
+                .FirstOrDefault(t => string.Equals(t.Codigo, codigoTipo, StringComparison.OrdinalIgnoreCase));
+            if (tipo is null)
+            {
+                e["tipoNovedad"] = [MensajeTipoInvalido];
+            }
+            else if (!tipo.EsElegible(guardada.AplicacionId))
+            {
+                e["tipoNovedad"] = [MensajeTipoNoAplica(AplicacionNovedad.Codigo(guardada.AplicacionId))];
+            }
+        }
+
+        IReadOnlyList<DateOnly> dias = [];
+        if (s.FechaInicio is null)
+        {
+            e["fechaInicio"] = [MensajeInicioObligatorio];
+        }
+
+        if (s.FechaFin is null)
+        {
+            e["fechaFin"] = [MensajeFinObligatorio];
+        }
+        else if (s.FechaInicio is DateOnly inicio && s.FechaFin is DateOnly fin)
+        {
+            if (fin < inicio)
+            {
+                e["fechaFin"] = [MensajeFinMenor];
+            }
+            else if (DiasNovedad.Contar(inicio, fin) > DiasNovedad.MaxDias)
+            {
+                e["fechaFin"] = [MensajeMaxDias];
+            }
+            else
+            {
+                var excluidos = (s.DiasExcluidos ?? []).Distinct().ToList();
+                if (excluidos.Any(d => d < inicio || d > fin))
+                {
+                    e["diasExcluidos"] = [MensajeExcluidosFuera];
+                }
+                else if ((dias = DiasNovedad.Resultantes(inicio, fin, excluidos)).Count == 0)
+                {
+                    e["diasExcluidos"] = [MensajeSinDias];
+                }
+            }
+        }
+
+        var observacion = LectorParametros.Normalizar(s.Observacion);
+        if (observacion is { Length: > LargoObservacion })
+        {
+            e["observacion"] = [MensajeObservacionLarga];
+        }
+
+        if (e.Count > 0)
+        {
+            return (null, e);
+        }
+
+        if (tipo!.Id == guardada.TipoNovedadId && dias.SequenceEqual(guardada.Dias) && observacion == guardada.Observacion)
+        {
+            return (null, new Dictionary<string, string[]> { ["general"] = [MensajeSinCambios] });
+        }
+
+        return (new EdicionValidada(tipo, dias, observacion), e);
     }
 }

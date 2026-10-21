@@ -74,6 +74,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<ICompletarCedulasRepositorio, CompletarCedulasRepositorio>(); // TAREA-22-1
         services.AddScoped<INovedadConsultas, NovedadConsultas>(); // TAREA-23-1
         services.AddScoped<INovedadRepositorio, NovedadRepositorio>();
+        services.AddScoped<INovedadModificacion, NovedadRepositorio>(); // TAREA-23-2
         services.AddScoped<DatosPruebaSembrador>();
 
         return services;

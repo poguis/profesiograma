@@ -82,6 +82,45 @@ public sealed class NovedadEndpointsTests
         Assert.Equal(0, r.Json.RootElement.GetProperty("tiposPorAplicacion").GetProperty("GENERAL").GetArrayLength());
     }
 
+    // ------------------------------------------------------------------ TAREA-23-2: editar y anular
+
+    private const string EdicionGeneral = """{ "version": "AAAAAAAAB9E=", "tipoNovedad": "FERIADO", "fechaInicio": "2032-01-01", "fechaFin": "2032-01-02", "diasExcluidos": [] }""";
+
+    [Fact]
+    public async Task Put_VersionIlegible_400_Y_SinSesion_401()
+    {
+        var ilegible = await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/5", EdicionGeneral.Replace("AAAAAAAAB9E=", "no-es-base64!", StringComparison.Ordinal));
+        var anonimo = await EnviarAsync("anonimo", HttpMethods.Put, "/api/novedades/5", EdicionGeneral);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, ilegible.Estado);
+        Assert.Equal(VersionNovedad.MensajeInvalida, ilegible.Json!.RootElement.GetProperty("errors").GetProperty("version")[0].GetString());
+        Assert.Equal(StatusCodes.Status401Unauthorized, anonimo.Estado);
+    }
+
+    [Fact]
+    public async Task Put_Y_Anular_GeneralDelAdmin_ComoGestor_403_Inexistente_404()
+    {
+        var put = await EnviarAsync("gestor", HttpMethods.Put, "/api/novedades/5", EdicionGeneral);
+        var anular = await EnviarAsync("gestor", HttpMethods.Post, "/api/novedades/5/anular", """{ "version": "AAAAAAAAB9E=", "motivo": "Prueba de anulación" }""");
+        var inexistente = await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/6", EdicionGeneral);
+
+        Assert.Equal(StatusCodes.Status403Forbidden, put.Estado);
+        Assert.Equal(PermisosNovedad.MensajeSinPermiso, put.Json!.RootElement.GetProperty("title").GetString());
+        Assert.Equal(StatusCodes.Status403Forbidden, anular.Estado);
+        Assert.Equal(StatusCodes.Status404NotFound, inexistente.Estado);
+    }
+
+    [Fact]
+    public async Task Put_Y_Anular_ComoAdmin_200ConVersionNueva()
+    {
+        var put = await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/5", EdicionGeneral);
+        var anular = await EnviarAsync("admin", HttpMethods.Post, "/api/novedades/5/anular", """{ "version": "AAAAAAAAB9E=", "motivo": "Prueba de anulación" }""");
+
+        Assert.Equal(StatusCodes.Status200OK, put.Estado);
+        Assert.Equal("AAAAAAAAB9I=", put.Json!.RootElement.GetProperty("version").GetString());
+        Assert.Equal((200, 5), (anular.Estado, anular.Json!.RootElement.GetProperty("id").GetInt32()));
+    }
+
     // ------------------------------------------------------------------ pipeline en memoria
 
     private sealed record Respuesta(int Estado, JsonDocument? Json, HttpContext Contexto);
@@ -115,6 +154,8 @@ public sealed class NovedadEndpointsTests
         builder.Services.AddScoped<NovedadValidador>();
         builder.Services.AddScoped<NovedadEscrituraServicio>();
         builder.Services.AddScoped<OpcionesFormularioNovedad>();
+        builder.Services.AddSingleton<INovedadModificacion, ModificacionFalsa>(); // TAREA-23-2
+        builder.Services.AddScoped<NovedadModificacionServicio>();
 
         await using var app = builder.Build();
         app.UseExceptionHandler();
@@ -201,6 +242,20 @@ public sealed class NovedadEndpointsTests
 
         public Task<NovedadCreadaDto> AgregarAsync(NuevaNovedad nueva, CancellationToken ct) =>
             Task.FromResult(new NovedadCreadaDto(77, nueva.Codigo, "AAAAAAAAB9E="));
+    }
+
+    /// <summary>Novedad 5: GENERAL FERIADO del admin (Id 1), 3 días, versión AAAAAAAAB9E=. Cualquier otra: no existe.</summary>
+    private sealed class ModificacionFalsa : INovedadModificacion
+    {
+        public Task<NovedadParaModificar?> ObtenerParaModificarAsync(int id, int? visibleParaUsuarioId, CancellationToken ct) =>
+            Task.FromResult(id == 5
+                ? new NovedadParaModificar(5, 3, 3, null, null, "PROFESIOGRAMA", true, null, false, 1, null,
+                    [new(2032, 1, 1), new(2032, 1, 2), new(2032, 1, 3)], [0, 0, 0, 0, 0, 0, 7, 209])
+                : null);
+
+        public Task<string> EditarAsync(EdicionNovedad edicion, CancellationToken ct) => Task.FromResult("AAAAAAAAB9I=");
+
+        public Task<string> AnularAsync(AnulacionNovedad anulacion, CancellationToken ct) => Task.FromResult("AAAAAAAAB9M=");
     }
 
     private sealed class TransaccionFalsa : ITransaccionAsignaciones

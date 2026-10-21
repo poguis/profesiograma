@@ -1,4 +1,5 @@
 using App.Application.Novedades;
+using App.Application.Proyectos.Estados;
 using App.Domain.Catalogos;
 using App.Domain.Novedades;
 using App.Infrastructure.Consultas;
@@ -12,7 +13,7 @@ namespace App.Infrastructure.Persistencia.Novedades;
 /// persona (con cédula, D15) comparte el applock con todas las escrituras de Empleado, y el duplicado (N7) se busca sin
 /// carrera. Auditoría: AuditoriaInterceptor. DetalleOrigenJson y OrigenArea quedan en null (origen PROFESIOGRAMA).
 /// </summary>
-internal sealed class NovedadRepositorio(ProfesiogramaDbContext db) : INovedadRepositorio
+internal sealed class NovedadRepositorio(ProfesiogramaDbContext db) : INovedadRepositorio, INovedadModificacion
 {
     public const int LargoRegistradoPorNombre = 200;
     public const int LargoRegistradoPorCorreo = 256;
@@ -72,7 +73,106 @@ internal sealed class NovedadRepositorio(ProfesiogramaDbContext db) : INovedadRe
         return new NovedadCreadaDto(novedad.Id, novedad.Codigo, Convert.ToBase64String(novedad.RowVer));
     }
 
+    // ------------------------------------------------------------------ edición y anulación (TAREA-23-2)
+
+    public Task<NovedadParaModificar?> ObtenerParaModificarAsync(int id, int? visibleParaUsuarioId, CancellationToken ct) =>
+        ConsultaDatosModificacion(db, id, visibleParaUsuarioId).FirstOrDefaultAsync(ct);
+
+    public async Task<string> EditarAsync(EdicionNovedad edicion, CancellationToken ct)
+    {
+        var novedad = await ConsultaParaModificar(db, edicion.Id).FirstAsync(ct);
+        PrepararEdicion(db, novedad, edicion);
+        await GuardarAsync(ct);
+        return Convert.ToBase64String(novedad.RowVer); // A2: el RowVer que EF leyó tras el UPDATE (antes del commit)
+    }
+
+    public async Task<string> AnularAsync(AnulacionNovedad anulacion, CancellationToken ct)
+    {
+        var novedad = await ConsultaParaModificar(db, anulacion.Id).FirstAsync(ct);
+        novedad.Anulada = true;
+        novedad.FechaAnulacion = anulacion.FechaAnulacionUtc;
+        novedad.AnuladaPorId = anulacion.AnuladaPorId;
+        novedad.MotivoAnulacion = anulacion.Motivo;
+        MarcarModificacion(db, novedad, anulacion.Token);
+        await GuardarAsync(ct);
+        return Convert.ToBase64String(novedad.RowVer);
+    }
+
+    /// <summary>
+    /// Diff de días: se quitan los que salen y se agregan los que entran; los que quedan no se tocan (conservan su
+    /// auditoría). Nunca se borra y se vuelve a insertar la misma fecha, así que UQ_NovedadDia no choca. FechaInicio y
+    /// FechaFin = mínimo y máximo de los días. Todo va en el MISMO SaveChanges que el UPDATE de la novedad (R1).
+    /// </summary>
+    internal static void PrepararEdicion(ProfesiogramaDbContext db, Novedad novedad, EdicionNovedad edicion)
+    {
+        var (inicio, fin) = DiasNovedad.Limites(edicion.Dias);
+        novedad.TipoNovedadId = edicion.TipoNovedadId;
+        novedad.FechaInicio = inicio;
+        novedad.FechaFin = fin;
+        novedad.Observacion = edicion.Observacion;
+
+        var nuevos = edicion.Dias.ToHashSet();
+        foreach (var dia in novedad.Dias.Where(d => !nuevos.Contains(d.Fecha)).ToList())
+        {
+            db.NovedadDias.Remove(dia);
+        }
+
+        var actuales = novedad.Dias.Where(d => db.Entry(d).State != EntityState.Deleted).Select(d => d.Fecha).ToHashSet();
+        foreach (var fecha in edicion.Dias.Where(f => !actuales.Contains(f)))
+        {
+            novedad.Dias.Add(new NovedadDia { Fecha = fecha });
+        }
+
+        MarcarModificacion(db, novedad, edicion.Token);
+    }
+
+    /// <summary>
+    /// R1: el token del cliente es el OriginalValue de RowVer (WHERE RowVer = token: si otro cambió la novedad, 0 filas →
+    /// 409) y FechaModificacion queda marcada aunque no cambie de valor (dos ediciones en el mismo segundo, o una que
+    /// solo cambia días): así siempre hay UPDATE de Novedad y su rowversion cambia.
+    /// </summary>
+    internal static void MarcarModificacion(ProfesiogramaDbContext db, Novedad novedad, byte[] token)
+    {
+        var entrada = db.Entry(novedad);
+        entrada.Property(n => n.RowVer).OriginalValue = token;
+        entrada.Property(n => n.FechaModificacion).IsModified = true;
+    }
+
+    private async Task GuardarAsync(CancellationToken ct)
+    {
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new ConflictoConcurrenciaException("La novedad fue modificada por otro proceso.", ex);
+        }
+    }
+
     // ------------------------------------------------------------------ consultas (internal: pruebas de traducción con ToQueryString)
+
+    /// <summary>Novedad CON seguimiento y sus días, para editar o anular (la visibilidad ya se comprobó).</summary>
+    internal static IQueryable<Novedad> ConsultaParaModificar(ProfesiogramaDbContext db, int novedadId) =>
+        db.Novedades.Include(n => n.Dias).Where(n => n.Id == novedadId);
+
+    /// <summary>Datos para decidir la edición o la anulación (sin seguimiento; visible según PermisosNovedad.VisiblePara).</summary>
+    internal static IQueryable<NovedadParaModificar> ConsultaDatosModificacion(ProfesiogramaDbContext db, int novedadId, int? visibleParaUsuarioId) =>
+        NovedadConsultas.Visibles(db, visibleParaUsuarioId).Where(n => n.Id == novedadId)
+            .Select(n => new NovedadParaModificar(
+                n.Id,
+                n.TipoAplicacionNovedadId,
+                n.TipoNovedadId,
+                n.EmpleadoId,
+                n.ProyectoId,
+                n.OrigenNovedad.Codigo,
+                n.OrigenNovedad.EsEditable,
+                n.Proyecto != null ? n.Proyecto.PropietarioUsuarioId : null,
+                n.Anulada,
+                n.CreadoPorId,
+                n.Observacion,
+                n.Dias.OrderBy(d => d.Fecha).Select(d => d.Fecha).ToList(),
+                n.RowVer));
 
     /// <summary>
     /// N7: novedad NO anulada con el mismo tipo de aplicación, el mismo tipo de novedad, el mismo sujeto (empleado o
@@ -82,8 +182,22 @@ internal sealed class NovedadRepositorio(ProfesiogramaDbContext db) : INovedadRe
     {
         var novedades = db.Novedades.AsNoTracking().Where(n => !n.Anulada
             && n.TipoAplicacionNovedadId == c.AplicacionId
-            && n.TipoNovedadId == c.TipoNovedadId
-            && n.Dias.Any(d => d.Fecha >= c.Desde && d.Fecha <= c.Hasta));
+            && n.TipoNovedadId == c.TipoNovedadId);
+
+        // Creación: un día en el rango. Edición (TAREA-23-2): un día de los resultantes (el rango acota el índice).
+        if (c.Dias is { } dias)
+        {
+            novedades = novedades.Where(n => n.Dias.Any(d => d.Fecha >= c.Desde && d.Fecha <= c.Hasta && dias.Contains(d.Fecha)));
+        }
+        else
+        {
+            novedades = novedades.Where(n => n.Dias.Any(d => d.Fecha >= c.Desde && d.Fecha <= c.Hasta));
+        }
+
+        if (c.ExcluirNovedadId is int propia)
+        {
+            novedades = novedades.Where(n => n.Id != propia);
+        }
 
         if (c.EmpleadoId is int empleadoId)
         {

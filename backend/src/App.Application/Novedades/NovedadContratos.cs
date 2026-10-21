@@ -180,8 +180,12 @@ public sealed record NuevaNovedad(
     NovedadValidada Datos, string Codigo, Guid Uid, IReadOnlyList<DateOnly> Dias,
     string? RegistradoPorNombre, string? RegistradoPorCorreo);
 
-/// <summary>N7: mismo sujeto, misma aplicación, mismo tipo y al menos un día en el rango.</summary>
-public sealed record CriterioDuplicado(byte AplicacionId, byte TipoNovedadId, int? EmpleadoId, int? ProyectoId, DateOnly Desde, DateOnly Hasta);
+/// <summary>
+/// N7: mismo sujeto, misma aplicación, mismo tipo y al menos un día en común. Creación: días = rango completo [Desde, Hasta].
+/// Edición (TAREA-23-2): <paramref name="Dias"/> = días resultantes (con huecos) y <paramref name="ExcluirNovedadId"/> = la propia.
+/// </summary>
+public sealed record CriterioDuplicado(byte AplicacionId, byte TipoNovedadId, int? EmpleadoId, int? ProyectoId, DateOnly Desde, DateOnly Hasta,
+    IReadOnlyCollection<DateOnly>? Dias = null, int? ExcluirNovedadId = null);
 
 /// <summary>Novedad existente que duplica; Visible = la ve quien registra (R6: solo entonces se informa su código).</summary>
 public sealed record DuplicadoNovedad(string Codigo, bool Visible);

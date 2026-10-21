@@ -4,8 +4,8 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 
 | Subtarea | Alcance | Estado |
 |---|---|---|
-| 23-1 | Lectura, opciones y **creación** | Implementada (21/10/2026), pendiente de la verificación del usuario |
-| 23-2 | Edición y anulación (`RowVer`, N3, N8–N10) | Siguiente |
+| 23-1 | Lectura, opciones y **creación** | ✅ Verificada por el usuario (21/10/2026, 22/22 en la segunda corrida) |
+| 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | Implementada (21/10/2026), pendiente de la verificación del usuario |
 | 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, fuente simulada y endpoint Admin | Pendiente |
 | 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) |
 | TAREA-24 | Frontend | Pendiente |
@@ -77,3 +77,40 @@ La API de empleados y la base se consultan **solo si el resto es válido**: un 4
 ## 6. Datos de desarrollo y pruebas
 - Consultas con prueba `ToQueryString` (`NovedadSqlTests`): listado (gestor y admin), detalle, días, tipos, proyecto elegible, duplicado (PERSONA, PROYECTO, GENERAL), visibilidad del duplicado y código/Uid.
 - Script manual: `backend/tests/manual/tarea23-1/` (`novedades.cmd`, 14 casos con `CONTROL … OK|FALLA`, `CORRIDA` para repetir sin 409).
+
+## 7. Edición y anulación (TAREA-23-2)
+### 7.1 Contratos (política Gestor)
+| Ruta | Request → Response | Errores |
+|---|---|---|
+| `PUT /api/novedades/{id:int}` | `{ version, tipoNovedad (código), fechaInicio, fechaFin, diasExcluidos[], observacion? }` → 200 `{ id, version }` | 400 (`version`, `origen`, campos, `diasExcluidos`, `general`), 403, 404, 409 (anulada, cambió, duplicado), 503 |
+| `POST /api/novedades/{id:int}/anular` | `{ version, motivo }` → 200 `{ id, version }` | 400 (`version`, `origen`, `motivo`), 403, 404, 409 (ya anulada, cambió), 503 |
+
+`version` = `RowVer` en Base64 (8 bytes). La respuesta trae la versión **nueva**, leída por EF tras el UPDATE y antes del commit (A2); el servicio no vuelve a la base después del commit. Para ver los días, el cliente pide `GET /api/novedades/{id}`.
+
+### 7.2 Orden de errores (H5)
+`version` ausente o ilegible (400) → no existe o no visible (404) → origen no editable (400 `origen`) → sin permiso (403, N3 con `PermisosNovedad.PuedeModificar`) → anulada (409) → versión distinta (409) → campos (400) → dentro de `ITransaccionAsignaciones`: anulada y versión otra vez (409), duplicado (409, solo al editar) → escritura (otro cambio entre medio → 409).
+
+### 7.3 Reglas y mensajes
+| Tema | Regla |
+|---|---|
+| `version` | Falta: «Falta la versión de la novedad; vuelve a cargarla.»; ilegible o de otro largo: «La versión de la novedad no es válida; vuelve a cargarla.» (400, nunca 500); distinta: 409 «La novedad cambió; vuelve a cargarla.» |
+| Anulada | Editar: 409 «La novedad está anulada.»; anular otra vez: 409 «La novedad ya está anulada.» |
+| Origen | 400 `origen` «Las novedades de PERMISOS_MEDICOS son de solo lectura.» |
+| N8 | Aplicación y sujeto inmutables. Editables: tipo (RN16 con la aplicación **guardada**), rango (obligatorio, fin ≥ inicio, ≤ 366 días; inicio = fin permitido), días excluidos y observación |
+| `diasExcluidos` | Repetidos se ignoran; fuera del rango: 400 «Los días excluidos deben estar dentro del rango.» (P2); sin días: 400 «La novedad debe tener al menos 1 día.». FechaInicio/FechaFin guardadas = mínimo y máximo de los días resultantes |
+| `observacion` | Recortada, ≤ 500; null o vacía la **borra** (P1: el PUT reemplaza) |
+| Sin cambios | Mismo tipo, mismos días y misma observación: 400 `general` «No hay cambios para registrar.» (P3) |
+| N7 en la edición | Duplicado con los días **resultantes** (con huecos) y excluyendo la propia novedad; 409 con el código solo si es visible (R6) |
+| N10 | `motivo` 5–500, recortado: «El motivo debe tener entre 5 y 500 caracteres.». Irreversible. Guarda `FechaAnulacion` (UTC truncada a segundos), `AnuladaPorId` y `MotivoAnulacion`. También dentro de `ITransaccionAsignaciones` (P4) |
+| Empleados | La edición no llama a la API de empleados (el sujeto es inmutable): sin 503 por el ERP |
+
+### 7.4 Escritura: diff de días y R1/R2/A5
+- **Diff de días** (una sola lectura **con seguimiento** de la novedad y sus días dentro de la transacción): se quitan (`Remove`) los días que salen y se agregan los que entran; los que quedan no se tocan (conservan su auditoría). Nunca se borra y se vuelve a insertar la misma fecha, así que `UQ_NovedadDia` no choca; la cascada de `FK_NovedadDia_Novedad` no interviene.
+- **R1:** en el **mismo** `SaveChanges` que los días, `Property(RowVer).OriginalValue = token del cliente` (`WHERE RowVer = token`: si otro la cambió, 0 filas → `DbUpdateConcurrencyException` → 409) y `Property(FechaModificacion).IsModified = true`. Sin esto, una edición que solo cambia días (o dos en el mismo segundo, porque `AuditoriaInterceptor` trunca a segundos) no emitiría UPDATE de `Novedad` y su `rowversion` no cambiaría.
+- **R2/A5:** que el `rowversion` cambie solo se puede probar contra SQL Server: caso e04/e05 de `tarea23-2/edicion.cmd` (dos pestañas que solo cambian días: la segunda recibe 409; sin R1 daría 200). Las pruebas con dobles cubren el flujo 400/409, y una prueba sin base verifica el estado del `ChangeTracker` (FechaModificacion marcada, OriginalValue de RowVer, días Deleted/Added).
+- **A3:** EF 10 traduce `dias.Contains(d.Fecha)` a `IN (@dias1, …)` con un parámetro por valor (relleno hasta 400 con 366 días), lejos del límite de 2100 de SQL Server: no hizo falta el plan B.
+
+### 7.5 Nota para la TAREA-24 (A4)
+- Al acortar el rango, quitar de `diasExcluidos` los días que queden fuera (P2 responde 400).
+- Tras editar o anular, invalidar: el detalle y el listado de novedades, el cronograma general y el del proyecto (las dos vistas) y `reporteResumen`.
+- Enviar siempre la `version` con que se abrió el formulario (patrón de la 19b2) y, con 409, ofrecer «Recargar».

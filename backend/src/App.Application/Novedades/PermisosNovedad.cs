@@ -54,7 +54,7 @@ public static class PermisosNovedad
     {
         if (!n.OrigenEditable)
         {
-            return (false, $"Las novedades de {n.OrigenCodigo} son de solo lectura.");
+            return (false, MensajeSoloLectura(n.OrigenCodigo));
         }
 
         if (n.Anulada)
@@ -62,15 +62,24 @@ public static class PermisosNovedad
             return (false, MensajeAnulada);
         }
 
-        var puede = usuario.TieneRol(RolesApp.Admin) || n.AplicacionId switch
+        return PuedeModificar(usuario, n.AplicacionId, n.CreadoPorId, n.PropietarioProyectoId) ? (true, null) : (false, MensajeSinPermiso);
+    }
+
+    /// <summary>
+    /// N3, solo el permiso (sin origen ni anulación): Admin; PERSONA el creador; PROYECTO el propietario del proyecto;
+    /// GENERAL quien puede registrar GENERAL. La edición y la anulación (TAREA-23-2) lo usan para el 403.
+    /// </summary>
+    public static bool PuedeModificar(IUsuarioActual usuario, byte aplicacionId, int creadoPorId, int? propietarioProyectoId) =>
+        usuario.TieneRol(RolesApp.Admin) || aplicacionId switch
         {
-            CatalogoIds.TipoAplicacionNovedad.Persona => usuario.UsuarioId == n.CreadoPorId,
-            CatalogoIds.TipoAplicacionNovedad.Proyecto => usuario.UsuarioId is int u && u == n.PropietarioProyectoId,
+            CatalogoIds.TipoAplicacionNovedad.Persona => usuario.UsuarioId == creadoPorId,
+            CatalogoIds.TipoAplicacionNovedad.Proyecto => usuario.UsuarioId is int u && u == propietarioProyectoId,
             CatalogoIds.TipoAplicacionNovedad.General => PuedeRegistrarGeneral(usuario),
             _ => false,
         };
-        return puede ? (true, null) : (false, MensajeSinPermiso);
-    }
+
+    /// <summary>Mensaje del origen no editable (400 en `origen` al editar o anular; motivo en el detalle).</summary>
+    public static string MensajeSoloLectura(string origenCodigo) => $"Las novedades de {origenCodigo} son de solo lectura.";
 
     /// <summary>El registrante (nombre y correo de quien registró, o de la app externa) solo lo ve Admin.</summary>
     public static bool VeRegistrante(IUsuarioActual usuario) => usuario.TieneRol(RolesApp.Admin);

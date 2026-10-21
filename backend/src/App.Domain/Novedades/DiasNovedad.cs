@@ -23,6 +23,16 @@ public static class DiasNovedad
         return Enumerable.Range(0, total).Select(inicio.AddDays).ToList();
     }
 
+    /// <summary>
+    /// TAREA-23-2: días del rango menos los excluidos, ordenados (puede quedar vacío). Los excluidos fuera del rango no
+    /// cambian nada aquí: la validación los rechaza aparte (P2).
+    /// </summary>
+    public static IReadOnlyList<DateOnly> Resultantes(DateOnly inicio, DateOnly fin, IEnumerable<DateOnly> excluidos)
+    {
+        var fuera = excluidos.ToHashSet();
+        return Generar(inicio, fin).Where(d => !fuera.Contains(d)).ToList();
+    }
+
     /// <summary>Mínimo y máximo de los días (FechaInicio y FechaFin de la novedad). Exige al menos 1 día.</summary>
     public static (DateOnly Inicio, DateOnly Fin) Limites(IEnumerable<DateOnly> dias)
     {
