@@ -193,7 +193,7 @@ El original (l. 974) arma una fila por EKON + proyecto + día. Prevalece el trab
   - 400 en su filtro, sin reintento (`hasta < desde` y fechas o Id ilegibles; el rango largo ya no es 400);
   - 403 con `EstadoError`;
   - 5xx o red con `EstadoError` y "Reintentar";
-  - **sin reintentos automáticos (P10)**, porque con la base caída cada intento espera la conexión (hasta ~5 s y luego 503 «Base de datos no disponible» desde la TAREA-22c; antes ~15 s y 500, pendiente 55);
+  - **sin reintentos automáticos (P10)**, porque con la base caída cada intento espera la conexión (~5–7 s y luego 503 «Base de datos no disponible» desde la TAREA-22c, verificada el 21/10/2026; antes ~15 s y 500, pendiente 55);
   - vacío: "No hay asignaciones en el rango.".
 
 **Colores de proyectos (P2, `coloresProyecto.ts`, código del usuario corregido el 19/10/2026):**
@@ -361,7 +361,7 @@ Aquí el libro se descarga.
 - **Errores de la descarga:**
   - 400 bajo su selector;
   - 404 «Proyecto no encontrado o sin acceso» con enlace al listado;
-  - 503, 5xx y red con «Reintentar». Con la base caída llega un 503 «Base de datos no disponible» en ~5 s (TAREA-22c; antes un 500, pendiente 55) y el diálogo muestra también su detail.
+  - 503, 5xx y red con «Reintentar». Con la base caída llega un 503 «Base de datos no disponible» en ~5–7 s (TAREA-22c; antes un 500, pendiente 55) y el diálogo muestra también su detail.
 - **Doble clic:** `enviandoRef` + `isPending`.
 - **Cancelación (Z28):** cerrar (Cancelar, Esc o la X), o desmontar el diálogo, cancela la petición con `AbortController`, sin error ni descarga.
 - **Éxito:** se cierra el diálogo y el detalle muestra «Reporte generado ({n} filas).», o «Reporte generado.» si no se pudo leer `X-Reporte-Filas`. No cambia de pestaña.
@@ -397,7 +397,7 @@ Aquí el libro se descarga.
 | Z8 | Libro armado en código |
 | Z9 | Endpoint de resumen (solo conteos) |
 | Z10–Z11 | Cédula (D15) y «completar cédulas»: TAREA-22-1 |
-| Z12 | 503 sin base: TAREA-22c (implementada el 21/10/2026; ver `00_ESTADO_ACTUAL.md` §7.1 regla 4) |
+| Z12 | 503 sin base: TAREA-22c y 22c-b (✅ verificadas por el usuario el 21/10/2026; ver `00_ESTADO_ACTUAL.md` §7.1 regla 4) |
 | Z13 | División 22-1 / 22-2 / 22b (frontend) / 22c |
 | Z14 | Nombre del archivo con las fechas pedidas |
 | Z15 | Orden de las filas |
