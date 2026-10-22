@@ -3,6 +3,7 @@ using App.Application.Cronograma;
 using App.Application.Cronograma.Reporte;
 using App.Application.Empleados;
 using App.Application.Novedades;
+using App.Application.Novedades.Sincronizacion;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
 using App.Application.Proyectos.Estados;
@@ -75,6 +76,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<INovedadConsultas, NovedadConsultas>(); // TAREA-23-1
         services.AddScoped<INovedadRepositorio, NovedadRepositorio>();
         services.AddScoped<INovedadModificacion, NovedadRepositorio>(); // TAREA-23-2
+        services.AddScoped<ISincronizacionNovedades, SincronizacionNovedadesRepositorio>(); // TAREA-23-3
         services.AddScoped<DatosPruebaSembrador>();
 
         return services;

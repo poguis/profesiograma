@@ -36,6 +36,8 @@ Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `d
 - La cédula (D15, TAREA-22-1) se guarda SOLO en `Empleado.Cedula`: nunca en un DTO, la caché de empleados, logs, mensajes
   de excepción ni respuestas de la API (salvo el reporte Excel de la TAREA-22-2). Viaja aparte en `CedulasEmpleados`, no
   en los `record` (su ToString la imprimiría). En pruebas y simulación, solo cédulas ficticias.
+- Los CSV exportados de la lista NOVEDADES ASISTENCIA contienen permisos médicos (datos de salud): nunca se agregan al
+  repo ni se leen en las tareas, y su ruta va solo en user-secrets (`NovedadesExternas:RutaArchivo`, TAREA-23-3).
 
 ## Archivos de referencia
 - `docs/referencia/` contiene archivos para FUSIONAR a mano (Program.cs, appsettings.json). No copiarlos tal cual.

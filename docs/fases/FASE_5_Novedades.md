@@ -5,9 +5,9 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 | Subtarea | Alcance | Estado |
 |---|---|---|
 | 23-1 | Lectura, opciones y **creación** | ✅ Verificada por el usuario (21/10/2026, 22/22 en la segunda corrida) |
-| 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | Implementada (21/10/2026), pendiente de la verificación del usuario |
-| 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, fuente simulada y endpoint Admin | Pendiente |
-| 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) |
+| 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | ✅ Verificada por el usuario (21/10/2026: 984/984, `edicion.cmd` 0 FALLA y 0 OMITIDOS) |
+| 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | Implementada (22/10/2026), pendiente de la verificación del usuario |
+| 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) y el permiso de Graph (pendiente 63) |
 | TAREA-24 | Frontend | Pendiente |
 
 ## 1. Contratos (23-1, política Gestor)
@@ -114,3 +114,42 @@ La API de empleados y la base se consultan **solo si el resto es válido**: un 4
 - Al acortar el rango, quitar de `diasExcluidos` los días que queden fuera (P2 responde 400).
 - Tras editar o anular, invalidar: el detalle y el listado de novedades, el cronograma general y el del proyecto (las dos vistas) y `reporteResumen`.
 - Enviar siempre la `version` con que se abrió el formulario (patrón de la 19b2) y, con 409, ofrecer «Recargar».
+
+## 8. Sincronización de PERMISO MEDICO (TAREA-23-3)
+### 8.1 Contrato
+`POST /api/admin/novedades/sincronizar-permisos-medicos[?escenario=base|fechas|anuladas]` (Politica.Admin), sin cuerpo.
+- 200 → `{ sincronizadaUtc, fuente, leidas, nuevas, actualizadas, anuladas, reactivadas, sinCambios, ausentesEnOrigen, omitidas: { categoría: n }, codigosOmitidos: [NOV-… o "fila ID n"] }` (máx. 100 códigos). Sin nombres, correos, cédulas ni JSON. La fecha de la sincronización no se guarda (va en la respuesta y en el log).
+- 400 `escenario` (solo con la fuente Simulada, P1: «El escenario solo se admite con la fuente Simulada.» / «El escenario debe ser base, fechas, anuladas.»); 401; 403 (gestor); 503 «Fuente de novedades externas no configurada» / «…no disponible» (archivo ausente, ilegible o sin las columnas esperadas; más de 5000 filas); 503 de empleados si hace falta la API y está caída (sin escribir); 503 registro ocupado; 503 base caída.
+
+### 8.2 Modos (`NovedadesExternas:Modo`, H1)
+| Modo | Entorno | Fuente |
+|---|---|---|
+| `Simulado` | Solo Development (en otro, la API no arranca) | 10 filas ficticias NOV-SIMPM-0001…0010 (2075, DEV001–DEV006), escenarios `base`, `fechas` y `anuladas` |
+| `ArchivoLocal` | Solo Development | CSV exportado de la lista, ruta **solo en user-secrets** (`NovedadesExternas:RutaArchivo`). UTF-8 con detección de BOM; salta la línea `ListSchema=`; `TextFieldParser` del framework (P6, sin NuGet); columnas ID, Título/Title, NOVEDAD_UID, ESTADO_NOVEDAD, DETALLE_JSON y CORREO_PERSONA (nunca «Creado por»/«Modificado por»); fila con otro número de columnas → `filaIlegible` |
+| sin modo o `Graph` | Cualquiera (la API arranca) | 503 «no configurada». Graph llega en la 23-4 (pendientes 7 y 63) |
+| otro valor | — | la API no arranca |
+
+`appsettings.Development.json` trae `Simulado`.
+
+### 8.3 Mapeador (`MapeoPermisoMedico`, puro, **reutilizable en la Fase 3**)
+- Uid = NOVEDAD_UID (si no se lee → `uidInvalido`); LegacyId = ID; Codigo = Título (si falta: `GeneradorCodigoNovedad(fecha de registro, Uid)`, determinista).
+- Filtros: `OrigenPermiso = aplicacionPermisosMedicos` (si no, `otroOrigen`); TipoNovedad «PERMISO MEDICO»/«PERMISO_MEDICO» sin distinguir mayúsculas ni tildes (si no, `tipoNoSoportado`); TipoAplicacion PERSONA (si no, `aplicacionNoSoportada`); JSON ilegible o que no es objeto → `jsonInvalido`.
+- Días: `Dias[].Fecha` (yyyy-MM-dd, sin repetidos) o, si no vienen, el rango de `Fechas`; ilegibles o rango > 366 → `fechasInvalidas`. No usa FECHA_INICIO/FECHA_FIN del CSV (traen Z).
+- Empleado: `Fechas.Ekon` → `Persona.Ekon` (sin puntos de miles, [SUPUESTO], pendiente 64) → correo (`Persona.Correo` o CORREO_PERSONA; formato válido, pendiente 45). Sin ninguno → `sinEmpleado`. `Persona.Nombre` no se lee; el correo nunca se guarda ni se imprime.
+- Estado: cualquier valor distinto de «ACTIVA» (sin distinguir mayúsculas ni espacios) = anulada [H8, pendiente 64].
+- Registro: `FechaRegistro` en hora de Ecuador [SUPUESTO, pendiente 64] → UTC truncada a segundos (ilegible → null); nombre y correo del registrante → `RegistradoPor*`.
+- N13: `DetalleOrigenJson` = lista blanca en orden fijo (NovedadUID, TipoAplicacion, TipoNovedad, OrigenPermiso, Origen, Fechas{FechaInicio, FechaFin, Ekon}, Dias[].Fecha, Registro.FechaRegistro), sin `Persona.*`; `Observacion` = null; `OrigenArea` ← `Origen`.
+
+### 8.4 Plan y escritura
+- **R3:** la fuente, la base (existentes por Uid, dueños de los códigos y de los LegacyId, empleados por correo, Uid de PERMISOS_MEDICOS) y, solo si alguna fila la necesita, la API de empleados (lectura fresca con cédulas, **una sola vez**, A4) se leen **fuera** de la transacción. API caída → 503 antes de escribir.
+- **Empleado:** con fila en `Empleado` se usa aunque ya no esté activo; sin fila, alta puntual (con cédula, D15) solo si está activo en la API. Solo correo (P2): primero la fila con ese `CorreoEmpresa` (coincidencia única; varias → `sinEmpleado`), después la API (coincidencia única).
+- **`PlanSincronizacion`** (puro): nueva no activa → `noActivaSinRegistro` (P4); Uid repetido en la fuente → `uidInvalido`; Uid de una novedad de PROFESIOGRAMA o código de otro Uid → `conflictoCodigo`; LegacyId de PERMISOS_MEDICOS con otro Uid → `conflictoLegacyId`. Guardadas: no activa y vigente → anular; activa y anulada → reactivar; si cambió Codigo, LegacyId, EmpleadoId, fechas, días, OrigenArea, RegistradoPor* o DetalleOrigenJson → actualizar; si no → **sin cambios, no entra a ninguna transacción** (sin UPDATE: RowVer y FechaModificacion iguales).
+- **Lotes de 100 (P3)**, cada uno en su `ITransaccionAsignaciones` (mismo applock que la alta puntual; sin applock propio). Dentro se relee **con seguimiento** y se reclasifica con la misma regla (**A1**: un Uid «nuevo» que ya existe no se duplica). Si un lote falla, los anteriores quedan confirmados (el log registra los conteos parciales) y repetir la sincronización completa el resto (idempotente).
+- Nueva (R5): `CreadoPorId` = SISTEMA, `FechaCreacion` = FechaRegistro en UTC, origen 2. Actualización: `ModificadoPorId` = el admin (auditoría). Anular: «Anulada en el origen (PERMISOS_MEDICOS)», `AnuladaPorId` = SISTEMA (P5), `FechaAnulacion` = ahora; reactivar limpia los cuatro campos. **Ausentes en el origen: solo se cuentan, nunca se anulan (R4).** NOV-DEV-0004 (sembrador) siempre cuenta como ausente.
+- Logs: Information con fuente, conteos, milisegundos, Id del admin y códigos NOV omitidos; Warning si un lote falla. Nunca nombres, correos, cédulas, el JSON ni la ruta del archivo.
+
+### 8.5 Categorías de omisión
+`filaIlegible`, `uidInvalido`, `jsonInvalido`, `otroOrigen`, `tipoNoSoportado`, `aplicacionNoSoportada`, `fechasInvalidas`, `sinEmpleado`, `conflictoCodigo`, `conflictoLegacyId`, `noActivaSinRegistro`.
+
+### 8.6 Ajustes de la Fase B (A1–A6)
+A1 reclasificación dentro del lote; A2 BOM y `ListSchema`; A3 fuente simulada con LegacyId ≥ 2.000.000.001; A4 una sola lectura de la API; A5 la versión de una novedad sin cambios no cambia (caso s02b del script); A6 pruebas solo con CSV y JSON ficticios (nunca un CSV real de la lista).

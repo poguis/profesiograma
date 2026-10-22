@@ -3,6 +3,7 @@ using App.Application.Cronograma.Reporte;
 using App.Application.Empleados;
 using App.Application.Erp;
 using App.Application.Novedades;
+using App.Application.Novedades.Sincronizacion;
 using App.Application.Proyectos;
 using App.Application.Proyectos.Cabecera;
 using App.Application.Proyectos.Crear;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<NovedadEscrituraServicio>();
         services.AddScoped<OpcionesFormularioNovedad>();
         services.AddScoped<NovedadModificacionServicio>(); // TAREA-23-2
+        services.AddScoped<SincronizacionPermisosMedicosServicio>(); // TAREA-23-3
         return services;
     }
 }

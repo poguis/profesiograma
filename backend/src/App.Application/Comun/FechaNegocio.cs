@@ -12,6 +12,10 @@ public static class FechaNegocio
     public static DateOnly Hoy(TimeProvider reloj)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), Zona.Value).DateTime);
 
+    /// <summary>TAREA-23-3: una fecha y hora de Ecuador (sin zona) en UTC.</summary>
+    public static DateTime AUtc(DateTime horaEcuador)
+        => TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(horaEcuador, DateTimeKind.Unspecified), Zona.Value);
+
     /// <summary>Hora de Ecuador de un instante (TAREA-26d: aviso de la lista de empleados anterior).</summary>
     public static TimeOnly Hora(DateTimeOffset instante)
         => TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(instante, Zona.Value).DateTime);

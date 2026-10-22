@@ -1,6 +1,7 @@
 using App.Application.Diagnostics;
 using App.Infrastructure.Diagnostics;
 using App.Infrastructure.Erp;
+using App.Infrastructure.NovedadesExternas;
 using App.Infrastructure.Persistencia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IDatabaseDiagnostics>(_ => new SqlDatabaseDiagnostics(connectionString));
         services.AddPersistencia(connectionString);   // [PASO 2] EF Core + auditoría + consultas + sembrador
         services.AddCatalogoErp(configuration, esDesarrollo);   // ERP: Http o Simulado (TAREA-11)
+        services.AddNovedadesExternas(configuration, esDesarrollo); // PERMISO MEDICO: Simulado / ArchivoLocal / sin fuente (TAREA-23-3)
         return services;
     }
 

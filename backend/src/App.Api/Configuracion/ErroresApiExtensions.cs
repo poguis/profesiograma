@@ -9,6 +9,7 @@ public static class ErroresApiExtensions
         services.AddExceptionHandler<RegistroOcupadoExceptionHandler>(); // applock de asignaciones no obtenido → 503
         services.AddExceptionHandler<SolicitudIlegibleExceptionHandler>(); // TAREA-26d-1: cuerpo ilegible → 400 en su campo
         services.AddExceptionHandler<BaseDatosNoDisponibleExceptionHandler>(); // TAREA-22c: base caída → 503
+        services.AddExceptionHandler<FuenteNovedadesNoDisponibleExceptionHandler>(); // TAREA-23-3: fuente de PERMISO MEDICO → 503
         services.AddProblemDetails();
 
         // TAREA-26d-1 (defecto V3): el enlace del cuerpo lanza BadHttpRequestException en TODOS los entornos (por defecto

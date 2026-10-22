@@ -1,5 +1,6 @@
 using App.Application.Comun;
 using App.Application.Novedades;
+using App.Application.Novedades.Sincronizacion;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -52,6 +53,41 @@ public static class NovedadEndpoints
             };
         });
 
+        // TAREA-23-3: sincronización manual de PERMISO MEDICO (Admin, sin cuerpo). escenario solo con la fuente Simulada.
+        // Respuesta y log: SOLO conteos y códigos NOV (nunca nombres, correos, cédulas, el JSON ni la ruta del archivo).
+        app.MapPost("/api/admin/novedades/sincronizar-permisos-medicos", async Task<Results<Ok<ResultadoSincronizacionDto>, ValidationProblem>> (
+                string? escenario, SincronizacionPermisosMedicosServicio servicio, IUsuarioActual usuario, ILoggerFactory registro,
+                CancellationToken ct) =>
+            {
+                var log = registro.CreateLogger(nameof(NovedadEndpoints));
+                var cronometro = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    var r = await servicio.SincronizarAsync(escenario, ct);
+                    if (!r.EsValido)
+                    {
+                        return TypedResults.ValidationProblem(r.Errores!, title: "Parámetros de la sincronización no válidos.");
+                    }
+
+                    var v = r.Valor!;
+                    log.LogInformation(
+                        "Sincronización PERMISO MEDICO (usuario {UsuarioId}, fuente {Fuente}, {Ms} ms): leídas {Leidas}, nuevas {Nuevas}, actualizadas {Actualizadas}, anuladas {Anuladas}, reactivadas {Reactivadas}, sin cambios {SinCambios}, ausentes en el origen {Ausentes}, omitidas {Omitidas}; códigos omitidos: {Codigos}.",
+                        usuario.UsuarioId, v.Fuente, cronometro.ElapsedMilliseconds, v.Leidas, v.Nuevas, v.Actualizadas, v.Anuladas,
+                        v.Reactivadas, v.SinCambios, v.AusentesEnOrigen, Conteos(v.Omitidas), string.Join(", ", v.CodigosOmitidos));
+                    return TypedResults.Ok(v);
+                }
+                catch (Exception ex) when (servicio.Parcial is { } p)
+                {
+                    // Un lote falló: los anteriores quedaron confirmados; repetir la sincronización completa el resto.
+                    log.LogWarning(
+                        "Sincronización PERMISO MEDICO incompleta (usuario {UsuarioId}, {Ms} ms, {Error}): hasta el último lote confirmado, nuevas {Nuevas}, actualizadas {Actualizadas}, anuladas {Anuladas}, reactivadas {Reactivadas}.",
+                        usuario.UsuarioId, cronometro.ElapsedMilliseconds, ex.GetType().Name, p.Nuevas, p.Actualizadas, p.Anuladas, p.Reactivadas);
+                    throw;
+                }
+            })
+            .WithTags("Novedades")
+            .RequireAuthorization(Politicas.Admin);
+
         // TAREA-23-2: editar (N8) y anular (N10). 200 { id, version }; 400 (version, origen, campos, general); 403; 404;
         // 409 (anulada, cambió, duplicado); 503 (registro ocupado o base caída).
         novedades.MapPut("/{id:int}", async Task<Results<Ok<NovedadEditadaDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
@@ -77,4 +113,7 @@ public static class NovedadEndpoints
             extensions: r.CodigoDuplicado is { } codigo ? new Dictionary<string, object?> { ["codigo"] = codigo } : null),
         _ => TypedResults.Problem(title: r.MensajeConflicto, statusCode: StatusCodes.Status409Conflict),
     };
+
+    private static string Conteos(IReadOnlyDictionary<string, int> omitidas) =>
+        omitidas.Count == 0 ? "0" : string.Join(", ", omitidas.OrderBy(o => o.Key, StringComparer.Ordinal).Select(o => $"{o.Key} {o.Value}"));
 }
