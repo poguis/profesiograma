@@ -13,12 +13,16 @@ const SelectorUsuarioDev =
   ? lazy(() => import('../auth/SelectorUsuarioDev').then((m) => ({ default: m.SelectorUsuarioDev })))
   : null
 
+// U4 (TAREA-24a): por debajo de 768 px el menú pasa arriba, en una fila con desplazamiento. Por encima, sin cambios.
+const MOVIL = '@media (max-width: 767px)'
+
 const useEstilos = makeStyles({
   raiz: {
     display: 'grid',
     gridTemplateRows: 'auto 1fr',
     gridTemplateColumns: '220px 1fr',
     height: '100vh',
+    [MOVIL]: { gridTemplateRows: 'auto auto 1fr', gridTemplateColumns: 'minmax(0, 1fr)' },
   },
   barra: {
     gridColumn: '1 / -1',
@@ -29,6 +33,7 @@ const useEstilos = makeStyles({
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL}`,
     backgroundColor: tokens.colorBrandBackground,
     color: tokens.colorNeutralForegroundOnBrand,
+    [MOVIL]: { flexWrap: 'wrap', gap: tokens.spacingHorizontalS },
   },
   titulo: { color: tokens.colorNeutralForegroundOnBrand },
   derecha: { display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalL },
@@ -37,8 +42,14 @@ const useEstilos = makeStyles({
     borderRight: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
     backgroundColor: tokens.colorNeutralBackground2,
     padding: tokens.spacingVerticalM,
+    [MOVIL]: {
+      borderRight: 'none',
+      borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
+      padding: tokens.spacingVerticalXS,
+      overflowX: 'auto',
+    },
   },
-  contenido: { padding: tokens.spacingHorizontalXXL, overflow: 'auto' },
+  contenido: { padding: tokens.spacingHorizontalXXL, overflow: 'auto', [MOVIL]: { padding: tokens.spacingHorizontalL } },
 })
 
 /** Barra superior (app, usuario actual, selector dev) + menú lateral + contenido de la ruta. */

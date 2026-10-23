@@ -35,6 +35,15 @@ const router = createBrowserRouter([
         path: 'cronograma',
         lazy: async () => ({ Component: (await import('../features/cronograma/pages/PaginaCronograma')).PaginaCronograma }),
       },
+      // TAREA-24a: novedades (la API decide la visibilidad, J2). '/novedades/nueva' llega en la 24b, antes de ':id'.
+      {
+        path: 'novedades',
+        lazy: async () => ({ Component: (await import('../features/novedades/pages/ListadoNovedades')).ListadoNovedades }),
+      },
+      {
+        path: 'novedades/:id',
+        lazy: async () => ({ Component: (await import('../features/novedades/pages/DetalleNovedad')).DetalleNovedad }),
+      },
       {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),

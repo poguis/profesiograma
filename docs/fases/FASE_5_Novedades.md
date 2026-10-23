@@ -6,9 +6,9 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 |---|---|---|
 | 23-1 | Lectura, opciones y **creación** | ✅ Verificada por el usuario (21/10/2026, 22/22 en la segunda corrida) |
 | 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | ✅ Verificada por el usuario (21/10/2026: 984/984, `edicion.cmd` 0 FALLA y 0 OMITIDOS) |
-| 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | Implementada (22/10/2026), pendiente de la verificación del usuario |
+| 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | ✅ Verificada por el usuario (22/10/2026: 1039/1039; `sincronizacion.cmd` 20 CONTROL OK, 0 FALLA y 0 OMITIDOS; N13 comprobada en la base) |
 | 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) y el permiso de Graph (pendiente 63) |
-| TAREA-24 | Frontend | Pendiente |
+| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a implementada (22/10/2026), pendiente de la verificación del usuario |
 
 ## 1. Contratos (23-1, política Gestor)
 | Ruta | Request → Response | Errores |
@@ -124,7 +124,7 @@ La API de empleados y la base se consultan **solo si el resto es válido**: un 4
 ### 8.2 Modos (`NovedadesExternas:Modo`, H1)
 | Modo | Entorno | Fuente |
 |---|---|---|
-| `Simulado` | Solo Development (en otro, la API no arranca) | 10 filas ficticias NOV-SIMPM-0001…0010 (2075, DEV001–DEV006), escenarios `base`, `fechas` y `anuladas` |
+| `Simulado` | Solo Development (en otro, la API no arranca) | 10 filas ficticias NOV-SIMPM-0001…0010 (2075, DEV001–DEV006), escenarios `base`, `fechas` y `anuladas`. Solo **6 se guardan** (NOV-SIMPM-0001, 0002, 0003, 0007, 0008 y 0009); las otras 4 se omiten a propósito: 0004 `tipoNoSoportado`, 0005 `jsonInvalido`, 0006 `sinEmpleado` y 0010 `otroOrigen` |
 | `ArchivoLocal` | Solo Development | CSV exportado de la lista, ruta **solo en user-secrets** (`NovedadesExternas:RutaArchivo`). UTF-8 con detección de BOM; salta la línea `ListSchema=`; `TextFieldParser` del framework (P6, sin NuGet); columnas ID, Título/Title, NOVEDAD_UID, ESTADO_NOVEDAD, DETALLE_JSON y CORREO_PERSONA (nunca «Creado por»/«Modificado por»); fila con otro número de columnas → `filaIlegible` |
 | sin modo o `Graph` | Cualquiera (la API arranca) | 503 «no configurada». Graph llega en la 23-4 (pendientes 7 y 63) |
 | otro valor | — | la API no arranca |
@@ -153,3 +153,19 @@ La API de empleados y la base se consultan **solo si el resto es válido**: un 4
 
 ### 8.6 Ajustes de la Fase B (A1–A6)
 A1 reclasificación dentro del lote; A2 BOM y `ListSchema`; A3 fuente simulada con LegacyId ≥ 2.000.000.001; A4 una sola lectura de la API; A5 la versión de una novedad sin cambios no cambia (caso s02b del script); A6 pruebas solo con CSV y JSON ficticios (nunca un CSV real de la lista).
+
+### 8.7 Verificación (22/10/2026)
+El usuario verificó la 23-3: 1039/1039 pruebas; `sincronizacion.cmd` con 20 CONTROL OK, 0 FALLA y 0 OMITIDOS; la consulta de las claves de `DetalleOrigenJson` en la base devolvió exactamente la lista blanca de §8.3 (sin `Persona`, `Nombre` ni `Correo`): **N13 cerrado**. Sigue abierto el pendiente 64 (valores de `ESTADO_NOVEDAD`, formato de EKON y zona horaria de `FechaRegistro`).
+
+## 9. Frontend (TAREA-24)
+Plan de la Fase A aprobado el 22/10/2026 (U1–U8): edición en página `/novedades/:id/editar`; días excluidos con chips por mes; buscador de empleados de la TAREA-13 en su lugar con dos props opcionales (`verOtrosInicial`, `textoAccion`) y «Ver otros departamentos» encendido por defecto (J6); selector de proyectos vigentes (ACTIVO y SUSPENDIDO, una consulta por estado `esVigente` del catálogo); botón de sincronización en la barra del listado, solo con el rol Admin de `/api/usuarios/me`; GENERAL según `opciones.puedeRegistrarGeneral`; el enlace «Ver novedad» desde el cronograma queda para la 24e (requiere una B0: `NovedadCeldaDto` no trae el Id).
+
+### 9.1 TAREA-24a (22/10/2026): menú, listado y detalle de solo lectura
+| Tema | Implementación |
+|---|---|
+| Rutas | `/novedades` y `/novedades/:id` (carga diferida); `/novedades/nueva` llega en la 24b, antes de `:id` |
+| Módulo | `src/features/novedades/`: `tipos.ts`, `api.ts` (`clavesNovedades`: `todos`, `listado(f)`, `detalle(id)`, `opciones`), `hooks.ts` (`useNovedades` con `keepPreviousData`, `useNovedad`; los dos con `retry: false`, H9), `filtrosUrl.ts`, `diasNovedad.ts`, `presentacion.ts`, `invalidacion.ts` |
+| Listado | Filtros en la URL: aplicación, tipo y origen (del catálogo), texto con espera, desde, hasta, incluir anuladas, página y tamaño 10/20/50. Un valor ilegible en la URL (aplicación desconocida, fecha sin `yyyy-MM-dd`, página < 1, tamaño fuera de la lista) vuelve al valor por defecto. 400 bajo su filtro; 503 o red con «Reintentar» manual |
+| Detalle | Código, tipo (sigla sobre su color), «Anulada» con fecha y motivo, `motivoNoEditable` como texto, datos (aplicación, persona o proyecto con enlace, origen, fechas, días, fecha de registro, registrante **solo si el backend lo envía**, observación) y días agrupados por mes. Sin botones de acción (llegan en la 24c). 404 → «La novedad no existe o no tiene acceso.» |
+| N15 | `invalidarTrasNovedad`: `['novedades']`, `['cronograma']`, `['proyectos','cronograma']` y `['proyectos','reporte-resumen']` (prefijos de `clavesProyectos.cronograma` y `reporteResumen`); no `['proyectos']` completo ni `['erp']`. Se usa desde la 24b |
+| Responsive | Filtros en una columna y botones a todo el ancho por debajo de 600 px; tabla dentro de un contenedor con desplazamiento horizontal; U4: por debajo de 768 px el menú lateral pasa arriba como una fila desplazable (escritorio sin cambios) |
