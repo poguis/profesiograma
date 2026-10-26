@@ -1,9 +1,17 @@
 import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { clavesProyectos, listarProyectos } from '../proyectos/api'
 import { useCatalogos } from '../proyectos/hooks'
-import { clavesNovedades, crearNovedad, listarNovedades, obtenerNovedad, obtenerOpcionesNovedad } from './api'
+import {
+  anularNovedad,
+  clavesNovedades,
+  crearNovedad,
+  editarNovedad,
+  listarNovedades,
+  obtenerNovedad,
+  obtenerOpcionesNovedad,
+} from './api'
 import { invalidarTrasNovedad } from './invalidacion'
-import type { FiltrosNovedades } from './tipos'
+import type { FiltrosNovedades, SolicitudAnularNovedad, SolicitudEditarNovedad } from './tipos'
 
 /**
  * GET /api/novedades. Sin reintentos automáticos (H9, como el cronograma): con la base caída cada intento espera la
@@ -77,6 +85,24 @@ export function useProyectosVigentes(texto: string, habilitada: boolean) {
       }
     },
   }
+}
+
+/** PUT /api/novedades/{id} (TAREA-24c). Sin reintentos; al guardar invalida novedades, cronogramas y reporte (N15). */
+export function useEditarNovedad(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudEditarNovedad) => editarNovedad(id, solicitud),
+    onSuccess: () => invalidarTrasNovedad(queryClient),
+  })
+}
+
+/** POST /api/novedades/{id}/anular (TAREA-24c). Sin reintentos; al anular invalida lo mismo que la edición (N15). */
+export function useAnularNovedad(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (solicitud: SolicitudAnularNovedad) => anularNovedad(id, solicitud),
+    onSuccess: () => invalidarTrasNovedad(queryClient),
+  })
 }
 
 /** POST /api/novedades. Sin reintentos (queryClient); al crear invalida novedades, cronogramas y reporte (N15). */

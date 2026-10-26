@@ -13,6 +13,7 @@
 | H6 | Texto anterior de los pendientes 7, 62 y 63 (reescritos el 26/10/2026) |
 | H7 | «8. Módulo Proyectos: avance» |
 | H8 | «9. Frontend: avance» (la fila TAREA-24a dice «pendiente de verificación»: se verificó el 26/10/2026, ver el estado vigente) |
+| H9 | Texto del estado vigente reemplazado en la TAREA-24c (cabecera, fila de novedades frontend, siguiente tarea, filas 24b y 24c) |
 
 ## H1. Cabecera anterior
 
@@ -196,3 +197,17 @@ Capas nuevas: `App.Application/DependencyInjection.cs` (`AddApplication()`: `Tim
 | TAREA-22c (2026-10-21) | Diálogos del detalle (cambio de estado, cabecera, personal, reactivación, exportar): un 503 muestra «título: detail» (`erroresDialogo.ts`; la base caída dice si el registro pudo guardarse). Comentarios de `reporteExcel.ts` y `cronograma/api.ts` actualizados | ✅ Verificada con la TAREA-22c (21/10/2026): build y lint sin errores; `npm test` **294/294** (3 nuevas en `erroresDialogo.test.ts`, sin ajustes a pruebas existentes) |
 | TAREA-24a (2026-10-22) | Novedades, frontend (1/4): menú «Novedades» y rutas con carga diferida `/novedades` y `/novedades/:id`; `features/novedades/` (tipos, api con `clavesNovedades`, hooks de lectura con `retry: false`, `filtrosUrl.ts` con valores ilegibles → por defecto, `diasNovedad.ts`, `invalidacion.ts` para la 24b–24d). Listado con filtros en la URL (aplicación, tipo, origen, texto, desde, hasta, incluirAnuladas, 10/20/50), DataGrid desplazable, sigla sobre el color del tipo, «Anulada»/«Vigente», «Reintentar» manual. Detalle de solo lectura: cabecera, datos, días por mes, observación, anulación, registrante solo si viene, `motivoNoEditable` como texto, 404 «La novedad no existe o no tiene acceso.». U4: por debajo de 768 px el menú pasa arriba en una fila con desplazamiento (escritorio sin cambios). Catálogos: `tiposAplicacionNovedad` y `origenesNovedad` en el tipo `Catalogos`. Sin cambios en backend/ | Implementada: build y lint sin errores ni advertencias; `npm test` **305/305** (294 + 11; sin ajustes a pruebas existentes). Pendiente: verificación visual del usuario (`docs/tareas/TAREA-24a-reporte.md` §5) |
 | Pendiente | Novedades 24b–24e; MSAL (Fase 7). | — |
+
+## H9. Movido del estado vigente el 26/10/2026 (TAREA-24c)
+
+Texto anterior de la cabecera, de la fila «Novedades, frontend» y de la siguiente tarea, y las filas 24b y 24c de la hoja de ruta (24b verificada; 24c implementada):
+
+**Última actualización:** 2026-10-26 (TAREA-24b). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Novedades, frontend | **24a ✅** verificada por el usuario el 26/10/2026 (casos L1 a E, todos correctos; 305/305). **24b** (registro) implementada el 26/10/2026, pendiente de verificación (323/323). Siguen 24c, 24d y 24e |
+| **Siguiente tarea** | Verificación visual de la 24b; después **TAREA-24c** (edición y anulación) |
+
+| Tarea | Alcance |
+|---|---|
+| 24b | Registro (`/novedades/nueva`): implementada, pendiente de verificación |
+| **24c** (siguiente) | Edición y anulación (aquí llega `apiPut`); plan en `FASE_5_Novedades.md` §9.3 |
+| 24d | Sincronización de PERMISO MEDICO (Admin) |

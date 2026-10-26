@@ -1,13 +1,16 @@
-import { apiGet, apiPost } from '../../api/clienteHttp'
+import { apiGet, apiPost, apiPut } from '../../api/clienteHttp'
 import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
 import type {
   FiltrosNovedades,
   NovedadCreada,
   NovedadDetalle,
+  NovedadEditada,
   NovedadResumen,
   OpcionesFormularioNovedad,
+  SolicitudAnularNovedad,
   SolicitudCrearNovedad,
+  SolicitudEditarNovedad,
 } from './tipos'
 
 export const clavesNovedades = {
@@ -33,4 +36,12 @@ export function obtenerOpcionesNovedad(signal?: AbortSignal) {
 
 export function crearNovedad(solicitud: SolicitudCrearNovedad) {
   return apiPost<SolicitudCrearNovedad, NovedadCreada>('/novedades', solicitud)
+}
+
+export function editarNovedad(id: number, solicitud: SolicitudEditarNovedad) {
+  return apiPut<SolicitudEditarNovedad, NovedadEditada>(`/novedades/${id}`, solicitud)
+}
+
+export function anularNovedad(id: number, solicitud: SolicitudAnularNovedad) {
+  return apiPost<SolicitudAnularNovedad, NovedadEditada>(`/novedades/${id}/anular`, solicitud)
 }

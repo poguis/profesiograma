@@ -20,14 +20,13 @@ import {
 import { ArrowLeft20Regular, Save20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useBlocker, useNavigate } from 'react-router'
-import { ErrorApi } from '../../../api/errores'
 import { EstadoError } from '../../../components/EstadoError'
 import { BuscadorEmpleados } from '../../proyectos/components/BuscadorEmpleados'
 import { claveEmpleado } from '../../proyectos/formularioProyecto'
 import { CamposNovedad, type ValoresCamposNovedad } from '../components/CamposNovedad'
 import { SelectorProyectoVigente } from '../components/SelectorProyectoVigente'
 import { excedeMaximo } from '../diasNovedad'
-import { CAMPOS_REGISTRO, type CampoRegistro, type ErroresNovedad, interpretarErrorNovedad } from '../erroresNovedad'
+import { CAMPOS_REGISTRO, type CampoRegistro, type ErroresNovedad, interpretarErrorDesconocido } from '../erroresNovedad'
 import { APLICACIONES } from '../filtrosUrl'
 import {
   REGISTRO_VACIO,
@@ -142,13 +141,7 @@ export function NuevaNovedad() {
         const estadoNavegacion: EstadoNavegacionNovedades = { aviso: `Novedad ${creada.codigo} registrada.` }
         void navigate(`/novedades/${creada.id}`, { replace: true, state: estadoNavegacion })
       },
-      onError: (error) => {
-        setErrorEnvio(
-          error instanceof ErrorApi
-            ? interpretarErrorNovedad(error, CAMPOS_REGISTRO)
-            : { campos: {}, generales: ['Ocurrió un error inesperado.'], ofrecerRecarga: false, ofrecerReintento: true, noEncontrado: false },
-        )
-      },
+      onError: (error) => setErrorEnvio(interpretarErrorDesconocido(error, CAMPOS_REGISTRO)),
       onSettled: () => {
         enviandoRef.current = false
       },

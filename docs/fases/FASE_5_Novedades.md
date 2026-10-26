@@ -8,7 +8,7 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 | 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | ✅ Verificada por el usuario (21/10/2026: 984/984, `edicion.cmd` 0 FALLA y 0 OMITIDOS) |
 | 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | ✅ Verificada por el usuario (22/10/2026: 1039/1039; `sincronizacion.cmd` 20 CONTROL OK, 0 FALLA y 0 OMITIDOS; N13 comprobada en la base) |
 | 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) y el permiso de Graph (pendiente 63) |
-| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b implementada (26/10/2026), pendiente de verificación; 24c–24e pendientes |
+| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b ✅ verificada (26/10/2026); 24c implementada (26/10/2026), pendiente de verificación; 24d y 24e pendientes |
 
 ## 1. Contratos (23-1, política Gestor)
 | Ruta | Request → Response | Errores |
@@ -182,32 +182,27 @@ Plan de la Fase A aprobado el 22/10/2026 (U1–U8): edición en página `/noveda
 | Errores | `erroresNovedad.ts`: 400 a su control (`tipoAplicacion`, `tipoNovedad`, `codigoEkon`, `proyectoId`, `fechaInicio`, `fechaFin`, `observacion`; `general` arriba); 403 con el title arriba; 409 duplicado con el title y, solo si viene `codigo`, «Ver {codigo}» → `/novedades?texto={codigo}`, sin «Recargar»; 503 y red: «título: detalle» con «Reintentar» |
 | Salida | `useBlocker` + `beforeunload` mientras haya algo escrito; se desactiva al registrar |
 
-### 9.3 Resumen operativo para las 24c y 24d (plan aprobado de la Fase A de la TAREA-24)
-**24c — Edición** (`/novedades/:id/editar`, página, U1; botones «Editar» y «Anular» en el detalle, habilitados según `puedeEditar`/`puedeAnular`, con `motivoNoEditable` como texto; nunca se infiere en el cliente):
-- `apiPut` nuevo en `clienteHttp.ts`. `PUT /api/novedades/{id}` con `{ version, tipoNovedad, fechaInicio, fechaFin, diasExcluidos[], observacion? }` → 200 `{ id, version }`. La `version` es la del GET con que se abrió el formulario (patrón de la 19b2).
-- Aplicación y sujeto de solo lectura (N8). Tipo con los de la aplicación guardada; si el tipo guardado ya no es elegible, se muestra como «(no disponible)» (el backend respondería 400 `tipoNovedad`).
-- Días excluidos con chips por mes (U2): chip encendido = día incluido; «Incluir todos». Al acortar el rango se quitan de `diasExcluidos` los que quedan fuera (A4) con una nota; sin días → «La novedad debe tener al menos 1 día.».
-- Sin cambios (mismo tipo, mismos días y misma observación recortada): «Guardar cambios» deshabilitado con «No hay cambios para registrar.» (el backend respondería 400 `general`). Con cambios, resumen previo: tipo A → B, rango, días n → m (excluidos), observación cambiada o borrada (null o vacía la borra, P1).
-- Errores: 400 `version` → «Recargar»; 400 `origen` y `general` arriba; 403 title; 404 «La novedad no existe o no tiene acceso.»; 409 «La novedad cambió…» o «…está anulada.» → «Recargar» (con confirmación si hay cambios); 409 duplicado como en el registro; 503 «Reintentar». `useBlocker` + `beforeunload`.
-
-**24c — Anulación** (diálogo en el detalle): motivo 5–500 con contador («El motivo debe tener entre 5 y 500 caracteres.»), texto «Esta acción no se puede deshacer.», casilla «Entiendo», protección contra doble clic. `POST /api/novedades/{id}/anular` `{ version, motivo }` → 200 `{ id, version }`; 409 «ya está anulada» o «cambió» → «Recargar».
-
+### 9.3 Resumen operativo para la 24d (plan aprobado de la Fase A de la TAREA-24)
 **24d — Sincronización Admin:** botón «Sincronizar permisos médicos» en la barra del listado, visible solo si `roles` de `GET /api/usuarios/me` incluye «Admin» (sin distinguir mayúsculas, como `TieneRol`); diálogo de confirmación; `POST /api/admin/novedades/sincronizar-permisos-medicos` **sin `escenario`** (nunca en la UI). Resultado: `sincronizadaUtc` en hora local, fuente, leídas, nuevas, actualizadas, anuladas, reactivadas, sin cambios, ausentes en el origen, omitidas por categoría (etiquetas de las 11 de §8.5; una desconocida muestra su clave) y `codigosOmitidos`; sin datos personales. 503 «Fuente de novedades externas no configurada» / «…no disponible», empleados, ocupado o base → «título: detalle» con «Reintentar»; 403 si el rol cambió.
 
-**Caché (N15), las dos:** tras editar, anular o sincronizar, `invalidarTrasNovedad` (`['novedades']`, `['cronograma']`, `['proyectos','cronograma']`, `['proyectos','reporte-resumen']`). Lógica pura con Vitest: días resultantes, recorte de excluidos, estado «sin cambios», resumen de cambios, etiquetas de categorías.
+**Caché (N15):** tras sincronizar, `invalidarTrasNovedad` (`['novedades']`, `['cronograma']`, `['proyectos','cronograma']`, `['proyectos','reporte-resumen']`). Lógica pura con Vitest: etiquetas de las categorías y filas del resumen.
 
-**Verificación visual (fechas de 2070; limpieza con `tarea23-2/limpiar.cmd`):**
+**Verificación visual (la fuente Simulada escribe las NOV-SIMPM ficticias de 2075):**
 | # | Caso | Esperado |
 |---|---|---|
-| E1 | Editar sin cambios | «Guardar cambios» deshabilitado, «No hay cambios para registrar.» |
-| E2 | Acortar el rango con días excluidos fuera | Se quitan con una nota; guarda 200 |
-| E3 | Excluir todos los días | «La novedad debe tener al menos 1 día.» |
-| E4 | Dos pestañas: guardar en A y luego en B | B recibe 409 y «Recargar» |
-| E5 | Salir con cambios | Aviso de confirmación |
-| E6 | Gestor con una novedad ajena o PERMISOS_MEDICOS | Botones deshabilitados con `motivoNoEditable` |
-| A1 | Motivo de 4 caracteres | Error, no se envía |
-| A2 | Anular con motivo válido y «Entiendo» | 200; detalle «Anulada» con el motivo |
-| A3 | Anular en otra pestaña la misma novedad | 409 y «Recargar» |
 | S1 | Gestor | No ve el botón |
 | S2 | Admin con la fuente Simulada | Conteos y omitidas por categoría |
 | S3 | Admin sin modo configurado | 503 «no configurada» con «Reintentar» |
+
+### 9.4 TAREA-24c (26/10/2026): edición y anulación
+| Tema | Implementación |
+|---|---|
+| Cliente HTTP | `apiPut` en `clienteHttp.ts` (mismos errores que `apiPost`, sin reintentos) |
+| Rutas y detalle | `/novedades/:id/editar` (carga diferida, U1). En el detalle, «Editar» y «Anular» habilitados según `puedeEditar`/`puedeAnular`; `motivoNoEditable` como texto (N3, nunca inferido). El detalle ya no muestra el correo del registrante (solo el nombre, y solo si viene) |
+| Formulario | Montado con el GET que lo abrió (su `version` se envía, patrón de la 19b2; un refresco en segundo plano no lo cambia). Aplicación y sujeto de solo lectura (N8). `CamposNovedad` compartido con el registro; el tipo guardado que ya no es elegible aparece como «(no disponible)» |
+| Días | `SelectorDiasExcluidos`: chips por mes (U2), encendido = incluido, «Incluir todos», «n días (m excluidos)». Excluidos iniciales = días del rango que no están en `dias`; al ampliar, los nuevos entran incluidos; al acortar, A4 quita los excluidos que quedan fuera y muestra una nota. Sin días: «La novedad debe tener al menos 1 día.» |
+| Sin cambios | Mismo tipo, mismo conjunto de días y misma observación recortada (null = vacía): «Guardar cambios» deshabilitado con «No hay cambios para registrar.». Con cambios, «Se guardará:» (tipo, rango, días, observación cambiada o borrada) |
+| Envío | `PUT` con `diasExcluidos` y la observación recortada; vacía viaja como `null` (la borra, P1). 200 → `invalidarTrasNovedad` y `replace` al detalle con «Novedad {codigo} actualizada.». `useBlocker` + `beforeunload` mientras haya cambios |
+| Errores | `erroresNovedad.ts` (`CAMPOS_EDICION`, `CAMPOS_ANULACION`, `interpretarErrorDesconocido`): campos del PUT a su control (`diasExcluidos` → chips); `general`, `origen` y `version` arriba; 400 `version` y 409 «cambió», «está anulada» o «ya está anulada» → «Recargar» (con confirmación si hay cambios); 409 duplicado → «Ver {codigo}» sin «Recargar»; 403 title; 404; 503 y red «Reintentar». **Acoplamiento:** los 409 del backend no traen `type`; el duplicado se reconoce por `codigo` o por su title exacto (`MENSAJE_DUPLICADO`) |
+| Anulación | `DialogoAnularNovedad`: motivo 5–500 recortado con contador, «Esta acción no se puede deshacer.», casilla «Entiendo» obligatoria, doble clic protegido; `POST …/anular` con la `version` del detalle abierto; 200 → «Novedad {codigo} anulada.» y el detalle se recarga (flags del backend); 409 o 400 `version` → «Recargar» (recarga el detalle y cierra el diálogo) |
+| Lógica pura | `edicionNovedad.ts`: estado inicial, días resultantes, `conRango` (A4), alternar o incluir días, `hayCambios`, `validarEdicion`, `resumenCambios`, solicitud y `validarMotivo` (con Vitest) |

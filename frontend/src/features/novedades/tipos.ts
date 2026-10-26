@@ -71,6 +71,31 @@ export interface NovedadCreada {
   version: string
 }
 
+/**
+ * PUT /api/novedades/{id} (TAREA-24c, §7.1). `version` = la del GET con que se abrió el formulario. El PUT reemplaza:
+ * `observacion` null o vacía la borra. Aplicación y sujeto no viajan (N8).
+ */
+export interface SolicitudEditarNovedad {
+  version: string
+  tipoNovedad: string
+  fechaInicio: string
+  fechaFin: string
+  diasExcluidos: string[]
+  observacion: string | null
+}
+
+/** POST /api/novedades/{id}/anular. */
+export interface SolicitudAnularNovedad {
+  version: string
+  motivo: string
+}
+
+/** 200 de PUT y de anular: la versión nueva. */
+export interface NovedadEditada {
+  id: number
+  version: string
+}
+
 /** Filtros del listado tal como viven en la URL y se envían a la API. */
 export interface FiltrosNovedades {
   aplicacion?: string

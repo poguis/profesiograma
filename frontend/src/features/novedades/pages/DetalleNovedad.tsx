@@ -10,12 +10,13 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { ArrowLeft20Regular } from '@fluentui/react-icons'
-import type { ReactNode } from 'react'
+import { ArrowLeft20Regular, Delete20Regular, Edit20Regular } from '@fluentui/react-icons'
+import { type ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
 import { EstadoError } from '../../../components/EstadoError'
 import { formatearFecha, formatearFechaHora } from '../../../utils/formato'
+import { DialogoAnularNovedad } from '../components/DialogoAnularNovedad'
 import { EtiquetaTipoNovedad } from '../components/EtiquetaTipoNovedad'
 import { agruparPorMes, etiquetaDia } from '../diasNovedad'
 import { useNovedad } from '../hooks'
@@ -46,9 +47,13 @@ const useEstilos = makeStyles({
   texto: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
   mes: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS },
   dias: { display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalXS },
+  acciones: { display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalS, [MOVIL]: { flexDirection: 'column', width: '100%' } },
 })
 
-/** Detalle de solo lectura (TAREA-24a). Editar y anular llegan en la 24c; aquí no hay botones de acción. */
+/**
+ * Detalle (TAREA-24a). TAREA-24c: «Editar» y «Anular» según `puedeEditar`/`puedeAnular` del backend (N3; el cliente no
+ * infiere permisos) y diálogo de anulación con la `version` del detalle abierto.
+ */
 export function DetalleNovedad() {
   const estilos = useEstilos()
   const navigate = useNavigate()
@@ -57,11 +62,36 @@ export function DetalleNovedad() {
   const numero = Number(id)
   const idValido = Number.isInteger(numero) && numero > 0
   const { data: novedad, error, isPending, isFetching, refetch } = useNovedad(numero)
+  const [anulando, setAnulando] = useState(false)
+  const [avisoLocal, setAvisoLocal] = useState<string>()
 
   const estadoNavegacion = location.state as EstadoNavegacionNovedades | null
   const busqueda = estadoNavegacion?.busqueda ?? ''
   const rutaListado = `/novedades${busqueda}`
   const noEncontrado = !idValido || (error instanceof ErrorApi && error.tipo === 'noEncontrado')
+  const aviso = avisoLocal ?? estadoNavegacion?.aviso
+
+  const acciones = novedad && (
+    <div className={estilos.acciones}>
+      <Button
+        icon={<Edit20Regular />}
+        disabled={!novedad.puedeEditar}
+        onClick={() => void navigate(`/novedades/${novedad.id}/editar`, { state: { busqueda } satisfies EstadoNavegacionNovedades })}
+      >
+        Editar
+      </Button>
+      <Button
+        icon={<Delete20Regular />}
+        disabled={!novedad.puedeAnular}
+        onClick={() => {
+          setAvisoLocal(undefined)
+          setAnulando(true)
+        }}
+      >
+        Anular
+      </Button>
+    </div>
+  )
 
   return (
     <section className={estilos.pagina}>
@@ -69,10 +99,10 @@ export function DetalleNovedad() {
         Volver al listado
       </Button>
 
-      {estadoNavegacion?.aviso && (
+      {aviso && (
         <MessageBar intent="success">
           <MessageBarBody>
-            <MessageBarTitle>{estadoNavegacion.aviso}</MessageBarTitle>
+            <MessageBarTitle>{aviso}</MessageBarTitle>
           </MessageBarBody>
         </MessageBar>
       )}
@@ -95,7 +125,20 @@ export function DetalleNovedad() {
       ) : isPending ? (
         <Spinner label="Cargando novedad…" labelPosition="after" />
       ) : (
-        novedad && <ContenidoNovedad novedad={novedad} />
+        novedad && <ContenidoNovedad novedad={novedad} acciones={acciones} />
+      )}
+
+      {novedad && (
+        <DialogoAnularNovedad
+          abierto={anulando}
+          novedad={novedad}
+          onCerrar={() => setAnulando(false)}
+          onAnulada={(mensaje) => {
+            setAnulando(false)
+            setAvisoLocal(mensaje) // invalidarTrasNovedad recarga el detalle (flags y anulación)
+          }}
+          onRecargar={() => void refetch()}
+        />
       )}
     </section>
   )
@@ -110,7 +153,7 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode })
   )
 }
 
-function ContenidoNovedad({ novedad }: { novedad: NovedadDetalle }) {
+function ContenidoNovedad({ novedad, acciones }: { novedad: NovedadDetalle; acciones: ReactNode }) {
   const estilos = useEstilos()
   const nombres = useNombresNovedad()
   const { sujeto, registro } = novedad
@@ -128,6 +171,7 @@ function ContenidoNovedad({ novedad }: { novedad: NovedadDetalle }) {
             Anulada
           </Badge>
         )}
+        {acciones}
       </div>
 
       {novedad.anulada && (
@@ -141,7 +185,7 @@ function ContenidoNovedad({ novedad }: { novedad: NovedadDetalle }) {
         </MessageBar>
       )}
 
-      {/* Lo decide el backend (N3); los botones Editar y Anular llegan en la 24c. */}
+      {/* Lo decide el backend (N3): explica por qué «Editar» y «Anular» están deshabilitados. */}
       {novedad.motivoNoEditable && (
         <MessageBar intent="info">
           <MessageBarBody>{novedad.motivoNoEditable}</MessageBarBody>
@@ -169,8 +213,8 @@ function ContenidoNovedad({ novedad }: { novedad: NovedadDetalle }) {
               {novedad.dias.length === 1 ? 'día' : 'días'})
             </Dato>
             <Dato etiqueta="Registrada">{formatearFechaHora(novedad.fechaCreacion)}</Dato>
-            {/* Solo viene para el Admin (lo decide el backend). */}
-            {registro && <Dato etiqueta="Registrado por">{[registro.nombre, registro.correo].filter(Boolean).join(' · ') || null}</Dato>}
+            {/* Solo viene para el Admin (lo decide el backend). TAREA-24c: el correo no se muestra. */}
+            {registro && <Dato etiqueta="Registrado por">{registro.nombre}</Dato>}
             <Dato etiqueta="Observación">
               {novedad.observacion ? <span className={estilos.texto}>{novedad.observacion}</span> : null}
             </Dato>

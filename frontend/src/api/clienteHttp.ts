@@ -18,6 +18,11 @@ export function apiPost<TReq, TRes>(ruta: string, cuerpo: TReq, opciones?: Opcio
   return solicitar<TRes>('POST', ruta, JSON.stringify(cuerpo), opciones)
 }
 
+/** PUT con cuerpo JSON (TAREA-24c: edición de novedades). Mismos errores que apiPost; tampoco se reintenta. */
+export function apiPut<TReq, TRes>(ruta: string, cuerpo: TReq, opciones?: OpcionesSolicitud): Promise<TRes> {
+  return solicitar<TRes>('PUT', ruta, JSON.stringify(cuerpo), opciones)
+}
+
 /**
  * Accept de las descargas .xlsx (Z29, TAREA-22b): también ProblemDetails, para que ASP.NET escriba el cuerpo de un error.
  */
