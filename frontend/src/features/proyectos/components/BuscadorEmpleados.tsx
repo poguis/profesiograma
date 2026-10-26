@@ -61,16 +61,31 @@ export interface BuscadorEmpleadosProps {
   puedeAgregar: boolean
   onSeleccionar: (empleado: EmpleadoFila) => void
   onCerrar: () => void
+  /** TAREA-24b: estado inicial de "Ver otros departamentos" (novedades: true, J6). */
+  verOtrosInicial?: boolean
+  /** TAREA-24b: texto del botón de cada ítem. Con otro distinto de "Agregar" (selección única) la marca es la etiqueta tal cual. */
+  textoAccion?: string
 }
+
+const TEXTO_ACCION_POR_DEFECTO = 'Agregar'
 
 /**
  * Búsqueda de empleados activos (GET /api/empleados) con espera al escribir y paginación. Queda abierto para agregar
  * varios. TAREA-26d-2: clave `codigoEkon`; `avisoErp` como aviso no bloqueante; 503 con "Reintentar".
  */
-export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, onSeleccionar, onCerrar }: BuscadorEmpleadosProps) {
+export function BuscadorEmpleados({
+  abierto,
+  titulo,
+  etiquetas,
+  puedeAgregar,
+  onSeleccionar,
+  onCerrar,
+  verOtrosInicial = false,
+  textoAccion = TEXTO_ACCION_POR_DEFECTO,
+}: BuscadorEmpleadosProps) {
   const estilos = useEstilos()
   const [texto, setTexto] = useState('')
-  const [verOtros, setVerOtros] = useState(false)
+  const [verOtros, setVerOtros] = useState(verOtrosInicial)
   const [pagina, setPagina] = useState(1)
   const [tamano, setTamano] = useState(10)
   const textoBusqueda = useValorConRetardo(texto.trim(), ESPERA_TEXTO_MS)
@@ -159,7 +174,7 @@ export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, on
                           <div className={estilos.marcas}>
                             {marcas.map((m) => (
                               <Badge key={m} appearance="tint" color="informative">
-                                Ya agregado: {m}
+                                {textoAccion === TEXTO_ACCION_POR_DEFECTO ? `Ya agregado: ${m}` : m}
                               </Badge>
                             ))}
                           </div>
@@ -168,10 +183,10 @@ export function BuscadorEmpleados({ abierto, titulo, etiquetas, puedeAgregar, on
                       <Button
                         icon={<Add20Regular />}
                         disabled={!puedeAgregar}
-                        aria-label={`Agregar ${e.nombreCompleto}`}
+                        aria-label={`${textoAccion} ${e.nombreCompleto}`}
                         onClick={() => agregar(e)}
                       >
-                        Agregar
+                        {textoAccion}
                       </Button>
                     </li>
                   )

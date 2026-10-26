@@ -1,5 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { agruparPorMes, etiquetaDia } from './diasNovedad'
+import { agruparPorMes, contarDias, diasDelRango, etiquetaDia, excedeMaximo } from './diasNovedad'
+
+describe('diasDelRango y contarDias (TAREA-24b, N6/N17)', () => {
+  it('inicio = fin es un día', () => {
+    expect(diasDelRango('2070-03-10', '2070-03-10')).toEqual(['2070-03-10'])
+    expect(contarDias('2070-03-10', '2070-03-10')).toBe(1)
+  })
+
+  it('incluye los fines de semana (viernes a lunes = 4 días)', () => {
+    expect(diasDelRango('2070-01-03', '2070-01-06')).toEqual(['2070-01-03', '2070-01-04', '2070-01-05', '2070-01-06'])
+  })
+
+  it('cruza el cambio de mes con el 29 de febrero de un año bisiesto y el cambio de año', () => {
+    expect(diasDelRango('2068-02-28', '2068-03-01')).toEqual(['2068-02-28', '2068-02-29', '2068-03-01'])
+    expect(diasDelRango('2069-12-31', '2070-01-01')).toEqual(['2069-12-31', '2070-01-01'])
+  })
+
+  it('fin anterior al inicio o fecha faltante: sin días', () => {
+    expect(diasDelRango('2070-03-10', '2070-03-09')).toEqual([])
+    expect(contarDias(undefined, '2070-03-09')).toBe(0)
+  })
+
+  it('366 días se permiten y 367 no', () => {
+    expect(contarDias('2070-01-01', '2071-01-01')).toBe(366)
+    expect(excedeMaximo('2070-01-01', '2071-01-01')).toBe(false)
+    expect(excedeMaximo('2070-01-01', '2071-01-02')).toBe(true)
+    expect(diasDelRango('2068-01-01', '2068-12-31')).toHaveLength(366) // bisiesto
+  })
+})
 
 describe('agruparPorMes (TAREA-24a)', () => {
   it('agrupa por mes en orden, con cambio de mes y de año', () => {

@@ -58,7 +58,8 @@ export function DetalleNovedad() {
   const idValido = Number.isInteger(numero) && numero > 0
   const { data: novedad, error, isPending, isFetching, refetch } = useNovedad(numero)
 
-  const busqueda = (location.state as EstadoNavegacionNovedades | null)?.busqueda ?? ''
+  const estadoNavegacion = location.state as EstadoNavegacionNovedades | null
+  const busqueda = estadoNavegacion?.busqueda ?? ''
   const rutaListado = `/novedades${busqueda}`
   const noEncontrado = !idValido || (error instanceof ErrorApi && error.tipo === 'noEncontrado')
 
@@ -67,6 +68,14 @@ export function DetalleNovedad() {
       <Button className={estilos.boton} icon={<ArrowLeft20Regular />} onClick={() => void navigate(rutaListado)}>
         Volver al listado
       </Button>
+
+      {estadoNavegacion?.aviso && (
+        <MessageBar intent="success">
+          <MessageBarBody>
+            <MessageBarTitle>{estadoNavegacion.aviso}</MessageBarTitle>
+          </MessageBarBody>
+        </MessageBar>
+      )}
 
       {noEncontrado ? (
         // La API responde 404 tanto si no existe como si no es visible: no se distingue.

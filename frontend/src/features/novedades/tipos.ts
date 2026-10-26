@@ -46,6 +46,31 @@ export interface NovedadDetalle extends Omit<NovedadResumen, 'totalDias'> {
   motivoNoEditable: string | null
 }
 
+/** GET /api/novedades/opciones-formulario. GENERAL viene vacío si no `puedeRegistrarGeneral` (J1). */
+export interface OpcionesFormularioNovedad {
+  puedeRegistrarGeneral: boolean
+  tiposPorAplicacion: Partial<Record<AplicacionNovedad, TipoNovedadResumen[]>>
+  maxDias: number
+}
+
+/** POST /api/novedades (sin días excluidos: eso es la edición, 24c). PERSONA: codigoEkon; PROYECTO: proyectoId. */
+export interface SolicitudCrearNovedad {
+  tipoAplicacion: AplicacionNovedad
+  tipoNovedad: string
+  codigoEkon?: string
+  proyectoId?: number
+  fechaInicio: string
+  fechaFin: string
+  observacion?: string
+}
+
+/** 201 de POST /api/novedades. */
+export interface NovedadCreada {
+  id: number
+  codigo: string
+  version: string
+}
+
 /** Filtros del listado tal como viven en la URL y se envían a la API. */
 export interface FiltrosNovedades {
   aplicacion?: string

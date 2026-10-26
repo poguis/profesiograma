@@ -1,7 +1,14 @@
-import { apiGet } from '../../api/clienteHttp'
+import { apiGet, apiPost } from '../../api/clienteHttp'
 import type { PaginaResultado } from '../../api/tipos'
 import { aConsultaApi } from './filtrosUrl'
-import type { FiltrosNovedades, NovedadDetalle, NovedadResumen } from './tipos'
+import type {
+  FiltrosNovedades,
+  NovedadCreada,
+  NovedadDetalle,
+  NovedadResumen,
+  OpcionesFormularioNovedad,
+  SolicitudCrearNovedad,
+} from './tipos'
 
 export const clavesNovedades = {
   /** Todo lo de novedades: lo invalida invalidarTrasNovedad (N15). */
@@ -18,4 +25,12 @@ export function listarNovedades(filtros: FiltrosNovedades, signal?: AbortSignal)
 
 export function obtenerNovedad(id: number, signal?: AbortSignal) {
   return apiGet<NovedadDetalle>(`/novedades/${id}`, { signal })
+}
+
+export function obtenerOpcionesNovedad(signal?: AbortSignal) {
+  return apiGet<OpcionesFormularioNovedad>('/novedades/opciones-formulario', { signal })
+}
+
+export function crearNovedad(solicitud: SolicitudCrearNovedad) {
+  return apiPost<SolicitudCrearNovedad, NovedadCreada>('/novedades', solicitud)
 }

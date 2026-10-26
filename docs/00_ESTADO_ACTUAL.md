@@ -1,15 +1,15 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-26 (TAREA-X1-B: este documento guarda solo el estado **vigente**; el historial de tareas cerradas, los pendientes resueltos y la cabecera anterior están en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**).
+**Última actualización:** 2026-10-26 (TAREA-24b). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
 | Proyectos (backend y frontend) | Crear, listado, detalle, estados, edición, reactivación, cronograma y reporte Excel ✅ (TAREA-07 a 22c) |
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
-| Novedades, frontend | **24a ✅** verificada por el usuario el 26/10/2026 (casos L1 a E completos, todos correctos; build, lint y `npm test` 305/305). Siguen 24b, 24c, 24d y 24e |
+| Novedades, frontend | **24a ✅** verificada por el usuario el 26/10/2026 (casos L1 a E, todos correctos; 305/305). **24b** (registro) implementada el 26/10/2026, pendiente de verificación (323/323). Siguen 24c, 24d y 24e |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **TAREA-24b** (registro de novedades) |
+| **Siguiente tarea** | Verificación visual de la 24b; después **TAREA-24c** (edición y anulación) |
 
 ## 1. Índice de documentos
 
@@ -89,8 +89,8 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| **24b** (siguiente) | Novedades, frontend: registro (`/novedades/nueva`) |
-| 24c | Edición y anulación (aquí llega `apiPut`) |
+| 24b | Registro (`/novedades/nueva`): implementada, pendiente de verificación |
+| **24c** (siguiente) | Edición y anulación (aquí llega `apiPut`); plan en `FASE_5_Novedades.md` §9.3 |
 | 24d | Sincronización de PERMISO MEDICO (Admin) |
 | 24e (opcional) | «Ver novedad» desde el cronograma; requiere una B0 de backend |
 | Criterio de personal | Pendiente 62: tarea nueva **después** de la 24 |

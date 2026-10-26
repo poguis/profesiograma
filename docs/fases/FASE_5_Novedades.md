@@ -8,7 +8,7 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 | 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | ✅ Verificada por el usuario (21/10/2026: 984/984, `edicion.cmd` 0 FALLA y 0 OMITIDOS) |
 | 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | ✅ Verificada por el usuario (22/10/2026: 1039/1039; `sincronizacion.cmd` 20 CONTROL OK, 0 FALLA y 0 OMITIDOS; N13 comprobada en la base) |
 | 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) y el permiso de Graph (pendiente 63) |
-| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b–24e pendientes |
+| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b implementada (26/10/2026), pendiente de verificación; 24c–24e pendientes |
 
 ## 1. Contratos (23-1, política Gestor)
 | Ruta | Request → Response | Errores |
@@ -169,3 +169,45 @@ Plan de la Fase A aprobado el 22/10/2026 (U1–U8): edición en página `/noveda
 | Detalle | Código, tipo (sigla sobre su color), «Anulada» con fecha y motivo, `motivoNoEditable` como texto, datos (aplicación, persona o proyecto con enlace, origen, fechas, días, fecha de registro, registrante **solo si el backend lo envía**, observación) y días agrupados por mes. Sin botones de acción (llegan en la 24c). 404 → «La novedad no existe o no tiene acceso.» |
 | N15 | `invalidarTrasNovedad`: `['novedades']`, `['cronograma']`, `['proyectos','cronograma']` y `['proyectos','reporte-resumen']` (prefijos de `clavesProyectos.cronograma` y `reporteResumen`); no `['proyectos']` completo ni `['erp']`. Se usa desde la 24b |
 | Responsive | Filtros en una columna y botones a todo el ancho por debajo de 600 px; tabla dentro de un contenedor con desplazamiento horizontal; U4: por debajo de 768 px el menú lateral pasa arriba como una fila desplazable (escritorio sin cambios) |
+
+### 9.2 TAREA-24b (26/10/2026): registro
+| Tema | Implementación |
+|---|---|
+| Ruta | `/novedades/nueva` (carga diferida, antes de `:id`); botón «Nueva novedad» en el listado |
+| Formulario | Aplicación (GENERAL solo si `puedeRegistrarGeneral`) → sujeto → tipo (`tiposPorAplicacion[aplicación]`) → Desde/Hasta (`fechaMinima` = Desde) → observación (contador 0/500). Debajo: «n días (fines de semana incluidos)». Cambiar la aplicación limpia el sujeto y el tipo. `CamposNovedad` (tipo, rango, observación) queda para la edición |
+| PERSONA | `BuscadorEmpleados` con dos props opcionales nuevas: `verOtrosInicial` (novedades: true, J6) y `textoAccion` («Seleccionar»); selección única, cierra al elegir, marca «Seleccionado». Sin filtro por familia ni departamento (pendiente 62). Sin cédula ni correo |
+| PROYECTO | `SelectorProyectoVigente`: Combobox con espera de 400 ms; una consulta `GET /api/proyectos?estado=…&texto=…&tamano=20` por cada estado con `esVigente` del catálogo, unidas y ordenadas por código; insignia «Suspendido»; con 20 coincidencias en un estado, «escriba para afinar la búsqueda» |
+| Validación previa | `formularioNovedad.ts` con los mensajes del backend (§2). Antes del primer intento solo se ven el rango (fin < inicio, más de `maxDias`) y el largo de la observación; con más de 366 días «Registrar» se deshabilita |
+| Envío | Mutación sin reintentos, `isPending` y un ref contra el doble clic. 201 → `replace` a `/novedades/:id` con «Novedad {codigo} registrada.» e `invalidarTrasNovedad` |
+| Errores | `erroresNovedad.ts`: 400 a su control (`tipoAplicacion`, `tipoNovedad`, `codigoEkon`, `proyectoId`, `fechaInicio`, `fechaFin`, `observacion`; `general` arriba); 403 con el title arriba; 409 duplicado con el title y, solo si viene `codigo`, «Ver {codigo}» → `/novedades?texto={codigo}`, sin «Recargar»; 503 y red: «título: detalle» con «Reintentar» |
+| Salida | `useBlocker` + `beforeunload` mientras haya algo escrito; se desactiva al registrar |
+
+### 9.3 Resumen operativo para las 24c y 24d (plan aprobado de la Fase A de la TAREA-24)
+**24c — Edición** (`/novedades/:id/editar`, página, U1; botones «Editar» y «Anular» en el detalle, habilitados según `puedeEditar`/`puedeAnular`, con `motivoNoEditable` como texto; nunca se infiere en el cliente):
+- `apiPut` nuevo en `clienteHttp.ts`. `PUT /api/novedades/{id}` con `{ version, tipoNovedad, fechaInicio, fechaFin, diasExcluidos[], observacion? }` → 200 `{ id, version }`. La `version` es la del GET con que se abrió el formulario (patrón de la 19b2).
+- Aplicación y sujeto de solo lectura (N8). Tipo con los de la aplicación guardada; si el tipo guardado ya no es elegible, se muestra como «(no disponible)» (el backend respondería 400 `tipoNovedad`).
+- Días excluidos con chips por mes (U2): chip encendido = día incluido; «Incluir todos». Al acortar el rango se quitan de `diasExcluidos` los que quedan fuera (A4) con una nota; sin días → «La novedad debe tener al menos 1 día.».
+- Sin cambios (mismo tipo, mismos días y misma observación recortada): «Guardar cambios» deshabilitado con «No hay cambios para registrar.» (el backend respondería 400 `general`). Con cambios, resumen previo: tipo A → B, rango, días n → m (excluidos), observación cambiada o borrada (null o vacía la borra, P1).
+- Errores: 400 `version` → «Recargar»; 400 `origen` y `general` arriba; 403 title; 404 «La novedad no existe o no tiene acceso.»; 409 «La novedad cambió…» o «…está anulada.» → «Recargar» (con confirmación si hay cambios); 409 duplicado como en el registro; 503 «Reintentar». `useBlocker` + `beforeunload`.
+
+**24c — Anulación** (diálogo en el detalle): motivo 5–500 con contador («El motivo debe tener entre 5 y 500 caracteres.»), texto «Esta acción no se puede deshacer.», casilla «Entiendo», protección contra doble clic. `POST /api/novedades/{id}/anular` `{ version, motivo }` → 200 `{ id, version }`; 409 «ya está anulada» o «cambió» → «Recargar».
+
+**24d — Sincronización Admin:** botón «Sincronizar permisos médicos» en la barra del listado, visible solo si `roles` de `GET /api/usuarios/me` incluye «Admin» (sin distinguir mayúsculas, como `TieneRol`); diálogo de confirmación; `POST /api/admin/novedades/sincronizar-permisos-medicos` **sin `escenario`** (nunca en la UI). Resultado: `sincronizadaUtc` en hora local, fuente, leídas, nuevas, actualizadas, anuladas, reactivadas, sin cambios, ausentes en el origen, omitidas por categoría (etiquetas de las 11 de §8.5; una desconocida muestra su clave) y `codigosOmitidos`; sin datos personales. 503 «Fuente de novedades externas no configurada» / «…no disponible», empleados, ocupado o base → «título: detalle» con «Reintentar»; 403 si el rol cambió.
+
+**Caché (N15), las dos:** tras editar, anular o sincronizar, `invalidarTrasNovedad` (`['novedades']`, `['cronograma']`, `['proyectos','cronograma']`, `['proyectos','reporte-resumen']`). Lógica pura con Vitest: días resultantes, recorte de excluidos, estado «sin cambios», resumen de cambios, etiquetas de categorías.
+
+**Verificación visual (fechas de 2070; limpieza con `tarea23-2/limpiar.cmd`):**
+| # | Caso | Esperado |
+|---|---|---|
+| E1 | Editar sin cambios | «Guardar cambios» deshabilitado, «No hay cambios para registrar.» |
+| E2 | Acortar el rango con días excluidos fuera | Se quitan con una nota; guarda 200 |
+| E3 | Excluir todos los días | «La novedad debe tener al menos 1 día.» |
+| E4 | Dos pestañas: guardar en A y luego en B | B recibe 409 y «Recargar» |
+| E5 | Salir con cambios | Aviso de confirmación |
+| E6 | Gestor con una novedad ajena o PERMISOS_MEDICOS | Botones deshabilitados con `motivoNoEditable` |
+| A1 | Motivo de 4 caracteres | Error, no se envía |
+| A2 | Anular con motivo válido y «Entiendo» | 200; detalle «Anulada» con el motivo |
+| A3 | Anular en otra pestaña la misma novedad | 409 y «Recargar» |
+| S1 | Gestor | No ve el botón |
+| S2 | Admin con la fuente Simulada | Conteos y omitidas por categoría |
+| S3 | Admin sin modo configurado | 503 «no configurada» con «Reintentar» |

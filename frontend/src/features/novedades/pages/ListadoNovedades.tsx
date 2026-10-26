@@ -11,6 +11,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
+import { Add20Regular } from '@fluentui/react-icons'
 import { useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
 import { EstadoError } from '../../../components/EstadoError'
@@ -20,9 +21,13 @@ import { TablaNovedades } from '../components/TablaNovedades'
 import { PAGINA_POR_DEFECTO, TAMANOS_PAGINA, TAMANO_POR_DEFECTO, useFiltrosUrl } from '../filtrosUrl'
 import { useNovedades } from '../hooks'
 
-/** Estado de navegación hacia el detalle: `busqueda` para volver al listado con los mismos filtros. */
+/**
+ * Estado de navegación hacia el detalle: `busqueda` para volver al listado con los mismos filtros; `aviso` de éxito
+ * (TAREA-24b: «Novedad … registrada.»).
+ */
 export interface EstadoNavegacionNovedades {
   busqueda?: string
+  aviso?: string
 }
 
 const CAMPOS_EN_FILTROS = new Set(['aplicacion', 'tipo', 'origen', 'desde', 'hasta'])
@@ -32,6 +37,7 @@ const useEstilos = makeStyles({
   encabezado: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalM },
   esqueleto: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalS },
   boton: { alignSelf: 'flex-start', '@media (max-width: 599px)': { alignSelf: 'stretch' } },
+  nueva: { marginLeft: 'auto', '@media (max-width: 599px)': { marginLeft: 0, width: '100%' } },
 })
 
 /** Listado de novedades (TAREA-24a). La API decide qué novedades ve cada usuario (J2). */
@@ -59,6 +65,14 @@ export function ListadoNovedades() {
           Novedades
         </Text>
         {isFetching && !isPending && <Spinner size="tiny" label="Actualizando…" />}
+        <Button
+          className={estilos.nueva}
+          appearance="primary"
+          icon={<Add20Regular />}
+          onClick={() => void navigate('/novedades/nueva')}
+        >
+          Nueva novedad
+        </Button>
       </div>
 
       <FiltrosNovedades
