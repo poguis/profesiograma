@@ -11,15 +11,19 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { Add20Regular } from '@fluentui/react-icons'
+import { Add20Regular, ArrowSync20Regular } from '@fluentui/react-icons'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
+import { useUsuarioActual } from '../../../auth/useUsuarioActual'
 import { EstadoError } from '../../../components/EstadoError'
 import { Paginacion } from '../../../components/Paginacion'
 import { FiltrosNovedades } from '../components/FiltrosNovedades'
 import { TablaNovedades } from '../components/TablaNovedades'
 import { PAGINA_POR_DEFECTO, TAMANOS_PAGINA, TAMANO_POR_DEFECTO, useFiltrosUrl } from '../filtrosUrl'
+import { DialogoSincronizacion } from '../components/DialogoSincronizacion'
 import { useNovedades } from '../hooks'
+import { esAdmin } from '../sincronizacion'
 
 /**
  * Estado de navegación hacia el detalle: `busqueda` para volver al listado con los mismos filtros; `aviso` de éxito
@@ -37,7 +41,13 @@ const useEstilos = makeStyles({
   encabezado: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalM },
   esqueleto: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalS },
   boton: { alignSelf: 'flex-start', '@media (max-width: 599px)': { alignSelf: 'stretch' } },
-  nueva: { marginLeft: 'auto', '@media (max-width: 599px)': { marginLeft: 0, width: '100%' } },
+  acciones: {
+    marginLeft: 'auto',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: tokens.spacingHorizontalS,
+    '@media (max-width: 599px)': { marginLeft: 0, width: '100%', flexDirection: 'column' },
+  },
 })
 
 /** Listado de novedades (TAREA-24a). La API decide qué novedades ve cada usuario (J2). */
@@ -47,6 +57,8 @@ export function ListadoNovedades() {
   const location = useLocation()
   const { filtros, actualizar, limpiar, hayFiltros } = useFiltrosUrl()
   const { data, error, isPending, isFetching, refetch } = useNovedades(filtros)
+  const { data: usuario } = useUsuarioActual() // misma consulta (y caché) que la barra superior
+  const [sincronizando, setSincronizando] = useState(false)
 
   const errorValidacion = error instanceof ErrorApi && error.tipo === 'validacion' ? error : undefined
   const erroresApi = errorValidacion?.errores ?? {}
@@ -65,15 +77,20 @@ export function ListadoNovedades() {
           Novedades
         </Text>
         {isFetching && !isPending && <Spinner size="tiny" label="Actualizando…" />}
-        <Button
-          className={estilos.nueva}
-          appearance="primary"
-          icon={<Add20Regular />}
-          onClick={() => void navigate('/novedades/nueva')}
-        >
-          Nueva novedad
-        </Button>
+        <div className={estilos.acciones}>
+          {/* TAREA-24d: solo decide si se ve el botón; la API exige la política Admin igual. */}
+          {esAdmin(usuario) && (
+            <Button icon={<ArrowSync20Regular />} onClick={() => setSincronizando(true)}>
+              Sincronizar permisos médicos
+            </Button>
+          )}
+          <Button appearance="primary" icon={<Add20Regular />} onClick={() => void navigate('/novedades/nueva')}>
+            Nueva novedad
+          </Button>
+        </div>
       </div>
+
+      <DialogoSincronizacion abierto={sincronizando} onCerrar={() => setSincronizando(false)} />
 
       <FiltrosNovedades
         filtros={filtros}

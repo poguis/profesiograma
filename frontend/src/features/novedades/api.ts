@@ -8,6 +8,7 @@ import type {
   NovedadEditada,
   NovedadResumen,
   OpcionesFormularioNovedad,
+  ResultadoSincronizacion,
   SolicitudAnularNovedad,
   SolicitudCrearNovedad,
   SolicitudEditarNovedad,
@@ -40,6 +41,14 @@ export function crearNovedad(solicitud: SolicitudCrearNovedad) {
 
 export function editarNovedad(id: number, solicitud: SolicitudEditarNovedad) {
   return apiPut<SolicitudEditarNovedad, NovedadEditada>(`/novedades/${id}`, solicitud)
+}
+
+/**
+ * TAREA-24d: SIN `escenario` (P1: solo lo usa el script manual de la 23-3) y sin cuerpo (`JSON.stringify(undefined)` es
+ * undefined: no viaja cuerpo ni Content-Type).
+ */
+export function sincronizarPermisosMedicos() {
+  return apiPost<undefined, ResultadoSincronizacion>('/admin/novedades/sincronizar-permisos-medicos', undefined)
 }
 
 export function anularNovedad(id: number, solicitud: SolicitudAnularNovedad) {

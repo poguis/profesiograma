@@ -96,6 +96,25 @@ export interface NovedadEditada {
   version: string
 }
 
+/**
+ * 200 de POST /api/admin/novedades/sincronizar-permisos-medicos (TAREA-23-3, §8.1). Solo conteos y códigos NOV (u
+ * «fila ID n»); nunca nombres, correos ni cédulas. `codigosOmitidos`: máximo 100.
+ */
+export interface ResultadoSincronizacion {
+  /** Instante UTC. */
+  sincronizadaUtc: string
+  fuente: string
+  leidas: number
+  nuevas: number
+  actualizadas: number
+  anuladas: number
+  reactivadas: number
+  sinCambios: number
+  ausentesEnOrigen: number
+  omitidas: Record<string, number>
+  codigosOmitidos: string[]
+}
+
 /** Filtros del listado tal como viven en la URL y se envían a la API. */
 export interface FiltrosNovedades {
   aplicacion?: string

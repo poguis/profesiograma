@@ -9,6 +9,7 @@ import {
   listarNovedades,
   obtenerNovedad,
   obtenerOpcionesNovedad,
+  sincronizarPermisosMedicos,
 } from './api'
 import { invalidarTrasNovedad } from './invalidacion'
 import type { FiltrosNovedades, SolicitudAnularNovedad, SolicitudEditarNovedad } from './tipos'
@@ -101,6 +102,15 @@ export function useAnularNovedad(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (solicitud: SolicitudAnularNovedad) => anularNovedad(id, solicitud),
+    onSuccess: () => invalidarTrasNovedad(queryClient),
+  })
+}
+
+/** TAREA-24d: sincronización de PERMISO MEDICO (Admin). Sin reintentos; solo un 200 invalida (N15). */
+export function useSincronizarPermisosMedicos() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: sincronizarPermisosMedicos,
     onSuccess: () => invalidarTrasNovedad(queryClient),
   })
 }

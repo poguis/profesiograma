@@ -1,15 +1,15 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-26 (TAREA-24c). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-26 (TAREA-24d). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
 | Proyectos (backend y frontend) | Crear, listado, detalle, estados, edición, reactivación, cronograma y reporte Excel ✅ (TAREA-07 a 22c) |
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
-| Novedades, frontend | **24a ✅** y **24b ✅** verificadas por el usuario el 26/10/2026 (24b: R1–R10 correctos; 323/323). **24c** (edición y anulación) implementada el 26/10/2026, pendiente de verificación (340/340). Siguen 24d y 24e |
+| Novedades, frontend | 24a, 24b y **24c ✅** verificadas por el usuario el 26/10/2026. **24d** (sincronización Admin) implementada, pendiente de verificación (349/349) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación visual de la 24c; después **TAREA-24d** (sincronización Admin) |
+| **Siguiente tarea** | Verificación visual de la 24d; luego elegir entre la 24e (opcional, B0) y el criterio de personal (pendiente 62) |
 
 ## 1. Índice de documentos
 
@@ -89,10 +89,8 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 24c | Edición y anulación: implementada, pendiente de verificación |
-| **24d** (siguiente) | Sincronización de PERMISO MEDICO (Admin); plan en `FASE_5_Novedades.md` §9.3 |
-| 24e (opcional) | «Ver novedad» desde el cronograma; requiere una B0 de backend |
-| Criterio de personal | Pendiente 62: tarea nueva **después** de la 24 |
+| 24d | Sincronización de PERMISO MEDICO (Admin): implementada, pendiente de verificación |
+| **24e** (opcional) o **pendiente 62** | Decidir cuál sigue: «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) o el criterio de personal |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | 25 | Administración de permisos por departamento |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
@@ -141,11 +139,12 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 58. [Mantenimiento, TAREA-22-2b, 21/10/2026] Retirar el pin de `System.Security.Cryptography.Pkcs` 10.0.13 (`App.Infrastructure.csproj`) cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web resuelvan una versión corregida (≥ 9.0.21 o ≥ 10.0.13; avisos GHSA-846f-f764-76mx y GHSA-2fmv-rv2c-59x7). La publicación incluye la DLL 10.0.13, así que no depende del Hosting Bundle del servidor.
 59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
 60. [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
-61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota (verificación del 21/10/2026): caso 6 de `bd-caida.cmd`: la instancia con nombre no sufría el defecto; `ForzarTcp` es de bajo riesgo (con la base real y `ForzarTcp=true`: `/api/health/db` y `/api/usuarios/me` 200 en ~0,25 s). [PENDIENTE]
+61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
 62. [Decisión del usuario, 26/10/2026] **Criterio de personal elegible:** por ahora solo el grupo **ADMINISTRATIVO** puede elegirse como personal (buscador de proyectos y de novedades PERSONA); los usuarios con rol Admin podrán cambiar ese criterio desde la aplicación, con efecto global. Es una **tarea nueva después de la 24**. Su Fase A debe: confirmar qué campo del ERP equivale al «Grupo» original (sondeo sin nombres); diseñar el parámetro `EMPLEADO_FAMILIAS_ASIGNABLES` (Id 8, hoy `ADMINISTRATIVO` y sin uso) editable por Admin, con auditoría; y aplicar la regla en el **backend** (buscador y validaciones de proyectos y novedades). Hasta entonces, **sin filtro**. Texto anterior en `HISTORIAL.md`.
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
 65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]
+67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). [PENDIENTE DE DECISIÓN DEL USUARIO]
 
 ## 7.1 Reglas técnicas obligatorias
 

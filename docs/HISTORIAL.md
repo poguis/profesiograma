@@ -14,6 +14,7 @@
 | H7 | «8. Módulo Proyectos: avance» |
 | H8 | «9. Frontend: avance» (la fila TAREA-24a dice «pendiente de verificación»: se verificó el 26/10/2026, ver el estado vigente) |
 | H9 | Texto del estado vigente reemplazado en la TAREA-24c (cabecera, fila de novedades frontend, siguiente tarea, filas 24b y 24c) |
+| H10 | Texto del estado vigente reemplazado en la TAREA-24d (cabecera, fila de novedades frontend, siguiente tarea, filas 24c y 24d, pendiente 61) |
 
 ## H1. Cabecera anterior
 
@@ -211,3 +212,20 @@ Texto anterior de la cabecera, de la fila «Novedades, frontend» y de la siguie
 | 24b | Registro (`/novedades/nueva`): implementada, pendiente de verificación |
 | **24c** (siguiente) | Edición y anulación (aquí llega `apiPut`); plan en `FASE_5_Novedades.md` §9.3 |
 | 24d | Sincronización de PERMISO MEDICO (Admin) |
+
+## H10. Movido del estado vigente el 26/10/2026 (TAREA-24d)
+
+Texto anterior de la cabecera, de la fila «Novedades, frontend», de la siguiente tarea, de las filas 24c y 24d de la hoja de ruta (24c verificada) y del pendiente 61 (su nota de la verificación del 21/10/2026 quedó solo aquí):
+
+**Última actualización:** 2026-10-26 (TAREA-24c). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Novedades, frontend | **24a ✅** y **24b ✅** verificadas por el usuario el 26/10/2026 (24b: R1–R10 correctos; 323/323). **24c** (edición y anulación) implementada el 26/10/2026, pendiente de verificación (340/340). Siguen 24d y 24e |
+| **Siguiente tarea** | Verificación visual de la 24c; después **TAREA-24d** (sincronización Admin) |
+
+| Tarea | Alcance |
+|---|---|
+| 24c | Edición y anulación: implementada, pendiente de verificación |
+| **24d** (siguiente) | Sincronización de PERMISO MEDICO (Admin); plan en `FASE_5_Novedades.md` §9.3 |
+
+61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota (verificación del 21/10/2026): caso 6 de `bd-caida.cmd`: la instancia con nombre no sufría el defecto; `ForzarTcp` es de bajo riesgo (con la base real y `ForzarTcp=true`: `/api/health/db` y `/api/usuarios/me` 200 en ~0,25 s). [PENDIENTE]
+| 24e (opcional) | «Ver novedad» desde el cronograma; requiere una B0 de backend |
+| Criterio de personal | Pendiente 62: tarea nueva **después** de la 24 |
