@@ -1,28 +1,27 @@
 # PROFESIOGRAMA — Instrucciones para Claude Code
 
 ## Contexto
-Rehacer la app Power Apps "PROFESIOGRAMA" (SEDEMI) como aplicación web.
-Solo se migran los DATOS; la app se rediseña. Alcance actual: módulo Proyectos.
-Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `docs/fases/` que apliquen
-(`FASE_0_Inventario.md`, `FASE_1_Analisis_Funcional.md`, `FASE_2_Modelo_Datos.md`, `FASE_2_modelo_profesiograma.sql`).
+Rehacer la app Power Apps "PROFESIOGRAMA" (SEDEMI) como aplicación web. Solo se migran los DATOS; la app se rediseña.
+Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y SOLO los documentos que su «Índice de documentos» indique para la
+tarea. `docs/fases/FASE_2_modelo_profesiograma.sql` solo si la tarea toca el modelo. `docs/HISTORIAL.md` solo si la tarea lo pide.
 
 ## Stack (no proponer alternativas)
-- Backend: ASP.NET Core Web API .NET 10, C#, EF Core code-first (`backend/`).
-- BD: SQL Server 2019 on-premise, compatibilidad 150.
-- Frontend (futuro): React + TypeScript + Vite + @azure/msal-react (`frontend/`).
+- Backend: ASP.NET Core Web API .NET 10, C#, EF Core code-first (`backend/`). BD: SQL Server 2019 on-premise, compatibilidad 150.
+- Frontend: React + TypeScript + Vite (`frontend/`); MSAL en la Fase 7.
 - Auth: Entra ID single-tenant (Microsoft.Identity.Web). En Development: DevAuth (`X-Dev-User: admin|gestor|anonimo`).
 - Capas: Domain → Application → Infrastructure → Api. Sin lógica de negocio en endpoints.
 
 ## Reglas de trabajo
 1. Idioma: español (Ecuador) en respuestas, reportes y comentarios de código.
-2. Trabajar SOLO la tarea indicada. Al terminar, detenerse. No avanzar a la siguiente.
+2. Flujo por fases: **Fase A** = plan de solo lectura, entregado en la conversación; **Fase B** = implementación del plan aprobado
+   (reportar toda desviación). Trabajar SOLO la tarea indicada y detenerse al terminar.
 3. Antes de modificar archivos, presentar un plan breve y esperar aprobación.
-4. No inventar datos. Si algo falta, marcarlo [PENDIENTE DE CONFIRMAR] y preguntar.
-5. Reportar contradicciones entre documentos y código.
-6. Al terminar, escribir `docs/tareas/TAREA-XX-reporte.md` con: qué se hizo, archivos tocados,
-   comandos ejecutados con su resultado, errores y cómo se resolvieron, pendientes.
-7. Git: prohibido ejecutar git add, commit, push, reset, checkout o cualquier comando que modifique el repositorio.
-   Solo se permiten comandos de lectura (git status, git diff, git log, git check-ignore). El usuario hace los commits.
+4. No inventar datos: marcar [PENDIENTE DE CONFIRMAR] o [SUPUESTO] y preguntar. Reportar contradicciones entre documentos y código.
+5. Reporte al terminar: `docs/tareas/TAREA-XX-reporte.md` según `docs/tareas/PLANTILLA_REPORTE.md` (máximo 120 líneas,
+   verificación en tabla, sin repetir el plan).
+6. Git: prohibido git add, commit, push, reset, checkout o cualquier comando que modifique el repositorio. Solo lectura
+   (git status, git diff, git log, git check-ignore). El usuario hace los commits.
+7. Búsquedas: usar las herramientas Grep y Glob, nunca `grep -r` ni `find` en Bash (recorren node_modules, bin y obj).
 
 ## Base de datos — PROHIBIDO
 - Servidor NIQUEL\SSDEV es COMPARTIDO: trabajar solo en PROFESIOGRAMA_DEV.
@@ -31,76 +30,36 @@ Antes de cualquier tarea, leer `docs/00_ESTADO_ACTUAL.md` y los documentos de `d
 - No ejecutar SQL que modifique datos sin aprobación explícita.
 
 ## Datos sensibles
-- `docs/origen/sharepoint/muestras/` contiene datos personales: solo lectura, nunca copiar valores a código, semillas ni reportes.
+- `docs/origen/sharepoint/muestras/` contiene datos personales: no se lee en las tareas; nunca copiar valores a código, semillas ni reportes.
 - La caché `Empleado` no guarda salario, BPR, fecha de nacimiento, teléfono, correo personal ni dirección.
-- La cédula (D15, TAREA-22-1) se guarda SOLO en `Empleado.Cedula`: nunca en un DTO, la caché de empleados, logs, mensajes
-  de excepción ni respuestas de la API (salvo el reporte Excel de la TAREA-22-2). Viaja aparte en `CedulasEmpleados`, no
-  en los `record` (su ToString la imprimiría). En pruebas y simulación, solo cédulas ficticias.
-- Los CSV exportados de la lista NOVEDADES ASISTENCIA contienen permisos médicos (datos de salud): nunca se agregan al
-  repo ni se leen en las tareas, y su ruta va solo en user-secrets (`NovedadesExternas:RutaArchivo`, TAREA-23-3).
-
-## Archivos de referencia
+- La cédula (D15) se guarda SOLO en `Empleado.Cedula`: nunca en un DTO, la caché de empleados, logs, mensajes de excepción ni
+  respuestas de la API (salvo el reporte Excel). Viaja aparte en `CedulasEmpleados`, no en los `record` (su ToString la
+  imprimiría). En pruebas y simulación, solo cédulas ficticias.
+- Los CSV exportados de la lista NOVEDADES ASISTENCIA contienen permisos médicos (datos de salud): nunca se agregan al repo
+  ni se leen en las tareas; su ruta va solo en user-secrets (`NovedadesExternas:RutaArchivo`).
 - `docs/referencia/` contiene archivos para FUSIONAR a mano (Program.cs, appsettings.json). No copiarlos tal cual.
 
-## Compilar (desde backend/)
-dotnet build Profesiograma.slnx
-dotnet test --solution Profesiograma.slnx -c Release   (pruebas: xUnit v3 sobre Microsoft Testing Platform, activado en global.json)
-
-- La API suele estar corriendo (la ejecuta el usuario) y bloquea bin\Debug.
-  Para verificar compilación usa: dotnet build Profesiograma.slnx -c Release
-  Para comandos EF agrega: --configuration Release
-  Nunca detengas la API; si se requiere Debug, pide al usuario que la detenga.
-
-- User-secrets: `App.Api.csproj` tiene `UserSecretsId = profesiograma-api-4d2f7c1e`. No cambiarlo ni regenerarlo:
-  la cadena de conexión está asociada a ese Id. Verificar solo la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
-
-## Reglas de pruebas
-- Toda consulta EF nueva o modificada debe tener una prueba de traducción con ToQueryString() en App.Infrastructure.Tests.
-  Las pruebas con dobles no detectan consultas que EF no puede traducir a SQL.
-  (Patrón: la consulta se expone como método `internal static IQueryable<…>` y se prueba con la base `Consultas/BaseSql.cs`.)
-
-## Reglas de seguridad para pruebas
-- Nunca ejecutar scripts, curl, Invoke-RestMethod ni ningún cliente HTTP contra la API, ni siquiera "simulando"
-  respuestas. Los scripts de pruebas manuales se escriben, no se ejecutan (los ejecuta el usuario).
-- Para probar la lógica de un script sin la API, usar un modo de simulación explícito que nunca invoque curl
-  (p. ej. variable `SIMULAR=1` que lea las respuestas de archivos) o una URL base inválida (`https://localhost:1`).
-  Nunca depender del orden de búsqueda de ejecutables (en este equipo `NoDefaultCurrentDirectoryInExePath=1`:
-  un `curl.cmd` en la carpeta actual NO reemplaza a `curl.exe`).
+## API y pruebas manuales — PROHIBIDO
+- Claude Code **nunca** llama a la API (curl, Invoke-RestMethod ni ningún cliente HTTP, ni siquiera «simulando»), **nunca**
+  ejecuta los scripts de `backend/tests/manual/` (se escriben; los ejecuta el usuario) y **nunca** lee `resultado-*.txt`,
+  `crear-proyecto-*.json` ni otros archivos que el usuario haya generado o completado (solo fecha y tamaño).
 - Si una prueba local pudo haber tocado la API real, detenerse y reportarlo de inmediato.
-  (Origen: incidente de la TAREA-17, 05/10/2026, ver `docs/tareas/TAREA-17-reporte.md` §6.5.)
-- Simular siempre en una COPIA de los scripts en el scratchpad, nunca dentro de `backend/tests/manual/`
-  (la simulación escribe `resultado-*.txt` y puede pisar o mezclarse con los archivos del usuario).
-- Prohibido leer (grep, cat, find con contenido, Get-Content, Select-String o cualquier otra lectura) los
-  `resultado-*.txt`, `crear-proyecto-*.json` u otros archivos que el usuario haya generado o completado. Para comprobar
-  que existen o que no cambiaron, solo fecha y tamaño.
-- En simulación, los scripts usan solo plantillas ficticias (`*.ejemplo.json` o la carpeta `simulacion\`).
-- El script debe mostrar al inicio, de forma visible, "MODO SIMULACION" o "MODO REAL".
-  (Origen: incidentes de la TAREA-26d-3, `retiro.ps1`, y de la TAREA-26c, un `grep` sobre un resultado del usuario;
-  ver `docs/tareas/TAREA-26c-reporte.md` §6.1.)
+- El detalle (estructura, simulación, banner, formato CONTROL) está en `.claude/rules/pruebas-manuales.md`.
+
+## Backend (desde backend/)
+- `dotnet build Profesiograma.slnx -c Release` y `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre
+  Microsoft Testing Platform). La API suele estar corriendo (la ejecuta el usuario) y bloquea bin\Debug: usar Release
+  (también `--configuration Release` en los comandos EF). Nunca detener la API; si se requiere Debug, pedirlo al usuario.
+- User-secrets: `UserSecretsId = profesiograma-api-4d2f7c1e` en `App.Api.csproj`; no cambiarlo ni regenerarlo. Verificar solo
+  la clave: `dotnet user-secrets list --project src/App.Api` (sin mostrar el valor).
+- Toda consulta EF nueva o modificada lleva una prueba de traducción con ToQueryString() en App.Infrastructure.Tests (la
+  consulta se expone como `internal static IQueryable<…>` y se prueba con la base `Consultas/BaseSql.cs`).
+- EF (la primera vez: `dotnet tool restore`):
+  `dotnet ef migrations add <Nombre> --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext --output-dir Persistencia/Migraciones`
+  `dotnet ef database update --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext`
 
 ## Frontend (desde frontend/)
-npm install
-npm run dev        (lo ejecuta el usuario; no ejecutarlo)
-npm run build      (tsc -b + vite build: verificación de tipos y compilación)
-npm run lint       (oxlint)
-npm test           (Vitest 5.0.3: lógica pura del frontend, p. ej. src/features/proyectos/formularioProyecto*.test.ts)
-
-- X-Dev-User solo existe en desarrollo: se envía únicamente si import.meta.env.DEV y VITE_AUTH_MODE=dev.
-  Nunca debe enviarse en producción. La identidad se obtiene solo en src/auth/ (Fase 7: MSAL).
-- Las llamadas usan "/api" (proxy de Vite → https://localhost:7180). No configurar CORS en la API.
-
-## Comandos EF (ejecutar desde backend/)
-La primera vez en un equipo: `dotnet tool restore` (desde backend/).
-dotnet ef migrations add <Nombre> --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext --output-dir Persistencia/Migraciones
-dotnet ef database update --project src/App.Infrastructure --startup-project src/App.Api --context ProfesiogramaDbContext
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
+- `npm run build` (tsc -b + vite build), `npm run lint` (oxlint), `npm test` (Vitest 5.0.3, lógica pura). `npm run dev` lo
+  ejecuta el usuario.
+- X-Dev-User solo se envía si `import.meta.env.DEV` y `VITE_AUTH_MODE=dev`; nunca en producción. La identidad se obtiene solo
+  en `src/auth/`. Las llamadas usan "/api" (proxy de Vite → https://localhost:7180); no configurar CORS en la API.

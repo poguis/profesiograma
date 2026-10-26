@@ -1,26 +1,12 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/sig4/.local/bin/graphify.EXE hook-guard search",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/sig4/.local/bin/graphify.EXE hook-guard read",
-            "timeout": 10
-          }
-        ]
-      }
+  "permissions": {
+    "deny": [
+      "Read(./docs/origen/sharepoint/muestras/**)",
+      "Read(**/muestras/**)",
+      "Read(**/resultado-*.txt)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": []
   }
 }
