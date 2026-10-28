@@ -16,12 +16,16 @@ public static class BusquedaEmpleados
     private const CompareOptions SinMayusculasNiTildes = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
     private static readonly StringComparer OrdenNombre = StringComparer.Create(CultureInfo.GetCultureInfo("es-EC"), ignoreCase: true);
 
-    public static ResultadoBusquedaEmpleadosDto Buscar(ListaEmpleadosErp lista, EmpleadoFiltro filtro)
+    /// <param name="familiasAsignables">TAREA-62: criterio de personal elegible (vacío o null = sin filtro). Se suma al
+    /// filtro de departamentos y se aplica antes de paginar.</param>
+    public static ResultadoBusquedaEmpleadosDto Buscar(ListaEmpleadosErp lista, EmpleadoFiltro filtro,
+        IReadOnlyCollection<string>? familiasAsignables = null)
     {
         ArgumentNullException.ThrowIfNull(lista);
         ArgumentNullException.ThrowIfNull(filtro);
+        var familias = familiasAsignables ?? [];
 
-        IEnumerable<EmpleadoErp> consulta = lista.Activos;
+        IEnumerable<EmpleadoErp> consulta = lista.Activos.Where(e => ReglasPersonalElegible.EsAsignable(e, familias));
         if (filtro.Texto is { } texto)
         {
             consulta = consulta.Where(e => Contiene(e.NombreCompleto, texto) || Contiene(e.Apellidos, texto)
@@ -48,7 +52,7 @@ public static class BusquedaEmpleados
         var aviso = lista.EsAnterior
             ? string.Format(CultureInfo.InvariantCulture, AvisoListaAnterior, FechaNegocio.Hora(lista.ObtenidaUtc))
             : null;
-        return new ResultadoBusquedaEmpleadosDto(items, filtro.Pagina, filtro.Tamano, filtrados.Count, aviso);
+        return new ResultadoBusquedaEmpleadosDto(items, filtro.Pagina, filtro.Tamano, filtrados.Count, aviso, familias.ToList());
     }
 
     private static bool Contiene(string? valor, string texto) =>

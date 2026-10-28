@@ -13,8 +13,11 @@ public sealed record EmpleadoBusquedaDto(string CodigoEkon, string NombreComplet
 /// Respuesta del buscador: los campos de <see cref="PaginaResultado{T}"/> más AvisoErp (P4: lista anterior porque el ERP
 /// no respondió; null si la lista es actual).
 /// </summary>
+/// <param name="FamiliasAsignables">TAREA-62: criterio aplicado, tal como está guardado (vacío = sin filtro). Opcional para
+/// mantener la compatibilidad hacia atrás del contrato.</param>
 public sealed record ResultadoBusquedaEmpleadosDto(
-    IReadOnlyList<EmpleadoBusquedaDto> Items, int Pagina, int Tamano, int Total, string? AvisoErp);
+    IReadOnlyList<EmpleadoBusquedaDto> Items, int Pagina, int Tamano, int Total, string? AvisoErp,
+    IReadOnlyList<string>? FamiliasAsignables = null);
 
 /// <summary>Parámetros crudos del query string (se validan en EmpleadoConsultaServicio).</summary>
 public sealed record EmpleadoBusquedaSolicitud(string? Texto, string? SoloMisDepartamentos, string? Pagina, string? Tamano);

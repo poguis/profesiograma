@@ -15,6 +15,7 @@
 | H8 | «9. Frontend: avance» (la fila TAREA-24a dice «pendiente de verificación»: se verificó el 26/10/2026, ver el estado vigente) |
 | H9 | Texto del estado vigente reemplazado en la TAREA-24c (cabecera, fila de novedades frontend, siguiente tarea, filas 24b y 24c) |
 | H10 | Texto del estado vigente reemplazado en la TAREA-24d (cabecera, fila de novedades frontend, siguiente tarea, filas 24c y 24d, pendiente 61) |
+| H11 | Texto del estado vigente reemplazado en la TAREA-62-1 (cabecera, novedades frontend, siguiente tarea, índice, filas 24d y 24e, pendiente 62) |
 
 ## H1. Cabecera anterior
 
@@ -229,3 +230,21 @@ Texto anterior de la cabecera, de la fila «Novedades, frontend», de la siguien
 61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota (verificación del 21/10/2026): caso 6 de `bd-caida.cmd`: la instancia con nombre no sufría el defecto; `ForzarTcp` es de bajo riesgo (con la base real y `ForzarTcp=true`: `/api/health/db` y `/api/usuarios/me` 200 en ~0,25 s). [PENDIENTE]
 | 24e (opcional) | «Ver novedad» desde el cronograma; requiere una B0 de backend |
 | Criterio de personal | Pendiente 62: tarea nueva **después** de la 24 |
+
+## H11. Movido del estado vigente el 27/10/2026 (TAREA-62-1)
+
+Texto anterior de la cabecera, de la fila «Novedades, frontend», de la siguiente tarea, de dos filas del índice, de las filas 24d y 24e de la hoja de ruta (24d verificada) y del pendiente 62 (62-0 cerrada; 62-1 implementada):
+
+**Última actualización:** 2026-10-26 (TAREA-24d). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Novedades, frontend | 24a, 24b y **24c ✅** verificadas por el usuario el 26/10/2026. **24d** (sincronización Admin) implementada, pendiente de verificación (349/349) |
+| **Siguiente tarea** | Verificación visual de la 24d; luego elegir entre la 24e (opcional, B0) y el criterio de personal (pendiente 62) |
+
+| `docs/fases/FASE_4_Empleados_API.md` | Empleados, buscador, ERP, alta puntual, pendiente 62 | §4–§5 |
+| Empleados y criterio de personal (pendiente 62) | `FASE_4_Empleados_API.md`, `FASE_1` §2.7, `FASE_5_Novedades.md` §2 |
+
+| Tarea | Alcance |
+|---|---|
+| 24d | Sincronización de PERMISO MEDICO (Admin): implementada, pendiente de verificación |
+| **24e** (opcional) o **pendiente 62** | Decidir cuál sigue: «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) o el criterio de personal |
+
+62. [Decisión del usuario, 26/10/2026] **Criterio de personal elegible:** por ahora solo el grupo **ADMINISTRATIVO** puede elegirse como personal (buscador de proyectos y de novedades PERSONA); los usuarios con rol Admin podrán cambiar ese criterio desde la aplicación, con efecto global. Es una **tarea nueva después de la 24**. Su Fase A debe: confirmar qué campo del ERP equivale al «Grupo» original (sondeo sin nombres); diseñar el parámetro `EMPLEADO_FAMILIAS_ASIGNABLES` (Id 8, hoy `ADMINISTRATIVO` y sin uso) editable por Admin, con auditoría; y aplicar la regla en el **backend** (buscador y validaciones de proyectos y novedades). Hasta entonces, **sin filtro**. Texto anterior en `HISTORIAL.md`.

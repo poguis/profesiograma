@@ -145,7 +145,11 @@ public sealed class NovedadValidador(
             empleado = catalogo.Validar(codigoEkon, "codigoEkon", new Dictionary<string, List<string>>());
             if (empleado is null)
             {
-                return new Validacion(null, new Dictionary<string, string[]> { ["codigoEkon"] = [MensajeEmpleadoInvalido] });
+                // TAREA-62: activo pero de un grupo no asignable (sin exención en novedades) → su propio mensaje.
+                var mensaje = catalogo.NoEsAsignable(codigoEkon)
+                    ? ReglasPersonalElegible.MensajeNoAsignable(MapeoEmpleado.Normalizar(codigoEkon)!)
+                    : MensajeEmpleadoInvalido;
+                return new Validacion(null, new Dictionary<string, string[]> { ["codigoEkon"] = [mensaje] });
             }
 
             cedulas = catalogo.Cedulas;

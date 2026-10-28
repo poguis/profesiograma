@@ -3,11 +3,12 @@ using App.Application.Empleados;
 using App.Application.Proyectos.Crear;
 using App.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace App.Infrastructure.Consultas;
 
 /// <summary>Datos de referencia para validar "Crear proyecto" (solo lectura).</summary>
-internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDatosReferenciaProyecto
+internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db, ILogger<DatosReferenciaProyecto> registro) : IDatosReferenciaProyecto
 {
     private const string ClaveMaxPrincipales = "PROYECTO_MAX_PRINCIPALES";
     private const string ClaveMaxBacks = "PROYECTO_MAX_BACKS";
@@ -43,6 +44,21 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
     public async Task<IReadOnlyList<string>> ObtenerHorariosNoLaboralesAsync(CancellationToken ct) =>
         SepararLista(await ConsultaHorariosNoLaborales(db).FirstOrDefaultAsync(ct));
 
+    /// <summary>TAREA-62: sin caché; un cambio del Admin aplica en la siguiente búsqueda o validación de toda la API.</summary>
+    public Task<IReadOnlyList<string>> ObtenerFamiliasAsignablesAsync(CancellationToken ct) => LeerFamiliasAsignablesAsync(db, registro, ct);
+
+    /// <summary>Lectura común del buscador (EmpleadoConsultas) y de las validaciones. Vacía o ausente = sin filtro (Warning).</summary>
+    internal static async Task<IReadOnlyList<string>> LeerFamiliasAsignablesAsync(ProfesiogramaDbContext db, ILogger registro, CancellationToken ct)
+    {
+        var familias = SepararLista(await ConsultaFamiliasAsignables(db).FirstOrDefaultAsync(ct));
+        if (familias.Count == 0)
+        {
+            registro.LogWarning("Parámetro {Clave} vacío o ausente: sin filtro de personal elegible.", ReglasPersonalElegible.ClaveParametro);
+        }
+
+        return familias;
+    }
+
     /// <summary>"A, B,,C" → ["A", "B", "C"]; null → vacía.</summary>
     internal static IReadOnlyList<string> SepararLista(string? valor) =>
         valor?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
@@ -76,6 +92,10 @@ internal sealed class DatosReferenciaProyecto(ProfesiogramaDbContext db) : IDato
         string[] claves = [ClaveMaxPrincipales, ClaveMaxBacks, ClaveMaxDiasDescansoBack, ClaveExigePrincipal];
         return db.Parametros.AsNoTracking().Where(p => claves.Contains(p.Clave));
     }
+
+    /// <summary>TAREA-62: valor de EMPLEADO_FAMILIAS_ASIGNABLES.</summary>
+    internal static IQueryable<string> ConsultaFamiliasAsignables(ProfesiogramaDbContext db) =>
+        db.Parametros.AsNoTracking().Where(p => p.Clave == ReglasPersonalElegible.ClaveParametro).Select(p => p.Valor);
 
     internal static IQueryable<string> ConsultaHorariosNoLaborales(ProfesiogramaDbContext db) =>
         db.Parametros.AsNoTracking().Where(p => p.Clave == ClaveHorariosNoLaborales).Select(p => p.Valor);

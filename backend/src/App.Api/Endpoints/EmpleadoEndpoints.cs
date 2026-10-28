@@ -1,6 +1,7 @@
 using App.Application.Empleados;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Endpoints;
 
@@ -34,6 +35,33 @@ public static class EmpleadoEndpoints
             })
             .WithTags("Empleados")
             .RequireAuthorization(Politicas.Admin);
+
+        // TAREA-62: criterio de personal elegible (Parametro EMPLEADO_FAMILIAS_ASIGNABLES). Solo familias y conteos.
+        var admin = app.MapGroup("/api/admin/empleados").WithTags("Empleados").RequireAuthorization(Politicas.Admin);
+
+        // Familias de la lista de la API en caché (sin lista utilizable → 503 por el manejador común del ERP).
+        admin.MapGet("/familias", async ([FromServices] CriterioPersonalServicio servicio, CancellationToken ct) =>
+            TypedResults.Ok(await servicio.ObtenerAsync(ct)));
+
+        // 200 { valorActual }; 400 en familias/valorAnterior; 409 si otro lo cambió (compare-and-set). Efecto inmediato.
+        admin.MapPut("/familias-asignables", async Task<Results<Ok<CriterioGuardadoDto>, ValidationProblem, ProblemHttpResult>> (
+            GuardarCriterioSolicitud solicitud, [FromServices] CriterioPersonalServicio servicio, IUsuarioActual usuario, ILoggerFactory registro,
+            CancellationToken ct) =>
+        {
+            var r = await servicio.GuardarAsync(solicitud, ct);
+            switch (r.Estado)
+            {
+                case EstadoGuardarCriterio.Guardado:
+                    registro.CreateLogger(nameof(EmpleadoEndpoints)).LogInformation(
+                        "Criterio de personal elegible (usuario {UsuarioId}): «{Anterior}» → «{Nuevo}».",
+                        usuario.UsuarioId, solicitud.ValorAnterior, r.Guardado!.ValorActual);
+                    return TypedResults.Ok(r.Guardado);
+                case EstadoGuardarCriterio.Invalido:
+                    return TypedResults.ValidationProblem(r.Errores!, title: "El criterio de personal no es válido.");
+                default:
+                    return TypedResults.Problem(title: ResultadoGuardarCriterio.MensajeConflicto, statusCode: StatusCodes.Status409Conflict);
+            }
+        });
 
         return app;
     }

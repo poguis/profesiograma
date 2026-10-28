@@ -107,6 +107,17 @@ internal sealed class DatosFalsos : IDatosReferenciaProyecto
         return Task.FromResult<IReadOnlyList<string>>(HorariosNoLaborales.ToList());
     }
 
+    /// <summary>TAREA-62: criterio de personal elegible. Vacío por defecto (sin filtro) para no cambiar las pruebas anteriores.</summary>
+    public List<string> FamiliasAsignables { get; set; } = [];
+
+    public int LecturasFamilias { get; private set; }
+
+    public Task<IReadOnlyList<string>> ObtenerFamiliasAsignablesAsync(CancellationToken ct)
+    {
+        LecturasFamilias++;
+        return Task.FromResult<IReadOnlyList<string>>(FamiliasAsignables.ToList());
+    }
+
     /// <summary>TAREA-26d-3: filas de Empleado guardadas (sin departamento ni unidad, como EmpleadosErpFalsos.Activo).</summary>
     public Dictionary<int, EmpleadoGuardado> Guardados { get; } = Empleados.Values
         .ToDictionary(e => e.Id, e => new EmpleadoGuardado(e.Id, e.CodigoEkon, e.NombreCompleto, e.Puesto, null, null));

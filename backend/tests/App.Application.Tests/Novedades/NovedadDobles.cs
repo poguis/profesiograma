@@ -141,11 +141,13 @@ internal sealed class EscenarioNovedad
     {
         Empleados = empleados ?? new EmpleadosErpFalsos();
         Repositorio = new NovedadRepositorioFalso(codigosExistentes);
-        Validador = new NovedadValidador(Consultas, new DatosFalsos(), Empleados, usuario);
+        Validador = new NovedadValidador(Consultas, Datos, Empleados, usuario);
         Servicio = new NovedadEscrituraServicio(Validador, Repositorio, Transaccion, usuario, NovedadPrueba.Reloj);
     }
 
     public NovedadConsultasFalsas Consultas { get; } = new();
+    /// <summary>TAREA-62: para fijar el criterio de personal elegible (vacío = sin filtro).</summary>
+    public DatosFalsos Datos { get; } = new();
     public IFuenteEmpleadosErp Empleados { get; }
     public NovedadRepositorioFalso Repositorio { get; }
     public TransaccionFalsa Transaccion { get; } = new();

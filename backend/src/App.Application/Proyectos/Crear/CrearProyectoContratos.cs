@@ -39,6 +39,12 @@ public interface IDatosReferenciaProyecto
     Task<IReadOnlyList<string>> ObtenerHorariosNoLaboralesAsync(CancellationToken ct);
 
     /// <summary>
+    /// TAREA-62: familias de Parametro EMPLEADO_FAMILIAS_ASIGNABLES (LIST separada por comas), sin caché (efecto global
+    /// inmediato). Vacía o ausente = sin filtro (con un Warning en el log).
+    /// </summary>
+    Task<IReadOnlyList<string>> ObtenerFamiliasAsignablesAsync(CancellationToken ct);
+
+    /// <summary>
     /// Datos laborales guardados en Empleado por Id, sin filtrar por estado ni datos sensibles (TAREA-26d-3: comparación
     /// "guardado frente al ERP"; si el empleado está activo lo decide la API).
     /// </summary>

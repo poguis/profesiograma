@@ -22,13 +22,16 @@ public sealed class CatalogoEmpleados
     private readonly IReadOnlyDictionary<string, int> idPorCodigo;
     private readonly IReadOnlyDictionary<string, EmpleadoErp> activos;
     private readonly IReadOnlyDictionary<string, EmpleadoAsignable>? fijos;
+    private readonly IReadOnlySet<string> noAsignables;
 
     private CatalogoEmpleados(
         IReadOnlyDictionary<string, int> idPorCodigo, IReadOnlyDictionary<string, EmpleadoErp> activos,
-        IReadOnlyDictionary<string, EmpleadoAsignable>? fijos = null, CedulasEmpleados? cedulas = null)
+        IReadOnlyDictionary<string, EmpleadoAsignable>? fijos = null, CedulasEmpleados? cedulas = null,
+        IReadOnlySet<string>? noAsignables = null)
     {
         this.activos = activos;
         this.fijos = fijos;
+        this.noAsignables = noAsignables ?? new HashSet<string>();
         Cedulas = cedulas ?? CedulasEmpleados.Vacio;
 
         // Id real si la persona tiene fila; si no, temporal negativo en orden de aparición (determinista).
@@ -54,7 +57,7 @@ public sealed class CatalogoEmpleados
     /// </summary>
     /// <exception cref="Erp.ErpNoDisponibleException">La API de empleados no respondió (503, sin escribir).</exception>
     public static async Task<CatalogoEmpleados> CargarAsync(IDatosReferenciaProyecto datos, IFuenteEmpleadosErp fuente,
-        IEnumerable<string?> codigosEkon, bool fresco, CancellationToken ct)
+        IEnumerable<string?> codigosEkon, bool fresco, CancellationToken ct, IEnumerable<string>? exentos = null)
     {
         ArgumentNullException.ThrowIfNull(datos);
         ArgumentNullException.ThrowIfNull(fuente);
@@ -75,7 +78,17 @@ public sealed class CatalogoEmpleados
             ? new Dictionary<string, int>()
             : await datos.ObtenerIdsPorCodigosAsync(activos.Keys.ToList(), ct);
 
-        return new CatalogoEmpleados(idsPorCodigo, activos, cedulas: api.Cedulas.Solo(activos.Keys));
+        // TAREA-62: criterio de personal elegible, leído en este momento (sin caché). Los exentos (personas que ya están
+        // en ESE proyecto: actualizar personal y reactivar) no se filtran.
+        IReadOnlyList<string> familias = activos.Count == 0 ? [] : await datos.ObtenerFamiliasAsignablesAsync(ct);
+        var exentosNormalizados = (exentos ?? []).Select(MapeoEmpleado.Normalizar).OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var noAsignables = activos
+            .Where(a => !exentosNormalizados.Contains(a.Key) && !ReglasPersonalElegible.EsAsignable(a.Value, familias))
+            .Select(a => a.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return new CatalogoEmpleados(idsPorCodigo, activos, cedulas: api.Cedulas.Solo(activos.Keys), noAsignables: noAsignables);
     }
 
     /// <summary>
@@ -94,6 +107,10 @@ public sealed class CatalogoEmpleados
             lista.ToDictionary(a => a.CodigoEkon, StringComparer.OrdinalIgnoreCase));
     }
 
+    /// <summary>TAREA-62: el código está activo en la API pero no pertenece a un grupo asignable (y no está exento).</summary>
+    public bool NoEsAsignable(string? codigoEkon) =>
+        MapeoEmpleado.Normalizar(codigoEkon) is { } codigo && noAsignables.Contains(codigo);
+
     /// <summary>
     /// Persona nueva: codigoEkon obligatorio y activo en la API. Los errores van a "{clave}.codigoEkon" con el código
     /// recibido.
@@ -111,6 +128,12 @@ public sealed class CatalogoEmpleados
         if (!activos.TryGetValue(codigo, out var erp))
         {
             Agregar(e, $"{clave}.codigoEkon", $"El empleado {codigo} no existe o no está activo.");
+            return null;
+        }
+
+        if (noAsignables.Contains(codigo))
+        {
+            Agregar(e, $"{clave}.codigoEkon", ReglasPersonalElegible.MensajeNoAsignable(codigo)); // TAREA-62, después de «no activo»
             return null;
         }
 

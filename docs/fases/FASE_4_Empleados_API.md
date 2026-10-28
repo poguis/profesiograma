@@ -106,7 +106,7 @@
 
 ## 7. Modo Simulado (SOLO Development)
 - `EmpleadosErpSimulado` devuelve **DEV001–DEV008** con datos idénticos a las filas del sembrador (definición común en `EmpleadosPrueba`): la alta puntual no cambia sus filas.
-- Además, **SIM001–SIM200** ficticios: el 60 % en "UNIDAD SISTEMA INTEGRADO DE GESTION" y el resto repartido entre los otros 6 departamentos de la tabla, sin datos sensibles.
+- Además, **SIM001–SIM200** ficticios: el 60 % en "UNIDAD SISTEMA INTEGRADO DE GESTION" y el resto repartido entre los otros 6 departamentos de la tabla, sin datos sensibles. **TAREA-62:** los SIM con i % 10 == 0 (SIM010, SIM020… SIM200, 20 personas) son `OPERATIVO`; el resto y los DEV, `ADMINISTRATIVO`.
 - En modo Http los DEV no están en la API: no se pueden agregar como personas nuevas, pero sus asignaciones existentes siguen funcionando.
 
 ## 8. Comparación "guardado frente al ERP" (TAREA-26d-3)
@@ -149,3 +149,30 @@
 - **Fase 7:** `Usuario.EmpleadoId` por alta puntual desde `mailEmpresa` [PENDIENTE DE CONFIRMAR].
 - **TAREA-23:** las novedades de una persona usarán la misma alta puntual.
 - **Fase 3:** alta desde las asignaciones de SharePoint con datos de la API si el código existe; si no existe, `EsOrigenLegado = 1` con los datos de SharePoint [PENDIENTE DE CONFIRMAR si un cuerpo con `estado` vacío devuelve también a los inactivos].
+
+## 10. Criterio de personal elegible (TAREA-62, pendiente 62)
+**Equivalencia (62-0, confirmada por el usuario con el sondeo de solo agregados `tarea62/sondeo-familias.cmd`):** el «Grupo» del original (`ESTRUCTURA GENERAL`, `Grupo = "ADMINISTRATIVO"`, FASE_1 §2.3 y §2.7) es `familiaPuesto` del ERP: 715 ADMINISTRATIVO y 908 OPERATIVO, igual que SharePoint, sin vacíos ni comas. Sin cambios de mapeo ni migración.
+
+| Tema | Regla |
+|---|---|
+| Punto de decisión | `ReglasPersonalElegible.EsAsignable(EmpleadoErp, familias)` (Application/Empleados): lista vacía = todos; con filtro, un empleado sin familia no es asignable. Comparación como `ComparacionEmpleadosErp.Iguales` (sin mayúsculas ni tildes, espacios colapsados) |
+| Parámetro | `EMPLEADO_FAMILIAS_ASIGNABLES` (Id 8, LIST separada por comas; inicial `ADMINISTRATIVO`). Se lee **sin caché** en cada búsqueda o validación (`ObtenerFamiliasAsignablesAsync`, `SepararLista`): el cambio del Admin aplica de inmediato en toda la API. Vacío o ausente = sin filtro, con un Warning en el log |
+| Buscador | `GET /api/empleados` filtra por familia **antes de paginar**; se suma a «soloMisDepartamentos» (filtros independientes, J6). La respuesta agrega `familiasAsignables` (texto guardado; vacío = sin filtro), compatible hacia atrás |
+| Personas nuevas | `CatalogoEmpleados` (crear proyecto, actualizar personal, reactivar, vista previa y novedades PERSONA): 400 en `…codigoEkon` «El empleado {código} no pertenece a un grupo asignable.» (código tal como llegó), **después** de «no existe o no está activo» |
+| Exención (P3) | Quien ya tiene fila en **ese mismo proyecto** (vigente o histórica) no se filtra al actualizar personal o reactivar, incluido el principal que propone R7. En crear proyecto y en novedades no hay exención. Las personas guardadas identificadas por `id` no pasan por la validación |
+| Sin filtro | Sincronización de PERMISO MEDICO (P2), comparación con el ERP (solo informa; pendiente 69), personas ya guardadas (incluidas las migradas en la Fase 3; pendiente 68) |
+| `GET /api/admin/empleados/familias` (Admin) | `{ valorActual, sinCriterio, familias: [{ familia, activos, asignable }] }`: agrupadas por familia normalizada con la lista en caché, más las del parámetro sin activos (0). Orden: activos descendente. Sin lista utilizable → 503. Sin datos personales |
+| `PUT /api/admin/empleados/familias-asignables` (Admin) | `{ familias[], valorAnterior }` → 200 `{ valorActual }`. 400 en `familias`: «Seleccione al menos una familia.», «La familia no puede estar vacía.», «La familia {v} no puede contener comas.», «La familia {v} está repetida.», «La familia {v} no existe.» (no está en la lista de la API ni en el parámetro), «El criterio supera el largo permitido.» (> 400); 400 en `valorAnterior` si falta: «Falta el valor anterior del criterio; recargue.» (vacío es válido). Se informan todos los errores de una vez |
+| Concurrencia y auditoría | `ExecuteUpdate … WHERE Clave = 'EMPLEADO_FAMILIAS_ASIGNABLES' AND Valor = valorAnterior` (compare-and-set; Parametro no tiene RowVer; la comparación sigue la collation de la base, `CI_AS`); 0 filas → 409 «Otro usuario cambió el criterio; recargue.». `ModificadoPorId` y `FechaModificacion` (UTC, segundos) se escriben de forma explícita (ExecuteUpdate no pasa por el `AuditoriaInterceptor`). Log Information con el valor anterior, el nuevo y el Id del Admin. Sin tabla de historial (P5). Si faltara la fila del parámetro (está en las semillas), el PUT también responde 409 |
+| Modo Simulado | §7: SIM con i % 10 == 0 = `OPERATIVO` |
+| Verificación | Pruebas: `PersonalElegibleTests`, `PersonalElegibleSqlTests` (ToQueryString), `CriterioPersonalEndpointsTests`. Manual: `backend/tests/manual/tarea62/criterio.cmd` (cubre el ExecuteUpdate y la auditoría) |
+
+| # | Decisión (Fase A de la TAREA-62, aprobada) |
+|---|---|
+| P2 | La sincronización de PERMISO MEDICO no aplica el filtro (la decide otra aplicación) |
+| P3 | Exención de quien ya está en el mismo proyecto (actualizar personal y reactivar, incluido R7) |
+| P4 | El PUT rechaza el criterio vacío; vacío o ausente en la base = sin filtro, con Warning |
+| P5 | Auditoría con ModificadoPor/FechaModificacion y el log; sin tabla de historial ni migración |
+| P6 | Administración en el menú «Administración» solo para Admin, ruta `/admin/personal-elegible` (62-2) |
+| P7 | El buscador muestra qué grupos se aplican (`familiasAsignables`; la línea se agrega en la 62-2) |
+| P8 | La comparación con el ERP no marca «ya no asignable» por ahora (pendiente 69) |

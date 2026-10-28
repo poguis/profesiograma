@@ -228,10 +228,11 @@ public sealed class ReactivacionServicio(
         }
 
         // Datos de referencia: jornadas, límites y empleados activos en la API (todas las personas son nuevas; TAREA-26d).
+        // TAREA-62 (P3): quien ya tiene fila en ESTE proyecto (incluido el principal que propone R7) no se filtra por grupo.
         var activos = empleados ?? await CatalogoEmpleados.CargarAsync(datos, empleadosErp,
             (s.Principales ?? []).Where(p => p.Id is null).Select(p => p.CodigoEkon)
                 .Concat((s.Backs ?? []).Where(b => b.Id is null).Select(b => b.CodigoEkon)),
-            fresco, ct);
+            fresco, ct, exentos: proyecto.Personal.Select(p => p.CodigoEkon));
         var jornadas = await datos.ObtenerJornadasAsync(ct);
         var limites = await datos.ObtenerLimitesAsync(ct);
 

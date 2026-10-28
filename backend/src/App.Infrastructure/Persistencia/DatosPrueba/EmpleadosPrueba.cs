@@ -14,6 +14,8 @@ internal static class EmpleadosPrueba
     public const string DepartamentoSig = "UNIDAD SISTEMA INTEGRADO DE GESTION";
     public const string Empresa = "COMPAÑÍA DE PRUEBA S.A.";
     public const string FamiliaPuesto = "ADMINISTRATIVO";
+    /// <summary>TAREA-62: familia real del ERP que NO es asignable con el criterio inicial (los SIM con i % 10 == 0).</summary>
+    public const string FamiliaNoAsignable = "OPERATIVO";
     public const int CantidadSimulados = 200;
 
     private static readonly string[] PuestosDev =
@@ -60,13 +62,15 @@ internal static class EmpleadosPrueba
                 e.Seccion, e.FamiliaPuesto, MapeoEmpleado.EstadoActivo));
         }
 
-        // SIM: 60 % en la unidad SIG y el resto repartido entre los otros 6 departamentos de la tabla.
+        // SIM: 60 % en la unidad SIG y el resto repartido entre los otros 6 departamentos de la tabla. TAREA-62: SIM010,
+        // SIM020… SIM200 (20) son OPERATIVO, para verificar que el criterio ADMINISTRATIVO los excluye.
         for (var i = 1; i <= CantidadSimulados; i++)
         {
             var departamento = i % 10 < 6 ? DepartamentoSig : Departamentos[i % Departamentos.Length];
             lista.Add(new EmpleadoErp($"SIM{i:000}", $"EMPLEADO SIMULADO {i:000}", "SIMULADO", $"EMPLEADO {i:000}",
                 $"sim{i:000}.dev@profesiograma.local", null, Empresa, null, PuestosSimulados[i % PuestosSimulados.Length],
-                null, departamento, null, departamento, null, null, null, null, FamiliaPuesto, MapeoEmpleado.EstadoActivo));
+                null, departamento, null, departamento, null, null, null, null, i % 10 == 0 ? FamiliaNoAsignable : FamiliaPuesto,
+                MapeoEmpleado.EstadoActivo));
         }
 
         return lista;

@@ -1,15 +1,16 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-26 (TAREA-24d). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-27 (TAREA-62-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
 | Proyectos (backend y frontend) | Crear, listado, detalle, estados, edición, reactivación, cronograma y reporte Excel ✅ (TAREA-07 a 22c) |
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
-| Novedades, frontend | 24a, 24b y **24c ✅** verificadas por el usuario el 26/10/2026. **24d** (sincronización Admin) implementada, pendiente de verificación (349/349) |
+| Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
+| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo: 715 ADMINISTRATIVO, 908 OPERATIVO). **62-1** (backend) implementada, pendiente de verificación (1074/1074) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación visual de la 24d; luego elegir entre la 24e (opcional, B0) y el criterio de personal (pendiente 62) |
+| **Siguiente tarea** | Verificación de la 62-1 (`tarea62/criterio.cmd`); después **TAREA-62-2** (frontend) |
 
 ## 1. Índice de documentos
 
@@ -20,7 +21,7 @@
 | `docs/fases/FASE_1_Analisis_Funcional.md` | Pantalla o regla funcional nueva del módulo Proyectos; pendiente 62 | Pantallas, RN01–RN18, roles; §2.7 (novedades del original) |
 | `docs/fases/FASE_2_Modelo_Datos.md` | Cambio de modelo, migración EF o Fase 3 | Mapeo lista → tabla, J1–J16, §8–§9 |
 | `docs/fases/FASE_2_modelo_profesiograma.sql` | **Solo** si la tarea toca el modelo (tablas, vistas, semillas) | — |
-| `docs/fases/FASE_4_Empleados_API.md` | Empleados, buscador, ERP, alta puntual, pendiente 62 | §4–§5 |
+| `docs/fases/FASE_4_Empleados_API.md` | Empleados, buscador, ERP, alta puntual, criterio de personal | §4–§5, §10 |
 | `docs/fases/FASE_5_Crear_Proyecto.md` | Crear proyecto, motor de cronograma, cruces | P1–P6 |
 | `docs/fases/FASE_5_Estados_Proyecto.md` | Suspensión, cierre, reactivación | E1–E6; §8 |
 | `docs/fases/FASE_5_Edicion_Cronograma.md` | Fecha de corte, actualización de personal | R1–R8; §8 |
@@ -37,7 +38,7 @@
 | Novedades, backend (23-4, B0) | `FASE_5_Novedades.md` §1–§8; pendientes 7, 63 y 66 |
 | Frontend de proyectos | El FASE_5 de la pantalla y su último reporte |
 | Cronograma o reporte Excel | `FASE_5_Cronograma.md` |
-| Empleados y criterio de personal (pendiente 62) | `FASE_4_Empleados_API.md`, `FASE_1` §2.7, `FASE_5_Novedades.md` §2 |
+| Criterio de personal (TAREA-62) | `FASE_4_Empleados_API.md` §10 y §5, `FASE_5_Novedades.md` §2 |
 | Migración de datos (Fase 3) | `FASE_0`, `FASE_2` y el `.sql`; pendientes 27 y 45 |
 | Entra ID, entornos y despliegue (Fase 7) | §4 de este documento; pendientes 7, 59, 63 y 65 |
 
@@ -89,8 +90,9 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 24d | Sincronización de PERMISO MEDICO (Admin): implementada, pendiente de verificación |
-| **24e** (opcional) o **pendiente 62** | Decidir cuál sigue: «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) o el criterio de personal |
+| 62-1 | Criterio de personal, backend: implementada, pendiente de verificación |
+| **62-2** (siguiente) | Criterio de personal, frontend: menú «Administración» (Admin), `/admin/personal-elegible`, grupos en el buscador |
+| 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | 25 | Administración de permisos por departamento |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
@@ -140,11 +142,13 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
 60. [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
 61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
-62. [Decisión del usuario, 26/10/2026] **Criterio de personal elegible:** por ahora solo el grupo **ADMINISTRATIVO** puede elegirse como personal (buscador de proyectos y de novedades PERSONA); los usuarios con rol Admin podrán cambiar ese criterio desde la aplicación, con efecto global. Es una **tarea nueva después de la 24**. Su Fase A debe: confirmar qué campo del ERP equivale al «Grupo» original (sondeo sin nombres); diseñar el parámetro `EMPLEADO_FAMILIAS_ASIGNABLES` (Id 8, hoy `ADMINISTRATIVO` y sin uso) editable por Admin, con auditoría; y aplicar la regla en el **backend** (buscador y validaciones de proyectos y novedades). Hasta entonces, **sin filtro**. Texto anterior en `HISTORIAL.md`.
+62. [TAREA-62] **Criterio de personal elegible** (solo el grupo ADMINISTRATIVO; el Admin lo cambia con efecto global y auditoría): 62-0 cerrada, 62-1 (backend) implementada, 62-2 (frontend) pendiente. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11.
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
 65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]
 67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). [PENDIENTE DE DECISIÓN DEL USUARIO]
+68. [Menor, Fase 3] Medir cuántas personas asignadas en SharePoint no son de un grupo asignable (podrán conservarse; no agregarse a proyectos nuevos).
+69. [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
 
 ## 7.1 Reglas técnicas obligatorias
 
