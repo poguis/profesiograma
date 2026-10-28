@@ -23,7 +23,7 @@ import { Add20Regular } from '@fluentui/react-icons'
 import { useState } from 'react'
 import { Paginacion } from '../../../components/Paginacion'
 import { useValorConRetardo } from '../../../hooks/useValorConRetardo'
-import { aEmpleadoFila, detalleEmpleado, errorBuscador, marcasEmpleado } from '../buscadorEmpleados'
+import { aEmpleadoFila, detalleEmpleado, errorBuscador, marcasEmpleado, textoGruposAsignables } from '../buscadorEmpleados'
 import type { EmpleadoFila } from '../formularioProyecto'
 import { useBusquedaEmpleados } from '../hooks'
 import type { EmpleadoBusqueda } from '../tipos'
@@ -49,6 +49,7 @@ const useEstilos = makeStyles({
   },
   datos: { display: 'flex', flexDirection: 'column', minWidth: 0 },
   marcas: { display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalXS },
+  grupos: { color: tokens.colorNeutralForeground3 },
 })
 
 export interface BuscadorEmpleadosProps {
@@ -152,6 +153,13 @@ export function BuscadorEmpleados({
               <MessageBar intent="warning">
                 <MessageBarBody>{data.avisoErp}</MessageBarBody>
               </MessageBar>
+            )}
+
+            {/* TAREA-62-2: criterio de personal elegible que aplicó el buscador (si no hay filtro, no se muestra nada). */}
+            {!error && textoGruposAsignables(data?.familiasAsignables) && (
+              <Text size={200} className={estilos.grupos}>
+                {textoGruposAsignables(data?.familiasAsignables)}
+              </Text>
             )}
 
             {data && data.total === 0 && (

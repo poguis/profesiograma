@@ -1,6 +1,8 @@
 import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
-import { Briefcase24Regular, CalendarCancel24Regular, CalendarLtr24Regular, Home24Regular } from '@fluentui/react-icons'
+import { Briefcase24Regular, CalendarCancel24Regular, CalendarLtr24Regular, Home24Regular, Settings24Regular } from '@fluentui/react-icons'
 import { NavLink } from 'react-router'
+import { useUsuarioActual } from '../auth/useUsuarioActual'
+import { esAdmin } from '../features/novedades/sincronizacion'
 
 const useEstilos = makeStyles({
   lista: {
@@ -29,6 +31,7 @@ const useEstilos = makeStyles({
 
 export function MenuLateral() {
   const estilos = useEstilos()
+  const { data: usuario } = useUsuarioActual() // misma consulta (y caché) que la barra superior
 
   return (
     <ul className={estilos.lista}>
@@ -69,6 +72,18 @@ export function MenuLateral() {
           Novedades
         </NavLink>
       </li>
+      {/* TAREA-62-2: solo para Admin (solo decide si se ve; la API exige la política Admin igual). */}
+      {esAdmin(usuario) && (
+        <li>
+          <NavLink
+            to="/admin/personal-elegible"
+            className={({ isActive }) => mergeClasses(estilos.item, estilos.enlace, isActive && estilos.activo)}
+          >
+            <Settings24Regular aria-hidden />
+            Administración
+          </NavLink>
+        </li>
+      )}
     </ul>
   )
 }

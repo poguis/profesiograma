@@ -25,6 +25,12 @@ export function marcasEmpleado(etiquetas: Map<string, string[]>, e: EmpleadoBusq
   return etiquetas.get(claveEmpleado(e.codigoEkon)) ?? []
 }
 
+/** TAREA-62-2: «Solo grupos asignables: A, B.» si el buscador aplicó el criterio; null si es vacío o no viene. */
+export function textoGruposAsignables(familias: readonly string[] | null | undefined): string | null {
+  const lista = (familias ?? []).map((f) => f.trim()).filter(Boolean)
+  return lista.length === 0 ? null : `Solo grupos asignables: ${lista.join(', ')}.`
+}
+
 export interface ErrorBuscador {
   titulo: string
   detalle: string | null

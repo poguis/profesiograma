@@ -212,6 +212,8 @@ export interface ResultadoBusquedaEmpleados {
   tamano: number
   total: number
   avisoErp: string | null
+  /** TAREA-62: criterio de personal elegible aplicado (vacío o ausente = sin filtro). */
+  familiasAsignables?: string[] | null
 }
 
 export interface FiltroEmpleados {

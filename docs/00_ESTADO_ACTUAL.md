@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-27 (TAREA-62-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-28 (TAREA-62-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
@@ -8,9 +8,9 @@
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
-| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo: 715 ADMINISTRATIVO, 908 OPERATIVO). **62-1** (backend) implementada, pendiente de verificación (1074/1074) |
+| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo). **62-1 ✅** (backend) verificada por el usuario el 28/10/2026 (`criterio.cmd` corrida 170: 0 FALLA; auditoría OK). **62-2** (frontend) implementada, pendiente de verificación (362/362) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación de la 62-1 (`tarea62/criterio.cmd`); después **TAREA-62-2** (frontend) |
+| **Siguiente tarea** | Verificación visual de la 62-2 (A1–A11); la siguiente la decide el usuario (pendientes en §5 y §7) |
 
 ## 1. Índice de documentos
 
@@ -90,8 +90,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 62-1 | Criterio de personal, backend: implementada, pendiente de verificación |
-| **62-2** (siguiente) | Criterio de personal, frontend: menú «Administración» (Admin), `/admin/personal-elegible`, grupos en el buscador |
+| 62-2 | Criterio de personal, frontend (`/admin/personal-elegible`): implementada, pendiente de verificación |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | 25 | Administración de permisos por departamento |
@@ -142,7 +141,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
 60. [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
 61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
-62. [TAREA-62] **Criterio de personal elegible** (solo el grupo ADMINISTRATIVO; el Admin lo cambia con efecto global y auditoría): 62-0 cerrada, 62-1 (backend) implementada, 62-2 (frontend) pendiente. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11.
+62. [TAREA-62] **Criterio de personal elegible**: 62-0 cerrada, 62-1 ✅ (backend), 62-2 (frontend) pendiente de verificación. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11 y H12.
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
 65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]

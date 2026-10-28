@@ -52,6 +52,13 @@ const router = createBrowserRouter([
         path: 'novedades/:id',
         lazy: async () => ({ Component: (await import('../features/novedades/pages/DetalleNovedad')).DetalleNovedad }),
       },
+      // TAREA-62-2: criterio de personal elegible (Admin; la pantalla no llama al backend si el usuario no lo es).
+      {
+        path: 'admin/personal-elegible',
+        lazy: async () => ({
+          Component: (await import('../features/admin/personal-elegible/PaginaPersonalElegible')).PaginaPersonalElegible,
+        }),
+      },
       {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),

@@ -16,6 +16,7 @@
 | H9 | Texto del estado vigente reemplazado en la TAREA-24c (cabecera, fila de novedades frontend, siguiente tarea, filas 24b y 24c) |
 | H10 | Texto del estado vigente reemplazado en la TAREA-24d (cabecera, fila de novedades frontend, siguiente tarea, filas 24c y 24d, pendiente 61) |
 | H11 | Texto del estado vigente reemplazado en la TAREA-62-1 (cabecera, novedades frontend, siguiente tarea, índice, filas 24d y 24e, pendiente 62) |
+| H12 | Texto del estado vigente reemplazado en la TAREA-62-2 (cabecera, criterio de personal, siguiente tarea, filas 62-1 y 62-2, pendiente 62) |
 
 ## H1. Cabecera anterior
 
@@ -248,3 +249,19 @@ Texto anterior de la cabecera, de la fila «Novedades, frontend», de la siguien
 | **24e** (opcional) o **pendiente 62** | Decidir cuál sigue: «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) o el criterio de personal |
 
 62. [Decisión del usuario, 26/10/2026] **Criterio de personal elegible:** por ahora solo el grupo **ADMINISTRATIVO** puede elegirse como personal (buscador de proyectos y de novedades PERSONA); los usuarios con rol Admin podrán cambiar ese criterio desde la aplicación, con efecto global. Es una **tarea nueva después de la 24**. Su Fase A debe: confirmar qué campo del ERP equivale al «Grupo» original (sondeo sin nombres); diseñar el parámetro `EMPLEADO_FAMILIAS_ASIGNABLES` (Id 8, hoy `ADMINISTRATIVO` y sin uso) editable por Admin, con auditoría; y aplicar la regla en el **backend** (buscador y validaciones de proyectos y novedades). Hasta entonces, **sin filtro**. Texto anterior en `HISTORIAL.md`.
+
+## H12. Movido del estado vigente el 28/10/2026 (TAREA-62-2)
+
+Texto anterior de la cabecera, de la fila del criterio de personal, de la siguiente tarea, de las filas 62-1 y 62-2 de la hoja de ruta (62-1 verificada) y del pendiente 62:
+
+**Última actualización:** 2026-10-27 (TAREA-62-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo: 715 ADMINISTRATIVO, 908 OPERATIVO). **62-1** (backend) implementada, pendiente de verificación (1074/1074) |
+| **Siguiente tarea** | Verificación de la 62-1 (`tarea62/criterio.cmd`); después **TAREA-62-2** (frontend) |
+
+
+| Tarea | Alcance |
+|---|---|
+| 62-1 | Criterio de personal, backend: implementada, pendiente de verificación |
+| **62-2** (siguiente) | Criterio de personal, frontend: menú «Administración» (Admin), `/admin/personal-elegible`, grupos en el buscador |
+
+62. [TAREA-62] **Criterio de personal elegible** (solo el grupo ADMINISTRATIVO; el Admin lo cambia con efecto global y auditoría): 62-0 cerrada, 62-1 (backend) implementada, 62-2 (frontend) pendiente. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11.
