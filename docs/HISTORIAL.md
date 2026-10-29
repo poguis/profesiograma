@@ -20,6 +20,7 @@
 | H13 | Texto del estado vigente reemplazado en la TAREA-25-1 (cabecera, criterio de personal, siguiente tarea, filas 62-2 y 25, pendientes 2, 6 y 62) |
 | H14 | Texto del estado vigente reemplazado en la TAREA-25-2 (cabecera, usuarios y departamentos, siguiente tarea, filas 25-1 a 25-3, pendiente 70; nota de los pendientes 72 y P7) |
 | H15 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-2 (29/10/2026): encabezado de la tabla de estado, fila de usuarios y departamentos, siguiente tarea y fila 25-2 |
+| H16 | Texto del estado vigente reemplazado en la TAREA-25-3-1 (cabecera, usuarios y departamentos, siguiente tarea, índice de FASE_5, fila 25-3 y pendiente 2) |
 
 ## H1. Cabecera anterior
 
@@ -309,3 +310,20 @@ Texto anterior del encabezado de la tabla de estado, de la fila de usuarios y de
 | **Siguiente tarea** | Verificación visual de la 25-2 (U1–U12); después **TAREA-25-3** (CargoInfor, pendiente 2) con su Fase A corta |
 
 | 25-2 | Usuarios y departamentos, frontend (`/admin`, `/admin/usuarios`): implementada, pendiente de verificación |
+## H16. Movido del estado vigente el 29/10/2026 (TAREA-25-3-1)
+
+Texto anterior de la cabecera, de la fila de usuarios y departamentos, de la siguiente tarea, de la fila de FASE_5 en el índice, de la fila 25-3 de la hoja de ruta y del pendiente 2:
+
+**Última actualización:** 2026-10-29 (TAREA-25-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (25-1: `usuarios.cmd` 0 FALLA; 25-2: U1–U12; frontend 378/378, backend 1123/1123). Se conservan (no se borran): Id 4 prueba.tarea25 y Id 7 prueba.ui (usuarios de prueba, inactivos); Id 5 gestor2 (usuario DevAuth creado en su primer ingreso; activo, sin departamentos) |
+| **Siguiente tarea** | **TAREA-25-3** (CargoInfor, pendiente 2), Fase A |
+
+| `docs/fases/FASE_5_Usuarios_Departamentos.md` | Usuarios y departamentos (TAREA-25), administración | §2–§3 contratos y reglas; §5 efecto de los departamentos |
+
+| **25-3** (siguiente) | CargoInfor (pendiente 2), con su propia Fase A |
+
+2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz). **TAREA-26d-1:** la alta puntual da de alta en `CargoInfor` el puesto de cada persona asignada (mayúsculas, sin espacios extremos, `CodigoInfor` vacío, nunca se borran). Queda acotado a los puestos de las personas asignadas; un futuro "Importar puestos desde la API" en la administración (TAREA-25-3) cubriría el resto. La asignación del código Infor sigue pendiente (interfaz o Excel).
+
+Pendiente 39 (resuelto el 08/10/2026; movido en la TAREA-25-3-1 para mantener el vigente bajo 25 KB):
+
+39. Los datos de prueba tienen solo 8 empleados (DEV001–DEV008), con cruces en casi todas las fechas disponibles: ya no alcanzan para pruebas sin cruces (V17 de la TAREA-19c no se pudo hacer). Ampliar los empleados de prueba (sembrador o SQL aprobado). [PENDIENTE DE DECISIÓN DEL USUARIO] **TAREA-26d-1:** en modo Simulado, la "API" trae DEV001–DEV008 y 200 empleados ficticios SIM001–SIM200 (resuelto en Simulado); en modo Http se asignan empleados reales desde la API. ✅ **Resuelto** en Http (V3/V9: Id 15) y en Simulado (V8: Id 16), 08/10/2026.

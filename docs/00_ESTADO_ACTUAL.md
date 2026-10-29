@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-29 (TAREA-25-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-25-3-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 29/10/2026 |
 |---|---|
@@ -9,9 +9,9 @@
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (25-1: `usuarios.cmd` 0 FALLA; 25-2: U1–U12; frontend 378/378, backend 1123/1123). Se conservan (no se borran): Id 4 prueba.tarea25 y Id 7 prueba.ui (usuarios de prueba, inactivos); Id 5 gestor2 (usuario DevAuth creado en su primer ingreso; activo, sin departamentos) |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (filas conservadas: Id 4 y 7 de prueba, inactivos; Id 5 gestor2). **25-3-1** (cargos Infor, backend) implementada, pendiente de verificación (1158/1158; `tarea25-3/cargos.cmd`) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **TAREA-25-3** (CargoInfor, pendiente 2), Fase A |
+| **Siguiente tarea** | Verificación de la 25-3-1 (reiniciar la API y `cargos.cmd`); después **TAREA-25-3-2** (frontend, tarjeta «Cargos Infor») |
 
 ## 1. Índice de documentos
 
@@ -29,7 +29,7 @@
 | `docs/fases/FASE_5_Edicion_Cabecera.md` | Fechas, horario, almuerzo, cambio de actividad | C1–C11 |
 | `docs/fases/FASE_5_Cronograma.md` | Cronograma y reporte Excel | Contrato, D1–D16; §7–§8 |
 | `docs/fases/FASE_5_Novedades.md` | Novedades (backend o frontend) | §1–§2 contratos y validación; §7 edición; §8 sincronización; §9 frontend |
-| `docs/fases/FASE_5_Usuarios_Departamentos.md` | Usuarios y departamentos (TAREA-25), administración | §2–§3 contratos y reglas; §5 efecto de los departamentos |
+| `docs/fases/FASE_5_Usuarios_Departamentos.md` | Usuarios y departamentos (TAREA-25), administración; cargos Infor | §2–§3 contratos y reglas; §5 efecto de los departamentos; §10 cargos Infor |
 | `docs/tareas/TAREA-XX-reporte.md` | Solo el reporte de la tarea que se continúa | — |
 | `docs/tareas/PLANTILLA_REPORTE.md` | Al escribir un reporte | — |
 | `docs/HISTORIAL.md` | **No leer** salvo que la tarea lo pida (trazabilidad, cifras de pruebas antiguas) | Índice al inicio |
@@ -93,7 +93,8 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| **25-3** (siguiente) | CargoInfor (pendiente 2), con su propia Fase A |
+| 25-3-1 | Cargos Infor, backend (`/api/admin/cargos-infor`): implementada, pendiente de verificación |
+| **25-3-2** (siguiente) | Cargos Infor, frontend (tarjeta en `/admin`) |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
@@ -104,7 +105,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
-2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz). **TAREA-26d-1:** la alta puntual da de alta en `CargoInfor` el puesto de cada persona asignada (mayúsculas, sin espacios extremos, `CodigoInfor` vacío, nunca se borran). Queda acotado a los puestos de las personas asignadas; un futuro "Importar puestos desde la API" en la administración (TAREA-25-3) cubriría el resto. La asignación del código Infor sigue pendiente (interfaz o Excel).
+2. Excel de cargos → código Infor (opcional). **TAREA-25-3-1:** la importación desde la API (todos los activos) y la edición de `CodigoInfor` ya están en el backend (`FASE_5_Usuarios_Departamentos.md` §10); la alta puntual también da de alta el puesto. Queda abierto solo el Excel, como opcional.
 4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). **TAREA-20:** la plantilla ya está en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (hoja `'PROYECTO '`, `Tabla1`, 14 columnas; nombres definidos `LABORABLE`/`LIBRE` rotos, `#REF!`); el análisis está en `FASE_5_Cronograma.md` §6. Falta el Office Script. **TAREA-22-2:** el flujo `ReporteProyectosSIG` sí está en el repo (`docs/origen/sharepoint/esquemas/ReporteProyectoSIG.json`): copiaba la plantilla, ejecutaba el Office Script (solo está su Id, no su código) y enviaba el archivo por correo. Sin el script, los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §8).
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Texto anterior en `HISTORIAL.md`.
@@ -124,7 +125,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 36. [Menor, backend] Agregar `esPrincipalInicial` al GET `…/edicion` (`PersonaEdicionDto`): hoy la pantalla "Actualizar personal" lo toma del detalle (`GET /api/proyectos/{id}`) para la marca "Será el principal inicial (responsable)" (P3).
 37. [Menor, backend] Agregar `principalRelacionadoId`, `cargo` y `observacion` a `PersonaReactivacionDto` (GET `…/reactivacion`) para mostrar la relación de los backs históricos en la pantalla de reactivación. Hoy la tabla de históricos de la TAREA-19c no muestra la relación, el cargo ni la observación. Origen: TAREA-19c (Fase A, sección A).
 38. [Menor, frontend] Unificar `validarEdicionPersonal` (`edicionPersonal.ts`, TAREA-19b) y `validarPersonalReactivacion` (`reactivacion.ts`, TAREA-19c): una sola función que acepte la fecha fin del proyecto vacía. Hoy la reactivación tiene su propia versión con los mismos textos más la regla de inicio ≥ R. Origen: TAREA-19c.
-39. Los datos de prueba tienen solo 8 empleados (DEV001–DEV008), con cruces en casi todas las fechas disponibles: ya no alcanzan para pruebas sin cruces (V17 de la TAREA-19c no se pudo hacer). Ampliar los empleados de prueba (sembrador o SQL aprobado). [PENDIENTE DE DECISIÓN DEL USUARIO] **TAREA-26d-1:** en modo Simulado, la "API" trae DEV001–DEV008 y 200 empleados ficticios SIM001–SIM200 (resuelto en Simulado); en modo Http se asignan empleados reales desde la API. ✅ **Resuelto** en Http (V3/V9: Id 15) y en Simulado (V8: Id 16), 08/10/2026.
 43. [Menor] `codEmpresa` del empleado (ECU, SCE…) no es el Id de compañía del ERP de proyectos (`Compania.Id`): no se cruzan. Si en el futuro se necesita filtrar empleados por la compañía del proyecto, hará falta una tabla de equivalencias.
 44. [Futuro] La API de empleados trae `codPerfil`, `posicion` y `cargoTipo` (organizacionales), útiles para el módulo Perfiles. Hoy no se guardan (`FASE_4_Empleados_API.md`).
 45. [Fase 3] El ERP puede devolver `CorreoEmpresa` (`mailEmpresa`) sin formato de correo (p. ej. "SC" en el empleado 11358). Validar el formato antes de usarlo (Graph, notificaciones, `Usuario.EmpleadoId` desde `mailEmpresa` en la Fase 7); un valor no válido se trata como sin correo.
@@ -148,6 +148,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 68. [Menor, Fase 3] Medir cuántas personas asignadas en SharePoint no son de un grupo asignable (podrán conservarse; no agregarse a proyectos nuevos).
 69. [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
 71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
+73. [Futuro] El join del reporte con `CargoInfor` distingue tildes y espacios internos: un cambio de grafía en el ERP deja el código Infor vacío sin aviso. Solución posible: columna normalizada con migración. Hoy lo mitigan los conteos de variantes y `personasGuardadas` (TAREA-25-3-1).
 
 ## 7.1 Reglas técnicas obligatorias
 

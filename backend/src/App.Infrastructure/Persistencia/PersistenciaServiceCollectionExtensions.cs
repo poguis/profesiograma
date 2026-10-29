@@ -62,6 +62,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<IProyectoConsultas, ProyectoConsultas>();
         services.AddScoped<IEmpleadoConsultas, EmpleadoConsultas>();
         services.AddScoped<ICriterioPersonalRepositorio, CriterioPersonalRepositorio>(); // TAREA-62
+        services.AddScoped<ICargosInforRepositorio, CargosInforRepositorio>(); // TAREA-25-3-1
         services.AddScoped<IDatosReferenciaProyecto, DatosReferenciaProyecto>();
         services.AddScoped<IConsultaCrucesExternos, ConsultaCrucesExternos>();
         services.AddScoped<ICronogramaConsultas, CronogramaConsultas>(); // TAREA-20

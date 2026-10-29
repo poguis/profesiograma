@@ -1,6 +1,6 @@
 # FASE 2 — Análisis de listas y modelo de datos (Módulo Proyectos)
  
-Script completo: `claude/FASE_2_modelo_profesiograma.sql` (validado sintácticamente: 66 sentencias).
+Script completo: `docs/fases/FASE_2_modelo_profesiograma.sql` (validado sintácticamente: 66 sentencias).
  
 ---
  
@@ -14,7 +14,7 @@ Script completo: `claude/FASE_2_modelo_profesiograma.sql` (validado sintácticam
 | 4 | Novedades | CRUD completo sobre las creadas por esta app: editar días (tabla `NovedadDia`) y anular (borrado lógico). |
 | 5 | Edición de proyecto | Se amplía: horario, almuerzo, fechas y datos generales editables, con registro de etapa `EDICION_CABECERA`. |
 | 6 | Fecha inicio | Editable (se corrige C24). |
-| 7 | CARGO INFOR | Catálogo `CargoInfor` con CRUD e importación desde Excel. A futuro, desde API. |
+| 7 | CARGO INFOR | Catálogo `CargoInfor` con CRUD e importación desde Excel. A futuro, desde API. **Reemplazado por §7 respuesta 3:** desde la API (puestos) y el código Infor en una interfaz (TAREA-25-3, `FASE_5_Usuarios_Departamentos.md` §10); el Excel queda opcional (pendiente 2). |
 | 8 | Límites | 20 principales / 20 backs, configurables en `Parametro`. |
 | 9 | MIGRADO | Los 51 proyectos ya están en listas normalizadas (DETALLE ≈ 5.000 filas). Se migra solo desde las listas nuevas. |
 | 10 | API empleados | `POST :7048/api/EvolutionEmployee/EmployeesEvolution` → reemplaza `ESTRUCTURA GENERAL`. **Contrato verificado en la TAREA-26a** (sondeo con solo agregados): cuerpo `{ "parameter": "", "estado": "A", "codEmpresa": "", "codDepartamento": "" }`, sin autenticación, envoltura `{ statusCode, isSuccess, errorMessages, result[] }`, ~1633 activos, ~2,5 MB, sin paginación. Desde la TAREA-26d (opción C) la API es la **única fuente** de los empleados: sin sincronización; `Empleado` solo con las personas asignadas (alta puntual). Ver `FASE_4_Empleados_API.md`. |
@@ -170,7 +170,7 @@ Script completo: `claude/FASE_2_modelo_profesiograma.sql` (validado sintácticam
 | Switch CARGO INFOR | `CargoInfor` |
 | Correos SuperAdmin fijos | App Role de Entra `Admin` (Fase 5) |
 | Límites / opciones de almuerzo / rango cronograma | `Parametro` |
-| API EvolutionEmployee | `Empleado` (caché sincronizada) |
+| API EvolutionEmployee | `Empleado` (solo asignados, opción C; ver FASE_4) |
 | API COMPANIAS | `Compania` (caché al usar) |
  
 ---
