@@ -47,5 +47,6 @@ backend/tests/manual/
 **/node_modules/
 **/dist/
 
-# Ruido generado (opcional)
-backend/src/App.Infrastructure/Persistencia/Migraciones/
+# Migraciones EF: son código fuente y SIEMPRE se versionan (TAREA-27). Excepción explícita para que ninguna regla
+# general las ignore; bin/ y obj/ siguen ignorados por las reglas de arriba.
+!backend/src/App.Infrastructure/Persistencia/Migraciones/

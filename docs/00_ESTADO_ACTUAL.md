@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-29 (TAREA-27). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-27, cierre). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 29/10/2026 |
 |---|---|
@@ -10,8 +10,9 @@
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
+| Pendientes 18 y 67 (TAREA-27) | ✅ Verificada el 29/10/2026 (M1–M4; backend 1163/1163, frontend 404/404) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **TAREA-27** implementada: el usuario aplica la migración `QuitarParametrosAlmuerzo` y verifica M1–M4 (`docs/tareas/TAREA-27-reporte.md`); después, cierre documental |
+| **Siguiente tarea** | **Fase 7a** — crear PROFESIOGRAMA_QA en NIQUEL\SSDEV (guiada, la ejecuta el usuario) |
 
 ## 1. Índice de documentos
 
@@ -79,10 +80,12 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | User-secrets | `UserSecretsId = profesiograma-api-4d2f7c1e` en `App.Api.csproj`; conservarlo para no perder la cadena de conexión |
 | Implementado | `GET /api/health/db` (diagnóstico de conexión) con `IDatabaseDiagnostics` (Application) y `SqlDatabaseDiagnostics` (Infrastructure, Microsoft.Data.SqlClient) |
 | Servidor SQL | `NIQUEL\SSDEV` — SQL Server 2019 Enterprise RTM (15.0.2190.7), compartido con ~42 bases de otros sistemas |
-| Base | `PROFESIOGRAMA_DEV`, collation `Modern_Spanish_CI_AS`, compatibilidad 150 (esquema creado por migraciones EF en la TAREA-04; sin datos de prueba aún) |
+| Base | `PROFESIOGRAMA_DEV` (recuperación SIMPLE desde el 29/10/2026), collation `Modern_Spanish_CI_AS`, compatibilidad 150 (esquema creado por migraciones EF en la TAREA-04; sin datos de prueba aún) |
+| Respaldos | Manuales con COPY_ONLY en `D:\BACKUP` del servidor, antes de cada cambio de esquema; DEV no tenía respaldos de TI |
+| Accesos del usuario | sysadmin (login `sa`) en NIQUEL\SSDEV; RDP a un servidor de pruebas (candidato al IIS de QA) |
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
-| ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). **Development usa el ERP real en modo Http desde la TAREA-26a**, activado por user-secrets (`dotnet user-secrets set "ServiciosExternos:Modo" "Http" --project src/App.Api`; `appsettings.Development.json` sigue diciendo `Simulado`, que vuelve con `user-secrets remove`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
+| ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). Development usa el ERP real (`Http` por user-secrets, TAREA-26a; `appsettings.Development.json` dice `Simulado`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
 | Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 | Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
@@ -91,14 +94,13 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 
 | Tarea | Alcance |
 |---|---|
-| 1. **TAREA-27** (en verificación) | Pendientes 18 y 67 resueltos en el código; falta aplicar la migración y M1–M4 |
-| 2. Fase 7a | Entornos DEV/QA/PRO y respaldos (pendiente 65) |
-| 3. Fase 7b | Entra ID y MSAL (pendiente 7) |
-| 4. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 5. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
-| 6. Fase 3 | Carga desde SharePoint, con ensayos en QA |
-| 7. Pruebas con usuarios | — |
-| 8. Corte | Paso a producción |
+| 1. **Fase 7a** (siguiente) | Entornos DEV/QA/PRO y respaldos (pendiente 65) |
+| 2. Fase 7b | Entra ID y MSAL (pendiente 7) |
+| 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
+| 4. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
+| 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
+| 6. Pruebas con usuarios | — |
+| 7. Corte | Paso a producción |
 | [Después de producción] 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 
 **Decisión del usuario (2026-09-29):** la migración de datos (Fase 3, carga masiva desde SharePoint) se hace **al final**, justo antes del corte a producción. Mientras tanto se desarrolla con datos de prueba. "Migración de EF Core" (crear tablas) ≠ "migración de datos".
@@ -108,12 +110,12 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
 2. Excel de cargos → código Infor (opcional). **TAREA-25-3-1:** la importación desde la API (todos los activos) y la edición de `CodigoInfor` ya están en el backend (`FASE_5_Usuarios_Departamentos.md` §10); la alta puntual también da de alta el puesto. Queda abierto solo el Excel, como opcional.
-4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). **TAREA-20:** la plantilla ya está en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (hoja `'PROYECTO '`, `Tabla1`, 14 columnas; nombres definidos `LABORABLE`/`LIBRE` rotos, `#REF!`); el análisis está en `FASE_5_Cronograma.md` §6. Falta el Office Script. **TAREA-22-2:** el flujo `ReporteProyectosSIG` sí está en el repo (`docs/origen/sharepoint/esquemas/ReporteProyectoSIG.json`): copiaba la plantilla, ejecutaba el Office Script (solo está su Id, no su código) y enviaba el archivo por correo. Sin el script, los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §8).
+4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). Plantilla en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (TAREA-20) y flujo `ReporteProyectosSIG` en el repo (TAREA-22-2), pero sin el código del script: los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
-7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Texto anterior en `HISTORIAL.md`.
+7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Texto anterior en `HISTORIAL.md`. **Verificado en Entra ID (29/10/2026):** los usuarios pueden registrar aplicaciones (el usuario no tiene roles de administrador); licencia Microsoft Entra ID gratis (los roles Admin y Gestor se asignan por usuario, no por grupo); configuración de consentimiento no visible (401); los permisos de aplicación de Graph requieren a TI (Privileged Role Administrator).
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push.
-10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
+10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
 12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
 13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. TAREA-26a: 65 horarios M y 4 D; el significado no se deduce de los datos. El modo Http ya se probó de extremo a extremo en Development (A6, proyecto Id 14). TAREA-26c (B1): M/D **no** indica turno nocturno; la aplicación lo deduce de las horas (salida < entrada).
 15. Sin prueba de traducción SQL (fuera del alcance pedido en la TAREA-12): consultas de `UsuarioProvisionamiento` y `DatosPruebaSembrador` (Paso 2).
@@ -142,14 +144,14 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 60. [Después de producción] [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
 61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
-65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno.
+65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno. **Reglas decididas (29/10/2026):** respaldo verificado antes de cada cambio de esquema; DEV y QA en SIMPLE, PRO en FULL con respaldos del log a cargo de TI; en QA y PRO, script `--idempotent` revisado, ejecutado completo (sin selección) y comprobando `@@TRANCOUNT = 0` al terminar.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]
 68. [Menor, Fase 3] Medir cuántas personas asignadas en SharePoint no son de un grupo asignable (podrán conservarse; no agregarse a proyectos nuevos).
 69. [Después de producción] [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
 71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
 73. [Futuro] El join del reporte con `CargoInfor` distingue tildes y espacios internos: un cambio de grafía en el ERP deja el código Infor vacío sin aviso. Solución posible: columna normalizada con migración. Hoy lo mitigan los conteos de variantes y `personasGuardadas` (TAREA-25-3-1).
 74. [Después de producción] [Menor, frontend] Extraer otros componentes repetidos de administración cuando aparezca una cuarta pantalla. Repetidos hoy (TAREA-25-3-2): el hook de filtros de la URL y el cuerpo del listado (esqueleto, error, vacío, `DataGrid`, `Paginacion`) de `PaginaUsuarios` y `PaginaCargosInfor`; `MOVIL` y los estilos de los diálogos en cinco archivos (`FASE_5_Usuarios_Departamentos.md` §10.6).
-75. [Fase 7, TI] Pedido a TI enviado el ____ (servidores, bases, DNS, certificado, App Registrations, Graph). Respuesta pendiente.
+75. [Fase 7, TI] Pedido a TI enviado el ____ (servidores, bases, DNS, certificado, App Registrations, Graph). Respuesta pendiente. El pedido se reduce a producción, DNS, certificado y consentimientos de Graph. Pregunta: ¿cuál es la instancia SQL de producción?
 76. [Después de producción] El alta de usuarios reconoce el duplicado por usuarioId o por el texto (usuariosAdmin.ts, MENSAJE_DUPLICADO); aplicar tipoConflicto con el helper ProblemasConflicto.
 
 ## 7.1 Reglas técnicas obligatorias

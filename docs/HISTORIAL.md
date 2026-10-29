@@ -22,6 +22,10 @@
 | H15 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-2 (29/10/2026): encabezado de la tabla de estado, fila de usuarios y departamentos, siguiente tarea y fila 25-2 |
 | H16 | Texto del estado vigente reemplazado en la TAREA-25-3-1 (cabecera, usuarios y departamentos, siguiente tarea, índice de FASE_5, fila 25-3 y pendiente 2) |
 | H17 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-3-1 (29/10/2026): fila de usuarios y departamentos, siguiente tarea y fila 25-3-1 |
+| H18–H19 | TAREA-25-3-2 y su cierre (29/10/2026) |
+| H20 | Cierre funcional de la primera entrega (29/10/2026) |
+| H21 | TAREA-27: pendientes 18 y 67 resueltos, siguiente tarea y fila 1 de la hoja de ruta |
+| H22 | Cierre de la TAREA-27 (29/10/2026): siguiente tarea, fila 1 de la hoja de ruta, pendientes 4 y 10 y fila ERP (acortados) |
 
 ## H1. Cabecera anterior
 
@@ -397,3 +401,23 @@ Texto anterior de la siguiente tarea y de la fila 1 de la hoja de ruta:
 | **Siguiente tarea** | **TAREA-27** (pendientes 18 y 67), Fase A |
 
 | 1. **TAREA-27** (siguiente) | Pendientes 18 y 67 |
+
+## H22. Movido del estado vigente el 29/10/2026 (TAREA-27, cierre)
+
+Texto anterior de la siguiente tarea y de la fila 1 de la hoja de ruta (TAREA-27 verificada; la hoja de ruta se renumeró 1–7):
+
+| **Siguiente tarea** | **TAREA-27** implementada: el usuario aplica la migración `QuitarParametrosAlmuerzo` y verifica M1–M4 (`docs/tareas/TAREA-27-reporte.md`); después, cierre documental |
+
+| 1. **TAREA-27** (en verificación) | Pendientes 18 y 67 resueltos en el código; falta aplicar la migración y M1–M4 |
+
+Texto anterior del pendiente 4 (acortado para mantener el vigente bajo 25 KB):
+
+4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). **TAREA-20:** la plantilla ya está en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (hoja `'PROYECTO '`, `Tabla1`, 14 columnas; nombres definidos `LABORABLE`/`LIBRE` rotos, `#REF!`); el análisis está en `FASE_5_Cronograma.md` §6. Falta el Office Script. **TAREA-22-2:** el flujo `ReporteProyectosSIG` sí está en el repo (`docs/origen/sharepoint/esquemas/ReporteProyectoSIG.json`): copiaba la plantilla, ejecutaba el Office Script (solo está su Id, no su código) y enviaba el archivo por correo. Sin el script, los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §8).
+
+Texto anterior de la fila ERP de la §4 (acortada por lo mismo):
+
+| ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). **Development usa el ERP real en modo Http desde la TAREA-26a**, activado por user-secrets (`dotnet user-secrets set "ServiciosExternos:Modo" "Http" --project src/App.Api`; `appsettings.Development.json` sigue diciendo `Simulado`, que vuelve con `user-secrets remove`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
+
+Texto anterior del pendiente 10 (acortado por lo mismo):
+
+10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
