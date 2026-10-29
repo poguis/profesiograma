@@ -355,3 +355,32 @@ Texto anterior de la fila de usuarios y departamentos (25-3-2 verificada por el 
 | **Siguiente tarea** | Verificación visual de la **25-3-2** (V1–V13 de `docs/tareas/TAREA-25-3-2-reporte.md`) y su cierre documental |
 
 | **25-3-2** (en verificación) | Cargos Infor, frontend (`/admin/cargos-infor`): implementada, pendiente de verificación |
+
+## H20. Movido del estado vigente el 29/10/2026 (cierre funcional de la primera entrega)
+
+Decisiones del usuario del 29/10/2026: los pendientes 18 y 67 van a la TAREA-27 (antes de la Fase 7); 24e, 36, 37, 38, 46, 60, 69 y 74 quedan para después de producción; el 11 se descarta.
+
+Texto anterior de la siguiente tarea y de la hoja de ruta (§5):
+
+| **Siguiente tarea** | Cierre funcional de la primera entrega: decidir los pendientes menores (24e, 18, 36, 37, 38, 46, 60, 67, 69, 74) y preparar el pedido a TI para la Fase 7 |
+
+| 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
+| 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
+| Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
+
+Pendiente 11 (**descartado** el 29/10/2026: Ecuador no cambia de zona y la constante funciona en IIS con Windows):
+
+11. Leer la zona horaria de negocio desde `Parametro.ZONA_HORARIA` en lugar de la constante `"SA Pacific Standard Time"` (`ProyectoConsultaServicio` y `DatosPruebaSembrador`). Origen: TAREA-07 (C3).
+
+Texto anterior de los pendientes 18 y 67 (decididos el 29/10/2026; van a la TAREA-27):
+
+18. Los parámetros `ALMUERZO_SALIDA_OPCIONES` / `ALMUERZO_REGRESO_OPCIONES` quedan **sin uso**: el validador y `GET /api/proyectos/opciones-formulario` usan `ReglasAlmuerzo` (Application, rangos RN09 y opciones cada hora). Decidir si se eliminan o si `ReglasAlmuerzo` pasa a leerlos (servirían al validador y al formulario a la vez). Origen: TAREA-13 (B0). [PENDIENTE DE DECISIÓN DEL USUARIO]
+67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). [PENDIENTE DE DECISIÓN DEL USUARIO]
+
+Nota de la §5 quitada (repetía el encabezado del documento):
+
+Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `docs/HISTORIAL.md`.
+
+Texto anterior de la fila de usuarios y departamentos (acortada para mantener el vigente bajo 25 KB; cifras en los reportes de cada subtarea):
+
+| Usuarios y departamentos (TAREA-25) | ✅ **Completa:** 25-1, 25-2, 25-3-1 (backend 1158/1158; `cargos.cmd` 0 FALLA) y 25-3-2 (cargos Infor, frontend; 399/399) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
