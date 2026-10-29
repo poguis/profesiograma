@@ -1,7 +1,7 @@
 // Autenticación simulada (DevAuth) — SOLO desarrollo. La API la acepta únicamente en su entorno Development.
 // Se carga solo con import dinámico dentro de ramas `devAuthActivo` (modo.ts): no llega al bundle de producción.
 
-export const USUARIOS_DEV = ['admin', 'gestor', 'anonimo'] as const
+export const USUARIOS_DEV = ['admin', 'gestor', 'gestor2', 'anonimo'] as const // gestor2: TAREA-25 (Gestor sin departamentos)
 export type UsuarioDev = (typeof USUARIOS_DEV)[number]
 
 const CLAVE_ALMACEN = 'profesiograma.devUsuario'

@@ -1,6 +1,6 @@
-// Sincronización manual de PERMISO MEDICO (TAREA-24d, FASE_5_Novedades §8): quién ve el botón, etiquetas de las
-// categorías de omisión (§8.5), filas del resumen e interpretación de errores. Lógica pura, sin React.
-import type { UsuarioActualDto } from '../../api/tipos'
+// Sincronización manual de PERMISO MEDICO (TAREA-24d, FASE_5_Novedades §8): etiquetas de las categorías de omisión
+// (§8.5), filas del resumen e interpretación de errores. Quién ve el botón: esAdmin de src/auth/roles.ts (pendiente 70).
+// Lógica pura, sin React.
 import { ErrorApi } from '../../api/errores'
 import { type ErroresNovedad, interpretarErrorDesconocido } from './erroresNovedad'
 import type { ResultadoSincronizacion } from './tipos'
@@ -10,14 +10,6 @@ export const MAX_CODIGOS_OMITIDOS = 100
 export const NOTA_AUSENTES = 'No se anulan; solo se cuentan.'
 export const NOTA_CODIGOS = 'Se muestran hasta 100.'
 export const SUGERENCIA_PROHIBIDO = 'Cierre el diálogo y recargue la página.'
-
-/**
- * Rol Admin según GET /api/usuarios/me, sin distinguir mayúsculas (como UsuarioActual.TieneRol). Solo decide si se
- * muestra el botón: la API exige la política Admin igual.
- */
-export function esAdmin(usuario: Pick<UsuarioActualDto, 'roles'> | null | undefined): boolean {
-  return (usuario?.roles ?? []).some((rol) => rol.toLowerCase() === 'admin')
-}
 
 const ETIQUETAS_OMISION: Record<string, string> = {
   filaIlegible: 'Fila ilegible',

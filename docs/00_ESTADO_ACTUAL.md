@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-29 (TAREA-25-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-25-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
@@ -9,9 +9,9 @@
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1** (backend) implementada, pendiente de verificación (1121/1121; `tarea25/usuarios.cmd`) |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** (backend) verificada por el usuario el 29/10/2026 (`usuarios.cmd` 0 FALLA; baja inmediata comprobada; usuarios Id 4 y 5 conservados). **25-2** (frontend) implementada, pendiente de verificación (378/378; backend 1123/1123) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación de la 25-1 (reiniciar la API y `usuarios.cmd`); después **TAREA-25-2** (frontend) |
+| **Siguiente tarea** | Verificación visual de la 25-2 (U1–U12); después **TAREA-25-3** (CargoInfor, pendiente 2) con su Fase A corta |
 
 ## 1. Índice de documentos
 
@@ -93,9 +93,8 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 25-1 | Usuarios y departamentos, backend: implementada, pendiente de verificación |
-| **25-2** (siguiente) | Frontend: centro `/admin`, lista y edición de usuarios (pendiente 70; `gestor2` en DevAuth) |
-| 25-3 | CargoInfor (pendiente 2), con su propia Fase A |
+| 25-2 | Usuarios y departamentos, frontend (`/admin`, `/admin/usuarios`): implementada, pendiente de verificación |
+| **25-3** (siguiente) | CargoInfor (pendiente 2), con su propia Fase A |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
@@ -149,7 +148,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). [PENDIENTE DE DECISIÓN DEL USUARIO]
 68. [Menor, Fase 3] Medir cuántas personas asignadas en SharePoint no son de un grupo asignable (podrán conservarse; no agregarse a proyectos nuevos).
 69. [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
-70. [Menor, frontend] Mover `esAdmin` y las reglas de rol de `features/novedades/sincronizacion.ts` a `src/auth/`; se resuelve en la 25-2.
 71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
 
 ## 7.1 Reglas técnicas obligatorias

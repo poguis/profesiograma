@@ -17,6 +17,7 @@ namespace App.Infrastructure.Persistencia.Seguridad;
 internal sealed class UsuariosAdminRepositorio(ProfesiogramaDbContext db, ILogger<UsuariosAdminRepositorio> logger) : IUsuariosAdminRepositorio
 {
     public const int EsperaMaximaMs = 15_000;
+    public const string MensajeOcupado = "Hay otra modificación de este usuario en curso; intente de nuevo."; // TAREA-25-2
     private static readonly int[] ErroresUnicos = [2601, 2627];
 
     public async Task<PaginaResultado<UsuarioAdminDto>> ListarAsync(UsuarioAdminFiltro filtro, CancellationToken ct)
@@ -151,7 +152,10 @@ internal sealed class UsuariosAdminRepositorio(ProfesiogramaDbContext db, ILogge
         if (codigo < 0)
         {
             logger.LogWarning("No se obtuvo el bloqueo {Recurso} (sp_getapplock = {Codigo}).", recurso, codigo);
-            throw new RegistroOcupadoException($"No se obtuvo el bloqueo del usuario (sp_getapplock = {codigo}).");
+            throw new RegistroOcupadoException($"No se obtuvo el bloqueo del usuario (sp_getapplock = {codigo}).")
+            {
+                MensajeUsuario = MensajeOcupado,
+            };
         }
     }
 

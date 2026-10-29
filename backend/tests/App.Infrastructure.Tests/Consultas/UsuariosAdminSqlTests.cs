@@ -85,6 +85,13 @@ public class UsuariosAdminSqlTests(ITestOutputHelper salida) : BaseSql(salida)
         Assert.Equal([2], retirados);
     }
 
+    /// <summary>TAREA-25-2: el 503 del bloqueo por usuario lleva este detail (el handler lo usa; ver BaseDatosNoDisponibleTests).</summary>
+    [Fact]
+    public void MensajeOcupado_PorUsuario()
+    {
+        Assert.Equal("Hay otra modificación de este usuario en curso; intente de nuevo.", UsuariosAdminRepositorio.MensajeOcupado);
+    }
+
     [Fact]
     public void Aplicar_ConjuntoVacio_RetiraTodas_SinBorrar()
     {

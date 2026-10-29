@@ -2,7 +2,7 @@ import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
 import { Briefcase24Regular, CalendarCancel24Regular, CalendarLtr24Regular, Home24Regular, Settings24Regular } from '@fluentui/react-icons'
 import { NavLink } from 'react-router'
 import { useUsuarioActual } from '../auth/useUsuarioActual'
-import { esAdmin } from '../features/novedades/sincronizacion'
+import { esAdmin } from '../auth/roles'
 
 const useEstilos = makeStyles({
   lista: {
@@ -72,11 +72,12 @@ export function MenuLateral() {
           Novedades
         </NavLink>
       </li>
-      {/* TAREA-62-2: solo para Admin (solo decide si se ve; la API exige la política Admin igual). */}
+      {/* TAREA-62-2 / 25-2: solo para Admin (solo decide si se ve; la API exige la política Admin igual). Abre el centro
+          /admin y queda marcado en todas sus subpáginas. */}
       {esAdmin(usuario) && (
         <li>
           <NavLink
-            to="/admin/personal-elegible"
+            to="/admin"
             className={({ isActive }) => mergeClasses(estilos.item, estilos.enlace, isActive && estilos.activo)}
           >
             <Settings24Regular aria-hidden />

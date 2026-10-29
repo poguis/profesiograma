@@ -19,8 +19,8 @@ import {
 import { Save20Regular } from '@fluentui/react-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useBlocker } from 'react-router'
+import { esAdmin } from '../../../auth/roles'
 import { useUsuarioActual } from '../../../auth/useUsuarioActual'
-import { esAdmin } from '../../novedades/sincronizacion'
 import { useCriterioPersonal, useGuardarCriterioPersonal } from './api'
 import {
   MENSAJE_SIN_CRITERIO,

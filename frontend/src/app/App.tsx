@@ -52,6 +52,19 @@ const router = createBrowserRouter([
         path: 'novedades/:id',
         lazy: async () => ({ Component: (await import('../features/novedades/pages/DetalleNovedad')).DetalleNovedad }),
       },
+      // TAREA-25-2: centro de administración y usuarios (Admin; las páginas no llaman al backend si el usuario no lo es).
+      {
+        path: 'admin',
+        lazy: async () => ({ Component: (await import('../features/admin/PaginaAdmin')).PaginaAdmin }),
+      },
+      {
+        path: 'admin/usuarios',
+        lazy: async () => ({ Component: (await import('../features/admin/usuarios/PaginaUsuarios')).PaginaUsuarios }),
+      },
+      {
+        path: 'admin/usuarios/:id',
+        lazy: async () => ({ Component: (await import('../features/admin/usuarios/PaginaUsuario')).PaginaUsuario }),
+      },
       // TAREA-62-2: criterio de personal elegible (Admin; la pantalla no llama al backend si el usuario no lo es).
       {
         path: 'admin/personal-elegible',

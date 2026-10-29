@@ -94,6 +94,19 @@ public sealed class BaseDatosNoDisponibleTests
         Assert.Equal((503, "Servicio de empleados no disponible"), (erp.Estado, erp.Titulo));
     }
 
+    /// <summary>TAREA-25-2: el bloqueo por usuario lleva su propio detail; el de asignaciones (arriba) no cambia.</summary>
+    [Fact]
+    public async Task RegistroOcupado_PorUsuario_MensajePropio()
+    {
+        var ocupado = await EnviarAsync(HttpMethods.Put, new RegistroOcupadoException("applock usuario")
+        {
+            MensajeUsuario = "Hay otra modificación de este usuario en curso; intente de nuevo.",
+        });
+
+        Assert.Equal((503, "Registro ocupado", "Hay otra modificación de este usuario en curso; intente de nuevo."),
+            (ocupado.Estado, ocupado.Titulo, ocupado.Detalle));
+    }
+
     [Fact]
     public async Task Log_UnAvisoCada30s_ConNumeroYRuta_SinElMensajeDelProveedor()
     {

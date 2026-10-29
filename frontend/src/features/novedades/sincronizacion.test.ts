@@ -3,7 +3,6 @@ import { ErrorApi } from '../../api/errores'
 import {
   NOTA_AUSENTES,
   SUGERENCIA_PROHIBIDO,
-  esAdmin,
   etiquetaOmision,
   interpretarErrorSincronizacion,
   resumenSincronizacion,
@@ -91,17 +90,6 @@ describe('resumenSincronizacion', () => {
     const codigos = Array.from({ length: 100 }, (_, i) => `fila ID ${i}`)
     expect(resumenSincronizacion({ ...base, codigosOmitidos: codigos }).codigosTruncados).toBe(true)
     expect(resumenSincronizacion({ ...base, codigosOmitidos: codigos.slice(1) }).codigosTruncados).toBe(false)
-  })
-})
-
-describe('esAdmin', () => {
-  it('sin distinguir mayúsculas; Gestor solo, vacío o ausente no', () => {
-    expect(esAdmin({ roles: ['Admin'] })).toBe(true)
-    expect(esAdmin({ roles: ['Gestor', 'admin'] })).toBe(true)
-    expect(esAdmin({ roles: ['ADMIN'] })).toBe(true)
-    expect(esAdmin({ roles: ['Gestor'] })).toBe(false)
-    expect(esAdmin({ roles: [] })).toBe(false)
-    expect(esAdmin(undefined)).toBe(false)
   })
 })
 

@@ -132,4 +132,10 @@ public interface ITransaccionAsignaciones
 }
 
 /// <summary>Otro registro de asignaciones está en curso y no se obtuvo el bloqueo a tiempo (la API responde 503).</summary>
-public sealed class RegistroOcupadoException(string detalle) : Exception(detalle);
+public sealed class RegistroOcupadoException(string detalle) : Exception(detalle)
+{
+    /// <summary>
+    /// TAREA-25-2: detail del 503 para el usuario; null = el de asignaciones. Lo usa el bloqueo por usuario de la 25-1.
+    /// </summary>
+    public string? MensajeUsuario { get; init; }
+}

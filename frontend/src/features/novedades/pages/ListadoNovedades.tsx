@@ -15,6 +15,7 @@ import { Add20Regular, ArrowSync20Regular } from '@fluentui/react-icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../../../api/errores'
+import { esAdmin } from '../../../auth/roles'
 import { useUsuarioActual } from '../../../auth/useUsuarioActual'
 import { EstadoError } from '../../../components/EstadoError'
 import { Paginacion } from '../../../components/Paginacion'
@@ -23,7 +24,6 @@ import { TablaNovedades } from '../components/TablaNovedades'
 import { PAGINA_POR_DEFECTO, TAMANOS_PAGINA, TAMANO_POR_DEFECTO, useFiltrosUrl } from '../filtrosUrl'
 import { DialogoSincronizacion } from '../components/DialogoSincronizacion'
 import { useNovedades } from '../hooks'
-import { esAdmin } from '../sincronizacion'
 
 /**
  * Estado de navegación hacia el detalle: `busqueda` para volver al listado con los mismos filtros; `aviso` de éxito

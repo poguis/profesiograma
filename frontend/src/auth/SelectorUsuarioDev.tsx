@@ -6,6 +6,7 @@ import { USUARIOS_DEV, esUsuarioDev, guardarUsuarioDev, leerUsuarioDev, type Usu
 const ETIQUETAS: Record<UsuarioDev, string> = {
   admin: 'admin (Admin)',
   gestor: 'gestor (Gestor)',
+  gestor2: 'gestor2 (Gestor)',
   anonimo: 'anonimo (sin identidad)',
 }
 

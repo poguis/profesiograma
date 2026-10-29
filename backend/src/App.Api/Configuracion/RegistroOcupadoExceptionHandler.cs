@@ -9,7 +9,7 @@ public sealed class RegistroOcupadoExceptionHandler(IProblemDetailsService probl
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext contexto, Exception excepcion, CancellationToken ct)
     {
-        if (excepcion is not RegistroOcupadoException)
+        if (excepcion is not RegistroOcupadoException ocupado)
         {
             return false;
         }
@@ -23,7 +23,7 @@ public sealed class RegistroOcupadoExceptionHandler(IProblemDetailsService probl
             {
                 Status = StatusCodes.Status503ServiceUnavailable,
                 Title = "Registro ocupado",
-                Detail = "Hay otro registro de asignaciones en curso. Intente nuevamente en unos segundos.",
+                Detail = ocupado.MensajeUsuario ?? "Hay otro registro de asignaciones en curso. Intente nuevamente en unos segundos.",
             },
         });
     }

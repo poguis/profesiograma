@@ -18,6 +18,7 @@
 | H11 | Texto del estado vigente reemplazado en la TAREA-62-1 (cabecera, novedades frontend, siguiente tarea, índice, filas 24d y 24e, pendiente 62) |
 | H12 | Texto del estado vigente reemplazado en la TAREA-62-2 (cabecera, criterio de personal, siguiente tarea, filas 62-1 y 62-2, pendiente 62) |
 | H13 | Texto del estado vigente reemplazado en la TAREA-25-1 (cabecera, criterio de personal, siguiente tarea, filas 62-2 y 25, pendientes 2, 6 y 62) |
+| H14 | Texto del estado vigente reemplazado en la TAREA-25-2 (cabecera, usuarios y departamentos, siguiente tarea, filas 25-1 a 25-3, pendiente 70; nota de los pendientes 72 y P7) |
 
 ## H1. Cabecera anterior
 
@@ -284,3 +285,17 @@ Texto anterior de la cabecera, de la fila del criterio de personal (62-2 verific
 Pendiente 20 (resuelto; movido en la TAREA-25-1 para mantener el vigente bajo 25 KB):
 
 20. **Resuelto (TAREA-26a, A9):** 503 "Servicio ERP no disponible" y "Reintentar" verificados con una URL base inválida por user-secrets. (El 503 de "registro ocupado" del applock sigue sin prueba visual.)
+
+## H14. Movido del estado vigente el 29/10/2026 (TAREA-25-2)
+
+Texto anterior de la cabecera, de la fila de usuarios y departamentos (25-1 verificada por el usuario el 29/10/2026: `usuarios.cmd` 0 FALLA y 0 OMITIDOS; efecto inmediato de la baja comprobado; usuarios Id 4 y 5 creados y conservados), de la siguiente tarea, de las filas 25-1, 25-2 y 25-3 de la hoja de ruta y del pendiente 70 (resuelto: `esAdmin` en `src/auth/roles.ts`). Pendiente 72 (creado y resuelto en la TAREA-25-2, nunca estuvo en el vigente): advertencia «Sin departamentos…» en el detalle del usuario. P7 resuelta: solo `@sedemi.com` en producción.
+
+**Última actualización:** 2026-10-29 (TAREA-25-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Usuarios y departamentos (TAREA-25) | **25-1** (backend) implementada, pendiente de verificación (1121/1121; `tarea25/usuarios.cmd`) |
+| **Siguiente tarea** | Verificación de la 25-1 (reiniciar la API y `usuarios.cmd`); después **TAREA-25-2** (frontend) |
+
+| 25-1 | Usuarios y departamentos, backend: implementada, pendiente de verificación |
+| **25-2** (siguiente) | Frontend: centro `/admin`, lista y edición de usuarios (pendiente 70; `gestor2` en DevAuth) |
+| 25-3 | CargoInfor (pendiente 2), con su propia Fase A |
+
+70. [Menor, frontend] Mover `esAdmin` y las reglas de rol de `features/novedades/sincronizacion.ts` a `src/auth/`; se resuelve en la 25-2.
