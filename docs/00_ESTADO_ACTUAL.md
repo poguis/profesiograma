@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-29 (TAREA-25-3-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-25-3-2, cierre). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 29/10/2026 |
 |---|---|
@@ -9,9 +9,9 @@
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas). **25-3-2** (cargos Infor, frontend: `/admin/cargos-infor`) implementada, pendiente de verificación (399/399) |
+| Usuarios y departamentos (TAREA-25) | ✅ **Completa:** 25-1, 25-2, 25-3-1 (backend 1158/1158; `cargos.cmd` 0 FALLA) y 25-3-2 (cargos Infor, frontend; 399/399) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación visual de la **25-3-2** (V1–V13 de `docs/tareas/TAREA-25-3-2-reporte.md`) y su cierre documental |
+| **Siguiente tarea** | Cierre funcional de la primera entrega: decidir los pendientes menores (24e, 18, 36, 37, 38, 46, 60, 67, 69, 74) y preparar el pedido a TI para la Fase 7 |
 
 ## 1. Índice de documentos
 
@@ -93,7 +93,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| **25-3-2** (en verificación) | Cargos Infor, frontend (`/admin/cargos-infor`): implementada, pendiente de verificación |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |

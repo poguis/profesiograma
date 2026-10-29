@@ -5,7 +5,7 @@
 | 25-1 | Backend: endpoints de administración, reglas, invalidación de la caché, DevAuth `gestor2`, script `tarea25/usuarios.cmd` | ✅ Verificada por el usuario (29/10/2026) |
 | 25-2 | Frontend: centro `/admin` con tarjetas, lista y edición de usuarios (§9); mensaje propio del 503 por usuario | ✅ Verificada por el usuario (29/10/2026) |
 | 25-3-1 | CargoInfor, backend: «Importar puestos desde la API» y edición de `CodigoInfor` (pendiente 2; §10) | ✅ Verificada por el usuario (29/10/2026) |
-| 25-3-2 | CargoInfor, frontend: tarjeta «Cargos Infor» en `/admin`, listado, edición e importación (§10.6) | Implementada, pendiente de verificación |
+| 25-3-2 | CargoInfor, frontend: tarjeta «Cargos Infor» en `/admin`, listado, edición e importación (§10.6) | ✅ Verificada por el usuario (29/10/2026) |
 
 Reemplaza el popup de SuperAdmin y el JSON `PermisosGenerales` de la fila 666 (FASE_1 §2.2 y §4; J4 de FASE_2). **Sin migración:** usa las tablas `Usuario`, `Departamento` y `UsuarioDepartamento` de la Fase 2.
 
@@ -69,7 +69,7 @@ Se hará con **SQL por staging**, no con estos servicios. Para que sea idempoten
 - Pruebas automáticas: reglas (Application), traducción SQL y plan de asignación (Infrastructure), 403/404/409/201 (Api). El `ExecuteUpdate` y el `sp_getapplock` se verifican con `backend/tests/manual/tarea25/usuarios.cmd`.
 
 ## 9. Frontend (TAREA-25-2)
-- **Menú:** «Administración» (solo `esAdmin`, de `src/auth/roles.ts`, pendiente 70) abre el centro **`/admin`** con dos tarjetas: «Personal elegible» (`/admin/personal-elegible`) y «Usuarios y departamentos» (`/admin/usuarios`); queda marcado en todas las `/admin/*`. Un gestor que entra por URL a cualquier `/admin/*` ve «No tienes permiso para ver esta página.» sin llamar al backend (`AdminRequerido`; personal elegible conserva su guarda).
+- **Menú:** «Administración» (solo `esAdmin`, de `src/auth/roles.ts`, pendiente 70) abre el centro **`/admin`** con tres tarjetas: «Personal elegible» (`/admin/personal-elegible`), «Usuarios y departamentos» (`/admin/usuarios`) y «Cargos Infor» (`/admin/cargos-infor`, TAREA-25-3-2, §10.6); queda marcado en todas las `/admin/*`. Un gestor que entra por URL a cualquier `/admin/*` ve «No tienes permiso para ver esta página.» sin llamar al backend (`AdminRequerido`; personal elegible conserva su guarda).
 - **`/admin/usuarios`:** filtros en la URL (`texto`, `incluirInactivos`, `pagina`; tamaño fijo 25), búsqueda con «Buscar» o Enter; tabla desplazable (correo, nombre, estado Activo/Inactivo y «Aún no ha ingresado», departamentos); cada fila abre el detalle.
 - **Alta («Nuevo usuario»):** normaliza (correo en minúsculas) y valida forma y nombre antes de enviar (el dominio lo decide el backend). 201 → detalle con «Usuario creado.»; 400 bajo su campo; 409 duplicado → el title y «Abrir usuario» si viene `usuarioId`.
 - **Texto fijo** (diálogo y detalle): «El rol (Gestor o Admin) no se administra aquí: lo asigna TI en Entra ID. Un usuario sin rol no puede entrar aunque esté dado de alta.».

@@ -346,3 +346,12 @@ Texto anterior de la fila de usuarios y departamentos, de la siguiente tarea y d
 | **Siguiente tarea** | **TAREA-25-3-2** (frontend de cargos Infor, tarjeta en `/admin`), Fase A corta |
 
 | **25-3-2** (siguiente) | Cargos Infor, frontend (tarjeta en `/admin`) |
+
+## H19. Movido del estado vigente el 29/10/2026 (TAREA-25-3-2, cierre 29/10/2026)
+
+Texto anterior de la fila de usuarios y departamentos (25-3-2 verificada por el usuario el 29/10/2026: V1–V13 y V13b OK), de la siguiente tarea y de la fila 25-3-2 de la hoja de ruta (quitada: la TAREA-25 queda completa):
+
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas). **25-3-2** (cargos Infor, frontend: `/admin/cargos-infor`) implementada, pendiente de verificación (399/399) |
+| **Siguiente tarea** | Verificación visual de la **25-3-2** (V1–V13 de `docs/tareas/TAREA-25-3-2-reporte.md`) y su cierre documental |
+
+| **25-3-2** (en verificación) | Cargos Infor, frontend (`/admin/cargos-infor`): implementada, pendiente de verificación |
