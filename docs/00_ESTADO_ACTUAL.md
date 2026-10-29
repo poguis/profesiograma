@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-29 (TAREA-25-3-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-25-3-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 29/10/2026 |
 |---|---|
@@ -9,9 +9,9 @@
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas). **25-3-2** (cargos Infor, frontend: `/admin/cargos-infor`) implementada, pendiente de verificación (399/399) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **TAREA-25-3-2** (frontend de cargos Infor, tarjeta en `/admin`), Fase A corta |
+| **Siguiente tarea** | Verificación visual de la **25-3-2** (V1–V13 de `docs/tareas/TAREA-25-3-2-reporte.md`) y su cierre documental |
 
 ## 1. Índice de documentos
 
@@ -93,7 +93,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| **25-3-2** (siguiente) | Cargos Infor, frontend (tarjeta en `/admin`) |
+| **25-3-2** (en verificación) | Cargos Infor, frontend (`/admin/cargos-infor`): implementada, pendiente de verificación |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
@@ -148,6 +148,7 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 69. [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
 71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
 73. [Futuro] El join del reporte con `CargoInfor` distingue tildes y espacios internos: un cambio de grafía en el ERP deja el código Infor vacío sin aviso. Solución posible: columna normalizada con migración. Hoy lo mitigan los conteos de variantes y `personasGuardadas` (TAREA-25-3-1).
+74. [Menor, frontend] Extraer otros componentes repetidos de administración cuando aparezca una cuarta pantalla. Repetidos hoy (TAREA-25-3-2): el hook de filtros de la URL y el cuerpo del listado (esqueleto, error, vacío, `DataGrid`, `Paginacion`) de `PaginaUsuarios` y `PaginaCargosInfor`; `MOVIL` y los estilos de los diálogos en cinco archivos (`FASE_5_Usuarios_Departamentos.md` §10.6).
 
 ## 7.1 Reglas técnicas obligatorias
 

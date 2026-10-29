@@ -5,7 +5,7 @@
 | 25-1 | Backend: endpoints de administración, reglas, invalidación de la caché, DevAuth `gestor2`, script `tarea25/usuarios.cmd` | ✅ Verificada por el usuario (29/10/2026) |
 | 25-2 | Frontend: centro `/admin` con tarjetas, lista y edición de usuarios (§9); mensaje propio del 503 por usuario | ✅ Verificada por el usuario (29/10/2026) |
 | 25-3-1 | CargoInfor, backend: «Importar puestos desde la API» y edición de `CodigoInfor` (pendiente 2; §10) | ✅ Verificada por el usuario (29/10/2026) |
-| 25-3-2 | CargoInfor, frontend: tarjeta «Cargos Infor» en `/admin` | Pendiente |
+| 25-3-2 | CargoInfor, frontend: tarjeta «Cargos Infor» en `/admin`, listado, edición e importación (§10.6) | Implementada, pendiente de verificación |
 
 Reemplaza el popup de SuperAdmin y el JSON `PermisosGenerales` de la fila 666 (FASE_1 §2.2 y §4; J4 de FASE_2). **Sin migración:** usa las tablas `Usuario`, `Departamento` y `UsuarioDepartamento` de la Fase 2.
 
@@ -133,3 +133,31 @@ Se hará con **SQL por staging**, no con estos servicios. Para que sea idempoten
 - **Infrastructure:** `ToQueryString` del listado (filtros y subconsulta), de todos, por Id y de `ConsultaCargoConValores` con anterior null y no null.
 - **Api:** 403 en los 4 endpoints, 404, 409 del PUT y de la importación, 503 con el ERP caído sin tocar la base, 400 y vista previa.
 - **Manual:** `backend/tests/manual/tarea25-3/cargos.cmd` (ver su `LEEME.md`).
+
+### 10.6 Frontend (TAREA-25-3-2)
+- **Ruta:** tercera tarjeta «Cargos Infor» del centro `/admin` → **`/admin/cargos-infor`** (carga diferida, `AdminRequerido`: un gestor ve «No tienes permiso…» sin llamar al backend). Código en `frontend/src/features/admin/cargos-infor/`.
+- **Texto fijo** (pantalla y diálogo de edición): «El código Infor se usa en la columna CARGO INFOR del reporte Excel. Se compara con el puesto del empleado tal como viene del ERP: las tildes y los espacios cuentan.».
+- **Filtros en la URL:** `texto` (cargo o código; «Buscar» o Enter), `filtro` (selector «Sin código» · «Con código» · «Todos»; por defecto **«Sin código»**, que se omite en la URL), `incluirInactivos`, `pagina`. A la API se envían siempre `filtro`, `pagina` y `tamano=25` (la API, sin `filtro`, usa `todos`).
+- **Columnas:** Cargo, Código Infor («—» sin código), Estado (Activo/Inactivo + insignia), Personas guardadas, Activos ERP («—» si es null). Tabla desplazable; cada fila (clic o Enter) abre la edición.
+- **Insignia «Afecta al reporte» (P1):** `personasGuardadas > 0 && (sin código || inactivo)`, porque en ambos casos el reporte deja vacía la columna. **Aproximación:** `personasGuardadas` cuenta filas de `Empleado` de **cualquier** proyecto (también cerrados), no solo las que saldrán en un reporte.
+- **Diálogo de edición:** el cargo (solo lectura), personas guardadas y activos ERP; campo «Código Infor» con vista previa normalizada («Se guardará como: P-25.3»; vacío = sin código) y validación local con los mensajes del backend; interruptor «Activo»; «No hay cambios para registrar.» o «Se guardará: (sin código) (Activo) → P-25.3 (Activo)». La baja (activo → inactivo) confirma «El reporte dejará de mostrar el código Infor de este cargo.». Los anteriores del PUT salen de la fila que abrió el diálogo. Cerrar con cambios pide confirmación. Éxito → «Cargo actualizado.».
+- **Diálogo de importación** («Importar puestos desde el ERP»): la vista previa se pide **solo al abrir** (P2: `staleTime: 0`, `gcTime: 0`, sin reintentos) y muestra «Lista de las HH:mm» (hora de Ecuador, `formatearHoraUtc`), el aviso si `esAnterior`, los conteos y hasta 20 grupos de variantes con «y N más». Nota fija: «La importación lee el ERP en este momento; los conteos pueden variar.». «Importar» se deshabilita mientras corre (`isPending` + ref); el resultado (insertados, ya existentes, inactivos) reemplaza la vista previa y queda «Cerrar».
+- **Invalidación:** PUT e importación → los listados `['admin','cargos-infor','listado',…]`, la vista previa (marcada vencida sin volver a pedirse) y `['proyectos','reporte-resumen']` (prefijo, como `novedades/invalidacion.ts`).
+- **Errores:** PUT: 400 bajo su campo (`anterior` ofrece «Recargar»); **409 → «Recargar»** (cierra el diálogo y vuelve a leer la lista; confirma si hay cambios); 404 «El cargo no existe.» con «Recargar»; 403 sin «Reintentar»; 503 y red con «Reintentar». Vista previa e importación: **409 → «Reintentar»** (no es un cambio de datos); 503 (ERP o registro ocupado) y red con «Reintentar». `BarraErrores` es el componente común extraído de la 25-2 (P3).
+- **Responsive:** por debajo de 600 px, filtros y botones a todo el ancho, diálogos a todo el ancho con sus botones apilados; la tabla se desplaza en horizontal.
+- **Repetición conocida (pendiente 74):** `useFiltrosCargos` copia a `useFiltrosUsuarios`, y el cuerpo del listado se repite en `PaginaUsuarios` y `PaginaCargosInfor`. `MOVIL` y los estilos `superficie`/`acciones` se repiten en `DialogoNuevoUsuario`, `PaginaUsuario`, `BarraErrores`, `DialogoEditarCargo` y `DialogoImportarCargos`.
+
+| # | Decisión |
+|---|---|
+| P1 | La insignia cuenta también los cargos inactivos con personas guardadas |
+| P2 | La vista previa se pide solo al abrir el diálogo (`staleTime: 0`, `retry: false`) |
+| P3 | `BarraErrores` se extrae a `features/admin/BarraErrores.tsx` (lo usan solo pantallas de administración y depende de `ErroresDialogo` de `features/proyectos`; `components/` no importa tipos de features). Sin cambios de comportamiento ni de textos; `PaginaUsuario.tsx` lo importa |
+| W1 | Tercera tarjeta y ruta diferida con `AdminRequerido` |
+| W2 | Listado con filtros en la URL y «Sin código» por defecto; `activosErp` null → «—» |
+| W3 | Insignia con la condición de P1 |
+| W4 | Edición en diálogo: vista previa normalizada, «Activo», «Se guardará», confirmación de baja |
+| W5 | Diálogo de importación: vista previa, «Lista de las HH:mm», aviso `esAnterior`, variantes, nota y resultado |
+| W6 | Texto fijo del código Infor |
+| W7 | Invalidación de listados, vista previa y resumen del reporte |
+| W8 | Errores como la 25-2; el 409 de la importación ofrece «Reintentar» y el del PUT «Recargar» |
+| W9 | Responsive como la 25-2 |

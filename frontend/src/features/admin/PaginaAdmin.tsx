@@ -1,5 +1,5 @@
 import { Card, CardHeader, Text, makeStyles, tokens } from '@fluentui/react-components'
-import { People24Regular, PersonAccounts24Regular } from '@fluentui/react-icons'
+import { Briefcase24Regular, People24Regular, PersonAccounts24Regular } from '@fluentui/react-icons'
 import { useNavigate } from 'react-router'
 import { AdminRequerido } from './AdminRequerido'
 
@@ -25,6 +25,12 @@ const TARJETAS = [
     titulo: 'Usuarios y departamentos',
     descripcion: 'Alta, baja y departamentos de los usuarios de la aplicación.',
     icono: <PersonAccounts24Regular />,
+  },
+  {
+    ruta: '/admin/cargos-infor',
+    titulo: 'Cargos Infor',
+    descripcion: 'Código Infor de cada cargo (columna CARGO INFOR del reporte) e importación de puestos del ERP.',
+    icono: <Briefcase24Regular />,
   },
 ]
 

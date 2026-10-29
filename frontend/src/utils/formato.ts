@@ -50,6 +50,25 @@ export function formatearFechaHora(valorIsoUtc: string | null | undefined): stri
   return Number.isNaN(fecha.getTime()) ? '' : formatoFechaHora.format(fecha).replace(',', '')
 }
 
+const formatoHora = new Intl.DateTimeFormat('es-EC', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: ZONA_NEGOCIO,
+})
+
+/**
+ * Instante UTC (ISO, también con "+00:00") → "HH:mm" en hora de Ecuador (TAREA-25-3-2: «Lista de las HH:mm»). No confundir
+ * con formatearHora, que recorta un TimeOnly "HH:mm:ss" sin conversión de zona.
+ */
+export function formatearHoraUtc(valorIsoUtc: string | null | undefined): string {
+  if (!valorIsoUtc) {
+    return ''
+  }
+  const fecha = new Date(valorIsoUtc)
+  return Number.isNaN(fecha.getTime()) ? '' : formatoHora.format(fecha)
+}
+
 const formatoFechaIsoNegocio = new Intl.DateTimeFormat('en-CA', {
   year: 'numeric',
   month: '2-digit',

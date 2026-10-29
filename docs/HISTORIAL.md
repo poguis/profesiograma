@@ -337,3 +337,12 @@ Texto anterior de la fila de usuarios y departamentos (25-3-1 verificada por el 
 | **Siguiente tarea** | Verificación de la 25-3-1 (reiniciar la API y `cargos.cmd`); después **TAREA-25-3-2** (frontend, tarjeta «Cargos Infor») |
 
 | 25-3-1 | Cargos Infor, backend (`/api/admin/cargos-infor`): implementada, pendiente de verificación |
+
+## H18. Movido del estado vigente el 29/10/2026 (TAREA-25-3-2)
+
+Texto anterior de la fila de usuarios y departamentos, de la siguiente tarea y de la fila 25-3-2 de la hoja de ruta (25-3-2 implementada el 29/10/2026, pendiente de verificación):
+
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
+| **Siguiente tarea** | **TAREA-25-3-2** (frontend de cargos Infor, tarjeta en `/admin`), Fase A corta |
+
+| **25-3-2** (siguiente) | Cargos Infor, frontend (tarjeta en `/admin`) |

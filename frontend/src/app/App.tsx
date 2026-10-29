@@ -72,6 +72,11 @@ const router = createBrowserRouter([
           Component: (await import('../features/admin/personal-elegible/PaginaPersonalElegible')).PaginaPersonalElegible,
         }),
       },
+      // TAREA-25-3-2: cargos Infor (Admin; la pantalla no llama al backend si el usuario no lo es).
+      {
+        path: 'admin/cargos-infor',
+        lazy: async () => ({ Component: (await import('../features/admin/cargos-infor/PaginaCargosInfor')).PaginaCargosInfor }),
+      },
       {
         path: 'proyectos/:id',
         lazy: async () => ({ Component: (await import('../features/proyectos/pages/DetalleProyecto')).DetalleProyecto }),

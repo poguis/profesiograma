@@ -24,6 +24,7 @@ import { ArrowLeft20Regular, Save20Regular } from '@fluentui/react-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router'
 import { AdminRequerido } from '../AdminRequerido'
+import { BarraErrores } from '../BarraErrores'
 import { useGuardarDatosUsuario, useGuardarDepartamentos, useUsuarioAdmin } from './api'
 import type { EstadoNavegacionUsuario } from './DialogoNuevoUsuario'
 import {
@@ -398,65 +399,5 @@ function SeccionDepartamentos({ usuario, onGuardado, onRecargar, onCambios, onEd
         {motivo && !guardar.isPending && <Text className={estilos.secundario}>{motivo}</Text>}
       </div>
     </section>
-  )
-}
-
-/** Errores generales de una sección: 409 con «Recargar» (con confirmación si hay cambios), 503 y red con «Reintentar». */
-function BarraErrores({
-  errores,
-  cambios,
-  pendiente,
-  onRecargar,
-  onReintentar,
-}: {
-  errores: ErroresUsuario<string> | null
-  cambios: boolean
-  pendiente: boolean
-  onRecargar: () => Promise<void>
-  onReintentar: () => void
-}) {
-  const estilos = useEstilos()
-  const [confirmar, setConfirmar] = useState(false)
-  if (!errores || errores.generales.length === 0) {
-    return null
-  }
-  return (
-    <MessageBar intent="error">
-      <MessageBarBody>
-        {errores.generales.map((m) => (
-          <div key={m}>{m}</div>
-        ))}
-      </MessageBarBody>
-      {(errores.ofrecerRecarga || errores.ofrecerReintento) && (
-        <MessageBarActions>
-          {errores.ofrecerRecarga && <Button onClick={() => (cambios ? setConfirmar(true) : void onRecargar())}>Recargar</Button>}
-          {errores.ofrecerReintento && (
-            <Button disabled={pendiente} onClick={onReintentar}>
-              Reintentar
-            </Button>
-          )}
-        </MessageBarActions>
-      )}
-      <Dialog open={confirmar} onOpenChange={(_, d) => !d.open && setConfirmar(false)}>
-        <DialogSurface className={estilos.superficie}>
-          <DialogBody>
-            <DialogTitle>¿Recargar?</DialogTitle>
-            <DialogContent>Se perderán los cambios que no guardó en esta sección.</DialogContent>
-            <DialogActions className={estilos.accionesDialogo}>
-              <Button onClick={() => setConfirmar(false)}>Seguir editando</Button>
-              <Button
-                appearance="primary"
-                onClick={() => {
-                  setConfirmar(false)
-                  void onRecargar()
-                }}
-              >
-                Recargar
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
-    </MessageBar>
   )
 }
