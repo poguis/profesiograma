@@ -146,6 +146,20 @@ public sealed class NovedadModificacionTests
         Assert.Equal((EstadoModificacionNovedad.Conflicto, "La novedad cambió; vuelve a cargarla."), (version.Estado, version.MensajeConflicto));
     }
 
+    [Fact]
+    public async Task TipoConflicto_AnuladaYCambio_AlEditarYAlAnular()
+    {
+        var ajena = new byte[] { 0, 0, 0, 0, 0, 0, 9, 9 };
+        var editarAnulada = await new Escenario(UsuarioNovedad.Gestor(), Guardada(anulada: true)).Servicio.EditarAsync(5, Edicion(), Ct);
+        var editarCambio = await new Escenario(UsuarioNovedad.Gestor(), Guardada(rowVer: ajena)).Servicio.EditarAsync(5, Edicion(), Ct);
+        var anularYa = await new Escenario(UsuarioNovedad.Gestor(), Guardada(anulada: true))
+            .Servicio.AnularAsync(5, new AnularNovedadSolicitud(Token, "Motivo de prueba"), Ct);
+
+        Assert.Equal((TipoConflictoNovedad.Anulada, PermisosNovedad.MensajeAnulada), (editarAnulada.TipoConflicto, editarAnulada.MensajeConflicto));
+        Assert.Equal((TipoConflictoNovedad.Cambio, VersionNovedad.MensajeCambio), (editarCambio.TipoConflicto, editarCambio.MensajeConflicto));
+        Assert.Equal((TipoConflictoNovedad.Anulada, ResultadoModificacionNovedad.MensajeYaAnulada), (anularYa.TipoConflicto, anularYa.MensajeConflicto));
+    }
+
     [Theory]
     [InlineData(CatalogoIds.TipoAplicacionNovedad.Persona, 3, null, true)]   // creador
     [InlineData(CatalogoIds.TipoAplicacionNovedad.Persona, 9, null, false)]

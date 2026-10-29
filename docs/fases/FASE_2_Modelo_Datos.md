@@ -169,9 +169,11 @@ Script completo: `docs/fases/FASE_2_modelo_profesiograma.sql` (validado sintáct
 | Grupos fijos | `GrupoProyecto` |
 | Switch CARGO INFOR | `CargoInfor` |
 | Correos SuperAdmin fijos | App Role de Entra `Admin` (Fase 5) |
-| Límites / opciones de almuerzo / rango cronograma | `Parametro` |
+| Límites / rango cronograma | `Parametro` (las opciones de almuerzo salen de `ReglasAlmuerzo`; ver la nota de abajo) |
 | API EvolutionEmployee | `Empleado` (solo asignados, opción C; ver FASE_4) |
 | API COMPANIAS | `Compania` (caché al usar) |
+
+**TAREA-27 (pendiente 18, 29/10/2026):** los parámetros `ALMUERZO_SALIDA_OPCIONES` (Id 6) y `ALMUERZO_REGRESO_OPCIONES` (Id 7) se eliminan con la migración EF `QuitarParametrosAlmuerzo` (su `Down()` los restaura); los Id 6 y 7 quedan como huecos y no se reutilizan. `ReglasAlmuerzo` (Application) es la única fuente de las opciones de almuerzo. `FASE_2_modelo_profesiograma.sql` y `backend/sql/ef/001_inicial_vistas.sql` quedan como **referencia histórica** y no se editan: todavía los siembran.
  
 ---
  

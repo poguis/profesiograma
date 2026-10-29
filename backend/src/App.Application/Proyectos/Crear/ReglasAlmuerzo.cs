@@ -5,7 +5,8 @@ namespace App.Application.Proyectos.Crear;
 /// <summary>
 /// RN09: rangos del almuerzo (coinciden con CK_Proyecto_Almuerzo: regreso &gt; salida). Fuente ÚNICA para
 /// CrearProyectoValidador y para las opciones del formulario (GET /api/proyectos/opciones-formulario).
-/// Los parámetros ALMUERZO_SALIDA_OPCIONES / ALMUERZO_REGRESO_OPCIONES no se usan (pendiente en 00_ESTADO_ACTUAL §7).
+/// TAREA-27 (pendiente 18): los parámetros ALMUERZO_SALIDA_OPCIONES / ALMUERZO_REGRESO_OPCIONES se eliminaron
+/// (migración QuitarParametrosAlmuerzo).
 /// TAREA-26c: los rangos fijos son del turno diurno; en el turno nocturno (salida &lt; entrada, incluida la salida 00:00)
 /// el almuerzo va dentro del turno en tiempo circular. El frontend replica estas reglas en almuerzoTurno.ts.
 /// </summary>

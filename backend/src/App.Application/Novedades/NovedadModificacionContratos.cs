@@ -92,13 +92,29 @@ public interface INovedadModificacion
     Task<string> AnularAsync(AnulacionNovedad anulacion, CancellationToken ct);
 }
 
+/// <summary>
+/// TAREA-27 (pendiente 67): motivo de un 409 de novedades. La API lo publica en la extensión `tipoConflicto` y el frontend
+/// decide con él (nunca con el texto del mensaje).
+/// </summary>
+public enum TipoConflictoNovedad
+{
+    /// <summary>N7: otra novedad no anulada con la misma aplicación, sujeto, tipo y algún día en común.</summary>
+    Duplicado,
+    /// <summary>La versión no coincide u otro proceso la modificó: hay que recargar.</summary>
+    Cambio,
+    /// <summary>La novedad está (o ya está) anulada.</summary>
+    Anulada,
+    /// <summary>Otro registro se guardó al mismo tiempo (alta puntual concurrente al crear): basta reintentar.</summary>
+    RegistroConcurrente,
+}
+
 public enum EstadoModificacionNovedad
 {
     Hecho,
     Invalido,
     NoEncontrada,
     Prohibido,
-    /// <summary>409 con <see cref="ResultadoModificacionNovedad.MensajeConflicto"/> (anulada o cambió).</summary>
+    /// <summary>409 con <see cref="ResultadoModificacionNovedad.MensajeConflicto"/> y su <see cref="TipoConflictoNovedad"/> (anulada o cambió).</summary>
     Conflicto,
     /// <summary>N7 (409, R6).</summary>
     Duplicado,
@@ -109,7 +125,8 @@ public sealed record ResultadoModificacionNovedad(
     IReadOnlyDictionary<string, string[]>? Errores = null,
     NovedadEditadaDto? Hecho = null,
     string? MensajeConflicto = null,
-    string? CodigoDuplicado = null)
+    string? CodigoDuplicado = null,
+    TipoConflictoNovedad? TipoConflicto = null)
 {
     public const string MensajeYaAnulada = "La novedad ya está anulada.";
 
@@ -118,7 +135,10 @@ public sealed record ResultadoModificacionNovedad(
     public static ResultadoModificacionNovedad Invalido(string clave, string mensaje) => Invalido(new Dictionary<string, string[]> { [clave] = [mensaje] });
     public static ResultadoModificacionNovedad NoEncontrada() => new(EstadoModificacionNovedad.NoEncontrada);
     public static ResultadoModificacionNovedad Prohibido() => new(EstadoModificacionNovedad.Prohibido);
-    public static ResultadoModificacionNovedad Conflicto(string mensaje) => new(EstadoModificacionNovedad.Conflicto, MensajeConflicto: mensaje);
+    public static ResultadoModificacionNovedad Anulada(string mensaje) =>
+        new(EstadoModificacionNovedad.Conflicto, MensajeConflicto: mensaje, TipoConflicto: TipoConflictoNovedad.Anulada);
+    public static ResultadoModificacionNovedad Cambio() =>
+        new(EstadoModificacionNovedad.Conflicto, MensajeConflicto: VersionNovedad.MensajeCambio, TipoConflicto: TipoConflictoNovedad.Cambio);
     /// <summary>R6: el código solo si la novedad existente es visible para quien edita.</summary>
     public static ResultadoModificacionNovedad Duplicado(DuplicadoNovedad d) => new(EstadoModificacionNovedad.Duplicado, CodigoDuplicado: d.Visible ? d.Codigo : null);
 }

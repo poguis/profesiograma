@@ -1117,26 +1117,6 @@ namespace App.Infrastructure.Persistencia.Migraciones
                         },
                         new
                         {
-                            Id = 6,
-                            Clave = "ALMUERZO_SALIDA_OPCIONES",
-                            CreadoPorId = 1,
-                            Descripcion = "Horas permitidas de salida a almuerzo",
-                            FechaCreacion = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            TipoDato = "LIST",
-                            Valor = "11:00,12:00,13:00,14:00"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Clave = "ALMUERZO_REGRESO_OPCIONES",
-                            CreadoPorId = 1,
-                            Descripcion = "Horas permitidas de regreso de almuerzo",
-                            FechaCreacion = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            TipoDato = "LIST",
-                            Valor = "12:00,13:00,14:00,15:00"
-                        },
-                        new
-                        {
                             Id = 8,
                             Clave = "EMPLEADO_FAMILIAS_ASIGNABLES",
                             CreadoPorId = 1,

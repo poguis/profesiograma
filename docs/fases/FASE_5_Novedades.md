@@ -22,6 +22,16 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 - `NovedadDetalleDto`: lo anterior más `dias` (ordenados), `observacion`, `fechaAnulacion`, `motivoAnulacion`, `registro` (solo Admin), `version` (RowVer en Base64), `puedeEditar`, `puedeAnular`, `motivoNoEditable`.
 - **Nunca** viajan `DetalleOrigenJson` ni la cédula. `texto` busca en el código de la novedad, el código y el nombre del empleado y el código y el nombre del proyecto.
 - Errores: 403 «Solo los administradores pueden registrar novedades GENERAL.»; 409 «Ya existe una novedad de ese tipo para ese sujeto en esas fechas.» (extensión `codigo` solo si quien registra la ve, R6) o «Otro registro se guardó al mismo tiempo; vuelva a intentarlo.» (alta puntual concurrente); 503 de empleados, registro ocupado o base caída (manejadores comunes). Un cuerpo ilegible → 400 en su campo (`SolicitudIlegibleExceptionHandler`).
+- **`tipoConflicto` (TAREA-27, pendiente 67):** todo 409 de novedades trae esta extensión estable (helper `ProblemasConflicto` en App.Api; en Application, `TipoConflictoNovedad`). El frontend (`erroresNovedad.ts`) decide **solo** por ella, sin comparar textos:
+
+| Valor | Cuándo | Mensaje (title) | Frontend |
+|---|---|---|---|
+| `duplicado` | N7 al crear o al editar | «Ya existe una novedad de ese tipo para ese sujeto en esas fechas.» (+ `codigo` solo si es visible, R6) | Sin «Recargar»; «Ver {codigo}» si viene |
+| `registroConcurrente` | Al crear: la alta puntual chocó con otro registro | «Otro registro se guardó al mismo tiempo; vuelva a intentarlo.» | «Reintentar», sin «Recargar» |
+| `cambio` | Editar o anular: la versión no coincide u otro proceso la modificó | «La novedad cambió; vuelve a cargarla.» | «Recargar» |
+| `anulada` | Editar una anulada / anular una ya anulada | «La novedad está anulada.» / «La novedad ya está anulada.» | «Recargar» |
+
+  Un 409 **sin** `tipoConflicto` (o con un valor desconocido) se trata como genérico: «Recargar». `codigo` ya no sirve para reconocer el duplicado; solo alimenta el enlace.
 
 ## 2. Validación (400 por campo)
 | Campo | Regla y mensaje |

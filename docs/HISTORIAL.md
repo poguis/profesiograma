@@ -384,3 +384,16 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 Texto anterior de la fila de usuarios y departamentos (acortada para mantener el vigente bajo 25 KB; cifras en los reportes de cada subtarea):
 
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa:** 25-1, 25-2, 25-3-1 (backend 1158/1158; `cargos.cmd` 0 FALLA) y 25-3-2 (cargos Infor, frontend; 399/399) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
+
+## H21. Movido del estado vigente el 29/10/2026 (TAREA-27)
+
+Pendientes 18 y 67, **resueltos** en la TAREA-27 (migración `QuitarParametrosAlmuerzo`, sin aplicar al cierre de la Fase B; `tipoConflicto` en los 409 de novedades):
+
+18. Los parámetros `ALMUERZO_SALIDA_OPCIONES` / `ALMUERZO_REGRESO_OPCIONES` quedan **sin uso**: el validador y `GET /api/proyectos/opciones-formulario` usan `ReglasAlmuerzo` (Application, rangos RN09 y opciones cada hora). Decidir si se eliminan o si `ReglasAlmuerzo` pasa a leerlos (servirían al validador y al formulario a la vez). Origen: TAREA-13 (B0). **Decidido (29/10/2026):** se eliminan; `ReglasAlmuerzo` queda como única fuente (TAREA-27).
+67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). **Decidido (29/10/2026):** se agrega `tipoConflicto` (TAREA-27).
+
+Texto anterior de la siguiente tarea y de la fila 1 de la hoja de ruta:
+
+| **Siguiente tarea** | **TAREA-27** (pendientes 18 y 67), Fase A |
+
+| 1. **TAREA-27** (siguiente) | Pendientes 18 y 67 |

@@ -121,6 +121,61 @@ public sealed class NovedadEndpointsTests
         Assert.Equal((200, 5), (anular.Estado, anular.Json!.RootElement.GetProperty("id").GetInt32()));
     }
 
+    // ------------------------------------------------------------------ TAREA-27: tipoConflicto en los 409
+
+    private static string GeneralEl(string fecha) =>
+        $$"""{ "tipoAplicacion": "GENERAL", "tipoNovedad": "FERIADO", "fechaInicio": "{{fecha}}", "fechaFin": "{{fecha}}" }""";
+
+    private static (string? Titulo, string? Tipo, string? Codigo) Conflicto(Respuesta r)
+    {
+        Assert.Equal(StatusCodes.Status409Conflict, r.Estado);
+        var raiz = r.Json!.RootElement;
+        return (raiz.GetProperty("title").GetString(), raiz.GetProperty("tipoConflicto").GetString(),
+            raiz.TryGetProperty("codigo", out var codigo) ? codigo.GetString() : null);
+    }
+
+    [Fact]
+    public async Task Crear_Duplicado_409Duplicado_ConCodigoSoloSiEsVisible()
+    {
+        var visible = Conflicto(await EnviarAsync("admin", HttpMethods.Post, "/api/novedades", GeneralEl("2026-12-31")));
+        var oculto = Conflicto(await EnviarAsync("admin", HttpMethods.Post, "/api/novedades", GeneralEl("2026-12-30")));
+
+        Assert.Equal((ResultadoCrearNovedad.MensajeDuplicado, "duplicado", "NOV-20261231-dup001"), visible);
+        Assert.Equal((ResultadoCrearNovedad.MensajeDuplicado, "duplicado", null), oculto);
+    }
+
+    [Fact]
+    public async Task Crear_AltaConcurrente_409RegistroConcurrente()
+    {
+        var r = Conflicto(await EnviarAsync("admin", HttpMethods.Post, "/api/novedades", GeneralEl("2026-12-29")));
+
+        Assert.Equal((ResultadoCrearNovedad.MensajeCambiado, "registroConcurrente", null), r);
+    }
+
+    [Fact]
+    public async Task Editar_Anulada_Cambio_Duplicado_ConSuTipo()
+    {
+        var anulada = Conflicto(await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/8", EdicionGeneral));
+        var cambio = Conflicto(await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/5",
+            EdicionGeneral.Replace("AAAAAAAAB9E=", "AAAAAAAACQk=", StringComparison.Ordinal)));
+        var duplicado = Conflicto(await EnviarAsync("admin", HttpMethods.Put, "/api/novedades/5",
+            EdicionGeneral.Replace("2032-01-01", "2032-02-01", StringComparison.Ordinal).Replace("2032-01-02", "2032-02-01", StringComparison.Ordinal)));
+
+        Assert.Equal((PermisosNovedad.MensajeAnulada, "anulada", null), anulada);
+        Assert.Equal((VersionNovedad.MensajeCambio, "cambio", null), cambio);
+        Assert.Equal((ResultadoCrearNovedad.MensajeDuplicado, "duplicado", "NOV-20320201-dup002"), duplicado);
+    }
+
+    [Fact]
+    public async Task Anular_YaAnulada_Y_Cambio_ConSuTipo()
+    {
+        var ya = Conflicto(await EnviarAsync("admin", HttpMethods.Post, "/api/novedades/8/anular", """{ "version": "AAAAAAAAB9E=", "motivo": "Prueba de anulación" }"""));
+        var cambio = Conflicto(await EnviarAsync("admin", HttpMethods.Post, "/api/novedades/5/anular", """{ "version": "AAAAAAAACQk=", "motivo": "Prueba de anulación" }"""));
+
+        Assert.Equal((ResultadoModificacionNovedad.MensajeYaAnulada, "anulada", null), ya);
+        Assert.Equal((VersionNovedad.MensajeCambio, "cambio", null), cambio);
+    }
+
     // ------------------------------------------------------------------ pipeline en memoria
 
     private sealed record Respuesta(int Estado, JsonDocument? Json, HttpContext Contexto);
@@ -233,23 +288,38 @@ public sealed class NovedadEndpointsTests
         public Task<bool> ProyectoElegibleAsync(int proyectoId, int? propietarioUsuarioId, CancellationToken ct) => Task.FromResult(false);
     }
 
+    /// <summary>
+    /// TAREA-27: duplicado visible el 31/12/2026 y el 01/02/2032 (edición), oculto el 30/12/2026; el alta del 29/12/2026
+    /// choca con otro registro (ConflictoConcurrenciaException).
+    /// </summary>
     private sealed class RepositorioFalso : INovedadRepositorio
     {
         public Task<DuplicadoNovedad?> BuscarDuplicadoAsync(CriterioDuplicado criterio, int? visibleParaUsuarioId, CancellationToken ct) =>
-            Task.FromResult<DuplicadoNovedad?>(null);
+            Task.FromResult(criterio.Desde switch
+            {
+                { Year: 2026, Month: 12, Day: 31 } => new DuplicadoNovedad("NOV-20261231-dup001", true),
+                { Year: 2026, Month: 12, Day: 30 } => new DuplicadoNovedad("NOV-20261230-oculta", false),
+                { Year: 2032, Month: 2, Day: 1 } => new DuplicadoNovedad("NOV-20320201-dup002", true),
+                _ => (DuplicadoNovedad?)null,
+            });
 
         public Task<bool> ExisteCodigoOUidAsync(string codigo, Guid uid, CancellationToken ct) => Task.FromResult(false);
 
         public Task<NovedadCreadaDto> AgregarAsync(NuevaNovedad nueva, CancellationToken ct) =>
-            Task.FromResult(new NovedadCreadaDto(77, nueva.Codigo, "AAAAAAAAB9E="));
+            nueva.Datos.FechaInicio == new DateOnly(2026, 12, 29)
+                ? throw new App.Application.Proyectos.Estados.ConflictoConcurrenciaException("Alta concurrente (prueba).")
+                : Task.FromResult(new NovedadCreadaDto(77, nueva.Codigo, "AAAAAAAAB9E="));
     }
 
-    /// <summary>Novedad 5: GENERAL FERIADO del admin (Id 1), 3 días, versión AAAAAAAAB9E=. Cualquier otra: no existe.</summary>
+    /// <summary>
+    /// Novedad 5: GENERAL FERIADO del admin (Id 1), 3 días, versión AAAAAAAAB9E=. Novedad 8 (TAREA-27): la misma, anulada.
+    /// Cualquier otra: no existe.
+    /// </summary>
     private sealed class ModificacionFalsa : INovedadModificacion
     {
         public Task<NovedadParaModificar?> ObtenerParaModificarAsync(int id, int? visibleParaUsuarioId, CancellationToken ct) =>
-            Task.FromResult(id == 5
-                ? new NovedadParaModificar(5, 3, 3, null, null, "PROFESIOGRAMA", true, null, false, 1, null,
+            Task.FromResult(id is 5 or 8
+                ? new NovedadParaModificar(id, 3, 3, null, null, "PROFESIOGRAMA", true, null, id == 8, 1, null,
                     [new(2032, 1, 1), new(2032, 1, 2), new(2032, 1, 3)], [0, 0, 0, 0, 0, 0, 7, 209])
                 : null);
 

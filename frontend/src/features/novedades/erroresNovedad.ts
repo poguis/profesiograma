@@ -1,6 +1,6 @@
 // Errores de la API en los formularios de novedades (TAREA-24b; la 24c lo reutiliza en la edición y la anulación).
-// Envoltorio de interpretarErrorDialogo (proyectos): un 409 de duplicado NO ofrece «Recargar» (hay que cambiar el tipo o
-// las fechas) y el 404 habla de la novedad. Lógica pura, sin React.
+// Envoltorio de interpretarErrorDialogo (proyectos): el 409 se decide por `tipoConflicto` (TAREA-27) y el 404 habla de la
+// novedad. Lógica pura, sin React.
 import { ErrorApi } from '../../api/errores'
 import { type ErrorRespuesta, type ErroresDialogo, interpretarErrorDialogo } from '../proyectos/erroresDialogo'
 
@@ -22,11 +22,9 @@ export const CAMPOS_EDICION = ['tipoNovedad', 'fechaInicio', 'fechaFin', 'diasEx
 export const CAMPOS_ANULACION = ['motivo'] as const
 
 export const MENSAJE_NOVEDAD_NO_ENCONTRADA = 'La novedad no existe o no tiene acceso.'
-/**
- * title del 409 de duplicado (ResultadoCrearNovedad.MensajeDuplicado, N7). Acoplamiento: el ProblemDetails del backend no
- * trae un discriminador (`type`) para sus 409; el duplicado se reconoce por `codigo` (si viene, R6) o por este title exacto.
- */
-export const MENSAJE_DUPLICADO = 'Ya existe una novedad de ese tipo para ese sujeto en esas fechas.'
+
+/** Extensión `tipoConflicto` de los 409 de novedades (TAREA-27, `ProblemasConflicto` en la API; FASE_5_Novedades §1). */
+export type TipoConflicto = 'duplicado' | 'cambio' | 'anulada' | 'registroConcurrente'
 
 export interface ErroresNovedad<C extends string> extends ErroresDialogo<C> {
   /** R6: código de la novedad existente, solo si el backend lo envía (quien registra la ve). */
@@ -43,9 +41,19 @@ export function interpretarErrorNovedad<C extends string>(
     return { ...base, generales: [MENSAJE_NOVEDAD_NO_ENCONTRADA] }
   }
   if (error.tipo === 'conflicto') {
-    const codigo = typeof error.extensiones?.codigo === 'string' ? error.extensiones.codigo : undefined
-    const duplicado = codigo !== undefined || error.titulo === MENSAJE_DUPLICADO
-    return duplicado ? { ...base, ofrecerRecarga: false, codigoDuplicado: codigo } : base
+    // Solo por `tipoConflicto` (P4, sin respaldo por el texto). cambio, anulada o sin tipo: 409 genérico con «Recargar».
+    switch (error.extensiones?.tipoConflicto as TipoConflicto | undefined) {
+      case 'duplicado': {
+        // Hay que cambiar el tipo o las fechas; `codigo` solo viene si quien registra ve la existente (R6).
+        const codigo = typeof error.extensiones?.codigo === 'string' ? error.extensiones.codigo : undefined
+        return { ...base, ofrecerRecarga: false, codigoDuplicado: codigo }
+      }
+      case 'registroConcurrente':
+        // Otro registro se guardó al mismo tiempo: los datos del formulario siguen siendo válidos, basta reintentar (P3).
+        return { ...base, ofrecerRecarga: false, ofrecerReintento: true }
+      default:
+        return base
+    }
   }
   return base
 }

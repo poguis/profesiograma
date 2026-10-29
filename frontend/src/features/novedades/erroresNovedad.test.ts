@@ -4,12 +4,12 @@ import {
   CAMPOS_ANULACION,
   CAMPOS_EDICION,
   CAMPOS_REGISTRO,
-  MENSAJE_DUPLICADO,
   interpretarErrorDesconocido,
   interpretarErrorNovedad,
 } from './erroresNovedad'
 
 const interpretar = (error: ErrorApi) => interpretarErrorNovedad(error, CAMPOS_REGISTRO)
+const MENSAJE_DUPLICADO = 'Ya existe una novedad de ese tipo para ese sujeto en esas fechas.'
 
 describe('interpretarErrorNovedad (TAREA-24b)', () => {
   it('400: cada clave a su control y `general` arriba, sin «Recargar»', () => {
@@ -31,13 +31,20 @@ describe('interpretarErrorNovedad (TAREA-24b)', () => {
 
   it('409 duplicado con código: title arriba, código para el enlace, sin «Recargar»', () => {
     const r = interpretar(
-      new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO, extensiones: { codigo: 'NOV-20700101-abc123' } }),
+      new ErrorApi({
+        tipo: 'conflicto',
+        estado: 409,
+        titulo: MENSAJE_DUPLICADO,
+        extensiones: { tipoConflicto: 'duplicado', codigo: 'NOV-20700101-abc123' },
+      }),
     )
     expect(r).toMatchObject({ generales: [MENSAJE_DUPLICADO], codigoDuplicado: 'NOV-20700101-abc123', ofrecerRecarga: false })
   })
 
   it('409 duplicado sin código (R6: no la ve): sin enlace ni «Recargar»', () => {
-    const r = interpretar(new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO }))
+    const r = interpretar(
+      new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO, extensiones: { tipoConflicto: 'duplicado' } }),
+    )
     expect(r.codigoDuplicado).toBeUndefined()
     expect(r.ofrecerRecarga).toBe(false)
   })
@@ -104,8 +111,12 @@ describe('interpretarErrorNovedad en la edición y la anulación (TAREA-24c)', (
   )
 
   it('409 duplicado al editar, con y sin código: sin «Recargar»', () => {
-    const con = editar(new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO, extensiones: { codigo: 'NOV-1' } }))
-    const sin = editar(new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO }))
+    const con = editar(
+      new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO, extensiones: { tipoConflicto: 'duplicado', codigo: 'NOV-1' } }),
+    )
+    const sin = editar(
+      new ErrorApi({ tipo: 'conflicto', estado: 409, titulo: MENSAJE_DUPLICADO, extensiones: { tipoConflicto: 'duplicado' } }),
+    )
     expect([con.codigoDuplicado, con.ofrecerRecarga]).toEqual(['NOV-1', false])
     expect([sin.codigoDuplicado, sin.ofrecerRecarga]).toEqual([undefined, false])
   })
@@ -133,5 +144,36 @@ describe('interpretarErrorNovedad en la edición y la anulación (TAREA-24c)', (
       generales: ['Ocurrió un error inesperado.'],
       ofrecerReintento: true,
     })
+  })
+})
+
+describe('tipoConflicto (TAREA-27)', () => {
+  const conflicto = (extensiones: Record<string, unknown>, titulo = 'Mensaje cualquiera.') =>
+    interpretar(new ErrorApi({ tipo: 'conflicto', estado: 409, titulo, extensiones }))
+
+  it.each(['cambio', 'anulada'])('«%s» → «Recargar», sin «Reintentar»', (tipoConflicto) => {
+    expect(conflicto({ tipoConflicto })).toMatchObject({ ofrecerRecarga: true, ofrecerReintento: false })
+  })
+
+  it('«registroConcurrente» → «Reintentar», sin «Recargar» (P3)', () => {
+    const r = conflicto({ tipoConflicto: 'registroConcurrente' }, 'Otro registro se guardó al mismo tiempo; vuelva a intentarlo.')
+    expect(r).toMatchObject({
+      generales: ['Otro registro se guardó al mismo tiempo; vuelva a intentarlo.'],
+      ofrecerRecarga: false,
+      ofrecerReintento: true,
+    })
+  })
+
+  it('sin tipoConflicto: 409 genérico con «Recargar», aunque traiga el texto o el código del duplicado (P4)', () => {
+    const porTexto = conflicto({}, MENSAJE_DUPLICADO)
+    const porCodigo = conflicto({ codigo: 'NOV-1' })
+    expect(porTexto).toMatchObject({ ofrecerRecarga: true })
+    expect(porTexto.codigoDuplicado).toBeUndefined()
+    expect(porCodigo).toMatchObject({ ofrecerRecarga: true })
+    expect(porCodigo.codigoDuplicado).toBeUndefined()
+  })
+
+  it('valor desconocido: 409 genérico', () => {
+    expect(conflicto({ tipoConflicto: 'otro' })).toMatchObject({ ofrecerRecarga: true, ofrecerReintento: false })
   })
 })

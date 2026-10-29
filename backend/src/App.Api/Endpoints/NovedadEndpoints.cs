@@ -33,7 +33,7 @@ public static class NovedadEndpoints
             int id, NovedadConsultaServicio servicio, CancellationToken ct) =>
             await servicio.ObtenerDetalleAsync(id, ct) is { } detalle ? TypedResults.Ok(detalle) : TypedResults.NotFound());
 
-        // 201 + Location; 400 por campo; 403 GENERAL sin permiso; 409 duplicado (N7) o alta concurrente; 503 empleados,
+        // 201 + Location; 400 por campo; 403 GENERAL sin permiso; 409 duplicado (N7) o alta concurrente, con tipoConflicto (TAREA-27); 503 empleados,
         // registro ocupado o base caída (manejadores comunes).
         novedades.MapPost("/", async Task<Results<Created<NovedadCreadaDto>, ValidationProblem, ProblemHttpResult>> (
             CrearNovedadSolicitud solicitud, NovedadEscrituraServicio servicio, CancellationToken ct) =>
@@ -45,11 +45,9 @@ public static class NovedadEndpoints
                 EstadoCrearNovedad.Invalido => TypedResults.ValidationProblem(resultado.Errores!, title: "Los datos de la novedad no son válidos."),
                 EstadoCrearNovedad.Prohibido => TypedResults.Problem(
                     title: ResultadoCrearNovedad.MensajeProhibido, statusCode: StatusCodes.Status403Forbidden),
-                EstadoCrearNovedad.Duplicado => TypedResults.Problem(
-                    title: ResultadoCrearNovedad.MensajeDuplicado, statusCode: StatusCodes.Status409Conflict,
-                    // R6: el código de la existente solo si quien registra la ve.
-                    extensions: resultado.CodigoDuplicado is { } codigo ? new Dictionary<string, object?> { ["codigo"] = codigo } : null),
-                _ => TypedResults.Problem(title: ResultadoCrearNovedad.MensajeCambiado, statusCode: StatusCodes.Status409Conflict),
+                // R6: el código de la existente solo si quien registra la ve.
+                EstadoCrearNovedad.Duplicado => Duplicado(resultado.CodigoDuplicado),
+                _ => ProblemasConflicto.Conflicto(ResultadoCrearNovedad.MensajeCambiado, ProblemasConflicto.Tipos.RegistroConcurrente),
             };
         });
 
@@ -89,7 +87,7 @@ public static class NovedadEndpoints
             .RequireAuthorization(Politicas.Admin);
 
         // TAREA-23-2: editar (N8) y anular (N10). 200 { id, version }; 400 (version, origen, campos, general); 403; 404;
-        // 409 (anulada, cambió, duplicado); 503 (registro ocupado o base caída).
+        // 409 con tipoConflicto anulada, cambio o duplicado (TAREA-27); 503 (registro ocupado o base caída).
         novedades.MapPut("/{id:int}", async Task<Results<Ok<NovedadEditadaDto>, ValidationProblem, NotFound, ProblemHttpResult>> (
             int id, EditarNovedadSolicitud solicitud, NovedadModificacionServicio servicio, CancellationToken ct) =>
             Respuesta(await servicio.EditarAsync(id, solicitud, ct), "Los datos de la novedad no son válidos."));
@@ -108,11 +106,16 @@ public static class NovedadEndpoints
         EstadoModificacionNovedad.Invalido => TypedResults.ValidationProblem(r.Errores!, title: tituloInvalido),
         EstadoModificacionNovedad.NoEncontrada => TypedResults.NotFound(),
         EstadoModificacionNovedad.Prohibido => TypedResults.Problem(title: PermisosNovedad.MensajeSinPermiso, statusCode: StatusCodes.Status403Forbidden),
-        EstadoModificacionNovedad.Duplicado => TypedResults.Problem(
-            title: ResultadoCrearNovedad.MensajeDuplicado, statusCode: StatusCodes.Status409Conflict,
-            extensions: r.CodigoDuplicado is { } codigo ? new Dictionary<string, object?> { ["codigo"] = codigo } : null),
-        _ => TypedResults.Problem(title: r.MensajeConflicto, statusCode: StatusCodes.Status409Conflict),
+        EstadoModificacionNovedad.Duplicado => Duplicado(r.CodigoDuplicado),
+        _ => ProblemasConflicto.Conflicto(r.MensajeConflicto!, r.TipoConflicto == TipoConflictoNovedad.Anulada
+            ? ProblemasConflicto.Tipos.Anulada
+            : ProblemasConflicto.Tipos.Cambio),
     };
+
+    /// <summary>N7: 409 «duplicado»; <c>codigo</c> solo si la existente es visible (R6).</summary>
+    private static ProblemHttpResult Duplicado(string? codigo) => ProblemasConflicto.Conflicto(
+        ResultadoCrearNovedad.MensajeDuplicado, ProblemasConflicto.Tipos.Duplicado,
+        codigo is null ? null : new Dictionary<string, object?> { ["codigo"] = codigo });
 
     private static string Conteos(IReadOnlyDictionary<string, int> omitidas) =>
         omitidas.Count == 0 ? "0" : string.Join(", ", omitidas.OrderBy(o => o.Key, StringComparer.Ordinal).Select(o => $"{o.Key} {o.Value}"));

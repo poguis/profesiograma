@@ -62,7 +62,7 @@ public sealed class NovedadModificacionServicio(
             }
             catch (ConflictoConcurrenciaException)
             {
-                return ResultadoModificacionNovedad.Conflicto(VersionNovedad.MensajeCambio);
+                return ResultadoModificacionNovedad.Cambio();
             }
         }, r => r.Estado == EstadoModificacionNovedad.Hecho, ct);
     }
@@ -99,7 +99,7 @@ public sealed class NovedadModificacionServicio(
             }
             catch (ConflictoConcurrenciaException)
             {
-                return ResultadoModificacionNovedad.Conflicto(VersionNovedad.MensajeCambio);
+                return ResultadoModificacionNovedad.Cambio();
             }
         }, r => r.Estado == EstadoModificacionNovedad.Hecho, ct);
     }
@@ -127,8 +127,8 @@ public sealed class NovedadModificacionServicio(
 
         var corte = !n.OrigenEditable ? ResultadoModificacionNovedad.Invalido("origen", PermisosNovedad.MensajeSoloLectura(n.OrigenCodigo))
             : !PermisosNovedad.PuedeModificar(usuario, n.AplicacionId, n.CreadoPorId, n.PropietarioProyectoId) ? ResultadoModificacionNovedad.Prohibido()
-            : n.Anulada ? ResultadoModificacionNovedad.Conflicto(mensajeAnulada)
-            : !VersionNovedad.Igual(token, n.RowVer) ? ResultadoModificacionNovedad.Conflicto(VersionNovedad.MensajeCambio)
+            : n.Anulada ? ResultadoModificacionNovedad.Anulada(mensajeAnulada)
+            : !VersionNovedad.Igual(token, n.RowVer) ? ResultadoModificacionNovedad.Cambio()
             : null;
         return corte is null ? (null, n, token, visible) : (corte, null, null, null);
     }
@@ -138,8 +138,8 @@ public sealed class NovedadModificacionServicio(
     {
         var actual = await modificacion.ObtenerParaModificarAsync(id, visible, ct);
         return actual is null ? ResultadoModificacionNovedad.NoEncontrada()
-            : actual.Anulada ? ResultadoModificacionNovedad.Conflicto(mensajeAnulada)
-            : !VersionNovedad.Igual(token, actual.RowVer) ? ResultadoModificacionNovedad.Conflicto(VersionNovedad.MensajeCambio)
+            : actual.Anulada ? ResultadoModificacionNovedad.Anulada(mensajeAnulada)
+            : !VersionNovedad.Igual(token, actual.RowVer) ? ResultadoModificacionNovedad.Cambio()
             : null;
     }
 }
