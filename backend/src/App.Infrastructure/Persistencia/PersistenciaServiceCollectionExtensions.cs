@@ -73,6 +73,7 @@ public static class PersistenciaServiceCollectionExtensions
         services.AddScoped<IReactivacionRepositorio, EdicionPersonalRepositorio>();
         services.AddScoped<ICabeceraRepositorio, EdicionCabeceraRepositorio>();
         services.AddScoped<IUsuarioProvisionamiento, UsuarioProvisionamiento>();
+        services.AddScoped<IUsuariosAdminRepositorio, Seguridad.UsuariosAdminRepositorio>(); // TAREA-25-1
         services.AddScoped<ICompletarCedulasRepositorio, CompletarCedulasRepositorio>(); // TAREA-22-1
         services.AddScoped<INovedadConsultas, NovedadConsultas>(); // TAREA-23-1
         services.AddScoped<INovedadRepositorio, NovedadRepositorio>();

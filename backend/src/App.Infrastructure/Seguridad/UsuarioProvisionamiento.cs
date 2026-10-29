@@ -22,7 +22,7 @@ internal sealed class UsuarioProvisionamiento(
     public async Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct)
     {
         var emailNormalizado = email.Trim().ToLowerInvariant();
-        var claveCache = $"usuario:{entraObjectId?.ToString() ?? emailNormalizado}";
+        var claveCache = ClaveCache(entraObjectId?.ToString() ?? emailNormalizado);
 
         if (cache.TryGetValue(claveCache, out UsuarioResuelto? enCache) && enCache is not null)
         {
@@ -45,6 +45,17 @@ internal sealed class UsuarioProvisionamiento(
         cache.Set(claveCache, resultado, DuracionCache);
         return resultado;
     }
+
+    public void Invalidar(string email, Guid? entraObjectId)
+    {
+        cache.Remove(ClaveCache(email.Trim().ToLowerInvariant()));
+        if (entraObjectId is { } oid)
+        {
+            cache.Remove(ClaveCache(oid.ToString()));
+        }
+    }
+
+    internal static string ClaveCache(string oidOEmail) => $"usuario:{oidOEmail}";
 
     private async Task<UsuarioResuelto> ResolverEnBaseAsync(Guid? oid, string email, string nombre, CancellationToken ct)
     {

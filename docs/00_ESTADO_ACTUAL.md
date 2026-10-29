@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-10-28 (TAREA-62-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-10-29 (TAREA-25-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 26/10/2026 |
 |---|---|
@@ -8,9 +8,10 @@
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
-| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo). **62-1 ✅** (backend) verificada por el usuario el 28/10/2026 (`criterio.cmd` corrida 170: 0 FALLA; auditoría OK). **62-2** (frontend) implementada, pendiente de verificación (362/362) |
+| Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
+| Usuarios y departamentos (TAREA-25) | **25-1** (backend) implementada, pendiente de verificación (1121/1121; `tarea25/usuarios.cmd`) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación visual de la 62-2 (A1–A11); la siguiente la decide el usuario (pendientes en §5 y §7) |
+| **Siguiente tarea** | Verificación de la 25-1 (reiniciar la API y `usuarios.cmd`); después **TAREA-25-2** (frontend) |
 
 ## 1. Índice de documentos
 
@@ -28,6 +29,7 @@
 | `docs/fases/FASE_5_Edicion_Cabecera.md` | Fechas, horario, almuerzo, cambio de actividad | C1–C11 |
 | `docs/fases/FASE_5_Cronograma.md` | Cronograma y reporte Excel | Contrato, D1–D16; §7–§8 |
 | `docs/fases/FASE_5_Novedades.md` | Novedades (backend o frontend) | §1–§2 contratos y validación; §7 edición; §8 sincronización; §9 frontend |
+| `docs/fases/FASE_5_Usuarios_Departamentos.md` | Usuarios y departamentos (TAREA-25), administración | §2–§3 contratos y reglas; §5 efecto de los departamentos |
 | `docs/tareas/TAREA-XX-reporte.md` | Solo el reporte de la tarea que se continúa | — |
 | `docs/tareas/PLANTILLA_REPORTE.md` | Al escribir un reporte | — |
 | `docs/HISTORIAL.md` | **No leer** salvo que la tarea lo pida (trazabilidad, cifras de pruebas antiguas) | Índice al inicio |
@@ -39,6 +41,7 @@
 | Frontend de proyectos | El FASE_5 de la pantalla y su último reporte |
 | Cronograma o reporte Excel | `FASE_5_Cronograma.md` |
 | Criterio de personal (TAREA-62) | `FASE_4_Empleados_API.md` §10 y §5, `FASE_5_Novedades.md` §2 |
+| Usuarios y departamentos (TAREA-25) | `FASE_5_Usuarios_Departamentos.md`; el reporte de la subtarea anterior |
 | Migración de datos (Fase 3) | `FASE_0`, `FASE_2` y el `.sql`; pendientes 27 y 45 |
 | Entra ID, entornos y despliegue (Fase 7) | §4 de este documento; pendientes 7, 59, 63 y 65 |
 
@@ -90,10 +93,11 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 62-2 | Criterio de personal, frontend (`/admin/personal-elegible`): implementada, pendiente de verificación |
+| 25-1 | Usuarios y departamentos, backend: implementada, pendiente de verificación |
+| **25-2** (siguiente) | Frontend: centro `/admin`, lista y edición de usuarios (pendiente 70; `gestor2` en DevAuth) |
+| 25-3 | CargoInfor (pendiente 2), con su propia Fase A |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |
-| 25 | Administración de permisos por departamento |
 | Después | Fase 3 (carga masiva), Fase 7 (Entra ID, IIS), corte a producción |
 
 **Decisión del usuario (2026-09-29):** la migración de datos (Fase 3, carga masiva desde SharePoint) se hace **al final**, justo antes del corte a producción. Mientras tanto se desarrolla con datos de prueba. "Migración de EF Core" (crear tablas) ≠ "migración de datos".
@@ -102,10 +106,9 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
-2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz). **TAREA-26d-1:** la alta puntual da de alta en `CargoInfor` el puesto de cada persona asignada (mayúsculas, sin espacios extremos, `CodigoInfor` vacío, nunca se borran). Queda acotado a los puestos de las personas asignadas; un futuro "Importar puestos desde la API" en la administración (TAREA-25) cubriría el resto. La asignación del código Infor sigue pendiente (interfaz o Excel).
+2. Excel de cargos → código Infor (opcional; se puede cargar desde la interfaz). **TAREA-26d-1:** la alta puntual da de alta en `CargoInfor` el puesto de cada persona asignada (mayúsculas, sin espacios extremos, `CodigoInfor` vacío, nunca se borran). Queda acotado a los puestos de las personas asignadas; un futuro "Importar puestos desde la API" en la administración (TAREA-25-3) cubriría el resto. La asignación del código Infor sigue pendiente (interfaz o Excel).
 4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). **TAREA-20:** la plantilla ya está en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (hoja `'PROYECTO '`, `Tabla1`, 14 columnas; nombres definidos `LABORABLE`/`LIBRE` rotos, `#REF!`); el análisis está en `FASE_5_Cronograma.md` §6. Falta el Office Script. **TAREA-22-2:** el flujo `ReporteProyectosSIG` sí está en el repo (`docs/origen/sharepoint/esquemas/ReporteProyectoSIG.json`): copiaba la plantilla, ejecutaba el Office Script (solo está su Id, no su código) y enviaba el archivo por correo. Sin el script, los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §8).
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
-6. [Fase 5] El acceso a proyectos se decidirá por App Role `Gestor` o por `UsuarioDepartamento` (Fase 1 indica `UsuarioDepartamento`).
 7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Texto anterior en `HISTORIAL.md`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push.
@@ -117,7 +120,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
 18. Los parámetros `ALMUERZO_SALIDA_OPCIONES` / `ALMUERZO_REGRESO_OPCIONES` quedan **sin uso**: el validador y `GET /api/proyectos/opciones-formulario` usan `ReglasAlmuerzo` (Application, rangos RN09 y opciones cada hora). Decidir si se eliminan o si `ReglasAlmuerzo` pasa a leerlos (servirían al validador y al formulario a la vez). Origen: TAREA-13 (B0). [PENDIENTE DE DECISIÓN DEL USUARIO]
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
-20. **Resuelto (TAREA-26a, A9):** 503 "Servicio ERP no disponible" y "Reintentar" verificados con una URL base inválida por user-secrets. (El 503 de "registro ocupado" del applock sigue sin prueba visual.)
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
 24. [TAREA-14] La advertencia E6 ("Se eliminarán días ya transcurridos.") solo está cubierta por pruebas: los proyectos de prueba Id 7 y 8 son de 2027.
 27. [TAREA-17b, H12] Datos migrados (Fase 3): un back sin días de descanso guardados después de su `FechaFin` se trata como recortado por una suspensión (histórico desde el día siguiente a su fin). Revisar en la carga masiva. [PENDIENTE DE CONFIRMAR]
@@ -141,13 +143,14 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
 60. [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
 61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
-62. [TAREA-62] **Criterio de personal elegible**: 62-0 cerrada, 62-1 ✅ (backend), 62-2 (frontend) pendiente de verificación. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11 y H12.
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
 65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]
 67. [Menor, backend + frontend] Agregar una extensión estable al ProblemDetails de los 409 de novedades (por ejemplo `tipoConflicto`: duplicado, cambio, anulada, registroConcurrente); hoy el frontend reconoce el duplicado por `codigo` o por el title exacto (`MENSAJE_DUPLICADO`). [PENDIENTE DE DECISIÓN DEL USUARIO]
 68. [Menor, Fase 3] Medir cuántas personas asignadas en SharePoint no son de un grupo asignable (podrán conservarse; no agregarse a proyectos nuevos).
 69. [Menor] La comparación con el ERP podría marcar «ya no asignable» en el personal guardado (hoy solo informa).
+70. [Menor, frontend] Mover `esAdmin` y las reglas de rol de `features/novedades/sincronizacion.ts` a `src/auth/`; se resuelve en la 25-2.
+71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
 
 ## 7.1 Reglas técnicas obligatorias
 

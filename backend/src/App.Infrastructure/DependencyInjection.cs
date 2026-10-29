@@ -1,4 +1,5 @@
 using App.Application.Diagnostics;
+using App.Application.Seguridad;
 using App.Infrastructure.Diagnostics;
 using App.Infrastructure.Erp;
 using App.Infrastructure.NovedadesExternas;
@@ -21,6 +22,9 @@ public static class DependencyInjection
         services.AddPersistencia(connectionString);   // [PASO 2] EF Core + auditoría + consultas + sembrador
         services.AddCatalogoErp(configuration, esDesarrollo);   // ERP: Http o Simulado (TAREA-11)
         services.AddNovedadesExternas(configuration, esDesarrollo); // PERMISO MEDICO: Simulado / ArchivoLocal / sin fuente (TAREA-23-3)
+        // TAREA-25-1: dominios de correo del alta de usuarios (sin valor → sedemi.com).
+        services.AddSingleton(new ConfiguracionUsuarios(configuration.GetSection("Usuarios:DominiosPermitidos").GetChildren()
+            .Select(c => c.Value?.Trim().ToLowerInvariant()).OfType<string>().Where(d => d.Length > 0).ToList()));
         return services;
     }
 

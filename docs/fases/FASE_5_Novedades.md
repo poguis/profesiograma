@@ -8,7 +8,7 @@ Novedades de asistencia: aplicaciones PERSONA, PROYECTO y GENERAL, origen PROFES
 | 23-2 | Edición y anulación (`RowVer`, N3, N8–N10; §7) | ✅ Verificada por el usuario (21/10/2026: 984/984, `edicion.cmd` 0 FALLA y 0 OMITIDOS) |
 | 23-3 | Sincronización de PERMISO MEDICO: puerto, mapeador, plan, fuentes Simulada y ArchivoLocal, endpoint Admin (§8) | ✅ Verificada por el usuario (22/10/2026: 1039/1039; `sincronizacion.cmd` 20 CONTROL OK, 0 FALLA y 0 OMITIDOS; N13 comprobada en la base) |
 | 23-4 | Fuente real (Graph / SharePoint) | Bloqueada por la App Registration (pendiente 7) y el permiso de Graph (pendiente 63) |
-| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b ✅ verificada (26/10/2026); 24c ✅ verificada por el usuario (26/10/2026: E1–E7, A1–A3 y regresión correctos; 340/340); 24d implementada (26/10/2026), pendiente de verificación; 24e pendiente |
+| TAREA-24 | Frontend (§9): 24a listado y detalle; 24b registro; 24c edición y anulación; 24d sincronización; 24e (opcional, B0) enlace desde el cronograma | 24a ✅ verificada por el usuario (26/10/2026); 24b ✅ verificada (26/10/2026); 24c ✅ verificada por el usuario (26/10/2026: E1–E7, A1–A3 y regresión correctos; 340/340); 24d ✅ verificada por el usuario (26/10/2026: S1–S6 correctos; 349/349); 24e pendiente |
 
 ## 1. Contratos (23-1, política Gestor)
 | Ruta | Request → Response | Errores |

@@ -17,6 +17,7 @@
 | H10 | Texto del estado vigente reemplazado en la TAREA-24d (cabecera, fila de novedades frontend, siguiente tarea, filas 24c y 24d, pendiente 61) |
 | H11 | Texto del estado vigente reemplazado en la TAREA-62-1 (cabecera, novedades frontend, siguiente tarea, índice, filas 24d y 24e, pendiente 62) |
 | H12 | Texto del estado vigente reemplazado en la TAREA-62-2 (cabecera, criterio de personal, siguiente tarea, filas 62-1 y 62-2, pendiente 62) |
+| H13 | Texto del estado vigente reemplazado en la TAREA-25-1 (cabecera, criterio de personal, siguiente tarea, filas 62-2 y 25, pendientes 2, 6 y 62) |
 
 ## H1. Cabecera anterior
 
@@ -265,3 +266,21 @@ Texto anterior de la cabecera, de la fila del criterio de personal, de la siguie
 | **62-2** (siguiente) | Criterio de personal, frontend: menú «Administración» (Admin), `/admin/personal-elegible`, grupos en el buscador |
 
 62. [TAREA-62] **Criterio de personal elegible** (solo el grupo ADMINISTRATIVO; el Admin lo cambia con efecto global y auditoría): 62-0 cerrada, 62-1 (backend) implementada, 62-2 (frontend) pendiente. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11.
+
+## H13. Movido del estado vigente el 29/10/2026 (TAREA-25-1)
+
+Texto anterior de la cabecera, de la fila del criterio de personal (62-2 verificada por el usuario el 28/10/2026: A1–A11; 362/362), de la siguiente tarea, de las filas 62-2 y 25 de la hoja de ruta, del fragmento del pendiente 2, del pendiente 6 (cerrado: el acceso lo dan los roles, App Roles; la visibilidad, el propietario, R1; el departamento solo sugiere personas y fija el de un proyecto nuevo, P5) y del pendiente 62 (cerrado: 62-1 y 62-2 verificadas):
+
+**Última actualización:** 2026-10-28 (TAREA-62-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+| Criterio de personal (TAREA-62) | 62-0 cerrada (`familiaPuesto` = Grupo). **62-1 ✅** (backend) verificada por el usuario el 28/10/2026 (`criterio.cmd` corrida 170: 0 FALLA; auditoría OK). **62-2** (frontend) implementada, pendiente de verificación (362/362) |
+| **Siguiente tarea** | Verificación visual de la 62-2 (A1–A11); la siguiente la decide el usuario (pendientes en §5 y §7) |
+
+| 62-2 | Criterio de personal, frontend (`/admin/personal-elegible`): implementada, pendiente de verificación |
+| 25 | Administración de permisos por departamento |
+
+2. (fragmento) un futuro "Importar puestos desde la API" en la administración (TAREA-25) cubriría el resto.
+6. [Fase 5] El acceso a proyectos se decidirá por App Role `Gestor` o por `UsuarioDepartamento` (Fase 1 indica `UsuarioDepartamento`).
+62. [TAREA-62] **Criterio de personal elegible**: 62-0 cerrada, 62-1 ✅ (backend), 62-2 (frontend) pendiente de verificación. Detalle en `FASE_4_Empleados_API.md` §10. Texto anterior en `HISTORIAL.md` H11 y H12.
+Pendiente 20 (resuelto; movido en la TAREA-25-1 para mantener el vigente bajo 25 KB):
+
+20. **Resuelto (TAREA-26a, A9):** 503 "Servicio ERP no disponible" y "Reintentar" verificados con una URL base inválida por user-secrets. (El 503 de "registro ocupado" del applock sigue sin prueba visual.)

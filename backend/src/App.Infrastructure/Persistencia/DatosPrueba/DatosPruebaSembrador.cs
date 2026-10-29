@@ -69,7 +69,8 @@ public sealed class DatosPruebaSembrador(
 
         // 3. Permisos por departamento
         var departamento = await db.Departamentos.FirstAsync(d => d.Nombre == DepartamentoPrueba, ct);
-        foreach (var usuario in usuarios.Values)
+        // TAREA-25-1: solo admin y gestor; gestor2 (y otros de DevAuth) quedan sin departamentos.
+        foreach (var usuario in usuarios.Where(u => u.Key is "admin" or "gestor").Select(u => u.Value))
         {
             var existe = await db.UsuarioDepartamentos.AnyAsync(x => x.UsuarioId == usuario.Id && x.DepartamentoId == departamento.Id, ct);
             if (!existe)

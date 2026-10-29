@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<CronogramaConsultaServicio>(); // TAREA-20
         services.AddScoped<CompletarCedulasServicio>(); // TAREA-22-1
         services.AddScoped<CriterioPersonalServicio>(); // TAREA-62
+        services.AddScoped<Seguridad.UsuariosAdminServicio>(); // TAREA-25-1
         services.AddScoped<ReporteProyectoServicio>(); // TAREA-22-2
         services.AddScoped<NovedadConsultaServicio>(); // TAREA-23-1
         services.AddScoped<NovedadValidador>();
