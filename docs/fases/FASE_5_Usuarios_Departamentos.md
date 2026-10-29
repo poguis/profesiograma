@@ -4,7 +4,7 @@
 |---|---|---|
 | 25-1 | Backend: endpoints de administración, reglas, invalidación de la caché, DevAuth `gestor2`, script `tarea25/usuarios.cmd` | ✅ Verificada por el usuario (29/10/2026) |
 | 25-2 | Frontend: centro `/admin` con tarjetas, lista y edición de usuarios (§9); mensaje propio del 503 por usuario | ✅ Verificada por el usuario (29/10/2026) |
-| 25-3-1 | CargoInfor, backend: «Importar puestos desde la API» y edición de `CodigoInfor` (pendiente 2; §10) | Implementada (29/10/2026), pendiente de verificación |
+| 25-3-1 | CargoInfor, backend: «Importar puestos desde la API» y edición de `CodigoInfor` (pendiente 2; §10) | ✅ Verificada por el usuario (29/10/2026) |
 | 25-3-2 | CargoInfor, frontend: tarjeta «Cargos Infor» en `/admin` | Pendiente |
 
 Reemplaza el popup de SuperAdmin y el JSON `PermisosGenerales` de la fila 666 (FASE_1 §2.2 y §4; J4 de FASE_2). **Sin migración:** usa las tablas `Usuario`, `Departamento` y `UsuarioDepartamento` de la Fase 2.
@@ -80,6 +80,8 @@ Se hará con **SQL por staging**, no con estos servicios. Para que sea idempoten
 - **Responsive:** una columna; botones a todo el ancho y diálogos a todo el ancho por debajo de 600 px. Los correos solo se muestran en estas pantallas (nunca en la consola, los avisos de error ni el título del documento).
 ## 10. Cargos Infor (TAREA-25-3)
 `CargoInfor` traduce el puesto del empleado al código Infor de la columna CARGO INFOR del reporte (D14, `FASE_5_Cronograma.md` §8). **Sin migración**; la tabla no tiene `RowVer`.
+
+**Datos en DEV (29/10/2026):** `CargoInfor` con 499 filas, de las cuales 491 se importaron ese día desde los 498 puestos de los activos del ERP. No había variantes (tildes o espacios internos) en el ERP a esa fecha.
 
 ### 10.1 Contratos (`Politica.Admin`; el gestor recibe 403)
 | Endpoint | Entrada | Respuestas |

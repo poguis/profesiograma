@@ -9,9 +9,9 @@
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (filas conservadas: Id 4 y 7 de prueba, inactivos; Id 5 gestor2). **25-3-1** (cargos Infor, backend) implementada, pendiente de verificación (1158/1158; `tarea25-3/cargos.cmd`) |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅**, **25-2 ✅** y **25-3-1 ✅** (cargos Infor, backend; 1158/1158; `cargos.cmd` 0 FALLA) verificadas por el usuario el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas (491 importadas) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación de la 25-3-1 (reiniciar la API y `cargos.cmd`); después **TAREA-25-3-2** (frontend, tarjeta «Cargos Infor») |
+| **Siguiente tarea** | **TAREA-25-3-2** (frontend de cargos Infor, tarjeta en `/admin`), Fase A corta |
 
 ## 1. Índice de documentos
 
@@ -93,7 +93,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 25-3-1 | Cargos Infor, backend (`/api/admin/cargos-infor`): implementada, pendiente de verificación |
 | **25-3-2** (siguiente) | Cargos Infor, frontend (tarjeta en `/admin`) |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |

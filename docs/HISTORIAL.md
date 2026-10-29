@@ -21,6 +21,7 @@
 | H14 | Texto del estado vigente reemplazado en la TAREA-25-2 (cabecera, usuarios y departamentos, siguiente tarea, filas 25-1 a 25-3, pendiente 70; nota de los pendientes 72 y P7) |
 | H15 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-2 (29/10/2026): encabezado de la tabla de estado, fila de usuarios y departamentos, siguiente tarea y fila 25-2 |
 | H16 | Texto del estado vigente reemplazado en la TAREA-25-3-1 (cabecera, usuarios y departamentos, siguiente tarea, índice de FASE_5, fila 25-3 y pendiente 2) |
+| H17 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-3-1 (29/10/2026): fila de usuarios y departamentos, siguiente tarea y fila 25-3-1 |
 
 ## H1. Cabecera anterior
 
@@ -327,3 +328,12 @@ Texto anterior de la cabecera, de la fila de usuarios y departamentos, de la sig
 Pendiente 39 (resuelto el 08/10/2026; movido en la TAREA-25-3-1 para mantener el vigente bajo 25 KB):
 
 39. Los datos de prueba tienen solo 8 empleados (DEV001–DEV008), con cruces en casi todas las fechas disponibles: ya no alcanzan para pruebas sin cruces (V17 de la TAREA-19c no se pudo hacer). Ampliar los empleados de prueba (sembrador o SQL aprobado). [PENDIENTE DE DECISIÓN DEL USUARIO] **TAREA-26d-1:** en modo Simulado, la "API" trae DEV001–DEV008 y 200 empleados ficticios SIM001–SIM200 (resuelto en Simulado); en modo Http se asignan empleados reales desde la API. ✅ **Resuelto** en Http (V3/V9: Id 15) y en Simulado (V8: Id 16), 08/10/2026.
+
+## H17. Movido del estado vigente el 29/10/2026 (TAREA-25-3-1, cierre 29/10/2026)
+
+Texto anterior de la fila de usuarios y departamentos (25-3-1 verificada por el usuario el 29/10/2026: `cargos.cmd` en Http, 0 FALLA y 0 OMITIDOS), de la siguiente tarea y de la fila 25-3-1 de la hoja de ruta:
+
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (filas conservadas: Id 4 y 7 de prueba, inactivos; Id 5 gestor2). **25-3-1** (cargos Infor, backend) implementada, pendiente de verificación (1158/1158; `tarea25-3/cargos.cmd`) |
+| **Siguiente tarea** | Verificación de la 25-3-1 (reiniciar la API y `cargos.cmd`); después **TAREA-25-3-2** (frontend, tarjeta «Cargos Infor») |
+
+| 25-3-1 | Cargos Infor, backend (`/api/admin/cargos-infor`): implementada, pendiente de verificación |
