@@ -2,16 +2,16 @@
 
 **Última actualización:** 2026-10-29 (TAREA-25-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
-| Área | Estado al 26/10/2026 |
+| Área | Estado al 29/10/2026 |
 |---|---|
 | Proyectos (backend y frontend) | Crear, listado, detalle, estados, edición, reactivación, cronograma y reporte Excel ✅ (TAREA-07 a 22c) |
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
 | Novedades, backend | 23-1, 23-2 y 23-3 ✅ (N13 cerrado); 23-4 (Graph) bloqueada por los pendientes 7 y 63 |
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
-| Usuarios y departamentos (TAREA-25) | **25-1 ✅** (backend) verificada por el usuario el 29/10/2026 (`usuarios.cmd` 0 FALLA; baja inmediata comprobada; usuarios Id 4 y 5 conservados). **25-2** (frontend) implementada, pendiente de verificación (378/378; backend 1123/1123) |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** y **25-2 ✅** verificadas por el usuario el 29/10/2026 (25-1: `usuarios.cmd` 0 FALLA; 25-2: U1–U12; frontend 378/378, backend 1123/1123). Se conservan (no se borran): Id 4 prueba.tarea25 y Id 7 prueba.ui (usuarios de prueba, inactivos); Id 5 gestor2 (usuario DevAuth creado en su primer ingreso; activo, sin departamentos) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | Verificación visual de la 25-2 (U1–U12); después **TAREA-25-3** (CargoInfor, pendiente 2) con su Fase A corta |
+| **Siguiente tarea** | **TAREA-25-3** (CargoInfor, pendiente 2), Fase A |
 
 ## 1. Índice de documentos
 
@@ -93,7 +93,6 @@ Las secciones 6 (hoja de ruta), 8 y 9 anteriores, con lo terminado, están en `d
 
 | Tarea | Alcance |
 |---|---|
-| 25-2 | Usuarios y departamentos, frontend (`/admin`, `/admin/usuarios`): implementada, pendiente de verificación |
 | **25-3** (siguiente) | CargoInfor (pendiente 2), con su propia Fase A |
 | 24e (opcional) | «Ver novedad» desde el cronograma (B0; `FASE_5_Novedades.md` §9.3) |
 | 23-4 | Fuente real por Graph (bloqueada por los pendientes 7 y 63) |

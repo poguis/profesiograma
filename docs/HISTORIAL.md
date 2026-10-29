@@ -19,6 +19,7 @@
 | H12 | Texto del estado vigente reemplazado en la TAREA-62-2 (cabecera, criterio de personal, siguiente tarea, filas 62-1 y 62-2, pendiente 62) |
 | H13 | Texto del estado vigente reemplazado en la TAREA-25-1 (cabecera, criterio de personal, siguiente tarea, filas 62-2 y 25, pendientes 2, 6 y 62) |
 | H14 | Texto del estado vigente reemplazado en la TAREA-25-2 (cabecera, usuarios y departamentos, siguiente tarea, filas 25-1 a 25-3, pendiente 70; nota de los pendientes 72 y P7) |
+| H15 | Texto del estado vigente reemplazado en el cierre de la TAREA-25-2 (29/10/2026): encabezado de la tabla de estado, fila de usuarios y departamentos, siguiente tarea y fila 25-2 |
 
 ## H1. Cabecera anterior
 
@@ -299,3 +300,12 @@ Texto anterior de la cabecera, de la fila de usuarios y departamentos (25-1 veri
 | 25-3 | CargoInfor (pendiente 2), con su propia Fase A |
 
 70. [Menor, frontend] Mover `esAdmin` y las reglas de rol de `features/novedades/sincronizacion.ts` a `src/auth/`; se resuelve en la 25-2.
+## H15. Movido del estado vigente el 29/10/2026 (TAREA-25-2, cierre 29/10/2026)
+
+Texto anterior del encabezado de la tabla de estado, de la fila de usuarios y departamentos (25-2 verificada por el usuario el 29/10/2026: U1–U12), de la siguiente tarea y de la fila 25-2 de la hoja de ruta:
+
+| Área | Estado al 26/10/2026 |
+| Usuarios y departamentos (TAREA-25) | **25-1 ✅** (backend) verificada por el usuario el 29/10/2026 (`usuarios.cmd` 0 FALLA; baja inmediata comprobada; usuarios Id 4 y 5 conservados). **25-2** (frontend) implementada, pendiente de verificación (378/378; backend 1123/1123) |
+| **Siguiente tarea** | Verificación visual de la 25-2 (U1–U12); después **TAREA-25-3** (CargoInfor, pendiente 2) con su Fase A corta |
+
+| 25-2 | Usuarios y departamentos, frontend (`/admin`, `/admin/usuarios`): implementada, pendiente de verificación |

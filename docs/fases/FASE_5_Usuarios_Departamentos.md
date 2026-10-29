@@ -3,7 +3,7 @@
 | Subtarea | Alcance | Estado |
 |---|---|---|
 | 25-1 | Backend: endpoints de administración, reglas, invalidación de la caché, DevAuth `gestor2`, script `tarea25/usuarios.cmd` | ✅ Verificada por el usuario (29/10/2026) |
-| 25-2 | Frontend: centro `/admin` con tarjetas, lista y edición de usuarios (§9); mensaje propio del 503 por usuario | Implementada (29/10/2026), pendiente de verificación |
+| 25-2 | Frontend: centro `/admin` con tarjetas, lista y edición de usuarios (§9); mensaje propio del 503 por usuario | ✅ Verificada por el usuario (29/10/2026) |
 | 25-3 | CargoInfor: «Importar puestos desde la API» y edición de `CodigoInfor` (pendiente 2) | Pendiente; su propia Fase A |
 
 Reemplaza el popup de SuperAdmin y el JSON `PermisosGenerales` de la fila 666 (FASE_1 §2.2 y §4; J4 de FASE_2). **Sin migración:** usa las tablas `Usuario`, `Departamento` y `UsuarioDepartamento` de la Fase 2.
@@ -64,6 +64,7 @@ Se hará con **SQL por staging**, no con estos servicios. Para que sea idempoten
 
 ## 8. Desarrollo y pruebas
 - DevAuth `gestor2` (Gestor, `gestor2.dev@profesiograma.local`, sin departamentos: el sembrador solo asigna a `admin` y `gestor`). Requiere reiniciar la API. En el frontend está en `USUARIOS_DEV` y en el selector (TAREA-25-2).
+- Filas conservadas en PROFESIOGRAMA_DEV (no se pueden borrar; comprobadas por el usuario en SSMS el 29/10/2026): Id 4 prueba.tarea25 y Id 7 prueba.ui (usuarios de prueba, inactivos); Id 5 gestor2 (usuario DevAuth creado en su primer ingreso; activo, sin departamentos).
 - Pruebas automáticas: reglas (Application), traducción SQL y plan de asignación (Infrastructure), 403/404/409/201 (Api). El `ExecuteUpdate` y el `sp_getapplock` se verifican con `backend/tests/manual/tarea25/usuarios.cmd`.
 
 ## 9. Frontend (TAREA-25-2)
