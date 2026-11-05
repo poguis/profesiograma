@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
+import { SesionEntra } from '../auth/SesionEntra'
 import { DisenoPrincipal } from '../components/DisenoPrincipal'
 import { Inicio } from '../pages/Inicio'
 import { NoAutorizado } from '../pages/NoAutorizado'
@@ -89,7 +90,14 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <Proveedores>
-      <RouterProvider router={router} />
+      {/* Fase 7b: en DevAuth no hay sesión que pedir; en modo Entra la puerta de SesionEntra (condición literal). */}
+      {import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'dev' ? (
+        <RouterProvider router={router} />
+      ) : (
+        <SesionEntra>
+          <RouterProvider router={router} />
+        </SesionEntra>
+      )}
     </Proveedores>
   )
 }

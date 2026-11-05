@@ -1,7 +1,7 @@
-// Punto ÚNICO de identidad para el cliente HTTP.
-// Fase 7: reemplazar el modo DevAuth por MSAL (@azure/msal-react) devolviendo
-// { Authorization: `Bearer ${token}` } aquí; pantallas y clienteHttp no cambian.
+// Punto ÚNICO de identidad para el cliente HTTP: X-Dev-User en DevAuth, Authorization: Bearer con MSAL (Fase 7b).
+// Pantallas y clienteHttp no cambian.
 import { devAuthActivo } from './modo'
+import { encabezadosMsal } from './msal'
 
 export { devAuthActivo }
 
@@ -13,5 +13,5 @@ export async function obtenerEncabezadosAutenticacion(): Promise<Record<string, 
     return { 'X-Dev-User': leerUsuarioDev() }
   }
 
-  return {}
+  return encabezadosMsal()
 }

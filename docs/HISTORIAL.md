@@ -26,6 +26,8 @@
 | H20 | Cierre funcional de la primera entrega (29/10/2026) |
 | H21 | TAREA-27: pendientes 18 y 67 resueltos, siguiente tarea y fila 1 de la hoja de ruta |
 | H22 | Cierre de la TAREA-27 (29/10/2026): siguiente tarea, fila 1 de la hoja de ruta, pendientes 4 y 10 y fila ERP (acortados) |
+| H23 | Fase 7a, registro de avances (05/11/2026): siguiente tarea, filas 1 y 2 de la hoja de ruta, pendientes 7, 65 y 75 |
+| H24 | Fase 7b, Fase B (05/11/2026): siguiente tarea, fila 2 de la hoja de ruta y pendiente 7 |
 
 ## H1. Cabecera anterior
 
@@ -421,3 +423,33 @@ Texto anterior de la fila ERP de la §4 (acortada por lo mismo):
 Texto anterior del pendiente 10 (acortado por lo mismo):
 
 10. **Resuelto (TAREA-03):** Smart App Control bloqueaba `dotnet ef`/`dotnet run` (eventos CodeIntegrity 3033/3077). El usuario lo desactivó (`VerifiedAndReputablePolicyState = 0`). Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo. [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
+
+## H23. Movido del estado vigente el 05/11/2026 (Fase 7a, registro de avances)
+
+Texto anterior de la siguiente tarea, de las filas 1 y 2 de la hoja de ruta y de los pendientes 7, 65 y 75 (el detalle de entornos pasó a `docs/fases/FASE_7_Entornos_Despliegue.md`):
+
+| **Siguiente tarea** | **Fase 7a** — crear PROFESIOGRAMA_QA en NIQUEL\SSDEV (guiada, la ejecuta el usuario) |
+
+| 1. **Fase 7a** (siguiente) | Entornos DEV/QA/PRO y respaldos (pendiente 65) |
+
+| 2. Fase 7b | Entra ID y MSAL (pendiente 7) |
+
+7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Texto anterior en `HISTORIAL.md`. **Verificado en Entra ID (29/10/2026):** los usuarios pueden registrar aplicaciones (el usuario no tiene roles de administrador); licencia Microsoft Entra ID gratis (los roles Admin y Gestor se asignan por usuario, no por grupo); configuración de consentimiento no visible (401); los permisos de aplicación de Graph requieren a TI (Privileged Role Administrator).
+
+65. [Nuevo, 26/10/2026; Fase 7] **Entornos y despliegue con buenas prácticas:** bases separadas DEV, QA y PRO; probar primero en pruebas y pasar a producción solo cuando todo esté OK; respaldo antes de cada cambio; migraciones aplicadas con scripts revisados (nunca `database update` directo en producción) y plan de reversa; secretos y configuración por entorno. **Reglas decididas (29/10/2026):** respaldo verificado antes de cada cambio de esquema; DEV y QA en SIMPLE, PRO en FULL con respaldos del log a cargo de TI; en QA y PRO, script `--idempotent` revisado, ejecutado completo (sin selección) y comprobando `@@TRANCOUNT = 0` al terminar.
+
+75. [Fase 7, TI] Pedido a TI enviado el ____ (servidores, bases, DNS, certificado, App Registrations, Graph). Respuesta pendiente. El pedido se reduce a producción, DNS, certificado y consentimientos de Graph. Pregunta: ¿cuál es la instancia SQL de producción?
+
+Texto anterior del tema de la cuenta en el pendiente 75 (decisión del usuario del 05/11/2026: en QA se usa administrador.SEDEMI):
+
+    - cuenta personal con administración en SDMAPPTEST2, en lugar de la cuenta administrador.SEDEMI;
+
+## H24. Movido del estado vigente el 05/11/2026 (Fase 7b, Fase B)
+
+Texto anterior de la siguiente tarea, de la fila 2 de la hoja de ruta y del pendiente 7:
+
+| **Siguiente tarea** | **Fase 7b** — registros de Entra en DEV + MSAL (Fase A) |
+
+| 2. **Fase 7b** (siguiente) | Entra ID y MSAL (pendiente 7) |
+
+7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Lo verificado en Entra ID el 29/10/2026 está en `FASE_7_Entornos_Despliegue.md` §7. Texto anterior en `HISTORIAL.md`.

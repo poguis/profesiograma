@@ -13,8 +13,10 @@ public static class AutenticacionExtensions
     /// <summary>
     /// Autenticación según "Autenticacion:Modo":
     ///  - DevAuth: usuarios simulados (SOLO Development; en otro entorno la API no arranca).
-    ///  - EntraId (por defecto): tokens de Entra ID validados con Microsoft.Identity.Web (sección "AzureAd").
-    /// Autorización: por defecto se exige usuario autenticado (FallbackPolicy).
+    ///  - EntraId (por defecto): tokens de Entra ID validados con Microsoft.Identity.Web (sección "AzureAd"). AzureAd:Audience
+    ///    va vacío a propósito: así Microsoft.Identity.Web acepta como aud el ClientId (token v2) y api://ClientId.
+    /// Autorización: toda política (por defecto, Fallback, Admin, Gestor) exige usuario autenticado y el scope access_as_user
+    /// (Fase 7b): un token de aplicación, con roles pero sin scp, recibe 403.
     /// </summary>
     public static WebApplicationBuilder AddSeguridadProfesiograma(this WebApplicationBuilder builder)
     {
@@ -38,16 +40,21 @@ public static class AutenticacionExtensions
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
         }
 
+        builder.Services.AddRequiredScopeAuthorization(); // handler de RequireScope (en DevAuth no lo registra Microsoft.Identity.Web)
         builder.Services.AddAuthorizationBuilder()
-            .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
-            .AddPolicy(Politicas.Admin, p => p.RequireRole(RolesApp.Admin))
-            .AddPolicy(Politicas.Gestor, p => p.RequireRole(RolesApp.Admin, RolesApp.Gestor));
+            .SetDefaultPolicy(Base().Build())
+            .SetFallbackPolicy(Base().Build())
+            .AddPolicy(Politicas.Admin, Base().RequireRole(RolesApp.Admin).Build())
+            .AddPolicy(Politicas.Gestor, Base().RequireRole(RolesApp.Admin, RolesApp.Gestor).Build());
 
         builder.Services.AddScoped<UsuarioActual>();
         builder.Services.AddScoped<IUsuarioActual>(sp => sp.GetRequiredService<UsuarioActual>());
 
         return builder;
     }
+
+    private static AuthorizationPolicyBuilder Base() =>
+        new AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireScope(ScopesApi.AccederComoUsuario);
 
     /// <summary>UseAuthentication → UsuarioActualMiddleware → UseAuthorization.</summary>
     public static WebApplication UseSeguridadProfesiograma(this WebApplication app)

@@ -10,6 +10,13 @@ public static class ClaimNames
     public const string PreferredUsername = "preferred_username";
     public const string Name = "name";
     public const string Roles = "roles";
+    public const string Scope = "scp";
+}
+
+/// <summary>Scope delegado que el SPA pide para la API (Fase 7b): lo exigen todas las políticas.</summary>
+public static class ScopesApi
+{
+    public const string AccederComoUsuario = "access_as_user";
 }
 
 public static class ClaimsPrincipalExtensions

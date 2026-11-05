@@ -49,7 +49,8 @@ export function Inicio() {
           <MessageBarBody>
             <MessageBarTitle>No autenticado</MessageBarTitle>
             La API respondió 401: la petición no tiene una identidad válida.
-            {devAuthActivo && ' Elija "admin" o "gestor" en el selector de usuario de la barra superior.'}
+            {devAuthActivo &&
+              ' Elija "admin" o "gestor" en el selector de usuario de la barra superior. Si la API está en modo EntraId, el modo del frontend (VITE_AUTH_MODE) debe coincidir.'}
           </MessageBarBody>
         </MessageBar>
       )}

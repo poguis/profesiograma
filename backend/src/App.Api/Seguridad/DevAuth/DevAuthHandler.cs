@@ -39,6 +39,7 @@ public sealed class DevAuthHandler(
             new(ClaimNames.ObjectId, usuario.ObjectId.ToString()),
             new(ClaimNames.PreferredUsername, usuario.Email),
             new(ClaimNames.Name, usuario.Nombre),
+            new(ClaimNames.Scope, ScopesApi.AccederComoUsuario), // Fase 7b: las mismas políticas que con Entra ID
             new("auth_mode", DevAuthDefaults.Esquema)
         };
         claims.AddRange(usuario.Roles.Select(r => new Claim(ClaimNames.Roles, r)));

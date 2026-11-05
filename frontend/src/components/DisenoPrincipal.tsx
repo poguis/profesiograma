@@ -3,6 +3,7 @@ import { Person24Regular } from '@fluentui/react-icons'
 import { Suspense, lazy } from 'react'
 import { Outlet } from 'react-router'
 import { ErrorApi } from '../api/errores'
+import { BotonCerrarSesion } from '../auth/SesionEntra'
 import { useUsuarioActual } from '../auth/useUsuarioActual'
 import { MenuLateral } from './MenuLateral'
 
@@ -64,10 +65,12 @@ export function DisenoPrincipal() {
         </Text>
         <div className={estilos.derecha}>
           <UsuarioBarra />
-          {SelectorUsuarioDev && (
+          {SelectorUsuarioDev ? (
             <Suspense fallback={null}>
               <SelectorUsuarioDev />
             </Suspense>
+          ) : (
+            <BotonCerrarSesion /> // modo Entra (Fase 7b)
           )}
         </div>
       </header>
