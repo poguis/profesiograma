@@ -32,6 +32,27 @@ export function leerConfigEntra(env: EnvEntra): { config: ConfigEntra } | { falt
   }
 }
 
+export const TITULO_REQUIERE_HTTPS = 'Esta aplicación requiere HTTPS para iniciar sesión.'
+export const TITULO_FALLO_MSAL = 'No se pudo iniciar la sesión con Entra ID.'
+
+/**
+ * TAREA-7d-1 (J4): qué se muestra al cargar. Orden: DevAuth → contexto no seguro (MSAL necesita crypto.subtle, que no
+ * existe en http con IP; http://localhost sí es seguro) → configuración incompleta → la aplicación.
+ */
+export function decidirArranque(estado: {
+  devAuth: boolean
+  contextoSeguro: boolean
+  faltan: string[]
+}): 'devAuth' | 'requiereHttps' | 'configIncompleta' | 'app' {
+  if (estado.devAuth) {
+    return 'devAuth'
+  }
+  if (!estado.contextoSeguro) {
+    return 'requiereHttps'
+  }
+  return estado.faltan.length > 0 ? 'configIncompleta' : 'app'
+}
+
 /**
  * Ajuste 2: al cargar sin cuenta, UN solo intento de ssoSilent; si falla, el botón «Iniciar sesión». Nunca un redirect
  * automático (evita bucles de redirección).

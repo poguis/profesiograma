@@ -4,6 +4,7 @@ import {
   TITULO_SESION_VENCIDA,
   TITULO_SIN_ACCESO,
   clasificarErrorMsal,
+  decidirArranque,
   decidirInicio,
   encabezadosEntra,
   leerConfigEntra,
@@ -92,5 +93,40 @@ describe('pantallaPorErrorUsuario', () => {
     expect(pantallaPorErrorUsuario(new ErrorApi({ tipo: 'noAutenticado', estado: 401 }))).toBe('iniciarSesion')
     expect(pantallaPorErrorUsuario(new ErrorApi({ tipo: 'red', estado: null }))).toBe('ninguna')
     expect(pantallaPorErrorUsuario(null)).toBe('ninguna')
+  })
+})
+
+// TAREA-7d-1 (J4): orden devAuth → requiereHttps → configIncompleta → app.
+describe('decidirArranque', () => {
+  const TODAS = ['VITE_ENTRA_TENANT_ID', 'VITE_ENTRA_CLIENT_ID', 'VITE_ENTRA_API_SCOPE']
+
+  // Contexto seguro según el navegador: https, o http solo en localhost (el resto de http, p. ej. con IP, no lo es).
+  function contextoSeguro(url: string): boolean {
+    const u = new URL(url)
+    return u.protocol === 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)
+  }
+
+  it('DevAuth gana a todo', () => {
+    expect(decidirArranque({ devAuth: true, contextoSeguro: false, faltan: TODAS })).toBe('devAuth')
+  })
+
+  it('http con IP y sin IDs: requiere HTTPS (antes que la configuración incompleta)', () => {
+    expect(decidirArranque({ devAuth: false, contextoSeguro: contextoSeguro('http://192.168.1.77:7082/'), faltan: TODAS })).toBe(
+      'requiereHttps',
+    )
+  })
+
+  it('https sin IDs: configuración incompleta', () => {
+    expect(decidirArranque({ devAuth: false, contextoSeguro: contextoSeguro('https://profesiograma.sedemi.local/'), faltan: TODAS })).toBe(
+      'configIncompleta',
+    )
+  })
+
+  it('https completo: la aplicación', () => {
+    expect(decidirArranque({ devAuth: false, contextoSeguro: contextoSeguro('https://profesiograma.sedemi.local/'), faltan: [] })).toBe('app')
+  })
+
+  it('http://localhost es contexto seguro (DEV en modo Entra no cambia)', () => {
+    expect(decidirArranque({ devAuth: false, contextoSeguro: contextoSeguro('http://localhost:5173/'), faltan: [] })).toBe('app')
   })
 })

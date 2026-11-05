@@ -77,6 +77,25 @@ public sealed class SqlDatabaseDiagnostics(string connectionString) : IDatabaseD
             Observaciones: observaciones);
     }
 
+    public async Task<bool> EstaDisponibleAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var command = new SqlCommand("SELECT 1", connection) { CommandTimeout = 5 };
+            return await command.ExecuteScalarAsync(cancellationToken) is 1;
+        }
+        catch (SqlException)
+        {
+            return false; // sin detalle: /api/salud/listo responde 503 sin exponer el servidor ni el error
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     private static bool ToBool(object value) => value is not DBNull && Convert.ToInt32(value) == 1;
 
     private static string NombreVersion(int mayor) => mayor switch

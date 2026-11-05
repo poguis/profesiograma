@@ -7,6 +7,12 @@ let config: ConfigEntra | null = null
 
 const CLAVE_PISTA = 'profesiograma.loginHint' // solo el nombre de usuario, para ssoSilent; nunca el token
 
+/** VITE_ENTRA_* que faltan (vacío = completa). No crea MSAL. */
+export function faltantesEntra(): string[] {
+  const leida = leerConfigEntra(import.meta.env)
+  return 'faltan' in leida ? leida.faltan : []
+}
+
 /** Crea e inicializa MSAL y procesa la vuelta de loginRedirect. Devuelve las VITE_ENTRA_* que faltan (vacío = listo). */
 export async function inicializarMsal(): Promise<string[]> {
   const leida = leerConfigEntra(import.meta.env)

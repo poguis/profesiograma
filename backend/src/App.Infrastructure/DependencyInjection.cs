@@ -37,7 +37,8 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString(ConnectionStringName);
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new InvalidOperationException(
-                $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. Configúrela con user-secrets (ver README).");
+                $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'. En Development, con user-secrets; en QA y " +
+                $"PRO, con la variable de entorno ConnectionStrings__{ConnectionStringName} del grupo de aplicaciones de IIS.");
 
         var segundos = configuration[CadenaConexion.ClaveTiempoEspera] is { } valor
             ? int.Parse(valor, System.Globalization.CultureInfo.InvariantCulture)

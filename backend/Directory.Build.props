@@ -6,4 +6,9 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- TAREA-7d-1 (D7): globalización NLS en toda la solución (API y pruebas). Windows Server 2019 (17763) no trae ICU:
+         así el orden y las comparaciones de texto (es-EC, IgnoreNonSpace) son iguales en DEV, QA y PRO. -->
+    <RuntimeHostConfigurationOption Include="System.Globalization.UseNls" Value="true" />
+  </ItemGroup>
 </Project>

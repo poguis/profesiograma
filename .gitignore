@@ -41,6 +41,7 @@ backend/tests/manual/
 # Secretos y compilados
 **/.env*
 !frontend/.env.development.local.example
+!frontend/.env.qa
 **/*.pfx
 **/bin/
 **/obj/

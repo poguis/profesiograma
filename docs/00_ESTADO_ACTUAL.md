@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-05 (cierre de la 7b y la 7b-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-05 (TAREA-7d-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 05/11/2026 |
 |---|---|
@@ -12,7 +12,7 @@
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
 | Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **Fase 7d-1** — publicación de prueba en SDMAPPTEST2 (http 192.168.1.77:7082, prueba de humo sin inicio de sesión), Fase A |
+| **Siguiente tarea** | **7d-1: ejecución por el usuario** (`backend/tests/manual/tarea7d1/LEEME.md`): publicar, migrar QA, punto cero v2, IIS y humo H1–H9, V1–V2 |
 
 ## 1. Índice de documentos
 
@@ -76,7 +76,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 |---|---|
 | Repositorio | `D:\GitHub\profesiograma` (git, rama `main`): `backend/` (solución .NET), `frontend/` (React, Fase 6), `docs/` (estado, fases, origen, referencia, tareas) |
 | Solución | `backend/Profesiograma.slnx`, .NET SDK 10.0.401 (`global.json`: 10.0.100 + `latestFeature`). Compilar desde `backend/`: `dotnet build Profesiograma.slnx` |
-| Proyectos | `backend/src/App.Domain`, `App.Application`, `App.Infrastructure`, `App.Api` (+ `backend/sql/`, `backend/tests/` vacía) |
+| Proyectos | `backend/src/App.Domain`, `App.Application`, `App.Infrastructure`, `App.Api` (+ `backend/sql/`, `backend/tests/`) |
 | Original | `D:\PROYECTOS\Profesiograma`: respaldo de **solo lectura** del Paso 1 (no modificar) |
 | User-secrets | `UserSecretsId = profesiograma-api-4d2f7c1e` en `App.Api.csproj`; conservarlo para no perder la cadena de conexión |
 | Implementado | `GET /api/health/db` (diagnóstico de conexión) con `IDatabaseDiagnostics` (Application) y `SqlDatabaseDiagnostics` (Infrastructure, Microsoft.Data.SqlClient) |
@@ -87,7 +87,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). Development usa el ERP real (`Http` por user-secrets, TAREA-26a; `appsettings.Development.json` dice `Simulado`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
-| Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests |
+| Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests, App.Api.Tests |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
 | Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
 
@@ -95,10 +95,10 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 
 | Tarea | Alcance |
 |---|---|
-| 1. **Fase 7a** (en curso) | Entornos DEV/QA/PRO y respaldos (pendiente 65): base QA, login y respaldos ✅; sitio IIS en la Fase 7d |
+| 1. **Fase 7a** ✅ | Entornos DEV/QA/PRO, base QA, login y respaldos (pendiente 65); el sitio IIS sigue en la 7d |
 | 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 4. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
+| 4. Fase 7d | 7d-1 (publicación http de prueba) preparada; 7d-2 endurecimiento; HTTPS y DNS (pendientes 59 y 75) |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
 | 6. Pruebas con usuarios | — |
 | 7. Corte | Paso a producción |
@@ -110,7 +110,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
-2. Excel de cargos → código Infor (opcional). **TAREA-25-3-1:** la importación desde la API (todos los activos) y la edición de `CodigoInfor` ya están en el backend (`FASE_5_Usuarios_Departamentos.md` §10); la alta puntual también da de alta el puesto. Queda abierto solo el Excel, como opcional.
+2. [Opcional] Excel de cargos → código Infor (la importación desde la API y la edición ya existen, TAREA-25-3-1). Texto anterior en `HISTORIAL.md`.
 4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). Plantilla en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (TAREA-20) y flujo `ReporteProyectosSIG` en el repo (TAREA-22-2), pero sin el código del script: los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2, verificadas el 05/11/2026; `FASE_7_Entornos_Despliegue.md` §7). Falta QA y PRO: registros con URI HTTPS, que dependen del certificado y el DNS (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
@@ -118,7 +118,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push. Pregunta abierta: ¿el remoto `origin` es privado?
 10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
 12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
-13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. TAREA-26a: 65 horarios M y 4 D; el significado no se deduce de los datos. El modo Http ya se probó de extremo a extremo en Development (A6, proyecto Id 14). TAREA-26c (B1): M/D **no** indica turno nocturno; la aplicación lo deduce de las horas (salida < entrada).
+13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. No indica turno nocturno (TAREA-26c, B1): la aplicación lo deduce de las horas. Texto anterior en `HISTORIAL.md`.
 15. Sin prueba de traducción SQL (fuera del alcance pedido en la TAREA-12): consultas de `UsuarioProvisionamiento` y `DatosPruebaSembrador` (Paso 2).
 16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
@@ -157,8 +157,10 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
     - identificar el servidor IIS y el SQL de producción;
     - nombre de la base de PRO (propuesto `SIG_PROFESIOGRAMA`): ¿existe una base PROFESIOGRAMA de la app antigua?;
     - cuenta de administración del servidor IIS de PRO (en QA se usa administrador.SEDEMI en SDMAPPTEST2: decisión del usuario del 05/11/2026);
-    - consentimientos de Graph (pendientes 63 y 71).
+    - consentimientos de Graph (pendientes 63 y 71);
+    - actualizar el Hosting Bundle de SDMAPPTEST2 (runtime 10.0.10; la aplicación usa paquetes 10.0.12; TAREA-7d-1).
 76. [Después de producción] El alta de usuarios reconoce el duplicado por usuarioId o por el texto (usuariosAdmin.ts, MENSAJE_DUPLICADO); aplicar tipoConflicto con el helper ProblemasConflicto.
+77. [Fase 7, antes de PRO] D4 de la TAREA-7d-1: evaluar la configuración del frontend en tiempo de ejecución (servida por la API) para promover un solo build de QA a PRO; hoy `vite build --mode qa` con `frontend/.env.qa`.
 
 ## 7.1 Reglas técnicas obligatorias
 

@@ -37,6 +37,7 @@ public static class AutenticacionExtensions
         }
         else
         {
+            ValidarAzureAd(builder.Configuration, builder.Environment.EnvironmentName);
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
         }
 
@@ -51,6 +52,22 @@ public static class AutenticacionExtensions
         builder.Services.AddScoped<IUsuarioActual>(sp => sp.GetRequiredService<UsuarioActual>());
 
         return builder;
+    }
+
+    /// <summary>
+    /// TAREA-7d-1 (E15): en modo EntraId la API no arranca si AzureAd:TenantId o AzureAd:ClientId no son GUID (p. ej. los
+    /// marcadores de appsettings.json). Sin esto arrancaría y el primer Bearer daría 500 al buscar los metadatos de Entra.
+    /// El mensaje no incluye los valores.
+    /// </summary>
+    internal static void ValidarAzureAd(IConfiguration configuracion, string entorno)
+    {
+        var faltan = new[] { "AzureAd:TenantId", "AzureAd:ClientId" }.Where(clave => !Guid.TryParse(configuracion[clave], out _)).ToList();
+        if (faltan.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Autenticacion:Modo = {ModoEntraId} requiere un GUID en {string.Join(" y ", faltan)} (entorno {entorno}). " +
+                "Configúrelo en appsettings.<Entorno>.json (son IDs públicos) o en user-secrets en Development.");
+        }
     }
 
     private static AuthorizationPolicyBuilder Base() =>

@@ -151,6 +151,39 @@ public sealed class EntraIdAutenticacionTests
         Assert.Contains("DevAuth solo está permitido en Development", ex.Message);
     }
 
+    /// <summary>TAREA-7d-1: en modo EntraId, TenantId y ClientId deben ser GUID (marcadores de appsettings.json o vacíos: no arranca).</summary>
+    [Theory]
+    [InlineData("[PENDIENTE: Tenant ID de la empresa]", ClientId, "AzureAd:TenantId")]
+    [InlineData(Tenant, null, "AzureAd:ClientId")]
+    [InlineData("", "", "AzureAd:TenantId y AzureAd:ClientId")]
+    public void E15_EntraId_SinGuid_NoArranca_SinMostrarElValor(string? tenant, string? clientId, string faltan)
+    {
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { EnvironmentName = "QA" });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Autenticacion:Modo"] = "EntraId",
+            ["AzureAd:TenantId"] = tenant,
+            ["AzureAd:ClientId"] = clientId,
+        });
+
+        var ex = Assert.Throws<InvalidOperationException>(() => builder.AddSeguridadProfesiograma());
+        Assert.Contains($"requiere un GUID en {faltan} (entorno QA)", ex.Message);
+        Assert.DoesNotContain("PENDIENTE", ex.Message);
+    }
+
+    [Fact]
+    public void E15b_DevAuth_NoExigeAzureAd()
+    {
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Autenticacion:Modo"] = "DevAuth",
+            ["AzureAd:TenantId"] = "[PENDIENTE: Tenant ID de la empresa]",
+        });
+
+        builder.AddSeguridadProfesiograma(); // no lanza
+    }
+
     [Fact]
     public async Task E14_DevAuth_EmiteScp_YPasaLasMismasPoliticas()
     {

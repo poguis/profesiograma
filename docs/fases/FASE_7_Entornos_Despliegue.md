@@ -1,6 +1,6 @@
 # FASE 7 — Entornos y despliegue
 
-**Última actualización:** 2026-11-05 (Fase 7a, registro de avances del 29/10 al 04/11/2026). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
+**Última actualización:** 2026-11-05 (TAREA-7d-1: §1, §4, §5, §6 y §9). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
 
 Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no se conecta a ninguna base ni a ningún servidor.
 
@@ -9,7 +9,7 @@ Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no
 | Entorno | Base de datos | Servidor web | Estado |
 |---|---|---|---|
 | DEV | `PROFESIOGRAMA_DEV` en `NIQUEL\SSDEV` | Equipo del desarrollador (`https://localhost:7180` + Vite) | En uso |
-| QA | `PROFESIOGRAMA_QA` en `NIQUEL\SSDEV` | Sitio IIS en `SDMAPPTEST2` (§5) | Base lista; sitio pendiente (Fase 7d) |
+| QA | `PROFESIOGRAMA_QA` en `NIQUEL\SSDEV` | Sitio IIS `SIG_Profesiograma` en `SDMAPPTEST2` (§5, §9), entorno `QA` | Base lista; publicación de prueba preparada (TAREA-7d-1), pendiente de la ejecución del usuario |
 | PRO | Servidor y SQL **por confirmar con TI** (pendiente 75). Nombre de base propuesto: `SIG_PROFESIOGRAMA`, porque en SEDEMI existe otra aplicación antigua «Profesiograma» | Por confirmar con TI | — |
 
 ## 2. Bases y logins
@@ -64,14 +64,16 @@ Procedimiento para QA y PRO (pendiente 65):
 | Archivo | Para qué |
 |---|---|
 | `PROFESIOGRAMA_DEV_20261029_antes_TAREA27.bak` | Estado de DEV antes de la migración `QuitarParametrosAlmuerzo` |
-| `PROFESIOGRAMA_QA_20261030_punto_cero.bak` | Estado limpio de QA para repetir los ensayos de la Fase 3 |
+| `PROFESIOGRAMA_QA_20261030_punto_cero.bak` | Estado limpio de QA (6 migraciones). **Reemplazado por el punto cero v2** |
+| `PROFESIOGRAMA_QA_<yyyyMMdd>_punto_cero_v2.bak` | TAREA-7d-1: estado limpio de QA con las 7 migraciones (incluye `AgregarUpnUsuario`), para repetir los ensayos de la Fase 3. Lo crea el usuario después de la migración y antes del humo (§9) |
 
 **Restauración del punto cero:** `SINGLE_USER` → `RESTORE … WITH REPLACE` → `MULTI_USER`. El usuario la probó una vez con éxito. El script lo guarda el usuario, fuera del repo.
 
 ## 5. Servidor de QA: SDMAPPTEST2.sedemi.local
 
 - **Sistema:** Windows Server 2019 en una máquina virtual.
-- **IIS:** en ejecución, con el módulo ASP.NET Core V2 y el runtime .NET 10.0.10.
+- **IIS:** en ejecución, con el módulo ASP.NET Core V2 y el runtime .NET 10.0.10. La aplicación usa paquetes 10.0.12; publicada como dependiente del framework, funciona sobre 10.0.10 [SUPUESTO hasta el humo], pero se pidió a TI actualizar el Hosting Bundle (pendiente 75).
+- **Globalización:** Windows Server 2019 (17763) no trae ICU; la solución usa NLS en todos los entornos (§9, D7).
 - **Sitios:** unos 40, todos en http y ninguno en https.
 - **Certificados:** están vencidos; no hay ninguno utilizable (pendiente 75).
 - **Convenciones:** los sitios van en `C:\inetpub\wwwroot\<Sistema>\`; la unidad `E:` es RESPALDOS.
@@ -86,9 +88,10 @@ Procedimiento para QA y PRO (pendiente 65):
 - **Cuenta:** en QA se usa `administrador.SEDEMI` (decisión del usuario del 05/11/2026); la cuenta de administración se revisa al llegar a producción.
 - Hay un sitio antiguo, **«Profesiograma_FrontEnd»** (otro proyecto, WebForms), que **no se toca**.
 
-## 6. Diseño del sitio de QA (propuesta, pendiente de la Fase 7d)
+## 6. Diseño del sitio de QA (aprobado en la TAREA-7d-1; procedimiento en §9)
 
-- **Sitio y grupo de aplicaciones:** `SIG_Profesiograma`; el grupo sin código administrado.
+- **Sitio y grupo de aplicaciones:** `SIG_Profesiograma`; el grupo sin código administrado, canalización integrada, `ApplicationPoolIdentity` y «Cargar perfil de usuario» = True.
+- **La SPA la sirve ASP.NET Core** desde `wwwroot` (D2), sin URL Rewrite ni aplicación `/api` aparte.
 - **Carpeta:** `C:\inetpub\wwwroot\SIG_Profesiograma\`.
 - **Un solo sitio para la API y el SPA**, con un mismo origen: no hace falta CORS (pendiente 59).
 - **Enlaces:**
@@ -304,7 +307,7 @@ El `cd` va antes del `ren`, porque `ren` no acepta una ruta en el nombre nuevo. 
 
 **Lección:** nunca pegar tokens en chats ni en tickets. Para inspeccionarlos se usa `jwt.ms`.
 
-**Falta para QA (y luego PRO):** los registros de QA, con sus URI de redirección HTTPS, cuando TI entregue el certificado y el DNS (pendiente 75). La prueba de humo de la Fase 7d-1 (`http 192.168.1.77:7082`) no usa inicio de sesión.
+**API-QA creada** (05/11/2026, SIG-Profesiograma-API-QA): IDs en §9, D5. **Falta para QA (y luego PRO):** el SPA-QA y los demás registros de QA, con sus URI de redirección HTTPS, cuando TI entregue el certificado y el DNS (pendiente 75). La prueba de humo de la Fase 7d-1 (`http 192.168.1.77:7082`) no usa inicio de sesión.
 
 ## 8. Pendientes con TI
 
@@ -314,3 +317,56 @@ Ver el pendiente 75 de `docs/00_ESTADO_ACTUAL.md`, que reúne:
 - el nombre de la base de PRO;
 - la cuenta de administración del servidor de PRO;
 - los consentimientos de Graph.
+
+## 9. Despliegue en QA (TAREA-7d-1, 05/11/2026)
+
+Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueba de humo **sin inicio de sesión**: Entra ID no admite una URI de redirección http fuera de localhost, y el SPA-QA espera el certificado y el DNS (pendiente 75). La ejecuta el usuario con `backend/tests/manual/tarea7d1/LEEME.md`.
+
+**Procedimiento** (el resultado esperado de cada paso está en el LEEME):
+1. `publicar-qa.cmd` en el PC del usuario.
+2. Respaldo de QA.
+3. Migración: `migraciones-QA.sql`, completo, F5 sin selección, con `@@TRANCOUNT = 0` al final.
+4. Punto cero v2 (§4).
+5. Grupo de aplicaciones y su variable con appcmd, desde CMD (nunca desde PowerShell).
+6. Sitio, permisos NTFS, enlace y firewall.
+7. Copia con `app_offline.htm` y respaldo de la versión anterior en `E:\`.
+8. `humo-qa.cmd` (H1–H9) y las verificaciones visuales V1 y V2.
+9. Diagnóstico (500.19, 500.30, 500.31, 503) y reversión.
+
+**Decisiones del usuario (05/11/2026):**
+
+| # | Decisión |
+|---|---|
+| D1 | Entorno `QA`: `appsettings.QA.json` (TenantId y ClientId de la API-QA, y `Logging` con EF en Warning) y `-p:EnvironmentName=QA` (lo escribe en `web.config`) |
+| D2 | La SPA la sirve ASP.NET Core desde `wwwroot`, con fallback a `index.html`. `publicar-qa` copia `dist` a `wwwroot` |
+| D3 | Cadena de conexión de QA en la variable `ConnectionStrings__Profesiograma` del grupo de aplicaciones (appcmd desde CMD); la escribe el usuario en el servidor |
+| D4 | `vite build --mode qa` con `frontend/.env.qa` versionado (solo IDs públicos), sin `VITE_ENTRA_CLIENT_ID` hasta que exista el SPA-QA. Antes de PRO se evalúa una configuración en tiempo de ejecución |
+| D5 | API-QA (SIG-Profesiograma-API-QA): tenant `3cec9264-5c1c-429e-8877-c23d701139ac`, scope `api://a0b57ea8-e21b-4bd1-a9c4-f39fc7a0b2eb/access_as_user` |
+| D6 | `/api/salud/vivo` (sin base) y `/api/salud/listo` (`SELECT 1`, 200/503 sin detalle), anónimos, con `IDatabaseDiagnostics.EstaDisponibleAsync`. `/api/health/db` sigue siendo solo de Development |
+| D7 | NLS en toda la solución (`System.Globalization.UseNls` en `backend/Directory.Build.props`). La zona de Ecuador usa el identificador de Windows `SA Pacific Standard Time`, que no requiere ICU |
+| D8 | Se quitó `MapGet("/")`: la raíz sirve `index.html` |
+
+**Ajustes:**
+
+| # | Ajuste |
+|---|---|
+| J1 | `RuntimeHostConfigurationOption` (ítem) y una prueba con `AppContext.GetData`. Las 1196 pruebas existentes pasaron sin cambios con NLS |
+| J2 | Las mismas `StaticFileOptions` en `UseStaticFiles` y en `MapFallbackToFile`: `/assets/*` → `public, max-age=31536000, immutable`; el resto (index.html) → `no-cache` |
+| J3 | `MapFallback("/api/{**ruta}")` → 404 sin HTML, con `AllowAnonymous` |
+| J4 | `decidirArranque` (frontend): DevAuth → `requiereHttps` (contexto no seguro) → `configIncompleta` → `app`. Un fallo de MSAL muestra «No se pudo iniciar la sesión con Entra ID.», nunca una página en blanco |
+| J5 | `publicar-qa` exige un árbol limpio y compila desde `git archive HEAD`, en una carpeta temporal que borra siempre. Resultado en `D:\PROFESIOGRAMA_DEPLOY\QA\<yyyyMMdd_HHmm>_<hash7>\` |
+| J6 | H9 solo informa `Server`, `X-Powered-By` y el listado de `/assets/`. Sin `web.config` propio: el endurecimiento va en la 7d-2 |
+| J7 | Punto cero v2 después de la migración y antes del humo |
+
+**Otras reglas de esta tarea:**
+- En modo EntraId, la API no arranca si `AzureAd:TenantId` o `AzureAd:ClientId` no son GUID (E15).
+- `appsettings.Development.json` no se publica (`CopyToPublishDirectory="Never"`).
+- La publicación es **dependiente del framework** (sin RID): `App.Api.exe` y `web.config` en proceso.
+- La configuración de QA queda en tres lugares:
+  - `appsettings.json`, la base: modo EntraId, ERP Http, `BaseDatos`, `Usuarios`;
+  - `appsettings.QA.json`: los IDs de la API-QA y `Logging`;
+  - la variable del grupo: la cadena de conexión.
+- Sin `NovedadesExternas:Modo`, la fuente queda «no configurada».
+- **Logs bajo IIS:**
+  - van al Visor de eventos (proveedor EventLog, Warning o superior; un error de arranque aparece como 500.30 con el origen «IIS AspNetCore Module V2»);
+  - el stdout de ANCM se activa solo durante un diagnóstico.

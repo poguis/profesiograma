@@ -30,6 +30,7 @@
 | H24 | Fase 7b, Fase B (05/11/2026): siguiente tarea, fila 2 de la hoja de ruta y pendiente 7 |
 | H25 | TAREA-7b-2 (05/11/2026): siguiente tarea y fila 2 de la hoja de ruta |
 | H26 | Cierre de la 7b y la 7b-2 (05/11/2026): cabecera, fila TAREA-27, siguiente tarea, fila 2 de la hoja de ruta, pendiente 7; títulos de FASE_7 §7.1 y §7.3 |
+| H27 | TAREA-7d-1 (05/11/2026): cabecera, siguiente tarea, filas Proyectos y Pruebas de §4, filas 1 y 4 de la hoja de ruta, pendientes 2, 13 y la última línea del 75 |
 
 ## H1. Cabecera anterior
 
@@ -485,3 +486,25 @@ Títulos y una línea anteriores de `FASE_7_Entornos_Despliegue.md`:
 - Identificador: `oid`. Correo: `preferred_username` (o `email` / `upn`).
 
 ### 7.3 TAREA-7b-2 — UPN distinto del correo (P3; implementada el 05/11/2026, migración sin aplicar)
+
+## H27. Movido del estado vigente el 05/11/2026 (TAREA-7d-1)
+
+Texto anterior (textual):
+
+**Última actualización:** 2026-11-05 (cierre de la 7b y la 7b-2).
+
+| **Siguiente tarea** | **Fase 7d-1** — publicación de prueba en SDMAPPTEST2 (http 192.168.1.77:7082, prueba de humo sin inicio de sesión), Fase A |
+
+| Proyectos | `backend/src/App.Domain`, `App.Application`, `App.Infrastructure`, `App.Api` (+ `backend/sql/`, `backend/tests/` vacía) |
+
+| Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests |
+
+| 1. **Fase 7a** (en curso) | Entornos DEV/QA/PRO y respaldos (pendiente 65): base QA, login y respaldos ✅; sitio IIS en la Fase 7d |
+
+| 4. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
+
+2. Excel de cargos → código Infor (opcional). **TAREA-25-3-1:** la importación desde la API (todos los activos) y la edición de `CodigoInfor` ya están en el backend (`FASE_5_Usuarios_Departamentos.md` §10); la alta puntual también da de alta el puesto. Queda abierto solo el Excel, como opcional.
+
+13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. TAREA-26a: 65 horarios M y 4 D; el significado no se deduce de los datos. El modo Http ya se probó de extremo a extremo en Development (A6, proyecto Id 14). TAREA-26c (B1): M/D **no** indica turno nocturno; la aplicación lo deduce de las horas (salida < entrada).
+
+    - consentimientos de Graph (pendientes 63 y 71).

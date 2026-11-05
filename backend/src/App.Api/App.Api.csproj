@@ -3,6 +3,10 @@
     <UserSecretsId>profesiograma-api-4d2f7c1e</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <!-- TAREA-7d-1: la configuración de Development (DevAuth, sembrador) nunca llega a una publicación. -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\App.Application\App.Application.csproj" />
     <ProjectReference Include="..\App.Infrastructure\App.Infrastructure.csproj" />
   </ItemGroup>
