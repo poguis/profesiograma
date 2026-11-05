@@ -33,12 +33,15 @@ import {
   resumenDatos,
   resumenDepartamentos,
   validarAlta,
+  TEXTO_UPN_PENDIENTE,
+  textoUpn,
 } from './usuariosAdmin'
 
 // Datos FICTICIOS.
 const detalle: UsuarioAdminDetalle = {
   id: 5,
   email: 'persona@prueba.local',
+  upn: null,
   nombreMostrar: 'PERSONA PRUEBA',
   activo: true,
   conIdentidad: false,
@@ -50,6 +53,14 @@ const detalle: UsuarioAdminDetalle = {
   ],
   esUsuarioActual: false,
 }
+
+describe('UPN (TAREA-7b-2)', () => {
+  it('con valor → el UPN; sin valor → «Se completa en el primer ingreso»', () => {
+    expect(textoUpn({ upn: 'upn.prueba@prueba.local' })).toBe('upn.prueba@prueba.local')
+    expect(textoUpn({ upn: null })).toBe(TEXTO_UPN_PENDIENTE)
+    expect(TEXTO_UPN_PENDIENTE).toBe('Se completa en el primer ingreso')
+  })
+})
 
 describe('filtros de la URL', () => {
   it('lectura: valores por defecto, texto recortado y página ilegible', () => {

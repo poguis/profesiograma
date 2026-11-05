@@ -258,7 +258,7 @@ public sealed class UsuariosAdminServicioTests
 
         public Task<UsuarioAdminDto?> ObtenerAsync(int id, CancellationToken ct) =>
             Task.FromResult(usuarios.FirstOrDefault(u => u.Id == id && !u.EsSistema) is { } u
-                ? new UsuarioAdminDto(u.Id, u.Email, u.NombreMostrar, u.Activo, u.EntraObjectId is not null, u.Id == OtroId ? departamentosDelOtro : [])
+                ? new UsuarioAdminDto(u.Id, u.Email, null, u.NombreMostrar, u.Activo, u.EntraObjectId is not null, u.Id == OtroId ? departamentosDelOtro : [])
                 : null);
 
         public Task<UsuarioRegistro?> ObtenerRegistroAsync(int id, CancellationToken ct) =>
@@ -296,7 +296,7 @@ public sealed class UsuariosAdminServicioTests
     {
         public List<string> Invalidados { get; } = [];
 
-        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct) =>
+        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string? upn, string correo, string nombreMostrar, CancellationToken ct) =>
             throw new NotSupportedException();
 
         public void Invalidar(string email, Guid? entraObjectId) => Invalidados.Add($"{email}|{entraObjectId}");

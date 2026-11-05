@@ -71,7 +71,7 @@ public sealed class UsuariosAdminServicio(
             .OrderBy(d => d.Orden).ThenBy(d => d.Id)
             .Select(d => new DepartamentoDisponibleDto(d.Id, d.Nombre, d.NombreCorto, d.Activo, asignados.Contains(d.Id)))
             .ToList();
-        return new UsuarioAdminDetalleDto(u.Id, u.Email, u.NombreMostrar, u.Activo, u.ConIdentidad, u.Departamentos, disponibles,
+        return new UsuarioAdminDetalleDto(u.Id, u.Email, u.Upn, u.NombreMostrar, u.Activo, u.ConIdentidad, u.Departamentos, disponibles,
             usuario.UsuarioId == u.Id);
     }
 

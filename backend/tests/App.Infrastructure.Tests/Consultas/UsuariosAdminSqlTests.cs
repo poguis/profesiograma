@@ -32,6 +32,26 @@ public class UsuariosAdminSqlTests(ITestOutputHelper salida) : BaseSql(salida)
         Assert.Contains("OFFSET", pagina);
     }
 
+    /// <summary>TAREA-7b-2: Q2 (el texto también busca en Upn) y Upn en la proyección del listado y del detalle.</summary>
+    [Fact]
+    public void Listado_TextoTambienEnUpn_YUpnEnLaProyeccion()
+    {
+        var consulta = UsuariosAdminRepositorio.ConsultaListado(Db, new UsuarioAdminFiltro("persona", false, 1, 25));
+
+        Assert.Contains("[Upn] LIKE", Sql(consulta));
+        Assert.Contains("[Upn]", Sql(UsuariosAdminRepositorio.PaginaListado(consulta, 0, 25)));
+        Assert.Contains("[Upn]", Sql(UsuariosAdminRepositorio.ConsultaDetalle(Db, 5)));
+    }
+
+    /// <summary>TAREA-7b-2: las tres búsquedas del alta (oid → UPN → correo), cada una por igualdad parametrizada.</summary>
+    [Fact]
+    public void Provisionamiento_BusquedasPorOidUpnYCorreo_Traducen()
+    {
+        Assert.Contains("[EntraObjectId] = @", Sql(UsuarioProvisionamiento.ConsultaPorOid(Db, Guid.Parse("33333333-3333-3333-3333-333333333333"))));
+        Assert.Contains("[Upn] = @", Sql(UsuarioProvisionamiento.ConsultaPorUpn(Db, "upn@prueba.local")));
+        Assert.Contains("[Email] = @", Sql(UsuarioProvisionamiento.ConsultaPorCorreo(Db, "persona@prueba.local")));
+    }
+
     [Fact]
     public void Listado_IncluirInactivos_NoFiltraActivo()
     {
@@ -133,7 +153,7 @@ public class UsuariosAdminSqlTests(ITestOutputHelper salida) : BaseSql(salida)
         var provisionamiento = new UsuarioProvisionamiento(Db, cache, NullLogger<UsuarioProvisionamiento>.Instance);
 
         // La base de BaseSql no existe: si Resolver fuera a la base, fallaría. Con la entrada en caché responde sin ir.
-        var antes = await provisionamiento.ResolverAsync(oid, "persona@prueba.local", "X", TestContext.Current.CancellationToken);
+        var antes = await provisionamiento.ResolverAsync(oid, "upn@prueba.local", "persona@prueba.local", "X", TestContext.Current.CancellationToken);
         provisionamiento.Invalidar("persona@prueba.local", oid);
 
         Assert.True(antes.Habilitado);

@@ -14,6 +14,8 @@ export interface DepartamentoUsuario {
 export interface UsuarioAdmin {
   id: number
   email: string
+  /** TAREA-7b-2: UPN de Entra ID (solo lectura); null hasta el primer ingreso. */
+  upn: string | null
   nombreMostrar: string
   activo: boolean
   /** false = «Aún no ha ingresado» (sin EntraObjectId). */
@@ -68,6 +70,7 @@ export const TEXTO_CONFIRMAR_BAJA = 'El usuario dejará de poder entrar de inmed
 export const ADVERTENCIA_SIN_DEPARTAMENTOS =
   'Sin departamentos: este usuario ve a todo el personal en el buscador y sus proyectos nuevos no tendrán departamento.'
 export const AVISO_CREADO = 'Usuario creado.'
+export const TEXTO_UPN_PENDIENTE = 'Se completa en el primer ingreso'
 export const AVISO_DATOS = 'Datos actualizados.'
 export const AVISO_DEPARTAMENTOS = 'Departamentos actualizados.'
 
@@ -83,6 +86,11 @@ export interface FiltrosUsuarios {
 }
 
 /** URL → filtros. Página ilegible o < 1 → 1; texto vacío → sin filtro. */
+/** TAREA-7b-2: el UPN se muestra de solo lectura; sin valor, el texto de pendiente. */
+export function textoUpn(u: Pick<UsuarioAdmin, 'upn'>): string {
+  return u.upn ?? TEXTO_UPN_PENDIENTE
+}
+
 export function leerFiltrosUsuarios(parametros: URLSearchParams): FiltrosUsuarios {
   const texto = parametros.get('texto')?.trim()
   const pagina = Number(parametros.get('pagina'))

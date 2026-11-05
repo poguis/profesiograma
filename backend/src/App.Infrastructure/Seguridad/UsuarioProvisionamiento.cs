@@ -9,8 +9,9 @@ using Microsoft.Extensions.Logging;
 namespace App.Infrastructure.Seguridad;
 
 /// <summary>
-/// Busca el Usuario por EntraObjectId (claim oid); si no existe, por Email; si tampoco, lo crea.
-/// El correo NO es un identificador confiable (C29): prevalece el oid.
+/// Resuelve el Usuario del token. TAREA-7b-2: busca por oid → UPN → correo, decide con ReglasProvisionamiento (Application)
+/// y aquí solo se lee y se guarda. El correo NO es un identificador confiable (C29): prevalece el oid.
+/// Logs (Q3): solo el Id y el oid abreviado; nunca el correo ni el UPN.
 /// </summary>
 internal sealed class UsuarioProvisionamiento(
     ProfesiogramaDbContext db,
@@ -19,10 +20,10 @@ internal sealed class UsuarioProvisionamiento(
 {
     private static readonly TimeSpan DuracionCache = TimeSpan.FromMinutes(10);
 
-    public async Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct)
+    public async Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string? upn, string correo, string nombreMostrar, CancellationToken ct)
     {
-        var emailNormalizado = email.Trim().ToLowerInvariant();
-        var claveCache = ClaveCache(entraObjectId?.ToString() ?? emailNormalizado);
+        var token = new IdentidadToken(entraObjectId, Normalizar(upn), Normalizar(correo)!);
+        var claveCache = ClaveCache(entraObjectId?.ToString() ?? token.Correo);
 
         if (cache.TryGetValue(claveCache, out UsuarioResuelto? enCache) && enCache is not null)
         {
@@ -32,14 +33,14 @@ internal sealed class UsuarioProvisionamiento(
         UsuarioResuelto resultado;
         try
         {
-            resultado = await ResolverEnBaseAsync(entraObjectId, emailNormalizado, nombreMostrar, ct);
+            resultado = await ResolverEnBaseAsync(token, nombreMostrar, ct);
         }
         catch (DbUpdateException ex) when (ex.InnerException is not BaseDatosNoDisponibleException) // TAREA-22c: base caída → 503
         {
-            // Dos peticiones simultáneas del mismo usuario nuevo: la segunda choca con UQ_Usuario_Email.
-            logger.LogWarning(ex, "Conflicto al provisionar {Email}; se reintenta la lectura.", emailNormalizado);
+            // Dos peticiones simultáneas del mismo usuario nuevo: la segunda choca con un índice único (correo, oid o UPN).
+            logger.LogWarning(ex, "Conflicto al provisionar (oid {Oid}); se reintenta la lectura.", Abreviar(entraObjectId));
             db.ChangeTracker.Clear();
-            resultado = await ResolverEnBaseAsync(entraObjectId, emailNormalizado, nombreMostrar, ct);
+            resultado = await ResolverEnBaseAsync(token, nombreMostrar, ct);
         }
 
         cache.Set(claveCache, resultado, DuracionCache);
@@ -57,47 +58,59 @@ internal sealed class UsuarioProvisionamiento(
 
     internal static string ClaveCache(string oidOEmail) => $"usuario:{oidOEmail}";
 
-    private async Task<UsuarioResuelto> ResolverEnBaseAsync(Guid? oid, string email, string nombre, CancellationToken ct)
+    internal static IQueryable<Usuario> ConsultaPorOid(ProfesiogramaDbContext db, Guid oid) => db.Usuarios.Where(u => u.EntraObjectId == oid);
+
+    internal static IQueryable<Usuario> ConsultaPorUpn(ProfesiogramaDbContext db, string upn) => db.Usuarios.Where(u => u.Upn == upn);
+
+    internal static IQueryable<Usuario> ConsultaPorCorreo(ProfesiogramaDbContext db, string correo) => db.Usuarios.Where(u => u.Email == correo);
+
+    private async Task<UsuarioResuelto> ResolverEnBaseAsync(IdentidadToken token, string nombre, CancellationToken ct)
     {
-        Usuario? usuario = null;
+        var porOid = token.EntraObjectId is { } oid ? await ConsultaPorOid(db, oid).FirstOrDefaultAsync(ct) : null;
+        var porUpn = token.Upn is not null && (porOid is null || porOid.Upn is null)
+            ? await ConsultaPorUpn(db, token.Upn).FirstOrDefaultAsync(ct)
+            : null;
+        var porCorreo = porOid is null && porUpn is null ? await ConsultaPorCorreo(db, token.Correo).FirstOrDefaultAsync(ct) : null;
 
-        if (oid is not null)
+        var decision = ReglasProvisionamiento.Decidir(token, Identidad(porOid), Identidad(porUpn), Identidad(porCorreo));
+        switch (decision.Tipo)
         {
-            usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.EntraObjectId == oid, ct);
-        }
+            case TipoDecisionProvisionamiento.Conflicto:
+                logger.LogWarning("Conflicto de identidad al ingresar: usuario {Id}, oid {Oid}.", decision.Usuario!.Id, Abreviar(token.EntraObjectId));
+                return new UsuarioResuelto(decision.Usuario.Id, false, decision.Motivo);
 
-        if (usuario is null)
-        {
-            usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
+            case TipoDecisionProvisionamiento.Crear:
+                var nuevo = new Usuario
+                {
+                    EntraObjectId = token.EntraObjectId,
+                    Upn = token.Upn,
+                    Email = token.Correo,
+                    NombreMostrar = string.IsNullOrWhiteSpace(nombre) ? token.Correo : nombre.Trim()
+                };
+                db.Usuarios.Add(nuevo);
+                await db.SaveChangesAsync(ct);
+                logger.LogInformation("Usuario provisionado: Id {Id}.", nuevo.Id);
+                return new UsuarioResuelto(nuevo.Id, true);
 
-            if (usuario is not null && usuario.EntraObjectId is not null && oid is not null && usuario.EntraObjectId != oid)
-            {
-                logger.LogWarning("Conflicto de identidad: {Email} registrado con otro oid.", email);
-                return new UsuarioResuelto(usuario.Id, false, "El correo está asociado a otra identidad de Entra ID.");
-            }
-        }
+            default:
+                var usuario = new[] { porOid, porUpn, porCorreo }.First(u => u?.Id == decision.Usuario!.Id)!;
+                if (decision.CompletarOid || decision.CompletarUpn)
+                {
+                    // Usuario precargado (Admin o Fase 3) que ingresa por primera vez, o fila anterior a la 7b-2 sin UPN.
+                    if (decision.CompletarOid) usuario.EntraObjectId = token.EntraObjectId;
+                    if (decision.CompletarUpn) usuario.Upn = token.Upn;
+                    await db.SaveChangesAsync(ct);
+                }
 
-        if (usuario is null)
-        {
-            usuario = new Usuario
-            {
-                EntraObjectId = oid,
-                Email = email,
-                NombreMostrar = string.IsNullOrWhiteSpace(nombre) ? email : nombre.Trim()
-            };
-            db.Usuarios.Add(usuario);
-            await db.SaveChangesAsync(ct);
-            logger.LogInformation("Usuario provisionado: {Email} (Id {Id}).", email, usuario.Id);
+                return usuario.Activo
+                    ? new UsuarioResuelto(usuario.Id, true)
+                    : new UsuarioResuelto(usuario.Id, false, "El usuario está inactivo en la aplicación.");
         }
-        else if (usuario.EntraObjectId is null && oid is not null)
-        {
-            // Usuario precargado (migración / permisos) que ingresa por primera vez.
-            usuario.EntraObjectId = oid;
-            await db.SaveChangesAsync(ct);
-        }
-
-        return usuario.Activo
-            ? new UsuarioResuelto(usuario.Id, true)
-            : new UsuarioResuelto(usuario.Id, false, "El usuario está inactivo en la aplicación.");
     }
+
+    private static UsuarioIdentidad? Identidad(Usuario? u) => u is null ? null : new(u.Id, u.EntraObjectId, u.Upn, u.Activo);
+
+    private static string? Normalizar(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim().ToLowerInvariant();
+
+    private static string Abreviar(Guid? oid) => oid?.ToString()[..8] ?? "-";
 }

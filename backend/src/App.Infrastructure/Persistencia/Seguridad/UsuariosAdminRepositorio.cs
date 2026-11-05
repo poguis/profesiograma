@@ -171,7 +171,7 @@ internal sealed class UsuariosAdminRepositorio(ProfesiogramaDbContext db, ILogge
 
         if (filtro.Texto is { } texto)
         {
-            consulta = consulta.Where(u => u.Email.Contains(texto) || u.NombreMostrar.Contains(texto));
+            consulta = consulta.Where(u => u.Email.Contains(texto) || u.NombreMostrar.Contains(texto) || (u.Upn != null && u.Upn.Contains(texto))); // Q2
         }
 
         return consulta;
@@ -197,7 +197,7 @@ internal sealed class UsuariosAdminRepositorio(ProfesiogramaDbContext db, ILogge
 
     /// <summary>Una sola consulta con los departamentos activos de cada usuario (sin N+1).</summary>
     private static IQueryable<UsuarioAdminDto> Proyectar(IQueryable<Usuario> consulta) =>
-        consulta.Select(u => new UsuarioAdminDto(u.Id, u.Email, u.NombreMostrar, u.Activo, u.EntraObjectId != null,
+        consulta.Select(u => new UsuarioAdminDto(u.Id, u.Email, u.Upn, u.NombreMostrar, u.Activo, u.EntraObjectId != null,
             u.Departamentos.Where(ud => ud.Activo).OrderBy(ud => ud.Departamento.Orden).ThenBy(ud => ud.DepartamentoId)
                 .Select(ud => new DepartamentoUsuarioDto(ud.DepartamentoId, ud.Departamento.NombreCorto)).ToList()));
 

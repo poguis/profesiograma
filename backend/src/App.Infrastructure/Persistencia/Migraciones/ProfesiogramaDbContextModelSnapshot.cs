@@ -2243,6 +2243,10 @@ namespace App.Infrastructure.Persistencia.Migraciones
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Upn")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.HasKey("Id")
                         .HasName("PK_Usuario");
 
@@ -2254,6 +2258,11 @@ namespace App.Infrastructure.Persistencia.Migraciones
                         .IsUnique()
                         .HasDatabaseName("UX_Usuario_EntraObjectId")
                         .HasFilter("[EntraObjectId] IS NOT NULL");
+
+                    b.HasIndex("Upn")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Usuario_Upn")
+                        .HasFilter("[Upn] IS NOT NULL");
 
                     b.ToTable("Usuario", "dbo");
 

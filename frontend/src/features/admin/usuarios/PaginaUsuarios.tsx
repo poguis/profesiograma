@@ -37,6 +37,7 @@ import {
   type UsuarioAdmin,
   aParametrosUrlUsuarios,
   leerFiltrosUsuarios,
+  textoUpn,
 } from './usuariosAdmin'
 
 const MOVIL = '@media (max-width: 599px)'
@@ -94,6 +95,7 @@ function ListaUsuarios() {
   const columnas = useMemo<TableColumnDefinition<UsuarioAdmin>[]>(
     () => [
       createTableColumn({ columnId: 'email', renderHeaderCell: () => 'Correo', renderCell: (u) => u.email }),
+      createTableColumn({ columnId: 'upn', renderHeaderCell: () => 'Inicio de sesión (UPN)', renderCell: (u) => textoUpn(u) }),
       createTableColumn({ columnId: 'nombre', renderHeaderCell: () => 'Nombre', renderCell: (u) => u.nombreMostrar }),
       createTableColumn({
         columnId: 'estado',

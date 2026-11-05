@@ -57,10 +57,13 @@ Reemplaza el popup de SuperAdmin y el JSON `PermisosGenerales` de la fila 666 (F
 - **Proyecto nuevo (P5):** 0 departamentos → el formulario no muestra el selector y el proyecto se crea **sin departamento** (`DepartamentoId` NULL), **sin mensaje ni error**; 1 → ese automáticamente (otro enviado: «El departamento no está entre los asignados al usuario.»); varios → obligatorio («Debe elegir el departamento del proyecto.»).
 - Consecuencia: un usuario sin departamentos **sí puede crear proyectos** (con el rol Gestor o Admin). Si se quiere exigir departamento, sería un cambio de regla aparte.
 
-## 6. Primer ingreso de un usuario precargado (O6, `UsuarioProvisionamiento`, sin cambios)
+## 6. Primer ingreso de un usuario precargado (O6, `UsuarioProvisionamiento`)
+**Actualizado en la TAREA-7b-2:** ahora se busca por oid → UPN → correo, se completan el oid y el UPN, y hay conflictos nuevos (`FASE_7_Entornos_Despliegue.md` §7.3). El texto siguiente describe el comportamiento anterior a la 7b-2.
 Busca por `oid` (no lo encuentra) y luego por correo (normalizado): lo encuentra sin `EntraObjectId` y **completa el oid** (escritura auditada). `NombreMostrar` **no** se actualiza desde los claims (queda el que puso el Admin). Si está inactivo → 403. Si el correo ya tiene **otro** oid → 403 «El correo está asociado a otra identidad de Entra ID.». El resultado se guarda 10 minutos en la caché.
 
 ## 7. Fase 3 (carga de la fila 666) — nota de diseño
+**TAREA-7b-2:** precargar también `Usuario.Upn` (en minúsculas) desde el nombre de inicio de sesión de los campos de persona de SharePoint; el primer ingreso busca por oid → UPN → correo (`FASE_7_Entornos_Despliegue.md` §7.3). Sin implementar.
+
 Se hará con **SQL por staging**, no con estos servicios. Para que sea idempotente: correos recortados y en minúsculas, con formato válido (pendiente 45); `INSERT INTO Usuario` solo si no existe ese correo (`UQ_Usuario_Email`, `Activo = 1`, `CreadoPorId = 1`); departamento por **nombre** (las 7 semillas); `INSERT INTO UsuarioDepartamento` solo si no existe el par (`UQ_UsuarioDepartamento`), con `Notificado = 1` (ya recibieron el correo en el original) y `Activo = 1`; si existe inactivo, decidir en esa fase si se reactiva. Repetir la carga no debe duplicar ni cambiar filas existentes.
 
 ## 8. Desarrollo y pruebas

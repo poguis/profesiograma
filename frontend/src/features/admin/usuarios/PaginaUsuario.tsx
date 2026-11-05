@@ -37,6 +37,7 @@ import {
   TEXTO_CONFIRMAR_BAJA,
   TEXTO_ROLES,
   type UsuarioAdminDetalle,
+  textoUpn,
   aSolicitudDatos,
   aSolicitudDepartamentos,
   advertenciaDepartamentos,
@@ -164,6 +165,9 @@ function DetalleUsuario() {
               {detalle.data.nombreMostrar}
             </Text>
             <Text block>{detalle.data.email}</Text>
+            <Text block className={estilos.secundario}>
+              Inicio de sesión (UPN): {textoUpn(detalle.data)}
+            </Text>
             <span className={estilos.insignias}>
               <Badge appearance="tint" color={detalle.data.activo ? 'success' : 'danger'}>
                 {detalle.data.activo ? 'Activo' : 'Inactivo'}

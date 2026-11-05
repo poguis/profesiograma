@@ -29,6 +29,7 @@ public sealed class EntraIdAutenticacionTests
     private const string EmisorV1 = $"https://sts.windows.net/{Tenant}/";
     private static readonly Guid OidActivo = Guid.Parse("cccccccc-0000-0000-0000-000000000003");
     private static readonly Guid OidInactivo = Guid.Parse("cccccccc-0000-0000-0000-000000000004");
+    private static readonly Guid OidConflicto = Guid.Parse("cccccccc-0000-0000-0000-000000000005");
 
     private static readonly RsaSecurityKey Clave = new(RSA.Create(2048)) { KeyId = "clave-prueba" };
     private static readonly RsaSecurityKey OtraClave = new(RSA.Create(2048)) { KeyId = "clave-prueba" };
@@ -179,16 +180,77 @@ public sealed class EntraIdAutenticacionTests
         foreach (var p in new[] { corto, mapeado })
         {
             Assert.Equal(OidActivo, p.ObtenerObjectId());
-            Assert.Equal("a@sedemi.com", p.ObtenerEmail());
+            Assert.Equal("a@sedemi.com", p.ObtenerUpn());
+            Assert.Equal("a@sedemi.com", p.ObtenerCorreo()); // sin claim email: el UPN
             Assert.Equal(["Admin"], p.ObtenerRoles());
         }
+    }
+
+    // ------------------------------------------------------------------ TAREA-7b-2: UPN distinto del correo
+
+    [Fact]
+    public async Task UpnDistintoDelCorreo_MeDevuelveElCorreo_YAlAltaVanLosDos()
+    {
+        var (estado, cuerpo, prov) = await EnviarAsync("/api/usuarios/me",
+            Token(roles: ["Gestor"], correo: "upn.prueba@sedemi.com", email: "persona.prueba@sedemi.com"));
+
+        Assert.Equal(StatusCodes.Status200OK, estado);
+        Assert.Contains("\"email\":\"persona.prueba@sedemi.com\"", cuerpo);
+        Assert.Equal(("upn.prueba@sedemi.com", "persona.prueba@sedemi.com"), (prov.UltimoUpn, prov.UltimoCorreo));
+    }
+
+    [Fact]
+    public async Task SinClaimEmail_ElCorreoEsElUpn()
+    {
+        var (estado, cuerpo, prov) = await EnviarAsync("/api/usuarios/me", Token(roles: ["Gestor"], correo: "upn.prueba@sedemi.com"));
+
+        Assert.Equal(StatusCodes.Status200OK, estado);
+        Assert.Contains("\"email\":\"upn.prueba@sedemi.com\"", cuerpo);
+        Assert.Equal(("upn.prueba@sedemi.com", "upn.prueba@sedemi.com"), (prov.UltimoUpn, prov.UltimoCorreo));
+    }
+
+    [Fact]
+    public async Task SoloEmail_SinPreferredUsername_200ConUpnNulo()
+    {
+        var (estado, _, prov) = await EnviarAsync("/api/usuarios/me", Token(roles: ["Gestor"], correo: null, email: "persona.prueba@sedemi.com"));
+
+        Assert.Equal(StatusCodes.Status200OK, estado);
+        Assert.Equal((null, "persona.prueba@sedemi.com"), (prov.UltimoUpn, prov.UltimoCorreo));
+    }
+
+    [Fact]
+    public async Task UpnDeOtraIdentidad_403ConElMotivo()
+    {
+        var (estado, cuerpo, _) = await EnviarAsync("/api/usuarios/me", Token(roles: ["Gestor"], oid: OidConflicto));
+
+        Assert.Equal(StatusCodes.Status403Forbidden, estado);
+        Assert.Contains(ReglasProvisionamiento.MotivoUpnOtroOid, cuerpo);
+    }
+
+    [Fact]
+    public async Task DevAuth_EmiteEmail()
+    {
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Autenticacion:Modo"] = "DevAuth",
+            ["DevAuth:Usuarios:0:Clave"] = "gestor",
+            ["DevAuth:Usuarios:0:ObjectId"] = OidActivo.ToString(),
+            ["DevAuth:Usuarios:0:Email"] = "gestor.dev@profesiograma.local",
+            ["DevAuth:Usuarios:0:Roles:0"] = "Gestor",
+        });
+
+        var (estado, _, prov) = await EjecutarAsync(builder, "/api/usuarios/me", token: null, devUser: "gestor");
+
+        Assert.Equal(StatusCodes.Status200OK, estado);
+        Assert.Equal(("gestor.dev@profesiograma.local", "gestor.dev@profesiograma.local"), (prov.UltimoUpn, prov.UltimoCorreo));
     }
 
     // ------------------------------------------------------------------ tokens y pipeline
 
     private static string Token(string[] roles, string? aud = ClientId, string iss = Emisor, string? scp = ScopesApi.AccederComoUsuario,
         string? correo = "persona.prueba@sedemi.com", Guid? oid = null, DateTime? vence = null, RsaSecurityKey? clave = null,
-        string version = "2.0")
+        string version = "2.0", string? email = null)
     {
         var claims = new Dictionary<string, object>
         {
@@ -199,7 +261,8 @@ public sealed class EntraIdAutenticacionTests
         };
         if (roles.Length > 0) claims["roles"] = roles;
         if (scp is not null) claims["scp"] = scp;
-        if (correo is not null) claims["preferred_username"] = correo;
+        if (correo is not null) claims["preferred_username"] = correo; // UPN
+        if (email is not null) claims["email"] = email;               // claim opcional (TAREA-7b-2)
 
         var expira = vence ?? DateTime.UtcNow.AddMinutes(30);
         return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
@@ -269,12 +332,15 @@ public sealed class EntraIdAutenticacionTests
     private sealed class ProvisionamientoFalso : IUsuarioProvisionamiento
     {
         public int Llamadas { get; private set; }
+        public string? UltimoUpn { get; private set; }
+        public string? UltimoCorreo { get; private set; }
 
-        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct)
+        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string? upn, string correo, string nombreMostrar, CancellationToken ct)
         {
             Llamadas++;
-            return Task.FromResult(entraObjectId == OidInactivo
-                ? new UsuarioResuelto(8, false, "El usuario está inactivo en la aplicación.")
+            (UltimoUpn, UltimoCorreo) = (upn, correo);
+            return Task.FromResult(entraObjectId == OidInactivo ? new UsuarioResuelto(8, false, "El usuario está inactivo en la aplicación.")
+                : entraObjectId == OidConflicto ? new UsuarioResuelto(9, false, ReglasProvisionamiento.MotivoUpnOtroOid)
                 : new UsuarioResuelto(7, true));
         }
 

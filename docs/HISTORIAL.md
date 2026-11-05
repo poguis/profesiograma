@@ -28,6 +28,7 @@
 | H22 | Cierre de la TAREA-27 (29/10/2026): siguiente tarea, fila 1 de la hoja de ruta, pendientes 4 y 10 y fila ERP (acortados) |
 | H23 | Fase 7a, registro de avances (05/11/2026): siguiente tarea, filas 1 y 2 de la hoja de ruta, pendientes 7, 65 y 75 |
 | H24 | Fase 7b, Fase B (05/11/2026): siguiente tarea, fila 2 de la hoja de ruta y pendiente 7 |
+| H25 | TAREA-7b-2 (05/11/2026): siguiente tarea y fila 2 de la hoja de ruta |
 
 ## H1. Cabecera anterior
 
@@ -453,3 +454,11 @@ Texto anterior de la siguiente tarea, de la fila 2 de la hoja de ruta y del pend
 | 2. **Fase 7b** (siguiente) | Entra ID y MSAL (pendiente 7) |
 
 7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Lo verificado en Entra ID el 29/10/2026 está en `FASE_7_Entornos_Despliegue.md` §7. Texto anterior en `HISTORIAL.md`.
+
+## H25. Movido del estado vigente el 05/11/2026 (TAREA-7b-2)
+
+Texto anterior de la siguiente tarea y de la fila 2 de la hoja de ruta:
+
+| **Siguiente tarea** | **Fase 7b implementada** (backend 1180/1180, frontend 411/411): el usuario crea los registros (`FASE_7_Entornos_Despliegue.md` §7.2) y verifica M1–M7 (`docs/tareas/TAREA-7b-reporte.md`) |
+
+| 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7): faltan registros y M1–M7 |

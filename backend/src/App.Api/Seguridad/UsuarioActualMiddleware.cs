@@ -35,18 +35,19 @@ public sealed class UsuarioActualMiddleware(RequestDelegate next)
                 return;
             }
 
-            var email = principal.ObtenerEmail();
-            if (string.IsNullOrWhiteSpace(email))
+            var correo = principal.ObtenerCorreo(); // null solo si faltan email y el UPN (TAREA-7b-2)
+            if (correo is null)
             {
                 await TypedResults.Problem(
                     title: "Token sin correo",
-                    detail: "El token no contiene preferred_username/email.",
+                    detail: "El token no contiene email ni preferred_username.",
                     statusCode: StatusCodes.Status403Forbidden).ExecuteAsync(contexto);
                 return;
             }
 
             var nombre = principal.ObtenerNombre();
-            var resuelto = await provisionamiento.ResolverAsync(principal.ObtenerObjectId(), email, nombre ?? email, contexto.RequestAborted);
+            var resuelto = await provisionamiento.ResolverAsync(
+                principal.ObtenerObjectId(), principal.ObtenerUpn(), correo, nombre ?? correo, contexto.RequestAborted);
             if (!resuelto.Habilitado)
             {
                 await TypedResults.Problem(
@@ -56,7 +57,7 @@ public sealed class UsuarioActualMiddleware(RequestDelegate next)
                 return;
             }
 
-            usuarioActual.Establecer(resuelto.UsuarioId, email.Trim().ToLowerInvariant(), nombre, principal.ObtenerRoles());
+            usuarioActual.Establecer(resuelto.UsuarioId, correo.Trim().ToLowerInvariant(), nombre, principal.ObtenerRoles());
         }
 
         await next(contexto);

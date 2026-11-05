@@ -15,6 +15,7 @@ internal sealed class UsuarioConfiguracion : IEntityTypeConfiguration<Usuario>
         b.HasKey(u => u.Id).HasName("PK_Usuario");
 
         b.Property(u => u.Email).HasMaxLength(256).IsRequired();
+        b.Property(u => u.Upn).HasMaxLength(256);
         b.Property(u => u.NombreMostrar).HasMaxLength(200).IsRequired();
         b.Property(u => u.EsSistema).ConDefault(false, "DF_Usuario_EsSistema");
         b.Property(u => u.Activo).ConDefault(true, "DF_Usuario_Activo");
@@ -23,6 +24,9 @@ internal sealed class UsuarioConfiguracion : IEntityTypeConfiguration<Usuario>
         b.HasIndex(u => u.EntraObjectId).IsUnique()
             .HasDatabaseName("UX_Usuario_EntraObjectId")
             .HasFilter("[EntraObjectId] IS NOT NULL");
+        b.HasIndex(u => u.Upn).IsUnique()
+            .HasDatabaseName("UX_Usuario_Upn")
+            .HasFilter("[Upn] IS NOT NULL");
 
         b.HasOne(u => u.Empleado).WithMany()
             .HasForeignKey(u => u.EmpleadoId)

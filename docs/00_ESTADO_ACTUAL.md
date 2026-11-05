@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-05 (Fase 7b, Fase B). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-05 (TAREA-7b-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 05/11/2026 |
 |---|---|
@@ -12,7 +12,7 @@
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
 | Pendientes 18 y 67 (TAREA-27) | ✅ Verificada el 29/10/2026 (M1–M4; backend 1163/1163, frontend 404/404) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **Fase 7b implementada** (backend 1180/1180, frontend 411/411): el usuario crea los registros (`FASE_7_Entornos_Despliegue.md` §7.2) y verifica M1–M7 (`docs/tareas/TAREA-7b-reporte.md`) |
+| **Siguiente tarea** | **7b y 7b-2 implementadas**. Usuario: respaldo de DEV, `AgregarUpnUsuario` (script revisado), user-secrets, `.env.development.local`, M1–M7 (`TAREA-7b-2-reporte.md`) |
 
 ## 1. Índice de documentos
 
@@ -96,7 +96,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Tarea | Alcance |
 |---|---|
 | 1. **Fase 7a** (en curso) | Entornos DEV/QA/PRO y respaldos (pendiente 65): base QA, login y respaldos ✅; sitio IIS en la Fase 7d |
-| 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7): faltan registros y M1–M7 |
+| 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7) + 7b-2 (UPN): migración sin aplicar, registros y M1–M7 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
 | 4. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |

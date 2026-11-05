@@ -52,7 +52,7 @@ Diseño, claves, tabla 401/403, decisiones P1–P6, ajustes 1–3 y lo que se cr
   En la práctica no afecta: con `requestedAccessTokenVersion = 2`, Entra emite siempre el GUID.
 - **Versiones de MSAL:** no se usaron las últimas (5.8.0 / 5.28.0), publicadas hace horas. Se eligió el par compatible publicado el 21/10/2026 (5.7.3 / 5.26.0). `npm audit` da 0 vulnerabilidades.
 - **InteractionRequired:** el plan de la Fase A preveía un `acquireTokenRedirect` automático. Para cumplir el ajuste 2 («nunca un redirect automático»), ahora se muestra «La sesión venció; vuelva a iniciar sesión.» con el botón.
-- **P3 no implementado:** el respaldo por `email` cambia la firma de `IUsuarioProvisionamiento.ResolverAsync`, sus tres dobles de prueba, la clave de caché y la regla de conflicto. Se decide después de M3.
+- **P3 → TAREA-7b-2** (05/11/2026; ver `TAREA-7b-2-reporte.md`, cuyas M0–M7 reemplazan las de este reporte). Texto original: **P3 no implementado:** el respaldo por `email` cambia la firma de `IUsuarioProvisionamiento.ResolverAsync`, sus tres dobles de prueba, la clave de caché y la regla de conflicto. Se decide después de M3.
 - **`.gitignore` raíz:** `**/.env*` ignoraba el `.example`; se agregó la excepción `!frontend/.env.development.local.example`.
 - **Pista de inicio de sesión:** `loginHint` se guarda en `localStorage` (`profesiograma.loginHint`, solo el nombre de usuario) para el `ssoSilent` tras cerrar el navegador. «Cerrar sesión» la borra.
 - **Pruebas sin red:** en las pruebas, los metadatos OpenID son estáticos y el validador de emisor de Microsoft.Identity.Web (que consulta login.microsoftonline.com) se reemplaza por `ValidIssuers` (los emisores v1 y v2 del tenant ficticio). La validación real del emisor se verifica en M2.

@@ -7,7 +7,7 @@ namespace App.Api.Seguridad.DevAuth;
 
 /// <summary>
 /// Autenticación SIMULADA para desarrollo local, sin App Registrations.
-/// Emite las mismas claims que un token de Entra ID (oid, preferred_username, name, roles).
+/// Emite las mismas claims que un token de Entra ID (oid, preferred_username, email, name, roles, scp).
 /// Solo se registra en el entorno Development (ver AutenticacionExtensions).
 /// </summary>
 public sealed class DevAuthHandler(
@@ -38,6 +38,7 @@ public sealed class DevAuthHandler(
         {
             new(ClaimNames.ObjectId, usuario.ObjectId.ToString()),
             new(ClaimNames.PreferredUsername, usuario.Email),
+            new(ClaimNames.Email, usuario.Email), // TAREA-7b-2: como el claim opcional email de Entra
             new(ClaimNames.Name, usuario.Nombre),
             new(ClaimNames.Scope, ScopesApi.AccederComoUsuario), // Fase 7b: las mismas políticas que con Entra ID
             new("auth_mode", DevAuthDefaults.Esquema)

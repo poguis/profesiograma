@@ -9,13 +9,13 @@ public sealed record DepartamentoUsuarioDto(int Id, string NombreCorto);
 
 /// <summary>ConIdentidad = ya ingresó con Entra ID (tiene EntraObjectId). Departamentos = asignaciones activas.</summary>
 public sealed record UsuarioAdminDto(
-    int Id, string Email, string NombreMostrar, bool Activo, bool ConIdentidad, IReadOnlyList<DepartamentoUsuarioDto> Departamentos);
+    int Id, string Email, string? Upn, string NombreMostrar, bool Activo, bool ConIdentidad, IReadOnlyList<DepartamentoUsuarioDto> Departamentos);
 
 /// <summary>Activo = el departamento está activo (uno inactivo solo aparece si el usuario ya lo tiene asignado).</summary>
 public sealed record DepartamentoDisponibleDto(int Id, string Nombre, string NombreCorto, bool Activo, bool Asignado);
 
 public sealed record UsuarioAdminDetalleDto(
-    int Id, string Email, string NombreMostrar, bool Activo, bool ConIdentidad, IReadOnlyList<DepartamentoUsuarioDto> Departamentos,
+    int Id, string Email, string? Upn, string NombreMostrar, bool Activo, bool ConIdentidad, IReadOnlyList<DepartamentoUsuarioDto> Departamentos,
     IReadOnlyList<DepartamentoDisponibleDto> DepartamentosDisponibles, bool EsUsuarioActual);
 
 /// <summary>GET /api/admin/usuarios (query string como texto, validado en el servicio).</summary>

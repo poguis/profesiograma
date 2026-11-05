@@ -118,7 +118,7 @@ Lo verificó el usuario el 29/10/2026 (pendiente 7):
 |---|---|
 | P1 | Sin rol `Admin` ni `Gestor`: 403 «Sin rol asignado» **antes** del alta; la fila `Usuario` no se crea |
 | P2 | No se valida el dominio al ingresar (single-tenant + asignación requerida) |
-| P3 | Respaldo por el claim `email` en el alta: **no implementado** (cambia la firma de `IUsuarioProvisionamiento`); se decide después de M3 |
+| P3 | UPN distinto del correo: resuelto en la **TAREA-7b-2** (§7.3) |
 | P5 | «Asignación requerida» solo en la API; el frontend traduce AADSTS501051 a «No tienes acceso…» |
 | P6 | Tenant y client IDs (públicos) en user-secrets (backend) y en `frontend/.env.development.local` (ignorado) |
 | Ajuste 1 | `AzureAd:Audience` **vacío**: Microsoft.Identity.Web acepta el GUID del ClientId (token v2) y `api://ClientId` (token v1); un token v2 con `aud = api://…` se rechaza (E2c) |
@@ -200,6 +200,49 @@ No hay secretos: el SPA es un cliente público (PKCE) y la API solo valida token
 - Si el tenant bloquea el consentimiento de usuario, el primer ingreso pedirá la aprobación de un administrador para `openid`, `profile` y `offline_access`, y hará falta TI (pendiente 75).
 - Si el portal no deja asignar roles al dueño del registro, también hará falta TI.
 - Un cambio de rol rige con el siguiente token (hasta unos 60–90 minutos, o al cerrar e iniciar sesión).
+
+### 7.3 TAREA-7b-2 — UPN distinto del correo (P3; implementada el 05/11/2026, migración sin aplicar)
+
+En SEDEMI el UPN (`preferred_username`, p. ej. `sig4@…`) suele ser **distinto** del correo (p. ej. `carlos_pogo@…`). El Admin precarga por correo y los avisos de la Fase 7c irán al correo. En el registro de la API se agrega el claim opcional **`email`** al access token (Configuración del token → Agregar notificación opcional → Acceso → `email`).
+
+**Modelo:**
+- `Usuario.Upn`: `nvarchar(256)` NULL, en minúsculas, con índice único filtrado `UX_Usuario_Upn` (`[Upn] IS NOT NULL`);
+- `Usuario.Email` sigue siendo el correo;
+- migración `AgregarUpnUsuario`.
+
+**Claims:**
+- UPN = `preferred_username` (si falta, `upn`);
+- correo = `email` (si falta, el UPN);
+- «Token sin correo» solo si faltan los dos;
+- `/me` y `UsuarioActual.Email` devuelven el **correo**;
+- DevAuth emite también `email`.
+
+**Primer ingreso:** las reglas son una función pura, `ReglasProvisionamiento.Decidir` (Application); Infrastructure solo busca y guarda.
+- **Orden de búsqueda: oid → UPN → correo.** Al encontrar la fila se completan el oid y el UPN que falten; nunca se reemplazan.
+- Si no existe, se crea con `Email` = correo y `Upn` = UPN. El rol ya se exigió antes (P1).
+
+| Conflicto | Respuesta |
+|---|---|
+| Correo ligado a otro oid | 403 «El correo está asociado a otra identidad de Entra ID.» (sin cambios) |
+| UPN ligado a otro oid, o el UPN que se completaría ya está en otra fila | 403 «El UPN está asociado a otra identidad de Entra ID.» |
+| Q1: fila encontrada por correo con un `Upn` guardado distinto del del token | 403 «El correo está asociado a otro UPN de Entra ID.» |
+
+**Decisiones del usuario (05/11/2026):**
+
+| # | Decisión |
+|---|---|
+| Q1 | Sí: el conflicto anterior da 403 |
+| Q2 | Sí: el filtro `texto` del listado de usuarios también busca en `Upn` |
+| Q3 | Sí: los logs del alta registran solo el Id y los 8 primeros caracteres del oid; nunca el correo ni el UPN |
+| Q4 | No: el correo **no** se actualiza en cada ingreso. **Tema de la Fase 7c** (avisos por correo): si una persona cambia su correo en Entra, `Usuario.Email` queda con el anterior. Decidir allí si se actualiza desde el claim `email` o lo corrige el Admin |
+
+**Administración:** el listado (columna «Inicio de sesión (UPN)») y el detalle muestran el UPN de solo lectura; sin valor, «Se completa en el primer ingreso». El alta manual sigue pidiendo el correo.
+
+**Fase 3 (sin implementar):** el UPN se precarga desde el nombre de inicio de sesión de los campos de persona de SharePoint (ver también `FASE_5_Usuarios_Departamentos.md` §7).
+
+**Riesgos:**
+- **Correo provisional:** si el token no trae `email` (claim opcional sin configurar, o cuenta sin el atributo `mail`), la fila se crea con `Email` = UPN. Un alta manual posterior con el correo real crearía una segunda fila para la misma persona, o daría «Ya existe» si coincidieran. Por eso hay que configurar el claim antes del primer ingreso real y comprobarlo en M3.
+- **Filas DevAuth:** las de antes de la 7b-2 completan su `Upn` en el siguiente ingreso (DevAuth: UPN = correo de prueba).
 
 ## 8. Pendientes con TI
 

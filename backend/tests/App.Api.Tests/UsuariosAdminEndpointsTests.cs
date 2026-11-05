@@ -153,7 +153,7 @@ public sealed class UsuariosAdminEndpointsTests
 
     private sealed class ProvisionamientoFalso : IUsuarioProvisionamiento
     {
-        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct) =>
+        public Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string? upn, string correo, string nombreMostrar, CancellationToken ct) =>
             throw new NotSupportedException();
 
         public void Invalidar(string email, Guid? entraObjectId) { }
@@ -178,7 +178,7 @@ public sealed class UsuariosAdminEndpointsTests
         public Task<UsuarioAdminDto?> ObtenerAsync(int id, CancellationToken ct)
         {
             Llamadas++;
-            return Task.FromResult(id == 5 ? new UsuarioAdminDto(5, "existente@sedemi.com", "X", true, false, []) : null);
+            return Task.FromResult(id == 5 ? new UsuarioAdminDto(5, "existente@sedemi.com", null, "X", true, false, []) : null);
         }
 
         public Task<UsuarioRegistro?> ObtenerRegistroAsync(int id, CancellationToken ct)

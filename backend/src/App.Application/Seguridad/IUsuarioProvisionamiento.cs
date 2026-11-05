@@ -5,7 +5,8 @@ namespace App.Application.Seguridad;
 /// </summary>
 public interface IUsuarioProvisionamiento
 {
-    Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string email, string nombreMostrar, CancellationToken ct);
+    /// <summary>TAREA-7b-2: busca por oid, luego por UPN y luego por correo (ReglasProvisionamiento).</summary>
+    Task<UsuarioResuelto> ResolverAsync(Guid? entraObjectId, string? upn, string correo, string nombreMostrar, CancellationToken ct);
 
     /// <summary>
     /// TAREA-25-1: quita de la caché (10 min) las entradas del usuario, por oid y por correo, para que un cambio (baja,
