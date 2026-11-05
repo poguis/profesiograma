@@ -1,6 +1,6 @@
 # TAREA-7b — Reporte: Entra ID en DEV (backend y MSAL)
 
-**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A aprobado) · **Estado:** implementada; pendiente de los registros del portal y de la verificación del usuario (M1–M7)
+**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A aprobado) · **Estado:** ✅ verificada por el usuario el 05/11/2026, junto con la 7b-2 (§7)
 
 Diseño, claves, tabla 401/403, decisiones P1–P6, ajustes 1–3 y lo que se crea en el portal: `docs/fases/FASE_7_Entornos_Despliegue.md` §7.1–§7.2.
 
@@ -73,6 +73,16 @@ Requisitos: los registros (FASE_7 §7.2), los IDs en user-secrets (`Autenticacio
 | M7 | Volver a DevAuth (`dotnet user-secrets remove Autenticacion:Modo` y renombrar el `.local`) | Igual que M1 |
 
 ## 6. Pendientes
-- Registros del portal, M1–M7 y el cierre documental de la Fase 7b.
-- P3 (respaldo por `email`), según el resultado de M3.
 - Dividir el chunk de 505 kB (opcional).
+- Registros de QA y PRO, que dependen del pendiente 75.
+- Los dos anteriores se cerraron el 05/11/2026: los registros del portal y M1–M7, por una parte, y P3, resuelto en la TAREA-7b-2, por otra.
+
+## 7. Verificación del usuario (05/11/2026)
+Las M de este reporte se verificaron con las de la 7b-2 (M0–M7). El detalle está en `TAREA-7b-2-reporte.md` §7.
+- **Registros:** creados según §7.2 y comprobados (FASE_7 §7.4).
+- **Consentimiento:** el riesgo de consentimiento del administrador no ocurrió.
+- **M2:** token v2 con `aud` = GUID de la API (ajuste 1); llamadas con `Bearer` y sin `X-Dev-User`.
+- **M4:** sin asignación no hay acceso. La pantalla puede ser la de Microsoft (AADSTS501051) o la nuestra.
+- **M5:** cerrar sesión y volver a entrar, sin bucles.
+- **M6:** un pasante con rol Gestor, dado de baja, recibió 403 en su siguiente acción. Quedó en Entra ID como Usuario con rol Gestor y está dado de baja en la aplicación. Estado final según el usuario: «reactivado».
+- **M7:** se volvió a DevAuth y luego a Entra ID. La ayuda ante modos distintos se mostró bien.

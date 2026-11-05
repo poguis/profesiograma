@@ -29,6 +29,7 @@
 | H23 | Fase 7a, registro de avances (05/11/2026): siguiente tarea, filas 1 y 2 de la hoja de ruta, pendientes 7, 65 y 75 |
 | H24 | Fase 7b, Fase B (05/11/2026): siguiente tarea, fila 2 de la hoja de ruta y pendiente 7 |
 | H25 | TAREA-7b-2 (05/11/2026): siguiente tarea y fila 2 de la hoja de ruta |
+| H26 | Cierre de la 7b y la 7b-2 (05/11/2026): cabecera, fila TAREA-27, siguiente tarea, fila 2 de la hoja de ruta, pendiente 7; títulos de FASE_7 §7.1 y §7.3 |
 
 ## H1. Cabecera anterior
 
@@ -462,3 +463,25 @@ Texto anterior de la siguiente tarea y de la fila 2 de la hoja de ruta:
 | **Siguiente tarea** | **Fase 7b implementada** (backend 1180/1180, frontend 411/411): el usuario crea los registros (`FASE_7_Entornos_Despliegue.md` §7.2) y verifica M1–M7 (`docs/tareas/TAREA-7b-reporte.md`) |
 
 | 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7): faltan registros y M1–M7 |
+
+## H26. Movido del estado vigente el 05/11/2026 (cierre de la 7b y la 7b-2)
+
+Texto anterior de la cabecera, de la fila de la TAREA-27, de la siguiente tarea, de la fila 2 de la hoja de ruta y del pendiente 7:
+
+**Última actualización:** 2026-11-05 (TAREA-7b-2).
+
+| Pendientes 18 y 67 (TAREA-27) | ✅ Verificada el 29/10/2026 (M1–M4; backend 1163/1163, frontend 404/404) |
+
+| **Siguiente tarea** | **7b y 7b-2 implementadas**. Usuario: respaldo de DEV, `AgregarUpnUsuario` (script revisado), user-secrets, `.env.development.local`, M1–M7 (`TAREA-7b-2-reporte.md`) |
+
+| 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7) + 7b-2 (UPN): migración sin aplicar, registros y M1–M7 |
+
+7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Lo verificado en Entra ID el 29/10/2026 y el diseño de la Fase 7b (implementado el 05/11/2026) están en `FASE_7_Entornos_Despliegue.md` §7. Texto anterior en `HISTORIAL.md`.
+
+Títulos y una línea anteriores de `FASE_7_Entornos_Despliegue.md`:
+
+### 7.1 Fase 7b — diseño final (implementado el 05/11/2026; pendiente de los registros y de M1–M7)
+
+- Identificador: `oid`. Correo: `preferred_username` (o `email` / `upn`).
+
+### 7.3 TAREA-7b-2 — UPN distinto del correo (P3; implementada el 05/11/2026, migración sin aplicar)

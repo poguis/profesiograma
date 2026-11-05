@@ -1,6 +1,6 @@
 # TAREA-7b-2 — Reporte: UPN distinto del correo (P3)
 
-**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A corta aprobado) · **Estado:** implementada; pendiente de aplicar la migración, de los registros del portal y de la verificación del usuario (M0–M7, que **reemplazan** a las de `TAREA-7b-reporte.md`)
+**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A corta aprobado) · **Estado:** ✅ verificada por el usuario el 05/11/2026 (M0–M7, §7), con backend 1196/1196 y frontend 412/412
 
 El diseño (orden de búsqueda, conflictos, Q1–Q4 y riesgos) está en `docs/fases/FASE_7_Entornos_Despliegue.md` §7.3.
 
@@ -83,6 +83,21 @@ Requisitos:
 | M7 | Volver a DevAuth | Igual que M1 |
 
 ## 6. Pendientes
-- M0–M7 y el cierre documental de la 7b y la 7b-2.
 - Q4: actualizar el correo, para la Fase 7c.
 - Precarga del UPN en la Fase 3.
+- Registros de QA y PRO, que dependen del pendiente 75 (`FASE_7_Entornos_Despliegue.md` §7.4).
+
+## 7. Verificación del usuario (05/11/2026)
+| # | Resultado |
+|---|---|
+| Portal | Configuración de la API, la aplicación empresarial y el SPA según FASE_7 §7.4. Claim opcional `email` con el permiso `email` de Graph. Ningún permiso requiere consentimiento del administrador |
+| M0 | Respaldo `PROFESIOGRAMA_DEV_20261105_antes_7b2.bak` verificado. `AgregarUpnUsuario` se aplicó con `dotnet ef database update`, porque el script del §3 deja el `ALTER` y el `CREATE INDEX` en el mismo lote; en QA, el `--idempotent` usa `EXEC`. Columna e índice verificados |
+| M1 | OK |
+| M2 | OK: el primer ingreso real no pidió aprobación de administrador; las llamadas llevan `Bearer`. Token v2: `aud` = GUID de la API, `iss` v2.0 del tenant, `azp` = SPA, `scp`, `roles`, `preferred_username` y `email` |
+| M3 | OK: la fila Id 8 tiene oid, UPN y un correo distinto del UPN. Los usuarios DevAuth (Id 2, 3 y 5) completaron su UPN, igual al correo de prueba |
+| M4 | OK: la cuenta sin asignación no entra. La pantalla puede ser la de Microsoft o la nuestra |
+| M5 | OK |
+| M6 | OK: una cuenta de pasante con rol Gestor ingresó, y tras darla de baja su siguiente acción dio 403 |
+| M7 | OK. La ayuda ante modos distintos (API en EntraId, frontend en dev) se mostró bien |
+
+**Estado final del pasante:** sigue en Entra ID como Usuario con rol Gestor y está dado de baja en la aplicación. Estado final según el usuario: «reactivado».

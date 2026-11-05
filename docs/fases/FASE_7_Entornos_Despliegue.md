@@ -103,7 +103,9 @@ Lo verificó el usuario el 29/10/2026 (pendiente 7):
 - La configuración de consentimiento no es visible (401).
 - Los permisos de **aplicación** de Graph requieren a TI (Privileged Role Administrator).
 
-### 7.1 Fase 7b — diseño final (implementado el 05/11/2026; pendiente de los registros y de M1–M7)
+**Estado: Entra ID en DEV verificado (05/11/2026)**, Fase 7b y TAREA-7b-2 (M1–M7). Operación y lo que falta para QA: §7.4.
+
+### 7.1 Fase 7b — diseño final (implementado y verificado el 05/11/2026)
 
 **Decisiones fijas:**
 - single-tenant SEDEMI;
@@ -129,7 +131,7 @@ Lo verificó el usuario el 29/10/2026 (pendiente 7):
 - Todas las políticas (por defecto, Fallback, Admin y Gestor) exigen un usuario autenticado y `RequireScope("access_as_user")`. Así un token de aplicación, con roles pero sin `scp`, recibe 403.
 - DevAuth emite `scp=access_as_user`.
 - `UsuarioActualMiddleware` rechaza al usuario sin rol antes del alta.
-- Identificador: `oid`. Correo: `preferred_username` (o `email` / `upn`).
+- Identificador: `oid`. UPN y correo: ver §7.3 (TAREA-7b-2).
 
 **Frontend** (`src/auth/`):
 - `entra.ts`: lógica pura.
@@ -201,7 +203,7 @@ No hay secretos: el SPA es un cliente público (PKCE) y la API solo valida token
 - Si el portal no deja asignar roles al dueño del registro, también hará falta TI.
 - Un cambio de rol rige con el siguiente token (hasta unos 60–90 minutos, o al cerrar e iniciar sesión).
 
-### 7.3 TAREA-7b-2 — UPN distinto del correo (P3; implementada el 05/11/2026, migración sin aplicar)
+### 7.3 TAREA-7b-2 — UPN distinto del correo (P3; implementada y verificada el 05/11/2026, migración aplicada en DEV)
 
 En SEDEMI el UPN (`preferred_username`, p. ej. `sig4@…`) suele ser **distinto** del correo (p. ej. `carlos_pogo@…`). El Admin precarga por correo y los avisos de la Fase 7c irán al correo. En el registro de la API se agrega el claim opcional **`email`** al access token (Configuración del token → Agregar notificación opcional → Acceso → `email`).
 
@@ -243,6 +245,66 @@ En SEDEMI el UPN (`preferred_username`, p. ej. `sig4@…`) suele ser **distinto*
 **Riesgos:**
 - **Correo provisional:** si el token no trae `email` (claim opcional sin configurar, o cuenta sin el atributo `mail`), la fila se crea con `Email` = UPN. Un alta manual posterior con el correo real crearía una segunda fila para la misma persona, o daría «Ya existe» si coincidieran. Por eso hay que configurar el claim antes del primer ingreso real y comprobarlo en M3.
 - **Filas DevAuth:** las de antes de la 7b-2 completan su `Upn` en el siguiente ingreso (DevAuth: UPN = correo de prueba).
+
+### 7.4 Entra ID en DEV — estado verificado y operación (05/11/2026)
+
+**IDs públicos de DEV** (no son secretos; los valores reales están en user-secrets y en `frontend/.env.development.local`):
+
+| Dato | Valor |
+|---|---|
+| Tenant (Id. de directorio) | `3cec9264-5c1c-429e-8877-c23d701139ac` |
+| Client ID de SIG-Profesiograma-API-DEV | `8e32bc38-c2bd-408c-aeb0-efe322f5c606` |
+| Client ID de SIG-Profesiograma-SPA-DEV | `77fa0b93-436d-4983-b3e9-caccf894156c` |
+| Scope | `api://8e32bc38-c2bd-408c-aeb0-efe322f5c606/access_as_user` |
+
+**Configuración verificada en el portal:**
+- **API:**
+  - scope `access_as_user`;
+  - roles `Admin` y `Gestor`;
+  - manifiesto v2;
+  - claim opcional `email` (Acceso), con el permiso `email` de Graph;
+  - SPA preautorizado.
+- **Aplicación empresarial de la API:**
+  - asignación requerida = Sí;
+  - visible = No;
+  - asignación por usuario (la licencia no permite grupos).
+- **SPA:**
+  - plataforma SPA `http://localhost:5173`;
+  - sin flujos implícitos ni de cliente público;
+  - permiso `access_as_user`.
+- Ningún permiso requiere consentimiento del administrador. El primer ingreso real no lo pidió (el riesgo de §7.2 no ocurrió).
+
+**Token observado (v2):**
+- `aud` = GUID de la API;
+- `iss` = v2.0 del tenant;
+- `azp` = SPA;
+- `scp` = `access_as_user`;
+- `roles`;
+- `preferred_username` (UPN) y `email` (correo).
+
+**Notas de la verificación:**
+- **M4:** la cuenta sin asignación puede ver la pantalla de Microsoft (AADSTS501051 en el inicio de sesión) o la nuestra («No tienes acceso a PROFESIOGRAMA.»). Las dos son correctas.
+- **Migración:** `AgregarUpnUsuario` se aplicó con `dotnet ef database update`, porque el script común deja el `ALTER` y el `CREATE INDEX` en el mismo lote. En QA se usa el script `--idempotent`, que envuelve cada sentencia en `EXEC`.
+
+**Cambiar de modo en DEV:**
+
+Para pasar a Entra ID:
+1. Desde `backend/`: `dotnet user-secrets set Autenticacion:Modo EntraId --project src/App.Api`.
+2. `cd frontend` y luego `ren .env.development.local.entra .env.development.local`.
+3. Reiniciar la API y `npm run dev`.
+
+Para volver a DevAuth:
+1. Desde `backend/`: `dotnet user-secrets remove Autenticacion:Modo --project src/App.Api`.
+2. `cd frontend` y luego `ren .env.development.local .env.development.local.entra`.
+3. Reiniciar la API y `npm run dev`.
+
+El `cd` va antes del `ren`, porque `ren` no acepta una ruta en el nombre nuevo. Git ignora los dos nombres del archivo: `.env.development.local` por `frontend/.gitignore` (`*.local`) y `.env.development.local.entra` por `.gitignore` (`**/.env*`). Si los modos no coinciden (API EntraId con el frontend en dev, o al revés), la aplicación muestra la ayuda correspondiente.
+
+**Decisión del usuario (05/11/2026):** DEV queda por defecto en **DevAuth**, porque los scripts `.cmd` de `backend/tests/manual/` necesitan `X-Dev-User`. QA y PRO usan **siempre Entra ID**: DevAuth solo existe en Development (guarda E13).
+
+**Lección:** nunca pegar tokens en chats ni en tickets. Para inspeccionarlos se usa `jwt.ms`.
+
+**Falta para QA (y luego PRO):** los registros de QA, con sus URI de redirección HTTPS, cuando TI entregue el certificado y el DNS (pendiente 75). La prueba de humo de la Fase 7d-1 (`http 192.168.1.77:7082`) no usa inicio de sesión.
 
 ## 8. Pendientes con TI
 

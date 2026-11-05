@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-05 (TAREA-7b-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-05 (cierre de la 7b y la 7b-2). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 05/11/2026 |
 |---|---|
@@ -10,9 +10,9 @@
 | Novedades, frontend | 24a–24d ✅ verificadas por el usuario el 26/10/2026 (24d: S1–S6; 349/349). Sigue la 24e (opcional, B0) |
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
-| Pendientes 18 y 67 (TAREA-27) | ✅ Verificada el 29/10/2026 (M1–M4; backend 1163/1163, frontend 404/404) |
+| Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **7b y 7b-2 implementadas**. Usuario: respaldo de DEV, `AgregarUpnUsuario` (script revisado), user-secrets, `.env.development.local`, M1–M7 (`TAREA-7b-2-reporte.md`) |
+| **Siguiente tarea** | **Fase 7d-1** — publicación de prueba en SDMAPPTEST2 (http 192.168.1.77:7082, prueba de humo sin inicio de sesión), Fase A |
 
 ## 1. Índice de documentos
 
@@ -96,7 +96,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Tarea | Alcance |
 |---|---|
 | 1. **Fase 7a** (en curso) | Entornos DEV/QA/PRO y respaldos (pendiente 65): base QA, login y respaldos ✅; sitio IIS en la Fase 7d |
-| 2. **Fase 7b** (en verificación) | Entra ID y MSAL (pendiente 7) + 7b-2 (UPN): migración sin aplicar, registros y M1–M7 |
+| 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
 | 4. Fase 7d | IIS, HTTPS y DNS (pendiente 59) |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
@@ -113,7 +113,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 2. Excel de cargos → código Infor (opcional). **TAREA-25-3-1:** la importación desde la API (todos los activos) y la edición de `CodigoInfor` ya están en el backend (`FASE_5_Usuarios_Departamentos.md` §10); la alta puntual también da de alta el puesto. Queda abierto solo el Excel, como opcional.
 4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). Plantilla en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (TAREA-20) y flujo `ReporteProyectosSIG` en el repo (TAREA-22-2), pero sin el código del script: los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
-7. [Fase 7, más adelante] App Registrations (API + SPA) con App Roles `Admin` y `Gestor`. (`/api/health/db` ya es `AllowAnonymous` desde la TAREA-02.) **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63 (C33 de `FASE_2_Modelo_Datos.md`). Lo verificado en Entra ID el 29/10/2026 y el diseño de la Fase 7b (implementado el 05/11/2026) están en `FASE_7_Entornos_Despliegue.md` §7. Texto anterior en `HISTORIAL.md`.
+7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2, verificadas el 05/11/2026; `FASE_7_Entornos_Despliegue.md` §7). Falta QA y PRO: registros con URI HTTPS, que dependen del certificado y el DNS (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push. Pregunta abierta: ¿el remoto `origin` es privado?
 10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
