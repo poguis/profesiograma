@@ -1,6 +1,6 @@
 # TAREA-7d-1 — Reporte: publicación de prueba en SDMAPPTEST2 (QA, http, sin inicio de sesión)
 
-**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A, con D1–D8 y J1–J7) · **Estado:** implementada; pendiente de la ejecución y la verificación del usuario (`backend/tests/manual/tarea7d1/LEEME.md`)
+**Fecha:** 05/11/2026 · **Fase:** B (implementación del plan de la Fase A, con D1–D8 y J1–J7) · **Estado:** ✅ verificada por el usuario el 06/11/2026 (§7)
 
 Diseño, decisiones y ajustes: `docs/fases/FASE_7_Entornos_Despliegue.md` §9.
 
@@ -81,6 +81,40 @@ El orden completo y el resultado esperado de cada paso están en `backend/tests/
 | 9 | Si algo falla | Tabla de 500.19, 500.30, 500.31 y 503 del LEEME |
 
 ## 6. Pendientes
-- La ejecución y la verificación de esta tarea, y su cierre documental.
-- 7d-2: endurecimiento (`Server` y `X-Powered-By`, `web.config` propio).
+- 7d-2: endurecimiento y despliegue (pendiente 78).
 - SPA-QA y HTTPS (pendiente 75); Hosting Bundle (75); configuración del frontend en tiempo de ejecución (77).
+- Pendientes 79–82 (cierre): `/assets/` en pruebas automáticas, carpeta de despliegue versionada, npm audit y el bloque de 505 kB.
+
+## 7. Verificación del usuario (05–06/11/2026)
+| # | Resultado |
+|---|---|
+| ClientId | Confirmado por el usuario en el portal (Información general → Id. de aplicación (cliente) = `a0b57ea8-e21b-4bd1-a9c4-f39fc7a0b2eb`): se cierra el [SUPUESTO] del §4. La validación de tokens con este ClientId queda para la prueba con el SPA-QA (pendiente 75) |
+| 1 | Commit `37e5dc4`; `publicar-qa` con P1 y C1–C12 OK (162 archivos, 94,93 MB) |
+| 2 | `D:\BACKUP\PROFESIOGRAMA_QA_20261105_antes_7d1.bak` (6,08 MB, COPY_ONLY + CHECKSUM, VERIFYONLY válido) |
+| 3 | `migraciones-QA.sql` aplicado: 7 migraciones, `Usuario.Upn` nvarchar(256) NULL, `UX_Usuario_Upn` único filtrado, `@@TRANCOUNT = 0` |
+| 4 | Punto cero v2 `D:\BACKUP\PROFESIOGRAMA_QA_20261105_punto_cero_v2.bak` (VERIFYONLY válido) |
+| 5 | Respaldo de la configuración de IIS `antes_SIG_Profesiograma_20261106`. Grupo `SIG_Profesiograma`: sin código administrado, integrado, `ApplicationPoolIdentity`, `loadUserProfile = true`. La variable `ConnectionStrings__Profesiograma` se escribió con el **Editor de configuración**; su forma es `Server=NIQUEL,1433;…;Encrypt=True;TrustServerCertificate=True;Application Name=SIG_Profesiograma_QA`. El login se probó en SSMS contra `NIQUEL,1433` (`@@SERVERNAME = NIQUEL\SSDEV`) |
+| 6 | Sitio id 42, `http/192.168.1.77:7082:`, `C:\inetpub\wwwroot\SIG_Profesiograma`, NTFS RX para el grupo. **Sin regla de firewall**: el 7082 ya era accesible |
+| 7 | Paquete en `C:\DEPLOY\SIG_Profesiograma\20261105_1434_37e5dc4\`. `version.txt` está en la raíz del sitio (no se sirve: solo se publica `wwwroot\`) |
+| Runtime | La aplicación (paquetes 10.0.12) arranca con el runtime 10.0.10: se confirma el [SUPUESTO] de la Fase A |
+| 8 | H1–H8 OK, «Casos con FALLA: 0». **H9 INFO:** `Server` ausente; `X-Powered-By: Sedemi` (cabecera del servidor, de TI); `GET /assets/` → 200 (fallback a `index.html`, no es un listado) |
+| V1 | «Esta aplicación requiere HTTPS para iniciar sesión.» |
+| V2 | Consola sin errores en rojo, verificado por el usuario el 06/11/2026 |
+| SQL | Sesión de `profesiograma_test` desde `SDMAPPTEST2`, con `program_name = SIG_Profesiograma_QA` y `encrypt_option = TRUE` |
+
+**Incidentes** (corregidos durante la ejecución):
+- (a) El sitio se creó con una ruta sin `wwwroot` y respondió 500. Se corrigió con `appcmd set vdir`.
+- (b) Una regla de firewall se creó por error en el PC del usuario, y se eliminó.
+- (c) Los `.cmd` quedaron con LF en la copia de trabajo y se regeneraron con `git checkout`.
+
+Lo aprendido se pasó a `LEEME.md` (pasos 5–8). Para el incidente (c) se creó `.gitattributes` (`*.cmd`/`*.bat eol=crlf`).
+
+**`git add --renormalize`: no hace falta.** Los 32 `.cmd` del índice ya están en LF (`git ls-files --eol`). Cinco copias de trabajo siguen con LF (`tarea22-1/completar.cmd` y `sondeo-cedula.cmd`, `tarea26c/horarios-analisis.cmd`, `tarea26d3/comparacion.cmd` y `retiro.cmd`); toman CRLF cuando el usuario las vuelve a extraer.
+
+**npm audit** (06/11/2026, solo lectura):
+
+| Paquete | Severidad | Tipo | Instalada | Corregida | Avisos |
+|---|---|---|---|---|---|
+| `vite` (directo; incluye `launch-editor`) | Alta | **Desarrollo** (`--omit=dev`: 0 vulnerabilidades) | 8.3.1 (rango afectado 8.3.0–8.3.2) | ≥ 8.3.3 («fix available via npm audit fix») | GHSA-698v-4r3x-3vcv, GHSA-r825-w8mm-5pxw, GHSA-587h-7wmj-h5pm, GHSA-9jrq-w75r-8gcw, GHSA-rq7h-c2jc-7f22, GHSA-vfpm-58rq-9qcg |
+
+**Recomendación (pendiente 81):** el riesgo es solo del servidor de desarrollo (el build publicado no incluye Vite). En una tarea propia, actualizar a `vite` ≥ 8.3.3 (dentro de `^8.3.1`, con al menos dos semanas de publicada) y repetir build, lint, pruebas y el Grep de `dist`.

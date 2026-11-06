@@ -1,0 +1,4 @@
+# TAREA-7d-1 (cierre): los lanzadores de Windows siempre con CRLF en la copia de trabajo (cmd.exe falla con etiquetas y
+# bloques si el archivo tiene LF). El resto de los archivos sigue con la configuración actual (core.autocrlf).
+*.cmd text eol=crlf
+*.bat text eol=crlf

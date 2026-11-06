@@ -1,6 +1,6 @@
 # FASE 7 — Entornos y despliegue
 
-**Última actualización:** 2026-11-05 (TAREA-7d-1: §1, §4, §5, §6 y §9). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1: §1, §4, §5, §6 y §9). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
 
 Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no se conecta a ninguna base ni a ningún servidor.
 
@@ -9,7 +9,7 @@ Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no
 | Entorno | Base de datos | Servidor web | Estado |
 |---|---|---|---|
 | DEV | `PROFESIOGRAMA_DEV` en `NIQUEL\SSDEV` | Equipo del desarrollador (`https://localhost:7180` + Vite) | En uso |
-| QA | `PROFESIOGRAMA_QA` en `NIQUEL\SSDEV` | Sitio IIS `SIG_Profesiograma` en `SDMAPPTEST2` (§5, §9), entorno `QA` | Base lista; publicación de prueba preparada (TAREA-7d-1), pendiente de la ejecución del usuario |
+| QA | `PROFESIOGRAMA_QA` en `NIQUEL\SSDEV` | Sitio IIS `SIG_Profesiograma` (id 42) en `SDMAPPTEST2` (§5, §9), entorno `QA` | **En uso por http provisional** (`http://192.168.1.77:7082`, desde el 06/11/2026, sin inicio de sesión); HTTPS según el pendiente 75 |
 | PRO | Servidor y SQL **por confirmar con TI** (pendiente 75). Nombre de base propuesto: `SIG_PROFESIOGRAMA`, porque en SEDEMI existe otra aplicación antigua «Profesiograma» | Por confirmar con TI | — |
 
 ## 2. Bases y logins
@@ -65,14 +65,19 @@ Procedimiento para QA y PRO (pendiente 65):
 |---|---|
 | `PROFESIOGRAMA_DEV_20261029_antes_TAREA27.bak` | Estado de DEV antes de la migración `QuitarParametrosAlmuerzo` |
 | `PROFESIOGRAMA_QA_20261030_punto_cero.bak` | Estado limpio de QA (6 migraciones). **Reemplazado por el punto cero v2** |
-| `PROFESIOGRAMA_QA_<yyyyMMdd>_punto_cero_v2.bak` | TAREA-7d-1: estado limpio de QA con las 7 migraciones (incluye `AgregarUpnUsuario`), para repetir los ensayos de la Fase 3. Lo crea el usuario después de la migración y antes del humo (§9) |
+| `PROFESIOGRAMA_QA_20261105_antes_7d1.bak` | TAREA-7d-1: QA antes de `AgregarUpnUsuario` (6,08 MB, VERIFYONLY válido) |
+| `PROFESIOGRAMA_QA_20261105_punto_cero_v2.bak` | TAREA-7d-1: estado limpio de QA con las 7 migraciones (incluye `AgregarUpnUsuario`), para repetir los ensayos de la Fase 3 (VERIFYONLY válido) |
+
+**Configuración de IIS (SDMAPPTEST2):** `appcmd add backup "antes_SIG_Profesiograma_20261106"` antes de crear el grupo y el sitio. Se restaura con `appcmd restore backup "antes_SIG_Profesiograma_20261106"`; esa restauración revierte **toda** la configuración de IIS, también la de los otros sitios.
 
 **Restauración del punto cero:** `SINGLE_USER` → `RESTORE … WITH REPLACE` → `MULTI_USER`. El usuario la probó una vez con éxito. El script lo guarda el usuario, fuera del repo.
 
 ## 5. Servidor de QA: SDMAPPTEST2.sedemi.local
 
 - **Sistema:** Windows Server 2019 en una máquina virtual.
-- **IIS:** en ejecución, con el módulo ASP.NET Core V2 y el runtime .NET 10.0.10. La aplicación usa paquetes 10.0.12; publicada como dependiente del framework, funciona sobre 10.0.10 [SUPUESTO hasta el humo], pero se pidió a TI actualizar el Hosting Bundle (pendiente 75).
+- **IIS:** en ejecución, con el módulo ASP.NET Core V2 y el runtime .NET 10.0.10. La aplicación (paquetes 10.0.12, dependiente del framework) **arranca con 10.0.10** (comprobado el 06/11/2026). Igual se pidió a TI actualizar el Hosting Bundle (pendiente 75).
+- **Encabezado de la consola:** Windows Server 2019, `10.0.17763`. Sirve para comprobar que un comando se ejecuta en el servidor y no en el PC.
+- **Cabeceras de todo el servidor:** `X-Powered-By: Sedemi` (configurada por TI a nivel de servidor); `Server` ausente.
 - **Globalización:** Windows Server 2019 (17763) no trae ICU; la solución usa NLS en todos los entornos (§9, D7).
 - **Sitios:** unos 40, todos en http y ninguno en https.
 - **Certificados:** están vencidos; no hay ninguno utilizable (pendiente 75).
@@ -82,14 +87,16 @@ Procedimiento para QA y PRO (pendiente 65):
   - el ERP (puertos 7048 y 7055);
   - `login.microsoftonline.com` y `graph.microsoft.com`.
 - **Red (05/11/2026):**
-  - los sitios de SDMAPPTEST2 escuchan en `192.168.1.77` con puertos 70xx; el **7082 está libre** (comprobado el 05/11/2026) y el PC del usuario llega a los puertos 70xx;
+  - los sitios de SDMAPPTEST2 escuchan en `192.168.1.77` con puertos 70xx; el **7082 lo usa `SIG_Profesiograma`** desde el 06/11/2026 (estaba libre y accesible sin regla de firewall) y el PC del usuario llega a los puertos 70xx;
   - `backstack.sedemi.com` resuelve a `192.168.1.117`: el ERP está en otro servidor;
   - `sdmapp.sedemi.local` resuelve a `192.168.1.52`: candidato a IIS de producción, por confirmar con TI.
 - **Cuenta:** en QA se usa `administrador.SEDEMI` (decisión del usuario del 05/11/2026); la cuenta de administración se revisa al llegar a producción.
 - Hay un sitio antiguo, **«Profesiograma_FrontEnd»** (otro proyecto, WebForms), que **no se toca**.
 
-## 6. Diseño del sitio de QA (aprobado en la TAREA-7d-1; procedimiento en §9)
+## 6. Sitio de QA (implementado el 06/11/2026; procedimiento en §9)
 
+- **Estado:** sitio `SIG_Profesiograma`, id 42, `http/192.168.1.77:7082:`. La ruta física es `C:\inetpub\wwwroot\SIG_Profesiograma`, con NTFS RX para `IIS AppPool\SIG_Profesiograma`. El paquete está en `C:\DEPLOY\SIG_Profesiograma\<carpeta>\`.
+- **Cadena de conexión:** variable `ConnectionStrings__Profesiograma` del grupo, con la forma `Server=NIQUEL,1433;Database=PROFESIOGRAMA_QA;User ID=profesiograma_test;Password=…;Encrypt=True;TrustServerCertificate=True;Application Name=SIG_Profesiograma_QA`. Va por puerto fijo, sin SQL Browser. La contraseña solo está en el servidor.
 - **Sitio y grupo de aplicaciones:** `SIG_Profesiograma`; el grupo sin código administrado, canalización integrada, `ApplicationPoolIdentity` y «Cargar perfil de usuario» = True.
 - **La SPA la sirve ASP.NET Core** desde `wwwroot` (D2), sin URL Rewrite ni aplicación `/api` aparte.
 - **Carpeta:** `C:\inetpub\wwwroot\SIG_Profesiograma\`.
@@ -318,7 +325,7 @@ Ver el pendiente 75 de `docs/00_ESTADO_ACTUAL.md`, que reúne:
 - la cuenta de administración del servidor de PRO;
 - los consentimientos de Graph.
 
-## 9. Despliegue en QA (TAREA-7d-1, 05/11/2026)
+## 9. Despliegue en QA (TAREA-7d-1, preparada el 05/11/2026 y ejecutada el 06/11/2026)
 
 Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueba de humo **sin inicio de sesión**: Entra ID no admite una URI de redirección http fuera de localhost, y el SPA-QA espera el certificado y el DNS (pendiente 75). La ejecuta el usuario con `backend/tests/manual/tarea7d1/LEEME.md`.
 
@@ -370,3 +377,27 @@ Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueb
 - **Logs bajo IIS:**
   - van al Visor de eventos (proveedor EventLog, Warning o superior; un error de arranque aparece como 500.30 con el origen «IIS AspNetCore Module V2»);
   - el stdout de ANCM se activa solo durante un diagnóstico.
+
+**Ejecución (05–06/11/2026, la hizo el usuario):** el detalle está en `docs/tareas/TAREA-7d-1-reporte.md` §7.
+- **Publicación:** commit `37e5dc4`; `publicar-qa` con P1 y C1–C12 OK (162 archivos, 94,93 MB).
+- **Base QA:** respaldo previo, 7 migraciones (`Usuario.Upn` y `UX_Usuario_Upn`), `@@TRANCOUNT = 0` y punto cero v2 (§4).
+- **IIS:**
+  - respaldo de la configuración;
+  - grupo y variable (escrita con el Editor de configuración);
+  - sitio id 42;
+  - sin regla de firewall: el 7082 ya era accesible.
+- **Runtime:** arranca con 10.0.10.
+- **Humo:**
+  - H1–H8 OK;
+  - H9 INFO: `X-Powered-By: Sedemi` es del servidor; `GET /assets/` → 200, porque el fallback devuelve `index.html` y no es un listado;
+  - V1 OK; V2: consola sin errores en rojo (verificado por el usuario el 06/11/2026);
+  - en SQL, la sesión de `profesiograma_test` llega desde SDMAPPTEST2 con `program_name = SIG_Profesiograma_QA` y `encrypt_option = TRUE`.
+
+**Incidentes y lo que cambió en el procedimiento** (`LEEME.md`):
+
+| Incidente | Corrección | Cambio en el LEEME |
+|---|---|---|
+| El sitio se creó con una ruta sin `wwwroot` (500) | `appcmd set vdir` | Paso 6: copiar y pegar los comandos; verificar con `appcmd list vdir` |
+| Una regla de firewall se creó en el PC del usuario | Se eliminó | Paso 6: primero `curl.exe` desde el PC; la regla solo en el servidor (`10.0.17763` en el encabezado de la consola) |
+| Los `.cmd` quedaron con LF | `git checkout` | `.gitattributes` con `*.cmd`/`*.bat eol=crlf` |
+| La cadena de conexión con appcmd (historial, auditoría de la línea de comandos, comillas) | Se usó el Editor de configuración | Paso 5: el Editor de configuración es el método principal; `Server=NIQUEL,1433`, `Application Name`; probar antes el login en SSMS |

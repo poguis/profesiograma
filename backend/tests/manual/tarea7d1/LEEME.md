@@ -56,53 +56,112 @@ RESTORE VERIFYONLY FROM DISK = N'D:\BACKUP\PROFESIOGRAMA_QA_<yyyyMMdd>_punto_cer
 ```
 **Esperado:** igual que en el paso 2.
 
-## 5. Grupo de aplicaciones (RDP en SDMAPPTEST2, **CMD como administrador**, nunca PowerShell)
+## 5. Grupo de aplicaciones y cadena de conexión (RDP en SDMAPPTEST2, **CMD como administrador**, nunca PowerShell)
+**Copie y pegue** los comandos de este documento; no los escriba a mano (el incidente (a) de la 7d-1 fue una ruta mal
+escrita). Compruebe que la consola es la del **servidor**: el encabezado de CMD dice `Microsoft Windows [Versión 10.0.17763…]`.
+
+**5.0 Respaldo de la configuración de IIS** (antes de crear nada):
 ```bat
 cd /d %windir%\system32\inetsrv
+appcmd add backup "antes_SIG_Profesiograma_<yyyyMMdd>"
+```
+Se restaura con `appcmd restore backup "antes_SIG_Profesiograma_<yyyyMMdd>"`. Ojo: revierte **toda** la configuración de IIS,
+también la de los otros sitios.
+
+**5.1 Probar el login antes** (SSMS en su PC; Autenticación de SQL Server; servidor `NIQUEL,1433`, por puerto fijo y sin SQL
+Browser; login `profesiograma_test`):
+```sql
+SELECT @@SERVERNAME AS Servidor, DB_NAME() AS Base;   -- NIQUEL\SSDEV, PROFESIOGRAMA_QA
+```
+
+**5.2 Grupo de aplicaciones:**
+```bat
 appcmd add apppool /name:SIG_Profesiograma /managedRuntimeVersion:"" /managedPipelineMode:Integrated
 appcmd set apppool SIG_Profesiograma /processModel.identityType:ApplicationPoolIdentity /processModel.loadUserProfile:true
 ```
-Variable de la cadena de conexión (D3). Escríbala usted en el servidor; **nunca** en un chat, ticket ni archivo:
-```bat
-appcmd set config -section:system.applicationHost/applicationPools /+"[name='SIG_Profesiograma'].environmentVariables.[name='ConnectionStrings__Profesiograma',value='<CADENA DE QA>']" /commit:apphost
+
+**5.3 Variable `ConnectionStrings__Profesiograma` (D3), con el Editor de configuración** (método principal):
+1. Administrador de IIS → el **nodo del servidor** (no el sitio) → **Editor de configuración**.
+2. Sección: `system.applicationHost/applicationPools`.
+3. `(Colección)` → `…` → seleccione el grupo `SIG_Profesiograma`.
+4. En sus propiedades, `environmentVariables` → `…` → **Agregar**:
+   - `name` = `ConnectionStrings__Profesiograma`;
+   - `value` = la cadena.
+5. Cierre las ventanas de la colección y pulse **Aplicar**, en el panel derecho. Sin «Aplicar» no se guarda.
+
+Plantilla de la cadena (escriba la contraseña solo en el servidor; **nunca** en un chat, ticket ni archivo):
+```text
+Server=NIQUEL,1433;Database=PROFESIOGRAMA_QA;User ID=profesiograma_test;Password=<CONTRASEÑA>;Encrypt=True;TrustServerCertificate=True;Application Name=SIG_Profesiograma_QA
 ```
-- `<CADENA DE QA>`: la misma forma que la de DEV, con `Database=PROFESIOGRAMA_QA` y el login `profesiograma_test`. La API
-  antepone `tcp:` sola (`BaseDatos:ForzarTcp`).
-- Si la contraseña tiene `'` o `"`, use el Editor de configuración de IIS (sección `system.applicationHost/applicationPools`
-  → el grupo → `environmentVariables`) en lugar de appcmd.
-- Cierre la ventana de CMD al terminar (el historial queda solo en memoria).
+- Sobre la plantilla:
+  - la API antepone `tcp:` sola (`BaseDatos:ForzarTcp`);
+  - `Application Name` permite ver la sesión en SQL (paso 8).
+- **La contraseña no debe contener** `;` `'` `"` `{` `}` `=`. Rompen la cadena o la línea de comandos.
+- **Alternativa con appcmd** (solo si el Editor no está disponible): la contraseña queda en el historial de la consola mientras
+  esté abierta, y en la auditoría de la línea de comandos de Windows si TI la activó. Cierre la ventana al terminar.
+  ```bat
+  appcmd set config -section:system.applicationHost/applicationPools /+"[name='SIG_Profesiograma'].environmentVariables.[name='ConnectionStrings__Profesiograma',value='<CADENA DE QA>']" /commit:apphost
+  ```
 
-**Esperado:** `appcmd list apppool SIG_Profesiograma` → `(MgdVersion:,MgdMode:Integrated,state:Started)`.
-Para comprobar el nombre de la variable sin mostrar su valor: Editor de configuración → `environmentVariables` (Count = 1).
+**5.4 Verificar sin mostrar el valor y reciclar:**
+```bat
+find /c "ConnectionStrings__Profesiograma" %windir%\system32\inetsrv\config\applicationHost.config
+appcmd recycle apppool SIG_Profesiograma
+appcmd list apppool SIG_Profesiograma
+```
+**Esperado:**
+- `find /c` termina en `: 1`;
+- el grupo queda `(MgdVersion:,MgdMode:Integrated,state:Started)`.
 
-## 6. Sitio, permisos, enlace y firewall (CMD como administrador)
+## 6. Sitio, permisos, enlace y firewall (CMD como administrador, en el servidor)
+Copie y pegue:
 ```bat
 mkdir C:\inetpub\wwwroot\SIG_Profesiograma
 icacls C:\inetpub\wwwroot\SIG_Profesiograma /grant "IIS AppPool\SIG_Profesiograma:(OI)(CI)RX"
 cd /d %windir%\system32\inetsrv
 appcmd add site /name:SIG_Profesiograma /physicalPath:C:\inetpub\wwwroot\SIG_Profesiograma /bindings:http/192.168.1.77:7082:
 appcmd set app "SIG_Profesiograma/" /applicationPool:SIG_Profesiograma
-netsh advfirewall firewall show rule name=all | findstr 7082
+appcmd list vdir "SIG_Profesiograma/"
 ```
-- Si la última línea no muestra nada **y** el paso 8 no llega al puerto:
-  `netsh advfirewall firewall add rule name="SIG_Profesiograma 7082" dir=in action=allow protocol=TCP localport=7082`.
-- **No toque** el sitio «Profesiograma_FrontEnd» (otro sistema).
+**Esperado:**
+- `appcmd list vdir` muestra `physicalPath:C:\inetpub\wwwroot\SIG_Profesiograma`, **con** `wwwroot`. Si no, corrija con
+  `appcmd set vdir "SIG_Profesiograma/" /physicalPath:C:\inetpub\wwwroot\SIG_Profesiograma`.
+- `appcmd list site SIG_Profesiograma` → `bindings:http/192.168.1.77:7082:,state:Started`.
 
-**Esperado:** `appcmd list site SIG_Profesiograma` → `bindings:http/192.168.1.77:7082:,state:Started`.
+**Firewall** (en la 7d-1 no hizo falta). Primero, desde **su PC**:
+```bat
+curl.exe -s -o NUL -w "%{http_code}" http://192.168.1.77:7082/
+```
+- `403`, `404` u otro código → el puerto responde y **no** hace falta una regla.
+- `000` → no llega: falta la regla.
+
+La regla se crea **solo en el SERVIDOR** (compruebe `10.0.17763` en el encabezado de la consola), nunca en su PC:
+`netsh advfirewall firewall add rule name="SIG_Profesiograma 7082" dir=in action=allow protocol=TCP localport=7082`.
+
+**No toque** el sitio «Profesiograma_FrontEnd» (otro sistema).
 
 ## 7. Copia de archivos
-1. Copie por RDP la carpeta del paso 1 al servidor, por ejemplo a `C:\DEPLOY\SIG_Profesiograma\<carpeta>\` [SUPUESTO: ruta
-   libre; elija otra si TI tiene una convención].
+1. **Transferencia:**
+   - comprima la carpeta del paso 1 en un ZIP en su PC;
+   - cópielo con el portapapeles del RDP (Ctrl+C en su PC, Ctrl+V en el servidor) a `C:\DEPLOY\SIG_Profesiograma\`;
+   - en el servidor: clic derecho → **Extraer todo**.
+
+   **Alternativa:** redirija la unidad D: en la conexión RDP («Recursos locales» → «Más…» → Unidades) y copie desde
+   `\tsclient\D\PROFESIOGRAMA_DEPLOY\QA\<carpeta>`. **Desmarque** la redirección al terminar.
 2. Si ya hay una versión publicada:
    - respáldela: `robocopy C:\inetpub\wwwroot\SIG_Profesiograma E:\SIG_Profesiograma\<yyyyMMdd_HHmm> /E`;
-   - cree `C:\inetpub\wwwroot\SIG_Profesiograma\app_offline.htm` con el texto «PROFESIOGRAMA en mantenimiento.»;
-     IIS detiene la aplicación y libera las DLL.
-3. Copie:
-   `robocopy C:\DEPLOY\SIG_Profesiograma\<carpeta>\app C:\inetpub\wwwroot\SIG_Profesiograma /MIR /XF app_offline.htm /XD logs`.
-4. Borre `app_offline.htm`.
+   - cree `C:\inetpub\wwwroot\SIG_Profesiograma\app_offline.htm` con el texto «PROFESIOGRAMA en mantenimiento.». IIS detiene
+     la aplicación y libera las DLL.
+3. Copie la aplicación:
+   `robocopy C:\DEPLOY\SIG_Profesiograma\<carpeta>\app C:\inetpub\wwwroot\SIG_Profesiograma /MIR /XF app_offline.htm version.txt /XD logs`.
+4. Copie `version.txt` a la raíz del sitio, para saber qué commit está publicado. No se sirve: solo se publica `wwwroot\`.
+   `copy /y C:\DEPLOY\SIG_Profesiograma\<carpeta>\version.txt C:\inetpub\wwwroot\SIG_Profesiograma\`
+5. Borre `app_offline.htm`.
+6. **Retención:** conserve los últimos 3 paquetes en `C:\DEPLOY\SIG_Profesiograma\` y las copias de reversión en `E:\`.
 
-**Esperado:** en el sitio están `App.Api.dll`, `web.config`, `appsettings.json`, `appsettings.QA.json` y `wwwroot\index.html`,
-y **no** está `appsettings.Development.json`.
+**Esperado:**
+- en el sitio están `App.Api.dll`, `web.config`, `appsettings.json`, `appsettings.QA.json`, `version.txt` y `wwwroot\index.html`;
+- **no** está `appsettings.Development.json`.
 
 ## 8. Prueba de humo (PC del usuario) y verificaciones visuales
 ```bat
@@ -118,7 +177,7 @@ backend\tests\manual\tarea7d1\humo-qa.cmd
 | H6 | `GET /api/usuarios/me` sin token | 401 |
 | H7 | `GET /api/no-existe` | 404 sin HTML |
 | H8 | `GET /api/usuarios/me` con `X-Dev-User: admin` | 401 (DevAuth no existe en QA) |
-| H9 | Cabeceras `Server` y `X-Powered-By`; `GET /assets/` | Solo INFORMA (el endurecimiento va en la 7d-2) |
+| H9 | Cabeceras `Server` y `X-Powered-By`; `GET /assets/` | Solo INFORMA (el endurecimiento va en la 7d-2). En la 7d-1: `Server` ausente; `X-Powered-By: Sedemi` (del servidor, de TI); `/assets/` → 200 (fallback a index.html, no es un listado) |
 
 | # | Verificación visual | Esperado |
 |---|---|---|
@@ -126,6 +185,14 @@ backend\tests\manual\tarea7d1\humo-qa.cmd
 | V2 | F12 → Consola, recargar | Sin errores sin explicar (anótelos si los hay) |
 
 Salida: `resultado-humo-qa.txt`. H5 = 503: la API no llega a la base (firewall hacia `NIQUEL:1433`, cadena o login; pendiente 61).
+
+**Opcional, sesión en SQL** (SSMS como `sa`, mientras navega o tras H5):
+```sql
+SELECT s.login_name, s.host_name, s.program_name, c.encrypt_option
+FROM sys.dm_exec_sessions s JOIN sys.dm_exec_connections c ON c.session_id = s.session_id
+WHERE s.program_name = N'SIG_Profesiograma_QA';
+```
+**Esperado (7d-1):** `profesiograma_test`, `SDMAPPTEST2`, `SIG_Profesiograma_QA` y `TRUE`.
 
 ## 9. Diagnóstico y reversión
 | Código | Causa probable | Qué revisar |

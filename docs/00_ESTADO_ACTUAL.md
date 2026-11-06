@@ -1,8 +1,8 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-05 (TAREA-7d-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
-| Área | Estado al 05/11/2026 |
+| Área | Estado al 06/11/2026 |
 |---|---|
 | Proyectos (backend y frontend) | Crear, listado, detalle, estados, edición, reactivación, cronograma y reporte Excel ✅ (TAREA-07 a 22c) |
 | Empleados | Desde la API EvolutionEmployee con caché en memoria (opción C) ✅ (26a, 26d, 26c) |
@@ -11,8 +11,9 @@
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
 | Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
+| Publicación en QA (7d-1) | ✅ Verificada el 06/11/2026: `http://192.168.1.77:7082`, sin inicio de sesión (H1–H8, V1; 1211/1211, 417/417) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **7d-1: ejecución por el usuario** (`backend/tests/manual/tarea7d1/LEEME.md`): publicar, migrar QA, punto cero v2, IIS y humo H1–H9, V1–V2 |
+| **Siguiente tarea** | [PENDIENTE DE DECISIÓN DEL USUARIO] 7d-2 (sin TI) o seguimiento del pedido a TI (75) |
 
 ## 1. Índice de documentos
 
@@ -30,7 +31,7 @@
 | `docs/fases/FASE_5_Edicion_Cabecera.md` | Fechas, horario, almuerzo, cambio de actividad | C1–C11 |
 | `docs/fases/FASE_5_Cronograma.md` | Cronograma y reporte Excel | Contrato, D1–D16; §7–§8 |
 | `docs/fases/FASE_5_Novedades.md` | Novedades (backend o frontend) | §1–§2 contratos y validación; §7 edición; §8 sincronización; §9 frontend |
-| `docs/fases/FASE_7_Entornos_Despliegue.md` | Entornos, bases, logins, migraciones, respaldos, IIS, Entra ID (Fase 7) | §1–§8 |
+| `docs/fases/FASE_7_Entornos_Despliegue.md` | Entornos, bases, logins, migraciones, respaldos, IIS, Entra ID (Fase 7) | §1–§9 |
 | `docs/fases/FASE_5_Usuarios_Departamentos.md` | Usuarios y departamentos (TAREA-25), administración; cargos Infor | §2–§3 contratos y reglas; §5 efecto de los departamentos; §10 cargos Infor |
 | `docs/tareas/TAREA-XX-reporte.md` | Solo el reporte de la tarea que se continúa | — |
 | `docs/tareas/PLANTILLA_REPORTE.md` | Al escribir un reporte | — |
@@ -83,12 +84,13 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | Servidor SQL | `NIQUEL\SSDEV` — SQL Server 2019 Enterprise RTM (15.0.2190.7), compartido con ~42 bases de otros sistemas |
 | Base | `PROFESIOGRAMA_DEV` (recuperación SIMPLE desde el 29/10/2026), collation `Modern_Spanish_CI_AS`, compatibilidad 150 (esquema creado por migraciones EF en la TAREA-04; sin datos de prueba aún) |
 | Respaldos | Manuales con COPY_ONLY en `D:\BACKUP` del servidor, antes de cada cambio de esquema; DEV no tenía respaldos de TI |
-| Accesos del usuario | sysadmin (login `sa`) en NIQUEL\SSDEV; RDP a un servidor de pruebas (candidato al IIS de QA) |
+| Accesos del usuario | sysadmin (login `sa`) en NIQUEL\SSDEV; RDP a SDMAPPTEST2 (IIS de QA) |
 | Login app | `profesiograma_dev` (db_owner solo de su base). Estándar futuro: `profesiograma_test`, `profesiograma_prod_app` + `profesiograma_prod_migrator` |
 | Cadena de conexión | `dotnet user-secrets` → `ConnectionStrings:Profesiograma` (no está en el repo) |
 | ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). Development usa el ERP real (`Http` por user-secrets, TAREA-26a; `appsettings.Development.json` dice `Simulado`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
 | Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests, App.Api.Tests |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
+| QA | Sitio IIS `SIG_Profesiograma` (id 42) en SDMAPPTEST2, `http://192.168.1.77:7082` (provisional), grupo `SIG_Profesiograma`, entorno `QA`; cadena en la variable `ConnectionStrings__Profesiograma` del grupo (FASE_7 §6 y §9) |
 | Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
 
 ## 5. Hoja de ruta (lo que falta) y siguiente tarea
@@ -98,7 +100,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | 1. **Fase 7a** ✅ | Entornos DEV/QA/PRO, base QA, login y respaldos (pendiente 65); el sitio IIS sigue en la 7d |
 | 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 4. Fase 7d | 7d-1 (publicación http de prueba) preparada; 7d-2 endurecimiento; HTTPS y DNS (pendientes 59 y 75) |
+| 4. Fase 7d | 7d-1 ✅ (06/11/2026); **7d-2: endurecimiento y despliegue** (pendiente 78); **HTTPS/DNS: según el pendiente 75** |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
 | 6. Pruebas con usuarios | — |
 | 7. Corte | Paso a producción |
@@ -111,7 +113,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 
 1. Propietario real de `PRY-20260831-e4776f`, `PRY-20260902-bbd352`, `PRY-20260911-5ceab4`: `gestor.sig@` o `gestor.administrativosig@` (C29).
 2. [Opcional] Excel de cargos → código Infor (la importación desde la API y la edición ya existen, TAREA-25-3-1). Texto anterior en `HISTORIAL.md`.
-4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). Plantilla en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (TAREA-20) y flujo `ReporteProyectosSIG` en el repo (TAREA-22-2), pero sin el código del script: los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
+4. Office Script del reporte de cronograma: sin su código, EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
 7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2, verificadas el 05/11/2026; `FASE_7_Entornos_Despliegue.md` §7). Falta QA y PRO: registros con URI HTTPS, que dependen del certificado y el DNS (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
@@ -119,7 +121,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
 12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
 13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. No indica turno nocturno (TAREA-26c, B1): la aplicación lo deduce de las horas. Texto anterior en `HISTORIAL.md`.
-15. Sin prueba de traducción SQL (fuera del alcance pedido en la TAREA-12): consultas de `UsuarioProvisionamiento` y `DatosPruebaSembrador` (Paso 2).
+15. Sin prueba de traducción SQL: consultas de `DatosPruebaSembrador` (las de `UsuarioProvisionamiento` la tienen desde la TAREA-7b-2).
 16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
@@ -131,19 +133,19 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 43. [Menor] `codEmpresa` del empleado (ECU, SCE…) no es el Id de compañía del ERP de proyectos (`Compania.Id`): no se cruzan. Si en el futuro se necesita filtrar empleados por la compañía del proyecto, hará falta una tabla de equivalencias.
 44. [Futuro] La API de empleados trae `codPerfil`, `posicion` y `cargoTipo` (organizacionales), útiles para el módulo Perfiles. Hoy no se guardan (`FASE_4_Empleados_API.md`).
 45. [Fase 3] El ERP puede devolver `CorreoEmpresa` (`mailEmpresa`) sin formato de correo (p. ej. "SC" en el empleado 11358). Validar el formato antes de usarlo (Graph, notificaciones, `Usuario.EmpleadoId` desde `mailEmpresa` en la Fase 7); un valor no válido se trata como sin correo.
-46. [Después de producción] [Opcional, TAREA-26d-3 D1] Acción "Actualizar datos guardados del empleado": refrescar la fila de `Empleado` desde la API (con auditoría y control de concurrencia) cuando la comparación "guardado frente al ERP" muestra diferencias. Hoy los avisos solo informan y los datos se refrescan en la próxima alta puntual. `ProyectoPersonal.CargoAsignado` no se refresca (es histórico). [PENDIENTE DE DECISIÓN DEL USUARIO]
+46. [Después de producción] [Opcional, TAREA-26d-3 D1] Acción «Actualizar datos guardados del empleado» desde la API, con auditoría y concurrencia. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE DECISIÓN DEL USUARIO]
 47. [Seguridad, lo ejecuta el usuario] Cambiar la contraseña del login `profesiograma_dev` (débil y expuesta en un chat): en SQL Server (NIQUEL\SSDEV) y en los user-secrets (`ConnectionStrings:Profesiograma`, `UserSecretsId` sin cambios). Claude Code no la ve ni la escribe.
 48. [Observar] Posible lentitud de la primera llamada tras arrancar la API (~4,7 s en un 404, TAREA-26d-3). Solo observar; si se repite en llamadas normales, medir (arranque de EF, primera conexión, caché de empleados).
 49. [TAREA-26c, PENDIENTE RR. HH.] Confirmar con RR. HH.:
     - la duración del almuerzo y los márgenes respecto de la entrada y la salida (hoy no hay regla: solo dentro del turno, o los rangos RN09 en el diurno);
     - la lista de horarios no laborales (`HORARIOS_NO_LABORALES`).
 50. [TAREA-20–24, cronograma, reporte y novedades/asistencia] En los turnos nocturnos (salida < entrada), las horas después de las 00:00 pertenecen al **día de entrada**. Ningún cálculo actual usa `HoraEntrada`/`HoraSalida` por fecha (el motor del cronograma solo usa días), pero el cronograma, el reporte y la asistencia deben respetarlo.
-53. [TAREA-22-2] Columna PROYECTO para PLANTA/OFICINAS (sin ProjectId del ERP): **vacía** [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme]. Implementado en la TAREA-22-2.
-54. [TAREA-22-2] SALIDA DE JORNADA en turnos nocturnos (salida menor que el ingreso, p. ej. 17:00–04:00): se exporta **tal cual** [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme cómo lo interpreta]. Implementado en la TAREA-22-2.
-58. [Mantenimiento, TAREA-22-2b, 21/10/2026] Retirar el pin de `System.Security.Cryptography.Pkcs` 10.0.13 (`App.Infrastructure.csproj`) cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web resuelvan una versión corregida (≥ 9.0.21 o ≥ 10.0.13; avisos GHSA-846f-f764-76mx y GHSA-2fmv-rv2c-59x7). La publicación incluye la DLL 10.0.13, así que no depende del Hosting Bundle del servidor.
-59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
-60. [Después de producción] [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
-61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
+53. [TAREA-22-2, implementado] PROYECTO vacío para PLANTA/OFICINAS [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme].
+54. [TAREA-22-2, implementado] SALIDA DE JORNADA nocturna (p. ej. 17:00–04:00) tal cual [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme].
+58. [Mantenimiento, TAREA-22-2b] Retirar el pin de `System.Security.Cryptography.Pkcs` 10.0.13 (`App.Infrastructure.csproj`) cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web dependan de una versión corregida. La publicación incluye la DLL 10.0.13 (C7 de la TAREA-7d-1). Texto anterior en `HISTORIAL.md`.
+59. [Fase 7] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas`. Hoy no aplica: mismo origen (Vite en DEV; ASP.NET Core sirve la SPA en QA, TAREA-7d-1). Texto anterior en `HISTORIAL.md`.
+60. [Después de producción] En Development el sembrador corre antes de `app.Run()`: con la base caída la API no arranca. Evaluar un sembrador tolerante a fallos o `SembrarAlIniciar = false`. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE DECISIÓN DEL USUARIO]
+61. [Robustez] Probar con Sophos (conectado y desconectado) el Connect Timeout de 5 s y `BaseDatos:ForzarTcp` (si falla: `ForzarTcp=false` o subir el tiempo). QA ya funciona con TCP y `NIQUEL,1433`. Texto anterior en `HISTORIAL.md` (H10, H28). [PENDIENTE]
 63. [TAREA-23-4, Fase 7 con TI] **Lectura de la lista NOVEDADES ASISTENCIA** (no es del usuario). Opciones: **A)** permiso de aplicación `Sites.Selected` con acceso de solo lectura al sitio; **B)** lectura con la sesión del Admin (permiso delegado); **C)** exportación periódica a CSV (fuente `ArchivoLocal`). Se decide en la Fase 7 con TI. La carga histórica de la Fase 3 no depende de esto. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE TI]
 65. [Fase 7] **Entornos y despliegue con buenas prácticas:** **en curso, ver `FASE_7_Entornos_Despliegue.md`** (bases y logins §2, migraciones §3, respaldos §4). Texto anterior en `HISTORIAL.md`.
 66. [Nuevo, 26/10/2026; para la 23-4] La lista de origen **nunca marca «anulada»** (pendiente 64 cerrado): un permiso médico borrado allá quedaría activo aquí, porque N10 impide anularlo a mano y R4 no anula por ausencia. Propuesta: opción explícita del Admin «anular ausentes», con vista previa de cuáles son y solo si la lectura fue completa. [PENDIENTE DE DECISIÓN DEL USUARIO]
@@ -159,8 +161,14 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
     - cuenta de administración del servidor IIS de PRO (en QA se usa administrador.SEDEMI en SDMAPPTEST2: decisión del usuario del 05/11/2026);
     - consentimientos de Graph (pendientes 63 y 71);
     - actualizar el Hosting Bundle de SDMAPPTEST2 (runtime 10.0.10; la aplicación usa paquetes 10.0.12; TAREA-7d-1).
+    - datos para el certificado y el DNS de QA: servidor `SDMAPPTEST2` (192.168.1.77), sitio IIS id 42 (`SIG_Profesiograma`); nombre DNS de QA propuesto: [PENDIENTE DE CONFIRMAR con TI].
 76. [Después de producción] El alta de usuarios reconoce el duplicado por usuarioId o por el texto (usuariosAdmin.ts, MENSAJE_DUPLICADO); aplicar tipoConflicto con el helper ProblemasConflicto.
 77. [Fase 7, antes de PRO] D4 de la TAREA-7d-1: evaluar la configuración del frontend en tiempo de ejecución (servida por la API) para promover un solo build de QA a PRO; hoy `vite build --mode qa` con `frontend/.env.qa`.
+78. [7d-2, sin TI] Endurecimiento del sitio de QA: cabeceras (consultar a TI por `X-Powered-By: Sedemi`, configurada a nivel de servidor) y `web.config` propio.
+79. [Menor] Prueba automática de `/assets/` sin extensión (hoy da `index.html`) y de un asset inexistente (404).
+80. Mover `publicar-qa` a una carpeta de despliegue versionada (p. ej. `deploy/qa/`); revisar si el `.gitignore` de `backend/tests/manual/` debe ignorar solo `resultado-*` y los archivos de estado.
+81. npm audit (06/11/2026): `vite` 8.3.1, severidad alta, solo de desarrollo (`--omit=dev`: 0). Corregida en ≥ 8.3.3. Recomendación: actualizarla en una tarea propia, con build, lint, pruebas y el Grep de `dist` (`TAREA-7d-1-reporte.md` §7).
+82. [Optimización] Bloque `clienteHttp` de unos 505 kB (posible MSAL dentro): dividirlo.
 
 ## 7.1 Reglas técnicas obligatorias
 

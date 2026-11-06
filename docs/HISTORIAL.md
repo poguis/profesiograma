@@ -31,6 +31,7 @@
 | H25 | TAREA-7b-2 (05/11/2026): siguiente tarea y fila 2 de la hoja de ruta |
 | H26 | Cierre de la 7b y la 7b-2 (05/11/2026): cabecera, fila TAREA-27, siguiente tarea, fila 2 de la hoja de ruta, pendiente 7; títulos de FASE_7 §7.1 y §7.3 |
 | H27 | TAREA-7d-1 (05/11/2026): cabecera, siguiente tarea, filas Proyectos y Pruebas de §4, filas 1 y 4 de la hoja de ruta, pendientes 2, 13 y la última línea del 75 |
+| H28 | Cierre de la TAREA-7d-1 (06/11/2026): cabecera, siguiente tarea, accesos de §4, fila 4 de la hoja de ruta, pendientes 4, 15, 46, 53, 54, 58, 59, 60 y 61 (acortados); textos de FASE_7 §1, §4, §5, §6 y §9 |
 
 ## H1. Cabecera anterior
 
@@ -508,3 +509,51 @@ Texto anterior (textual):
 13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. TAREA-26a: 65 horarios M y 4 D; el significado no se deduce de los datos. El modo Http ya se probó de extremo a extremo en Development (A6, proyecto Id 14). TAREA-26c (B1): M/D **no** indica turno nocturno; la aplicación lo deduce de las horas (salida < entrada).
 
     - consentimientos de Graph (pendientes 63 y 71).
+
+## H28. Movido del estado vigente el 06/11/2026 (cierre de la TAREA-7d-1)
+
+Texto anterior de `00_ESTADO_ACTUAL.md` (textual):
+
+**Última actualización:** 2026-11-05 (TAREA-7d-1).
+
+| Área | Estado al 05/11/2026 |
+
+| **Siguiente tarea** | **7d-1: ejecución por el usuario** (`backend/tests/manual/tarea7d1/LEEME.md`): publicar, migrar QA, punto cero v2, IIS y humo H1–H9, V1–V2 |
+
+RDP a un servidor de pruebas (candidato al IIS de QA) |
+
+| 4. Fase 7d | 7d-1 (publicación http de prueba) preparada; 7d-2 endurecimiento; HTTPS y DNS (pendientes 59 y 75) |
+
+15. Sin prueba de traducción SQL (fuera del alcance pedido en la TAREA-12): consultas de `UsuarioProvisionamiento` y `DatosPruebaSembrador` (Paso 2).
+
+53. [TAREA-22-2] Columna PROYECTO para PLANTA/OFICINAS (sin ProjectId del ERP): **vacía** [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme]. Implementado en la TAREA-22-2.
+
+54. [TAREA-22-2] SALIDA DE JORNADA en turnos nocturnos (salida menor que el ingreso, p. ej. 17:00–04:00): se exporta **tal cual** [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme cómo lo interpreta]. Implementado en la TAREA-22-2.
+
+4. Office Script del reporte de cronograma (lo que hace con los textos de fecha y hora). Plantilla en `docs/PLANTILLA_REPORTE_PROYECTOS.xlsx` (TAREA-20) y flujo `ReporteProyectosSIG` en el repo (TAREA-22-2), pero sin el código del script: los tipos de EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
+
+59. [Fase 7, TAREA-22b] Si la SPA y la API quedan en orígenes distintos, exponer `Content-Disposition` y `X-Reporte-Filas` (`Access-Control-Expose-Headers`): sin eso el navegador no deja leerlos y la descarga usa el nombre por defecto (`Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx`) y el aviso «Reporte generado.» sin la cantidad de filas. Hoy no aplica: mismo origen (proxy de Vite; IIS en la Fase 7) y CLAUDE.md pide no configurar CORS.
+
+61. [Robustez, TAREA-22c/22c-b] Probar desde casa con Sophos (conectado y desconectado) el Connect Timeout de 5 s con `BaseDatos:ForzarTcp=true` (por defecto). Si la conexión a la base real falla con `ForzarTcp=true` (p. ej. el servidor solo acepta Named Pipes; comprobar `net_transport` en SSMS), usar `BaseDatos:ForzarTcp=false`; si aparecen 503 falsos con la VPN conectada, subir `BaseDatos:TiempoEsperaConexionSegundos`. Nota de la verificación del 21/10/2026 en `HISTORIAL.md` H10. [PENDIENTE]
+
+60. [Después de producción] [Robustez, TAREA-22c] En Development el sembrador (`DatosPrueba:SembrarAlIniciar = true` en `appsettings.Development.json`) corre antes de `app.Run()`: con la base caída la API no arranca (y el 503 de la TAREA-22c no puede verse). Evaluar un sembrador tolerante a fallos (registrar y seguir) o `SembrarAlIniciar = false`. En producción el sembrador no corre. [PENDIENTE DE DECISIÓN DEL USUARIO]
+
+58. [Mantenimiento, TAREA-22-2b, 21/10/2026] Retirar el pin de `System.Security.Cryptography.Pkcs` 10.0.13 (`App.Infrastructure.csproj`) cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web resuelvan una versión corregida (≥ 9.0.21 o ≥ 10.0.13; avisos GHSA-846f-f764-76mx y GHSA-2fmv-rv2c-59x7). La publicación incluye la DLL 10.0.13, así que no depende del Hosting Bundle del servidor.
+
+46. [Después de producción] [Opcional, TAREA-26d-3 D1] Acción "Actualizar datos guardados del empleado": refrescar la fila de `Empleado` desde la API (con auditoría y control de concurrencia) cuando la comparación "guardado frente al ERP" muestra diferencias. Hoy los avisos solo informan y los datos se refrescan en la próxima alta puntual. `ProyectoPersonal.CargoAsignado` no se refresca (es histórico). [PENDIENTE DE DECISIÓN DEL USUARIO]
+
+Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
+
+**Última actualización:** 2026-11-05 (TAREA-7d-1: §1, §4, §5, §6 y §9).
+
+| QA | `PROFESIOGRAMA_QA` en `NIQUEL\SSDEV` | Sitio IIS `SIG_Profesiograma` en `SDMAPPTEST2` (§5, §9), entorno `QA` | Base lista; publicación de prueba preparada (TAREA-7d-1), pendiente de la ejecución del usuario |
+
+| `PROFESIOGRAMA_QA_<yyyyMMdd>_punto_cero_v2.bak` | TAREA-7d-1: estado limpio de QA con las 7 migraciones (incluye `AgregarUpnUsuario`), para repetir los ensayos de la Fase 3. Lo crea el usuario después de la migración y antes del humo (§9) |
+
+- **IIS:** en ejecución, con el módulo ASP.NET Core V2 y el runtime .NET 10.0.10. La aplicación usa paquetes 10.0.12; publicada como dependiente del framework, funciona sobre 10.0.10 [SUPUESTO hasta el humo], pero se pidió a TI actualizar el Hosting Bundle (pendiente 75).
+
+## 6. Diseño del sitio de QA (aprobado en la TAREA-7d-1; procedimiento en §9)
+
+el **7082 está libre** (comprobado el 05/11/2026)
+
+## 9. Despliegue en QA (TAREA-7d-1, 05/11/2026)
