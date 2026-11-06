@@ -11,6 +11,7 @@ import {
   encabezadosEntra,
   leerConfigEntra,
   pantallaPorErrorUsuario,
+  uriRedireccionSilenciosa,
 } from './entra'
 
 // Fase 7b: MSAL SIMULADO (dobles); nunca se llama a Entra ID. Valores ficticios.
@@ -18,11 +19,14 @@ const SCOPE = 'api://bbbbbbbb-0000-0000-0000-000000000002/access_as_user'
 
 function clienteFalso(opciones: { cuenta?: { username: string } | null; token?: string; error?: unknown }) {
   const pedidos: { scopes: string[] }[] = []
+  const redirecciones: (string | undefined)[] = []
   return {
     pedidos,
+    redirecciones,
     getActiveAccount: () => (opciones.cuenta === undefined ? { username: 'persona@sedemi.com' } : opciones.cuenta),
-    acquireTokenSilent: async (s: { scopes: string[]; account: { username: string } | null }) => {
+    acquireTokenSilent: async (s: { scopes: string[]; account: { username: string } | null; redirectUri?: string }) => {
       pedidos.push({ scopes: s.scopes })
+      redirecciones.push(s.redirectUri)
       if (opciones.error) {
         throw opciones.error
       }
@@ -175,5 +179,35 @@ describe('decidirArranque con VITE_URL_PUBLICA', () => {
 
   it('destino: origen público + ruta + consulta, sin el fragmento', () => {
     expect(destinoPublico(`${PUBLICA}/`, { pathname: '/proyectos/14', search: '?pagina=2' })).toBe(`${PUBLICA}/proyectos/14?pagina=2`)
+  })
+})
+
+// TAREA-7d-4 (G2, G3): redirectUri de las llamadas silenciosas = página del puente de MSAL 5.
+describe('uriRedireccionSilenciosa', () => {
+  it('DEV: http://localhost:5173/redirect.html', () => {
+    expect(uriRedireccionSilenciosa('http://localhost:5173')).toBe('http://localhost:5173/redirect.html')
+  })
+
+  it('QA: la URI registrada en el SPA-QA, sin barra final', () => {
+    expect(uriRedireccionSilenciosa('https://sdmapptest2.sedemi.local:7083')).toBe('https://sdmapptest2.sedemi.local:7083/redirect.html')
+  })
+
+  it('con barra o ruta: usa solo el origen', () => {
+    expect(uriRedireccionSilenciosa('https://sdmapptest2.sedemi.local:7083/')).toBe('https://sdmapptest2.sedemi.local:7083/redirect.html')
+    expect(uriRedireccionSilenciosa('https://sdmapptest2.sedemi.local:7083/proyectos/14?x=1#y')).toBe(
+      'https://sdmapptest2.sedemi.local:7083/redirect.html',
+    )
+  })
+
+  it('el puerto por defecto no se escribe', () => {
+    expect(uriRedireccionSilenciosa('https://profesiograma.sedemi.com:443')).toBe('https://profesiograma.sedemi.com/redirect.html')
+  })
+})
+
+describe('encabezadosEntra con redirectUri silencioso (TAREA-7d-4)', () => {
+  it('envía el redirectUri a acquireTokenSilent', async () => {
+    const cliente = clienteFalso({ token: 'abc' })
+    await encabezadosEntra(cliente, SCOPE, 'https://sdmapptest2.sedemi.local:7083/redirect.html')
+    expect(cliente.redirecciones).toEqual(['https://sdmapptest2.sedemi.local:7083/redirect.html'])
   })
 })

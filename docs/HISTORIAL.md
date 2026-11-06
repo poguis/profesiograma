@@ -34,6 +34,7 @@
 | H28 | Cierre de la TAREA-7d-1 (06/11/2026): cabecera, siguiente tarea, accesos de §4, fila 4 de la hoja de ruta, pendientes 4, 15, 46, 53, 54, 58, 59, 60 y 61 (acortados); textos de FASE_7 §1, §4, §5, §6 y §9 |
 | H29 | TAREA-7d-3 (06/11/2026): cabecera, siguiente tarea, fila QA de §4, fila 4 de la hoja de ruta, pendientes 7, 50, 75 y 82; pendientes 78–81 cerrados; textos de FASE_7 §5, §6, §7.4 y §9 |
 | H30 | Cierre de la TAREA-7d-3 (06/11/2026): cabecera, filas de QA del estado, siguiente tarea, fila 4 de la hoja de ruta, pendiente 7; pendientes 19 y 45 (acortados) |
+| H31 | TAREA-7d-4 (06/11/2026): cabecera, siguiente tarea, fila 4 de la hoja de ruta, pendiente 86; pendiente 87 cerrado; textos de FASE_7 (cabecera, §7.1 Ajuste 2 y §7.4) |
 
 ## H1. Cabecera anterior
 
@@ -629,3 +630,25 @@ en QA, API-QA y SPA-QA registradas e inicio de sesión implementado (7d-3;
 19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
 
 45. [Fase 3] El ERP puede devolver `CorreoEmpresa` (`mailEmpresa`) sin formato de correo (p. ej. "SC" en el empleado 11358). Validar el formato antes de usarlo (Graph, notificaciones, `Usuario.EmpleadoId` desde `mailEmpresa` en la Fase 7); un valor no válido se trata como sin correo.
+
+## H31. Movido del estado vigente el 06/11/2026 (TAREA-7d-4)
+
+Pendiente cerrado: 87 (encabezado neutro de `publicar-qa`). Texto anterior de `00_ESTADO_ACTUAL.md` (textual):
+
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-3).
+
+| **Siguiente tarea** | **TAREA-7d-4** — `ssoSilent` con página de redirección en blanco (pendiente 86) |
+
+| 4. Fase 7d | 7d-1 y 7d-3 ✅; 7d-4 (`ssoSilent`); certificado de confianza y PRO: pendiente 75 |
+
+86. [7d-4] `ssoSilent` en una pestaña nueva de QA: el `#code` llega al iframe, pero la ventana principal no lo recoge. Evaluar `/redirect.html` en blanco como `redirectUri` silencioso (SPA-QA y SPA-DEV). Detalle: `TAREA-7d-3-reporte.md` §7.
+
+87. [Menor, 7d-4] Corregir el encabezado de `publicar-qa` («TAREA-7d-1», «Siguiente paso: … paso 2»).
+
+Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
+
+**Última actualización:** 2026-11-06 (TAREA-7d-3: §5, §6, §7.4 y §10).
+
+| Ajuste 2 | MSAL con `sessionStorage`. Sin cuenta, **un** `ssoSilent` (con `loginHint` si se guardó uno) y luego el botón «Iniciar sesión con la cuenta de SEDEMI». Nunca un redirect automático |
+
+- Inicio de sesión en QA: TAREA-7d-3 (§10).

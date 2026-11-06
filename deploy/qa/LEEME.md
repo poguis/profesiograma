@@ -15,10 +15,10 @@ escribió estos archivos. Diseño y decisiones: `docs/fases/FASE_7_Entornos_Desp
 
 | Archivo | Qué hace |
 |---|---|
-| `publicar-qa.cmd` (+ `.ps1`) | Genera la publicación desde HEAD, fuera del repo: CONTROL P1, C1–C14 e INFO de migraciones |
-| `humo-qa.cmd` (+ `.ps1`) | H1–H13, solo GET anónimos con `curl.exe`. `set SIMULAR=1` para ensayarlo sin red |
+| `publicar-qa.cmd` (+ `.ps1`) | Genera la publicación desde HEAD, fuera del repo: CONTROL P1, C1–C15 e INFO de migraciones |
+| `humo-qa.cmd` (+ `.ps1`) | H1–H14, solo GET anónimos con `curl.exe`. `set SIMULAR=1` para ensayarlo sin red |
 | `comun7d1.ps1` | Candado, archivo de estado y salida (`resultado-*.txt`) |
-| `simulacion\` | Respuestas FICTICIAS de H1–H13 |
+| `simulacion\` | Respuestas FICTICIAS de H1–H14 |
 
 **Advertencias:**
 - **Nunca pegue tokens** en un chat ni en un ticket; para inspeccionarlos use `jwt.ms` en su propio navegador.
@@ -34,7 +34,7 @@ Requisitos: `git status` limpio, Node/npm y el SDK de .NET (los de DEV) y los us
 para crear el contexto; **no** se conecta a la base).
 
 **Esperado:**
-- todas las líneas `CONTROL P1, C1–C14 … OK` y «Casos con FALLA: 0»; `CONTROL INFO` con la cantidad de migraciones y la última;
+- todas las líneas `CONTROL P1, C1–C15 … OK` y «Casos con FALLA: 0»; `CONTROL INFO` con la cantidad de migraciones y la última;
 - carpeta `D:\PROFESIOGRAMA_DEPLOY\QA\<yyyyMMdd_HHmm>_<hash7>\` con `app\`, `migraciones-QA.sql` y `version.txt`;
 - el estado (etapa, commit y destino) queda en `resultado-estado-publicar-qa.txt`.
 
@@ -195,6 +195,7 @@ Desde la TAREA-7d-3, `humo-qa` va por **https** y necesita el certificado (**§1
 | H11 | `Strict-Transport-Security` | Ausente (HSTS apagado en QA) |
 | H12a / H12b | `GET /assets/` y `GET /assets/no-existe.js` | 200 index.html (no es un listado) y 404 |
 | H13 | `GET http://192.168.1.77:7082/` | 200 index.html (la redirección a la URL pública la hace el navegador) |
+| H14 | `GET /redirect.html` (puente de MSAL, TAREA-7d-4) | 200, `text/html`, `no-cache`, `SAMEORIGIN`, sin `id="root"` |
 
 | # | Verificación visual | Esperado |
 |---|---|---|
@@ -239,17 +240,30 @@ En la primera publicación no hay versión anterior: detenga el sitio (`appcmd s
 ## 10. Actualización (segunda publicación y siguientes)
 Sin cambios en IIS (el sitio, los enlaces 7082 y 7083, el grupo y la variable ya existen).
 
+**Antes de publicar (y antes de probar en DEV): URIs de redirección en Entra** (TAREA-7d-4, J4). Desde la 7d-4, las
+llamadas silenciosas (`ssoSilent` y la renovación de tokens) vuelven a `/redirect.html`, la página del puente de MSAL.
+Cada SPA debe tener registradas, en la plataforma «Aplicación de página única», **las dos** URIs (exactas, sin barra final):
+
+| Registro | URI de inicio y cierre de sesión (ya existía) | URI silenciosa (TAREA-7d-4) |
+|---|---|---|
+| SIG-Profesiograma-SPA-QA | `https://sdmapptest2.sedemi.local:7083` | `https://sdmapptest2.sedemi.local:7083/redirect.html` |
+| SIG-Profesiograma-SPA-DEV | `http://localhost:5173` | `http://localhost:5173/redirect.html` |
+
+- El usuario las registró el **06/11/2026**. En una publicación futura (otro SPA, otra URL o PRO), regístrelas antes.
+- Si falta la URI silenciosa, Entra responde **AADSTS50011** dentro del iframe oculto (no se ve) y la aplicación muestra el
+  botón «Iniciar sesión…», como antes de la 7d-4. Sin daño: el botón sigue funcionando.
+
 | # | Paso | Esperado / qué anotar |
 |---|---|---|
-| 1 | Commit de los cambios, y `deploy\qa\publicar-qa.cmd` | CONTROL P1 y C1–C14 OK. Anote la carpeta y la línea `CONTROL INFO migraciones` (cantidad y última) |
+| 1 | Commit de los cambios, y `deploy\qa\publicar-qa.cmd` | CONTROL P1 y C1–C15 OK. Anote la carpeta y la línea `CONTROL INFO migraciones` (cantidad y última) |
 | 2 | SSMS como `sa`: `SELECT COUNT(*) FROM PROFESIOGRAMA_QA.dbo.__EFMigrationsHistory;` | Si da **7** y la INFO del paso 1 también dice 7: **salte los pasos 2–4 de la base**. Si el commit tiene más: respaldo (paso 2), `migraciones-QA.sql` (paso 3) y, si hace falta, un punto cero nuevo |
 | 3 | Copie el ZIP al servidor (paso 7, punto 1) y cree `C:\inetpub\wwwroot\SIG_Profesiograma\app_offline.htm` («PROFESIOGRAMA en mantenimiento.») | El sitio responde la página de mantenimiento |
 | 4 | Respaldo del sitio: `robocopy C:\inetpub\wwwroot\SIG_Profesiograma E:\SIG_Profesiograma\<yyyyMMdd_HHmm> /E` | La carpeta de `E:\` tiene `App.Api.dll` y `version.txt` de la versión anterior |
 | 5 | `robocopy C:\DEPLOY\SIG_Profesiograma\<carpeta>\app C:\inetpub\wwwroot\SIG_Profesiograma /MIR /XF app_offline.htm version.txt /XD logs` | Sin errores (código de salida de robocopy ≤ 7) |
 | 6 | `copy /y C:\DEPLOY\SIG_Profesiograma\<carpeta>\version.txt C:\inetpub\wwwroot\SIG_Profesiograma\` | `version.txt` con el commit nuevo |
 | 7 | Borre `app_offline.htm` | La aplicación vuelve a arrancar |
-| 8 | `deploy\qa\humo-qa.cmd` (con `QA_CA`, §11) | H1–H8 y H10–H13 OK; H9 INFO; «Casos con FALLA: 0» |
-| 9 | L1–L6 (§12) | Según la tabla |
+| 8 | `deploy\qa\humo-qa.cmd` (con `QA_CA`, §11) | H1–H8 y H10–H14 OK; H9 INFO; «Casos con FALLA: 0» |
+| 9 | L1–L6 y N1–N4 (§12) | Según las tablas |
 | 10 | F1–F4 (§13) | Según la tabla |
 
 **Reversión:**
@@ -299,6 +313,16 @@ SELECT Id,
        Activo
 FROM PROFESIOGRAMA_QA.dbo.Usuario WHERE EsSistema = 0 ORDER BY Id;
 ```
+
+**Pestaña nueva (`ssoSilent`, TAREA-7d-4).** Hasta la 7d-4 `ssoSilent` **nunca funcionó**, tampoco en DEV: M5 de la 7b no
+cubría una pestaña nueva. N1 forma parte, desde ahora, de la verificación estándar del inicio de sesión.
+
+| # | Caso | Esperado | Si falla, anote |
+|---|---|---|---|
+| N1 | DEV en modo Entra (`npm run dev`): iniciar sesión y abrir una **pestaña nueva** en `http://localhost:5173` | Entra sola en menos de 10 s, sin el botón | Si aparece el botón; en F12 → Consola, los errores |
+| N2 | QA, después de la tercera publicación: lo mismo en `https://sdmapptest2.sedemi.local:7083` | Entra sola | Igual que N1 |
+| N3 | El botón «Iniciar sesión…» y «Cerrar sesión», en DEV y en QA | Igual que antes | — |
+| N4 | F12 → Consola en N1 y N2 | La advertencia del sandbox del iframe puede seguir; **sin** `timed_out`, `redirect_bridge_timeout` ni `block_iframe_reload` | El texto del error |
 - **Departamentos del Gestor (opcional):** el Admin entra en `/admin/usuarios` → el Gestor → Departamentos → Guardar.
   Filtra el buscador y fija el departamento de sus proyectos nuevos.
 - **Cambio de rol en Entra:** rige con el siguiente token (cerrar e iniciar sesión).

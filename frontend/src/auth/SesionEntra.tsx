@@ -5,7 +5,7 @@ import { MsalProvider, useMsal } from '@azure/msal-react'
 import { Button, MessageBar, MessageBarBody, MessageBarTitle, Spinner, Text, makeStyles, tokens } from '@fluentui/react-components'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { DETALLE_SIN_ACCESO, TITULO_SIN_ACCESO, decidirInicio, pantallaPorErrorUsuario } from './entra'
+import { DETALLE_SIN_ACCESO, TITULO_SIN_ACCESO, decidirInicio, pantallaPorErrorUsuario, uriRedireccionSilenciosa } from './entra'
 import { borrarPista, clienteMsal, guardarPista, leerPista, scopeApi } from './msal'
 import { useUsuarioActual } from './useUsuarioActual'
 
@@ -52,7 +52,8 @@ function Puerta({ children }: { children: ReactNode }) {
     }
     ssoIntentado.current = true
     instance
-      .ssoSilent({ scopes: [scopeApi()], loginHint: leerPista() })
+      // TAREA-7d-4: el iframe vuelve a redirect.html (puente de MSAL 5), no a la SPA completa.
+      .ssoSilent({ scopes: [scopeApi()], loginHint: leerPista(), redirectUri: uriRedireccionSilenciosa(window.location.origin) })
       .then((r) => {
         instance.setActiveAccount(r.account)
         guardarPista(r.account.username)

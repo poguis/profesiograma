@@ -1,5 +1,5 @@
 # ==========================================================================
-# TAREA-7d-1 - Publicacion de QA (J5); en deploy/qa desde la TAREA-7d-3 (E5). Lo ejecuta el USUARIO en su PC. NO llama a la API, NO se conecta a ningun
+# Publicacion de QA (TAREA-7d-1; deploy/qa desde la 7d-3; C15 en la 7d-4). Lo ejecuta el USUARIO en su PC. NO llama a la API, NO se conecta a ningun
 # servidor ni a la base y NO compila en la copia de trabajo:
 #   1. exige "git status --porcelain" vacio y anota el hash de HEAD;
 #   2. git archive HEAD -> carpeta temporal FUERA del repo;
@@ -43,7 +43,7 @@ function Ejecutar([string]$Programa, [string[]]$Argumentos, [string]$Carpeta) {
 
 $codigo = 0
 try {
-    Escribir 'PUBLICACION DE QA (TAREA-7d-1) - no se conecta a ningun servidor'
+    Escribir 'PUBLICACION DE QA - no se conecta a ningun servidor'
 
     # ---------------------------------------------------------------- 1. arbol limpio y hash
     Etapa '1. git status y hash'
@@ -140,13 +140,19 @@ try {
     Control 'C13-dist-SPA-QA-y-URL' ($conCliente -and $conUrl) 'ClientId del SPA-QA y https://sdmapptest2.sedemi.local:7083' ("ClientId: {0}; URL: {1}" -f $conCliente, $conUrl)
     $vacias = @([IO.File]::ReadAllLines((Join-Path $front '.env.qa')) | Where-Object { $_ -match '^\s*VITE_ENTRA_[A-Z_]+\s*=\s*$' })
     Control 'C14-env.qa-sin-VITE_ENTRA-vacias' ($vacias.Count -eq 0) '0 variables vacias' ("{0} vacias" -f $vacias.Count)
+    # TAREA-7d-4 (C15, J1): la pagina del puente de MSAL (redirect.html) existe, carga un /assets/*.js y no monta la app.
+    $redirect = Join-Path $app 'wwwroot\redirect.html'
+    $textoRedirect = if (Test-Path $redirect) { [IO.File]::ReadAllText($redirect) } else { '' }
+    $conScript = $textoRedirect -match 'src="/assets/[^"]+\.js"'
+    $sinRoot = -not $textoRedirect.Contains('id="root"')
+    Control 'C15-redirect.html' ((Test-Path $redirect) -and $conScript -and $sinRoot) 'existe, con /assets/*.js y sin id="root"' ("existe: {0}; script: {1}; sin root: {2}" -f (Test-Path $redirect), $conScript, $sinRoot)
     $migraciones = @(Get-ChildItem -Path (Join-Path $back 'src\App.Infrastructure\Persistencia\Migraciones') -Filter '2*.cs' |
         Where-Object { $_.Name -notlike '*.Designer.cs' } | Sort-Object Name)
-    Escribir ("CONTROL INFO migraciones del commit: {0}; ultima: {1} (QA tiene 7 desde la TAREA-7d-1: si coincide, se saltan los pasos de la base)" -f $migraciones.Count, $migraciones[-1].BaseName)
+    Escribir ("CONTROL INFO migraciones del commit: {0}; ultima: {1} (compare con COUNT(*) de __EFMigrationsHistory en QA: si coincide, se saltan los pasos de la base)" -f $migraciones.Count, $migraciones[-1].BaseName)
 
     Escribir ''
     Escribir "Carpeta de la publicacion: $Destino"
-    Escribir 'Siguiente paso: LEEME.md, paso 2 (respaldo de QA).'
+    Escribir 'Siguiente paso: LEEME.md seccion 10 (Actualizacion); primera publicacion: pasos 2-9.'
     $Estado['etapa'] = if ($script:Fallas -eq 0) { 'terminado' } else { 'terminado con fallas' }
     if ($script:Fallas -gt 0) { $codigo = 1 }
 }

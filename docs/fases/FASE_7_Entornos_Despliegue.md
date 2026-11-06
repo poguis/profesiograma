@@ -1,6 +1,6 @@
 # FASE 7 — Entornos y despliegue
 
-**Última actualización:** 2026-11-06 (TAREA-7d-3: §5, §6, §7.4 y §10). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
+**Última actualización:** 2026-11-06 (TAREA-7d-4: §7.1, §7.4 y §11). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
 
 Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no se conecta a ninguna base ni a ningún servidor.
 
@@ -141,7 +141,7 @@ Lo verificó el usuario el 29/10/2026 (pendiente 7):
 | P5 | «Asignación requerida» solo en la API; el frontend traduce AADSTS501051 a «No tienes acceso…» |
 | P6 | Tenant y client IDs (públicos) en user-secrets (backend) y en `frontend/.env.development.local` (ignorado) |
 | Ajuste 1 | `AzureAd:Audience` **vacío**: Microsoft.Identity.Web acepta el GUID del ClientId (token v2) y `api://ClientId` (token v1); un token v2 con `aud = api://…` se rechaza (E2c) |
-| Ajuste 2 | MSAL con `sessionStorage`. Sin cuenta, **un** `ssoSilent` (con `loginHint` si se guardó uno) y luego el botón «Iniciar sesión con la cuenta de SEDEMI». Nunca un redirect automático |
+| Ajuste 2 | MSAL con `sessionStorage`. Sin cuenta, **un** `ssoSilent` (con `loginHint` si se guardó uno) y luego el botón «Iniciar sesión con la cuenta de SEDEMI». Nunca un redirect automático. **Nota (TAREA-7d-4):** `ssoSilent` nunca funcionó hasta la 7d-4, tampoco en DEV; M5 no cubría una pestaña nueva. En MSAL 5 requiere el puente `/redirect.html` (§11) |
 | Ajuste 3 | `frontend/.env.development.local.example` versionado, con marcadores |
 
 **Backend** (`App.Api/Seguridad/`):
@@ -325,6 +325,7 @@ El `cd` va antes del `ren`, porque `ren` no acepta una ruta en el nombre nuevo. 
 - **API-QA** (SIG-Profesiograma-API-QA): ClientId `a0b57ea8-e21b-4bd1-a9c4-f39fc7a0b2eb`, confirmado en el portal; IDs en §9, D5. Tiene los roles Admin y Gestor, el claim `email`, tokens v2, asignación requerida (el usuario como Admin y el pasante como Gestor) y autoriza al SPA-QA.
 - **SPA-QA** (SIG-Profesiograma-SPA-QA): ClientId `4312b905-f25b-4b58-8e0a-ef896a717761`. Plataforma SPA con la URI `https://sdmapptest2.sedemi.local:7083` (sin barra final), sin flujos implícitos ni de cliente público. Permiso delegado `access_as_user` de la API-QA; sin `User.Read` ni secretos.
 - Inicio de sesión en QA: TAREA-7d-3 (§10).
+- **URIs silenciosas (TAREA-7d-4, registradas por el usuario el 06/11/2026):** `https://sdmapptest2.sedemi.local:7083/redirect.html` (SPA-QA) y `http://localhost:5173/redirect.html` (SPA-DEV), además de los orígenes. `ssoSilent` nunca funcionó hasta la 7d-4, tampoco en DEV: M5 no cubría una pestaña nueva. Desde la 7d-4, la prueba de la pestaña nueva (N1) forma parte de la verificación estándar del inicio de sesión (§11).
 - **Falta para PRO:** sus registros, con la URI de PRO (pendiente 75).
 
 ## 8. Pendientes con TI
@@ -467,3 +468,35 @@ Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueb
   - [SUPUESTO] La SPA completa arranca en el iframe y consume el fragmento.
   - Se evalúa en la **TAREA-7d-4**: un `redirectUri` en blanco (`/redirect.html`) solo para las llamadas silenciosas, registrado en el SPA-QA y el SPA-DEV.
   - `sessionStorage` se mantiene.
+
+## 11. `ssoSilent` con el puente de redirección de MSAL 5 (TAREA-7d-4, 06/11/2026)
+
+**Síntoma (L5 de la 7d-3):** en una pestaña nueva se ve el botón. Entra devuelve `#code=…` al iframe oculto, pero la ventana principal no lo recoge.
+
+**Causa** (MSAL `@azure/msal-browser` 5.26.0, `frontend/node_modules/@azure/msal-browser/src/`):
+- La ventana principal crea un iframe oculto con `sandbox` (`interaction_handler/SilentHandler.ts:95-110`) y **espera la respuesta por `BroadcastChannel`**, sin leer la URL del iframe: `interaction_client/SilentIframeClient.ts:701-715` → `utils/BrowserUtils.ts:269-378` (`waitForBridgeResponse`). Tiempo de espera: 10 s (`config/Configuration.ts:33`).
+- Solo `broadcastResponseToMainFrame()` del subpaquete `@azure/msal-browser/redirect-bridge` emite esa respuesta (`redirect_bridge/index.ts:32-156`).
+- El iframe volvía a la SPA completa (`redirectUri` = el origen):
+  - su `handleRedirectPromise` descarta la respuesta silenciosa porque no es de tipo Redirect, **sin limpiar el fragmento** (`interaction_client/RedirectClient.ts:646-666`);
+  - su propio `ssoSilent` lo bloquea `blockReloadInHiddenIframes` (`utils/BrowserUtils.ts:404-415`);
+  - **nadie emitía la respuesta**.
+- El [SUPUESTO] de la 7d-3 («la SPA consume el `#code`») quedó refutado en parte.
+
+**Solución:**
+
+| # | Decisión |
+|---|---|
+| G1 | `frontend/redirect.html` + `src/redirect.ts` como segunda entrada de Vite (`build.rolldownOptions.input`). `redirect.ts` importa **solo** `@azure/msal-browser/redirect-bridge` (J1). Build: `redirect.html` 0,63 kB; su chunk 1,2 kB, más el chunk compartido de MSAL (`Configuration-*.js`, 63 kB) |
+| G2 | `redirectUri` silencioso por llamada, en `ssoSilent` (`SesionEntra.tsx`) y en `acquireTokenSilent` (`entra.ts` → `encabezadosEntra`, vía `msal.ts`). `loginRedirect` y `logoutRedirect` siguen con el origen |
+| G3 | `uriRedireccionSilenciosa(origen)` = `new URL(origen).origin + '/redirect.html'`, con Vitest |
+| G4 | Tiempo de espera por defecto (10 s) |
+| G5 | Humo H14 (`/redirect.html`: 200, `text/html`, `no-cache`, `SAMEORIGIN`, sin `id="root"`) y C15 en `publicar-qa` |
+
+**Servido por la API, sin cambios de código:**
+- es un archivo con extensión, así que lo sirve `UseSpaEstaticos` (antes de `UseRouting`) y el fallback no lo tapa;
+- lleva `no-cache` (no está en `/assets`), `SAMEORIGIN` y `frame-ancestors 'self'`;
+- tiene una prueba en `SpaSaludTests`.
+
+**Registro en Entra (J4):** las dos URIs de §7.4, exactas y sin barra final. Si falta una, Entra da AADSTS50011 dentro del iframe y se ve el botón, sin daño.
+
+**Verificación:** N1 (DEV, pestaña nueva) y N2 (QA, después de la tercera publicación) en `deploy/qa/LEEME.md` §12.

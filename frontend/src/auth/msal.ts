@@ -1,6 +1,6 @@
 // Fase 7b: instancia única de MSAL (modo Entra). La crea inicializarMsal() en main.tsx antes del primer render.
 import { PublicClientApplication } from '@azure/msal-browser'
-import { encabezadosEntra, leerConfigEntra, type ConfigEntra } from './entra'
+import { encabezadosEntra, leerConfigEntra, uriRedireccionSilenciosa, type ConfigEntra } from './entra'
 
 let cliente: PublicClientApplication | null = null
 let config: ConfigEntra | null = null
@@ -51,7 +51,7 @@ export function scopeApi(): string {
 }
 
 export function encabezadosMsal(): Promise<Record<string, string>> {
-  return encabezadosEntra(clienteMsal(), scopeApi())
+  return encabezadosEntra(clienteMsal(), scopeApi(), uriRedireccionSilenciosa(window.location.origin)) // TAREA-7d-4
 }
 
 export function leerPista(): string | undefined {

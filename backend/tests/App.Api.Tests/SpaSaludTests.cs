@@ -19,6 +19,7 @@ public sealed class SpaSaludTests : IDisposable
 {
     private const string IndexHtml = "<!doctype html><html><body><div id=\"root\"></div></body></html>";
     private const string Asset = "/assets/index-AbC123.js";
+    private const string RedirectHtml = "<!doctype html><html><body><script type=\"module\" src=\"/assets/redirect-XyZ.js\"></script></body></html>";
     private readonly string _raiz = Path.Combine(Path.GetTempPath(), "spa-prueba-" + Guid.NewGuid().ToString("N"));
 
     public SpaSaludTests()
@@ -26,6 +27,7 @@ public sealed class SpaSaludTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_raiz, "wwwroot", "assets"));
         File.WriteAllText(Path.Combine(_raiz, "wwwroot", "index.html"), IndexHtml);
         File.WriteAllText(Path.Combine(_raiz, "wwwroot", "assets", "index-AbC123.js"), "console.log(1)");
+        File.WriteAllText(Path.Combine(_raiz, "wwwroot", "redirect.html"), RedirectHtml);
     }
 
     public void Dispose() => Directory.Delete(_raiz, recursive: true);
@@ -138,6 +140,19 @@ public sealed class SpaSaludTests : IDisposable
 
         Assert.Equal(StatusCodes.Status404NotFound, r.Estado);
         Assert.DoesNotContain("<html", r.Cuerpo, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>TAREA-7d-4: la página del puente es un archivo (no el fallback), sin caché larga y enmarcable por el mismo origen.</summary>
+    [Fact]
+    public async Task RedirectHtml_ArchivoEstatico_NoCache_SameOrigin()
+    {
+        var r = await EnviarAsync("/redirect.html", esquema: "https");
+
+        Assert.Equal((StatusCodes.Status200OK, RedirectHtml), (r.Estado, r.Cuerpo)); // no index.html
+        Assert.StartsWith("text/html", r.TipoContenido);
+        Assert.Equal(SpaExtensions.CacheSinCache, r.Cache);
+        Assert.Equal("SAMEORIGIN", r.Cabeceras.XFrameOptions.ToString());
+        Assert.Equal("frame-ancestors 'self'", r.Cabeceras.ContentSecurityPolicy.ToString());
     }
 
     // ------------------------------------------------------------------ pipeline (orden de Program.cs)

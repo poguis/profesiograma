@@ -1,7 +1,7 @@
 # ==========================================================================
-# TAREA-7d-1 / TAREA-7d-3 - Prueba de humo de QA SIN inicio de sesion (H1-H13). Lo ejecuta el USUARIO desde su PC.
+# TAREA-7d-1 / 7d-3 / 7d-4 - Prueba de humo de QA SIN inicio de sesion (H1-H14). Lo ejecuta el USUARIO desde su PC.
 # Solo GET anonimos con curl.exe (ruta completa: nunca un curl.cmd de la carpeta actual). Ningun token, ninguna escritura.
-#   set QA_BASE=https://sdmapptest2.sedemi.local:7083   (por defecto; H1-H12)
+#   set QA_BASE=https://sdmapptest2.sedemi.local:7083   (por defecto; H1-H12 y H14)
 #   set QA_HTTP=http://192.168.1.77:7082                (por defecto; H13)
 #   Certificado autofirmado (E6), en este orden:
 #     set QA_CA=D:\PROFESIOGRAMA_DEPLOY\QA\certificados\qa_7083.pem   -> --cacert + --ssl-no-revoke (por defecto, si existe)
@@ -96,7 +96,7 @@ try {
     Escribir ('=' * 70)
     Guardar-Estado $ArchivoEstado ($Estado + @{ etapa = 'en curso' })
 
-    $casosHttps = 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12'
+    $casosHttps = 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H14'
     if (-not $HttpsListo) {
         foreach ($c in $casosHttps) { Omitido $c 'requisito: QA_CA (PEM) o QA_INSEGURO=1; ver LEEME, certificado' }
     } else {
@@ -154,6 +154,12 @@ try {
         Control 'H12a' (EsIndex $h12a) '200 index.html' ("{0}, {1}" -f $h12a.Codigo, (Cabecera $h12a 'content-type'))
         $h12b = Https 'H12b' '/assets/no-existe.js'
         Control 'H12b' ($h12b.Codigo -eq 404) '404' $h12b.Codigo
+
+        # H14 (TAREA-7d-4): pagina del puente de MSAL: archivo estatico, sin cache larga, enmarcable por el mismo origen
+        $h14 = Https 'H14' '/redirect.html'
+        $tipo = Cabecera $h14 'content-type'; $cache = Cabecera $h14 'cache-control'; $marco = Cabecera $h14 'x-frame-options'
+        Control 'H14' ($h14.Codigo -eq 200 -and $tipo -like 'text/html*' -and $cache -eq 'no-cache' -and $marco -eq 'SAMEORIGIN' -and -not $h14.Cuerpo.Contains('id="root"')) `
+            '200, text/html, no-cache, SAMEORIGIN, sin id="root"' ("{0}, {1}, {2}, {3}" -f $h14.Codigo, $tipo, $cache, $marco)
     }
 
     # H13: http 7082 sirve index.html (la redireccion a la URL publica la hace el navegador, E1)

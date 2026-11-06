@@ -110,20 +110,33 @@ export function clasificarErrorMsal(error: unknown): 'sinAcceso' | 'interaccion'
   return 'otro'
 }
 
+/**
+ * TAREA-7d-4 (G2, G3): redirectUri de las llamadas silenciosas (ssoSilent y acquireTokenSilent cuando cae al iframe):
+ * la página del puente de MSAL 5 (redirect.html), registrada en el SPA de Entra. loginRedirect y logoutRedirect siguen
+ * con el origen.
+ */
+export function uriRedireccionSilenciosa(origen: string): string {
+  return `${new URL(origen).origin}/redirect.html`
+}
+
 /** Lo mínimo de PublicClientApplication que usa el cliente HTTP (permite dobles en las pruebas). */
 export interface ClienteTokens<C> {
   getActiveAccount(): C | null
-  acquireTokenSilent(solicitud: { scopes: string[]; account: C }): Promise<{ accessToken: string }>
+  acquireTokenSilent(solicitud: { scopes: string[]; account: C; redirectUri?: string }): Promise<{ accessToken: string }>
 }
 
 /** Encabezado Bearer para la API. Sin cuenta o sin token: ErrorApi (nunca se registra el token). */
-export async function encabezadosEntra<C>(cliente: ClienteTokens<C>, scopeApi: string): Promise<Record<string, string>> {
+export async function encabezadosEntra<C>(
+  cliente: ClienteTokens<C>,
+  scopeApi: string,
+  redirectUri?: string,
+): Promise<Record<string, string>> {
   const cuenta = cliente.getActiveAccount()
   if (!cuenta) {
     throw new ErrorApi({ tipo: 'noAutenticado', estado: null })
   }
   try {
-    const { accessToken } = await cliente.acquireTokenSilent({ scopes: [scopeApi], account: cuenta })
+    const { accessToken } = await cliente.acquireTokenSilent({ scopes: [scopeApi], account: cuenta, redirectUri })
     return { Authorization: `Bearer ${accessToken}` }
   } catch (error) {
     if (clasificarErrorMsal(error) === 'sinAcceso') {

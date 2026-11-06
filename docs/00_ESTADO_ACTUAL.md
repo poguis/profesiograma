@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-3). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-06 (TAREA-7d-4). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 06/11/2026 |
 |---|---|
@@ -13,7 +13,7 @@
 | Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
 | QA (7d-1 y 7d-3) | ✅ Verificadas el 06/11/2026: `https://sdmapptest2.sedemi.local:7083` con inicio de sesión (Admin y Gestor), humo H1–H13 y F1–F4 (1220/1220, 425/425) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **TAREA-7d-4** — `ssoSilent` con página de redirección en blanco (pendiente 86) |
+| **Siguiente tarea** | **7d-4: verificación del usuario** — N1 en DEV; tercera publicación (H1–H14) y N2–N4 en QA (`deploy/qa/LEEME.md` §10 y §12) |
 
 ## 1. Índice de documentos
 
@@ -100,7 +100,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | 1. **Fase 7a** ✅ | Entornos DEV/QA/PRO, base QA, login y respaldos (pendiente 65); el sitio IIS sigue en la 7d |
 | 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 4. Fase 7d | 7d-1 y 7d-3 ✅; 7d-4 (`ssoSilent`); certificado de confianza y PRO: pendiente 75 |
+| 4. Fase 7d | 7d-1 y 7d-3 ✅; 7d-4 (`ssoSilent`) implementada; certificado de confianza y PRO: pendiente 75 |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
 | 6. Pruebas con usuarios | — |
 | 7. Corte | Paso a producción |
@@ -168,8 +168,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 83. [Antes de PRO] CSP completa (E4 de la 7d-3; hoy solo `frame-ancestors`): probarla con `Content-Security-Policy-Report-Only` en DEV (Griffel, MSAL).
 84. [K6] tarea22c, 23-1, 23-2, 23-3, 25, 25-3 y 62 de `backend/tests/manual/`: sin archivos versionados. [PENDIENTE DE DECISIÓN DEL USUARIO]
 85. Renovar el certificado de QA antes del **06/11/2027** (o reemplazarlo: pendiente 75).
-86. [7d-4] `ssoSilent` en una pestaña nueva de QA: el `#code` llega al iframe, pero la ventana principal no lo recoge. Evaluar `/redirect.html` en blanco como `redirectUri` silencioso (SPA-QA y SPA-DEV). Detalle: `TAREA-7d-3-reporte.md` §7.
-87. [Menor, 7d-4] Corregir el encabezado de `publicar-qa` («TAREA-7d-1», «Siguiente paso: … paso 2»).
+86. [7d-4] `ssoSilent` en una pestaña nueva: **implementado** (puente `/redirect.html` de MSAL 5, FASE_7 §11); se cierra al verificar N1/N2.
 
 ## 7.1 Reglas técnicas obligatorias
 
