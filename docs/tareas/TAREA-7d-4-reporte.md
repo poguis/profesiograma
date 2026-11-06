@@ -1,6 +1,6 @@
 # TAREA-7d-4 — Reporte: `ssoSilent` con el puente de redirección de MSAL 5
 
-**Fecha:** 06/11/2026 · **Fase:** B (implementación del plan de la Fase A, con G1–G5 y J1–J4) · **Estado:** implementada; pendiente de la verificación del usuario (N1 en DEV; tercera publicación, H1–H14 y N2–N4 en QA)
+**Fecha:** 06/11/2026 · **Fase:** B (implementación del plan de la Fase A, con G1–G5 y J1–J4) · **Estado:** ✅ verificada por el usuario el 06/11/2026 (§7)
 
 Causa con las citas de MSAL 5.26.0 y la solución: `docs/fases/FASE_7_Entornos_Despliegue.md` §11.
 
@@ -54,7 +54,7 @@ Causa con las citas de MSAL 5.26.0 y la solución: `docs/fases/FASE_7_Entornos_D
 - **`fileURLToPath(new URL(…, import.meta.url))`** para las entradas de `vite.config.ts`: `tsconfig.node.json` ya incluye los tipos de `node`.
 - **`redirect.ts` captura el rechazo del puente:** si se abre `/redirect.html` a mano, sin respuesta en la URL, la página queda en blanco, sin errores sin capturar.
 - **No simulé `humo-qa`** (la tarea prohíbe ejecutar los scripts). Solo revisé la sintaxis.
-- **[PENDIENTE DE CONFIRMAR]** Que `npm run dev` sirva `/redirect.html` desde la raíz (Vite multipágina). N1 lo verifica.
+- Que `npm run dev` sirviera `/redirect.html` desde la raíz era un [PENDIENTE DE CONFIRMAR]. **Resuelto el 06/11/2026** (N1, §7).
 - **Cookies de terceros:** si un navegador las bloquea en el iframe de Entra, `ssoSilent` falla y se ve el botón, sin bucles.
 
 ## 5. Verificación para el usuario
@@ -68,6 +68,18 @@ Causa con las citas de MSAL 5.26.0 y la solución: `docs/fases/FASE_7_Entornos_D
 | N4 | F12 → Consola en N1 y N2 | Sin `timed_out`, `redirect_bridge_timeout` ni `block_iframe_reload` |
 
 ## 6. Pendientes
-- La verificación (N1–N4, H14) y el cierre documental; el pendiente 86 se cierra con N1/N2.
-- 82: revisar si se cierra (ya no aparece el aviso de más de 500 kB).
+- Pendientes 86 y 87 cerrados; 82 superado (sin el aviso de más de 500 kB).
 - Siguen 75, 77, 81 (desde el 13/11), 83, 84 y 85.
+
+## 7. Verificación del usuario (06/11/2026)
+| # | Resultado |
+|---|---|
+| Entra | En el primer intento de N1, las URIs `http://localhost:5173/redirect.html` (SPA-DEV) y `https://sdmapptest2.sedemi.local:7083/redirect.html` (SPA-QA) **no estaban registradas**, y la pestaña nueva mostraba el botón (el mismo síntoma que el error original). El usuario las agregó y N1 funcionó. **Esto confirma el orden de J4** (registrar antes de probar y de publicar) |
+| N1 (DEV) | OK: la pestaña nueva entra sola. `npm run dev` sirve `/redirect.html` |
+| N3 / N4 (DEV) | OK / sin errores ni advertencias nuevas |
+| Estado de DEV | Se encontró `frontend/.env.development.local` con `VITE_AUTH_MODE=entra`, en contra de FASE_7 §7.4 («DEV por defecto en DevAuth»). Se dejó en DevAuth: el archivo se renombró a `.env.development.local.entra` y se hizo `dotnet user-secrets remove Autenticacion:Modo`, verificado con `list \| findstr` (sin resultados) |
+| Paquete | Commit `98f253a`; `publicar-qa` con P1 y C1–C15 OK; 7 migraciones (pasos de base omitidos); encabezado neutro (pendiente 87) |
+| Tercera publicación | Respaldo `E:\SIG_Profesiograma\20261106_antes_98f253a`: `robocopy` 0 copiados y 164 omitidos (la carpeta ya existía, con los mismos archivos, de un intento previo); contiene `1570c05` según su `version.txt`. Copia: código 3 (94 copiados; 69 assets del build anterior purgados). `version.txt` = `98f253a`; `wwwroot\redirect.html` presente |
+| Humo | H1–H8 y H10–H14 OK (H14: `/redirect.html` 200, `text/html`, `no-cache`, `SAMEORIGIN`); H9 INFO; «Casos con FALLA: 0» |
+| N2 / N3 / N4 (QA) | OK: la pestaña nueva entra sola / el botón y cerrar sesión, sin cambios / consola sin errores nuevos |
+| Actualización | El procedimiento de §10 del LEEME quedó probado dos veces (`1570c05` y `98f253a`) |

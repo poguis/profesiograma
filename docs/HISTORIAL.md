@@ -35,6 +35,7 @@
 | H29 | TAREA-7d-3 (06/11/2026): cabecera, siguiente tarea, fila QA de §4, fila 4 de la hoja de ruta, pendientes 7, 50, 75 y 82; pendientes 78–81 cerrados; textos de FASE_7 §5, §6, §7.4 y §9 |
 | H30 | Cierre de la TAREA-7d-3 (06/11/2026): cabecera, filas de QA del estado, siguiente tarea, fila 4 de la hoja de ruta, pendiente 7; pendientes 19 y 45 (acortados) |
 | H31 | TAREA-7d-4 (06/11/2026): cabecera, siguiente tarea, fila 4 de la hoja de ruta, pendiente 86; pendiente 87 cerrado; textos de FASE_7 (cabecera, §7.1 Ajuste 2 y §7.4) |
+| H32 | Cierre de la TAREA-7d-4 (06/11/2026): cabecera, fila de QA, siguiente tarea, fila 4 de la hoja de ruta, pendiente 82 (superado); pendiente 86 cerrado; texto de FASE_7 (cabecera y §7.4) |
 
 ## H1. Cabecera anterior
 
@@ -652,3 +653,25 @@ Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
 | Ajuste 2 | MSAL con `sessionStorage`. Sin cuenta, **un** `ssoSilent` (con `loginHint` si se guardó uno) y luego el botón «Iniciar sesión con la cuenta de SEDEMI». Nunca un redirect automático |
 
 - Inicio de sesión en QA: TAREA-7d-3 (§10).
+
+## H32. Movido del estado vigente el 06/11/2026 (cierre de la TAREA-7d-4)
+
+Pendiente cerrado: 86 (`ssoSilent` resuelto, verificado con N1 y N2). Texto anterior de `00_ESTADO_ACTUAL.md` (textual):
+
+**Última actualización:** 2026-11-06 (TAREA-7d-4).
+
+| QA (7d-1 y 7d-3) | ✅ Verificadas el 06/11/2026: `https://sdmapptest2.sedemi.local:7083` con inicio de sesión (Admin y Gestor), humo H1–H13 y F1–F4 (1220/1220, 425/425) |
+
+| **Siguiente tarea** | **7d-4: verificación del usuario** — N1 en DEV; tercera publicación (H1–H14) y N2–N4 en QA (`deploy/qa/LEEME.md` §10 y §12) |
+
+| 4. Fase 7d | 7d-1 y 7d-3 ✅; 7d-4 (`ssoSilent`) implementada; certificado de confianza y PRO: pendiente 75 |
+
+82. [Optimización] Dividir el bloque `clienteHttp` (~505 kB, posible MSAL dentro).
+
+86. [7d-4] `ssoSilent` en una pestaña nueva: **implementado** (puente `/redirect.html` de MSAL 5, FASE_7 §11); se cierra al verificar N1/N2.
+
+Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
+
+**Última actualización:** 2026-11-06 (TAREA-7d-4: §7.1, §7.4 y §11).
+
+**Decisión del usuario (05/11/2026):** DEV queda por defecto en **DevAuth**, porque los scripts `.cmd` de `backend/tests/manual/` necesitan `X-Dev-User`. QA y PRO usan **siempre Entra ID**: DevAuth solo existe en Development (guarda E13).

@@ -1,6 +1,6 @@
 # FASE 7 — Entornos y despliegue
 
-**Última actualización:** 2026-11-06 (TAREA-7d-4: §7.1, §7.4 y §11). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-4: §7.4 y §11). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
 
 Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no se conecta a ninguna base ni a ningún servidor.
 
@@ -319,6 +319,10 @@ El `cd` va antes del `ren`, porque `ren` no acepta una ruta en el nombre nuevo. 
 
 **Decisión del usuario (05/11/2026):** DEV queda por defecto en **DevAuth**, porque los scripts `.cmd` de `backend/tests/manual/` necesitan `X-Dev-User`. QA y PRO usan **siempre Entra ID**: DevAuth solo existe en Development (guarda E13).
 
+**Al terminar cualquier prueba con Entra en DEV, se vuelve a DevAuth** (TAREA-7d-4: el 06/11/2026 se encontró DEV en modo Entra). Para comprobarlo:
+- `cd frontend` y `dir /b /a .env*`: debe aparecer `.env.development.local.entra` y **no** `.env.development.local`.
+- Desde `backend/`: `dotnet user-secrets list --project src/App.Api | findstr Autenticacion`, **sin resultados** (sin mostrar los otros valores).
+
 **Lección:** nunca pegar tokens en chats ni en tickets. Para inspeccionarlos se usa `jwt.ms`.
 
 **Registros de QA (06/11/2026):**
@@ -500,3 +504,14 @@ Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueb
 **Registro en Entra (J4):** las dos URIs de §7.4, exactas y sin barra final. Si falta una, Entra da AADSTS50011 dentro del iframe y se ve el botón, sin daño.
 
 **Verificación:** N1 (DEV, pestaña nueva) y N2 (QA, después de la tercera publicación) en `deploy/qa/LEEME.md` §12.
+
+**Verificación (06/11/2026, la hizo el usuario):** el detalle está en `docs/tareas/TAREA-7d-4-reporte.md` §7.
+- **Registro previo:** las URIs `/redirect.html` no estaban registradas en el primer intento de N1, y se veía el botón (el mismo síntoma que el error original). Una vez registradas, N1 funcionó: confirma el orden de J4.
+- **DEV:** N1, N3 y N4 OK; `npm run dev` sirve `/redirect.html`. DEV quedó otra vez en DevAuth (§7.4).
+- **QA, tercera publicación** (`98f253a`):
+  - P1 y C1–C15 OK; sin pasos de base;
+  - respaldo en `E:\SIG_Profesiograma\20261106_antes_98f253a` (con `1570c05`);
+  - copia con código 3;
+  - humo H1–H8 y H10–H14 OK, H9 INFO;
+  - N2, N3 y N4 OK.
+- **`ssoSilent` resuelto.** El procedimiento de actualización quedó probado dos veces.
