@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-06 (TAREA-7d-3). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-3). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 06/11/2026 |
 |---|---|
@@ -11,10 +11,9 @@
 | Criterio de personal (TAREA-62) | ✅ Cerrada: 62-1 (backend) y 62-2 (frontend) verificadas por el usuario el 28/10/2026 (62-2: A1–A11; 362/362) |
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
 | Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
-| Publicación en QA (7d-1) | ✅ Verificada el 06/11/2026: `http://192.168.1.77:7082`, sin inicio de sesión (H1–H8, V1; 1211/1211, 417/417) |
-| Inicio de sesión en QA (7d-3, incluye la 7d-2) | Implementada (1220/1220, 425/425); falta la ejecución del usuario |
+| QA (7d-1 y 7d-3) | ✅ Verificadas el 06/11/2026: `https://sdmapptest2.sedemi.local:7083` con inicio de sesión (Admin y Gestor), humo H1–H13 y F1–F4 (1220/1220, 425/425) |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | **7d-3: ejecución por el usuario** (`deploy/qa/LEEME.md` §10–§13): actualización, humo H1–H13, L1–L6 y F1–F4 |
+| **Siguiente tarea** | **TAREA-7d-4** — `ssoSilent` con página de redirección en blanco (pendiente 86) |
 
 ## 1. Índice de documentos
 
@@ -101,7 +100,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | 1. **Fase 7a** ✅ | Entornos DEV/QA/PRO, base QA, login y respaldos (pendiente 65); el sitio IIS sigue en la 7d |
 | 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 4. Fase 7d | 7d-1 ✅; 7d-3 (HTTPS provisional, inicio de sesión y la 7d-2) implementada; certificado de confianza y PRO: pendiente 75 |
+| 4. Fase 7d | 7d-1 y 7d-3 ✅; 7d-4 (`ssoSilent`); certificado de confianza y PRO: pendiente 75 |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
 | 6. Pruebas con usuarios | — |
 | 7. Corte | Paso a producción |
@@ -116,7 +115,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 2. [Opcional] Excel de cargos → código Infor (la importación desde la API y la edición ya existen, TAREA-25-3-1). Texto anterior en `HISTORIAL.md`.
 4. Office Script del reporte de cronograma: sin su código, EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
-7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2); en QA, API-QA y SPA-QA registradas e inicio de sesión implementado (7d-3; `FASE_7_Entornos_Despliegue.md` §7.4 y §10). Falta PRO (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
+7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2); en QA, inicio de sesión verificado el 06/11/2026 (7d-3; `FASE_7_Entornos_Despliegue.md` §7.4 y §10). Falta PRO (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push. Pregunta abierta: ¿el remoto `origin` es privado?
 10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
@@ -124,7 +123,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 13. Significado de `tipoHorario` del ERP (`M` / `D`) [PENDIENTE DE CONFIRMAR con el ERP o RR. HH.]. No indica turno nocturno (TAREA-26c, B1): la aplicación lo deduce de las horas. Texto anterior en `HISTORIAL.md`.
 15. Sin prueba de traducción SQL: consultas de `DatosPruebaSembrador` (las de `UsuarioProvisionamiento` la tienen desde la TAREA-7b-2).
 16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
-19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
+19. [TAREA-13] «Usuario con varios departamentos» (selector de P5) sin verificación visual; cubierto por pruebas. Texto anterior en `HISTORIAL.md`.
 21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
 24. [TAREA-14] La advertencia E6 ("Se eliminarán días ya transcurridos.") solo está cubierta por pruebas: los proyectos de prueba Id 7 y 8 son de 2027.
 27. [TAREA-17b, H12] Datos migrados (Fase 3): un back sin días de descanso guardados después de su `FechaFin` se trata como recortado por una suspensión (histórico desde el día siguiente a su fin). Revisar en la carga masiva. [PENDIENTE DE CONFIRMAR]
@@ -133,7 +132,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 38. [Después de producción] [Menor, frontend] Unificar `validarEdicionPersonal` (`edicionPersonal.ts`, TAREA-19b) y `validarPersonalReactivacion` (`reactivacion.ts`, TAREA-19c): una sola función que acepte la fecha fin del proyecto vacía. Hoy la reactivación tiene su propia versión con los mismos textos más la regla de inicio ≥ R. Origen: TAREA-19c.
 43. [Menor] `codEmpresa` del empleado (ECU, SCE…) no es el Id de compañía del ERP de proyectos (`Compania.Id`): no se cruzan. Si en el futuro se necesita filtrar empleados por la compañía del proyecto, hará falta una tabla de equivalencias.
 44. [Futuro] La API de empleados trae `codPerfil`, `posicion` y `cargoTipo` (organizacionales), útiles para el módulo Perfiles. Hoy no se guardan (`FASE_4_Empleados_API.md`).
-45. [Fase 3] El ERP puede devolver `CorreoEmpresa` (`mailEmpresa`) sin formato de correo (p. ej. "SC" en el empleado 11358). Validar el formato antes de usarlo (Graph, notificaciones, `Usuario.EmpleadoId` desde `mailEmpresa` en la Fase 7); un valor no válido se trata como sin correo.
+45. [Fase 3] `CorreoEmpresa` del ERP puede venir sin formato de correo (p. ej. «SC»): validarlo antes de usarlo; uno no válido = sin correo. Texto anterior en `HISTORIAL.md`.
 46. [Después de producción] [Opcional, TAREA-26d-3 D1] Acción «Actualizar datos guardados del empleado» desde la API, con auditoría y concurrencia. Texto anterior en `HISTORIAL.md`. [PENDIENTE DE DECISIÓN DEL USUARIO]
 47. [Seguridad, lo ejecuta el usuario] Cambiar la contraseña del login `profesiograma_dev` (débil y expuesta en un chat): en SQL Server (NIQUEL\SSDEV) y en los user-secrets (`ConnectionStrings:Profesiograma`, `UserSecretsId` sin cambios). Claude Code no la ve ni la escribe.
 48. [Observar] Posible lentitud de la primera llamada tras arrancar la API (~4,7 s en un 404, TAREA-26d-3). Solo observar; si se repite en llamadas normales, medir (arranque de EF, primera conexión, caché de empleados).
@@ -169,6 +168,8 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 83. [Antes de PRO] CSP completa (E4 de la 7d-3; hoy solo `frame-ancestors`): probarla con `Content-Security-Policy-Report-Only` en DEV (Griffel, MSAL).
 84. [K6] tarea22c, 23-1, 23-2, 23-3, 25, 25-3 y 62 de `backend/tests/manual/`: sin archivos versionados. [PENDIENTE DE DECISIÓN DEL USUARIO]
 85. Renovar el certificado de QA antes del **06/11/2027** (o reemplazarlo: pendiente 75).
+86. [7d-4] `ssoSilent` en una pestaña nueva de QA: el `#code` llega al iframe, pero la ventana principal no lo recoge. Evaluar `/redirect.html` en blanco como `redirectUri` silencioso (SPA-QA y SPA-DEV). Detalle: `TAREA-7d-3-reporte.md` §7.
+87. [Menor, 7d-4] Corregir el encabezado de `publicar-qa` («TAREA-7d-1», «Siguiente paso: … paso 2»).
 
 ## 7.1 Reglas técnicas obligatorias
 

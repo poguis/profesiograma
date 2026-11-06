@@ -1,6 +1,6 @@
 # TAREA-7d-3 — Reporte: inicio de sesión real en QA por HTTPS (incluye la 7d-2)
 
-**Fecha:** 06/11/2026 · **Fase:** B (implementación del plan de la Fase A, con E1–E8 y K1–K6) · **Estado:** implementada; pendiente de la ejecución y la verificación del usuario (`deploy/qa/LEEME.md` §10–§13)
+**Fecha:** 06/11/2026 · **Fase:** B (implementación del plan de la Fase A, con E1–E8 y K1–K6) · **Estado:** ✅ verificada por el usuario el 06/11/2026 (§7)
 
 Diseño, decisiones y ajustes: `docs/fases/FASE_7_Entornos_Despliegue.md` §10.
 
@@ -66,8 +66,8 @@ Diseño, decisiones y ajustes: `docs/fases/FASE_7_Entornos_Despliegue.md` §10.
 - **`humo-qa`:**
   - usa `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\qa_7083.pem` por defecto si existe (`QA_CA` lo cambia);
   - H9 ya no consulta `/assets/` (lo cubre H12a).
-- **[PENDIENTE DE CONFIRMAR] Schannel:** que el `curl.exe` de Windows acepte el PEM y que `--ssl-no-revoke` alcance. Si no, `QA_INSEGURO=1`.
-- **[SUPUESTO] Iframe de `ssoSilent`:** el iframe puede no aceptar el certificado autofirmado. En ese caso L5 muestra el botón, sin bucles.
+- **Schannel:** que el `curl.exe` de Windows aceptara el PEM con `--ssl-no-revoke` era un [PENDIENTE DE CONFIRMAR]. **Resuelto el 06/11/2026** (§7).
+- **Iframe de `ssoSilent`:** se suponía que el iframe podía no aceptar el certificado autofirmado. **Descartado:** Entra devuelve el código al iframe; la causa de L5 es otra (§7).
 - **Archivos del usuario:** los `resultado-*` de la 7d-1 quedan en `backend/tests/manual/tarea7d1/` (no los moví ni los leí).
 - **Corrección documental:** 00_ESTADO tenía la 7d-2 como tarea aparte. Quedó absorbida, y los pendientes 78–81 se cerraron (H29).
 
@@ -85,5 +85,32 @@ Orden completo en `deploy/qa/LEEME.md` §10 (Actualización), §11 (certificado)
 | 10 | F1–F4 | Proyecto con 2 empleados reales, cronograma, Excel con el nombre y la cantidad de filas, novedad |
 
 ## 6. Pendientes
-- La ejecución y la verificación de esta tarea, y su cierre documental.
+- **TAREA-7d-4:** `ssoSilent` en una pestaña nueva (§7, L5).
 - 75 (certificado de confianza, PRO, Graph, TLS, `X-Powered-By`, Hosting Bundle); 77 (configuración en tiempo de ejecución); 82 (bloque de 505 kB); 83 (CSP completa); 84 (K6); 85 (renovar el certificado antes del 06/11/2027).
+
+## 7. Verificación del usuario (06/11/2026)
+| # | Resultado |
+|---|---|
+| Paquete | Commit `1570c05`. `publicar-qa`: P1 y C1–C14 OK. INFO: 7 migraciones (la última `AgregarUpnUsuario`), así que se omitieron los pasos de la base |
+| Certificado | En `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\` (`.cer` + `qa_7083.pem` con `certutil -encode`). Huella sha1 `dd51425e…c6d5`, igual a la del servidor. `curl.exe --cacert qa_7083.pem --ssl-no-revoke` → 200: **Schannel acepta el PEM** |
+| Actualización | `app_offline.htm`. Respaldo `E:\SIG_Profesiograma\20261106_antes_1570c05` (163 archivos, código 1). `robocopy /MIR`: código 3 (90 copiados; 68 assets del build anterior purgados). `version.txt` = `1570c05`; `app_offline.htm` borrado. `/api/salud/vivo` por https con los 4 encabezados y sin HSTS |
+| Humo (`QA_CA`) | H1–H8 y H10–H13 OK; H9 INFO (`Server` ausente, `X-Powered-By: Sedemi`); «Casos con FALLA: 0» |
+| L1 | Admin OK. Edge muestra «No seguro» (esperado con el autofirmado) |
+| L2 | Gestor (pasante) OK, sin el menú de administración |
+| L3 | No probado (cubierto en DEV, M4) |
+| L4 | OK |
+| L5 | F5 en la misma pestaña mantiene la sesión. Una **pestaña nueva** muestra el botón y no entra sola (diagnóstico abajo) |
+| L6 | 2 filas (Id 2 y 3) con oid y `Upn`; el Id 2 con correo distinto del UPN (7b-2 en QA); `@@TRANCOUNT = 0` |
+| F1 | Proyecto `PRY-20261106-501802` creado por el Gestor con empleados del ERP |
+| F2 | Cronograma OK |
+| F3 | Excel descargado (nombre y aviso con la cantidad de filas) y contenido correcto |
+| F4 | OK |
+
+**Datos de prueba:** lo creado en F1–F4 queda en QA. Antes de la Fase 3 se restaura el punto cero v2.
+
+**Diagnóstico de L5** (pestaña nueva; para la TAREA-7d-4):
+- La consola muestra la advertencia estándar del iframe de MSAL y la carga de `https://sdmapptest2.sedemi.local:7083/#code=…` dentro del iframe.
+- Entra devolvió el código, así que las cookies y el certificado funcionan; la ventana principal no lo recoge.
+- [SUPUESTO] La SPA completa arranca dentro del iframe y procesa o limpia el fragmento antes de que lo lea la ventana principal, que espera hasta agotar el tiempo.
+- **A evaluar:** una página en blanco (p. ej. `/redirect.html`) como `redirectUri` solo para las llamadas silenciosas, registrada en el SPA-QA y el SPA-DEV.
+- Se mantiene la decisión de la 7b (`sessionStorage`).

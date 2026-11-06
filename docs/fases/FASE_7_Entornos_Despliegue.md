@@ -450,3 +450,20 @@ Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueb
 - Admin y Gestor se crean al primer ingreso, con oid, UPN y correo (búsqueda oid → UPN → correo de la 7b-2); la semilla SISTEMA nunca coincide.
 - El Gestor sin departamentos ve a todos los empleados y crea proyectos sin departamento; asignarle departamentos es opcional (`FASE_5_Usuarios_Departamentos.md` §5).
 - No hace falta ningún dato previo.
+
+**Ejecución y verificación (06/11/2026, la hizo el usuario):** el detalle está en `docs/tareas/TAREA-7d-3-reporte.md` §7.
+- **Actualización** (la primera real): commit `1570c05`; P1 y C1–C14 OK; con 7 migraciones se omitieron los pasos de la base.
+  - Respaldo en `E:\SIG_Profesiograma\20261106_antes_1570c05`.
+  - `robocopy /MIR` purgó 68 assets del build anterior.
+  - `version.txt` = `1570c05`.
+- **Certificado:** el `.pem` está en el PC del usuario, con la huella igual a la del servidor. **Schannel acepta `--cacert` (PEM) con `--ssl-no-revoke`.**
+- **Humo:** H1–H8 y H10–H13 OK; H9 INFO.
+- **Inicio de sesión:**
+  - L1 (Admin) y L2 (Gestor) OK; L4 OK; L3 no probado (cubierto en DEV);
+  - L6: 2 filas con oid y `Upn`, una con el correo distinto del UPN.
+- **Funcionales:** F1–F4 OK (`PRY-20261106-501802`, cronograma, Excel, novedad). Los datos quedan en QA hasta restaurar el punto cero v2.
+- **L5:** F5 mantiene la sesión, pero una pestaña nueva muestra el botón.
+  - Entra devuelve `#code=…` al iframe y la ventana principal no lo recoge.
+  - [SUPUESTO] La SPA completa arranca en el iframe y consume el fragmento.
+  - Se evalúa en la **TAREA-7d-4**: un `redirectUri` en blanco (`/redirect.html`) solo para las llamadas silenciosas, registrado en el SPA-QA y el SPA-DEV.
+  - `sessionStorage` se mantiene.

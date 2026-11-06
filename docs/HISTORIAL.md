@@ -33,6 +33,7 @@
 | H27 | TAREA-7d-1 (05/11/2026): cabecera, siguiente tarea, filas Proyectos y Pruebas de §4, filas 1 y 4 de la hoja de ruta, pendientes 2, 13 y la última línea del 75 |
 | H28 | Cierre de la TAREA-7d-1 (06/11/2026): cabecera, siguiente tarea, accesos de §4, fila 4 de la hoja de ruta, pendientes 4, 15, 46, 53, 54, 58, 59, 60 y 61 (acortados); textos de FASE_7 §1, §4, §5, §6 y §9 |
 | H29 | TAREA-7d-3 (06/11/2026): cabecera, siguiente tarea, fila QA de §4, fila 4 de la hoja de ruta, pendientes 7, 50, 75 y 82; pendientes 78–81 cerrados; textos de FASE_7 §5, §6, §7.4 y §9 |
+| H30 | Cierre de la TAREA-7d-3 (06/11/2026): cabecera, filas de QA del estado, siguiente tarea, fila 4 de la hoja de ruta, pendiente 7; pendientes 19 y 45 (acortados) |
 
 ## H1. Cabecera anterior
 
@@ -609,3 +610,22 @@ Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
 La ejecuta el usuario con `backend/tests/manual/tarea7d1/LEEME.md`.
 
 Corrección (06/11/2026): E7 revertida por el usuario; el pendiente 81 sigue abierto.
+
+## H30. Movido del estado vigente el 06/11/2026 (cierre de la TAREA-7d-3)
+
+Texto anterior de `00_ESTADO_ACTUAL.md` (textual):
+
+**Última actualización:** 2026-11-06 (TAREA-7d-3).
+
+| Publicación en QA (7d-1) | ✅ Verificada el 06/11/2026: `http://192.168.1.77:7082`, sin inicio de sesión (H1–H8, V1; 1211/1211, 417/417) |
+| Inicio de sesión en QA (7d-3, incluye la 7d-2) | Implementada (1220/1220, 425/425); falta la ejecución del usuario |
+
+| **Siguiente tarea** | **7d-3: ejecución por el usuario** (`deploy/qa/LEEME.md` §10–§13): actualización, humo H1–H13, L1–L6 y F1–F4 |
+
+| 4. Fase 7d | 7d-1 ✅; 7d-3 (HTTPS provisional, inicio de sesión y la 7d-2) implementada; certificado de confianza y PRO: pendiente 75 |
+
+en QA, API-QA y SPA-QA registradas e inicio de sesión implementado (7d-3;
+
+19. [TAREA-13] Caso "usuario con varios departamentos" (selector de P5) sin verificación visual: los dos usuarios de desarrollo tienen un solo departamento. Cubierto por pruebas (servicio de opciones y estado inicial). Para verlo en pantalla habría que insertar un `UsuarioDepartamento` con SQL (requiere aprobación).
+
+45. [Fase 3] El ERP puede devolver `CorreoEmpresa` (`mailEmpresa`) sin formato de correo (p. ej. "SC" en el empleado 11358). Validar el formato antes de usarlo (Graph, notificaciones, `Usuario.EmpleadoId` desde `mailEmpresa` en la Fase 7); un valor no válido se trata como sin correo.
