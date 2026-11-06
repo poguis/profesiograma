@@ -1,29 +1,40 @@
-# TAREA-7d-1 — Publicación de prueba en SDMAPPTEST2 (QA, http 192.168.1.77:7082, sin inicio de sesión)
+# Despliegue de QA en SDMAPPTEST2 — primera publicación y actualizaciones
 
 Todo lo ejecuta **el usuario**: los scripts en su PC, RDP en SDMAPPTEST2 y SSMS contra `NIQUEL\SSDEV`. Claude Code solo
-escribió estos archivos. Diseño y decisiones (D1–D8, J1–J7): `docs/fases/FASE_7_Entornos_Despliegue.md` §9.
+escribió estos archivos. Diseño y decisiones: `docs/fases/FASE_7_Entornos_Despliegue.md` §9 (TAREA-7d-1) y §10 (TAREA-7d-3).
 
-**Antes de empezar:** el commit que se publica debe contener los cambios de la TAREA-7d-1 (`appsettings.QA.json`,
-`frontend/.env.qa`, etc.). `publicar-qa` usa `git archive HEAD`: lo que no está en el commit no se publica.
-Los archivos nuevos de esta carpeta están bajo `backend/tests/manual/`, que el `.gitignore` raíz ignora: para versionarlos,
-`git add -f backend/tests/manual/tarea7d1`.
+- **URL pública:** `https://sdmapptest2.sedemi.local:7083`, con inicio de sesión de Entra ID (SPA-QA) y un certificado
+  autofirmado que vence el **06/11/2027**.
+- `http://192.168.1.77:7082` sigue activo: el navegador redirige a la URL pública (E1).
+- **Primera publicación** (pasos 1–9, hecha el 06/11/2026): solo para un servidor nuevo o para rehacer el sitio.
+- **Actualizaciones** (la de la 7d-3 y las siguientes): **§10**.
+
+**Antes de empezar:**
+- `publicar-qa` usa `git archive HEAD`: lo que no está en el commit no se publica.
+- Esta carpeta (`deploy/qa/`) se versiona normalmente; su `.gitignore` excluye `resultado-*` y `*.lock`.
 
 | Archivo | Qué hace |
 |---|---|
-| `publicar-qa.cmd` (+ `.ps1`) | Paso 1: genera la publicación desde HEAD, fuera del repo, con 13 líneas CONTROL |
-| `humo-qa.cmd` (+ `.ps1`) | Paso 8: H1–H9, solo GET anónimos con `curl.exe`. `set SIMULAR=1` para ensayarlo sin red |
+| `publicar-qa.cmd` (+ `.ps1`) | Genera la publicación desde HEAD, fuera del repo: CONTROL P1, C1–C14 e INFO de migraciones |
+| `humo-qa.cmd` (+ `.ps1`) | H1–H13, solo GET anónimos con `curl.exe`. `set SIMULAR=1` para ensayarlo sin red |
 | `comun7d1.ps1` | Candado, archivo de estado y salida (`resultado-*.txt`) |
-| `simulacion\` | Respuestas FICTICIAS de H1–H9 |
+| `simulacion\` | Respuestas FICTICIAS de H1–H13 |
+
+**Advertencias:**
+- **Nunca pegue tokens** en un chat ni en un ticket; para inspeccionarlos use `jwt.ms` en su propio navegador.
+- Restaure el **punto cero v2** antes de los ensayos de la Fase 3: las pruebas L y F escriben en QA.
+- Use **Edge o Chrome**.
+- El certificado de QA **vence el 06/11/2027**: renovarlo antes, o pedir a TI uno de confianza (pendiente 75).
 
 ## 1. Generar la publicación (PC del usuario)
 ```bat
-backend\tests\manual\tarea7d1\publicar-qa.cmd
+deploy\qa\publicar-qa.cmd
 ```
 Requisitos: `git status` limpio, Node/npm y el SDK de .NET (los de DEV) y los user-secrets de DEV (`dotnet ef` los usa
 para crear el contexto; **no** se conecta a la base).
 
 **Esperado:**
-- todas las líneas `CONTROL P1, C1–C12 … OK` y «Casos con FALLA: 0»;
+- todas las líneas `CONTROL P1, C1–C14 … OK` y «Casos con FALLA: 0»; `CONTROL INFO` con la cantidad de migraciones y la última;
 - carpeta `D:\PROFESIOGRAMA_DEPLOY\QA\<yyyyMMdd_HHmm>_<hash7>\` con `app\`, `migraciones-QA.sql` y `version.txt`;
 - el estado (etapa, commit y destino) queda en `resultado-estado-publicar-qa.txt`.
 
@@ -165,8 +176,10 @@ La regla se crea **solo en el SERVIDOR** (compruebe `10.0.17763` en el encabezad
 
 ## 8. Prueba de humo (PC del usuario) y verificaciones visuales
 ```bat
-backend\tests\manual\tarea7d1\humo-qa.cmd
+deploy\qa\humo-qa.cmd
 ```
+Desde la TAREA-7d-3, `humo-qa` va por **https** y necesita el certificado (**§11**).
+
 | Caso | Qué hace | Esperado |
 |---|---|---|
 | H1 | `GET /` | 200, `text/html`, `Cache-Control: no-cache`, index.html |
@@ -177,11 +190,15 @@ backend\tests\manual\tarea7d1\humo-qa.cmd
 | H6 | `GET /api/usuarios/me` sin token | 401 |
 | H7 | `GET /api/no-existe` | 404 sin HTML |
 | H8 | `GET /api/usuarios/me` con `X-Dev-User: admin` | 401 (DevAuth no existe en QA) |
-| H9 | Cabeceras `Server` y `X-Powered-By`; `GET /assets/` | Solo INFORMA (el endurecimiento va en la 7d-2). En la 7d-1: `Server` ausente; `X-Powered-By: Sedemi` (del servidor, de TI); `/assets/` → 200 (fallback a index.html, no es un listado) |
+| H9 | Cabeceras `Server` y `X-Powered-By` | Solo INFORMA (`X-Powered-By: Sedemi` es del servidor; se consulta a TI) |
+| H10 | Encabezados de seguridad en `/` y en `/api/salud/vivo` | `nosniff`, `strict-origin-when-cross-origin`, `SAMEORIGIN`, `frame-ancestors 'self'` |
+| H11 | `Strict-Transport-Security` | Ausente (HSTS apagado en QA) |
+| H12a / H12b | `GET /assets/` y `GET /assets/no-existe.js` | 200 index.html (no es un listado) y 404 |
+| H13 | `GET http://192.168.1.77:7082/` | 200 index.html (la redirección a la URL pública la hace el navegador) |
 
 | # | Verificación visual | Esperado |
 |---|---|---|
-| V1 | Abrir `http://192.168.1.77:7082` en el navegador | «Esta aplicación requiere HTTPS para iniciar sesión.», nunca una página en blanco |
+| V1 | Abrir `http://192.168.1.77:7082` en el navegador | Desde la 7d-3: redirige a `https://sdmapptest2.sedemi.local:7083` (en la 7d-1 mostraba «requiere HTTPS») |
 | V2 | F12 → Consola, recargar | Sin errores sin explicar (anótelos si los hay) |
 
 Salida: `resultado-humo-qa.txt`. H5 = 503: la API no llega a la base (firewall hacia `NIQUEL:1433`, cadena o login; pendiente 61).
@@ -218,3 +235,83 @@ En la primera publicación no hay versión anterior: detenga el sitio (`appcmd s
 
 **Revertir la base** (solo si hace falta; la columna `Upn` es NULL y no afecta a versiones anteriores):
 `SINGLE_USER` → `RESTORE DATABASE PROFESIOGRAMA_QA FROM DISK = N'D:\BACKUP\PROFESIOGRAMA_QA_<yyyyMMdd>_antes_7d1.bak' WITH REPLACE` → `MULTI_USER`.
+
+## 10. Actualización (segunda publicación y siguientes)
+Sin cambios en IIS (el sitio, los enlaces 7082 y 7083, el grupo y la variable ya existen).
+
+| # | Paso | Esperado / qué anotar |
+|---|---|---|
+| 1 | Commit de los cambios, y `deploy\qa\publicar-qa.cmd` | CONTROL P1 y C1–C14 OK. Anote la carpeta y la línea `CONTROL INFO migraciones` (cantidad y última) |
+| 2 | SSMS como `sa`: `SELECT COUNT(*) FROM PROFESIOGRAMA_QA.dbo.__EFMigrationsHistory;` | Si da **7** y la INFO del paso 1 también dice 7: **salte los pasos 2–4 de la base**. Si el commit tiene más: respaldo (paso 2), `migraciones-QA.sql` (paso 3) y, si hace falta, un punto cero nuevo |
+| 3 | Copie el ZIP al servidor (paso 7, punto 1) y cree `C:\inetpub\wwwroot\SIG_Profesiograma\app_offline.htm` («PROFESIOGRAMA en mantenimiento.») | El sitio responde la página de mantenimiento |
+| 4 | Respaldo del sitio: `robocopy C:\inetpub\wwwroot\SIG_Profesiograma E:\SIG_Profesiograma\<yyyyMMdd_HHmm> /E` | La carpeta de `E:\` tiene `App.Api.dll` y `version.txt` de la versión anterior |
+| 5 | `robocopy C:\DEPLOY\SIG_Profesiograma\<carpeta>\app C:\inetpub\wwwroot\SIG_Profesiograma /MIR /XF app_offline.htm version.txt /XD logs` | Sin errores (código de salida de robocopy ≤ 7) |
+| 6 | `copy /y C:\DEPLOY\SIG_Profesiograma\<carpeta>\version.txt C:\inetpub\wwwroot\SIG_Profesiograma\` | `version.txt` con el commit nuevo |
+| 7 | Borre `app_offline.htm` | La aplicación vuelve a arrancar |
+| 8 | `deploy\qa\humo-qa.cmd` (con `QA_CA`, §11) | H1–H8 y H10–H13 OK; H9 INFO; «Casos con FALLA: 0» |
+| 9 | L1–L6 (§12) | Según la tabla |
+| 10 | F1–F4 (§13) | Según la tabla |
+
+**Reversión:**
+1. Cree `app_offline.htm`.
+2. `robocopy E:\SIG_Profesiograma\<yyyyMMdd_HHmm> C:\inetpub\wwwroot\SIG_Profesiograma /MIR /XF app_offline.htm /XD logs`.
+3. Borre `app_offline.htm`.
+4. Repita `humo-qa`.
+
+La base no se toca si no hubo migraciones.
+
+## 11. Certificado de QA para `humo-qa` (K3, una sola vez por certificado)
+El `.cer` es público, pero **no se versiona**: vive en `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\`, fuera del repo.
+1. Cópielo del servidor por el portapapeles del RDP:
+   `C:\DEPLOY\SIG_Profesiograma\sig_profesiograma_qa_7083.cer` → `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\`.
+2. Conviértalo a PEM (en su PC, CMD):
+   ```bat
+   cd /d D:\PROFESIOGRAMA_DEPLOY\QA\certificados
+   certutil -encode sig_profesiograma_qa_7083.cer qa_7083.pem
+   ```
+3. `humo-qa` usa `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\qa_7083.pem` por defecto. Otra ruta: `set QA_CA=<ruta del .pem>`.
+   - Va con `--cacert` y `--ssl-no-revoke`: el autofirmado no tiene lista de revocación.
+   - [PENDIENTE DE CONFIRMAR que el `curl.exe` de Windows (Schannel) acepte el PEM.] Si no lo acepta, use
+     `set QA_INSEGURO=1` (`-k`, sin verificar el certificado; el script muestra un aviso) y anótelo.
+4. **Huella esperada:** `DD51425E584DF82B312B747DB5BC29FF65F3C6D5`. Compruébela con `certutil -dump qa_7083.pem` (línea
+   «Cert Hash(sha1)»).
+
+En el navegador **no** hace falta instalar el `.cer`: basta con aceptar la advertencia la primera vez («Avanzado» →
+«Continuar a sdmapptest2.sedemi.local»).
+
+## 12. Inicio de sesión (L1–L6)
+Use `https://sdmapptest2.sedemi.local:7083`; para la segunda cuenta, una ventana InPrivate.
+
+| # | Caso | Esperado | Si falla, anote |
+|---|---|---|---|
+| L1 | Admin: «Iniciar sesión con la cuenta de SEDEMI» | La barra muestra su nombre e Inicio dice Admin; existe `/admin/usuarios` | La hora y el código AADSTS de la pantalla de Microsoft |
+| L2 | Pasante Gestor (InPrivate) | Entra sin el menú de administración; el buscador muestra a todos los empleados (sin departamentos) | La hora y el mensaje |
+| L3 | Una cuenta **sin** asignación | Pantalla de Microsoft (AADSTS501051) o «No tienes acceso a PROFESIOGRAMA.»; sin una fila nueva en `dbo.Usuario` | La pantalla |
+| L4 | «Cerrar sesión» | Vuelve al botón «Iniciar sesión…» | — |
+| L5 | Con la sesión abierta: F5 y una pestaña nueva | Entra sin pedir credenciales (un solo `ssoSilent`, sin bucles). Si aparece el botón, anótelo: el iframe de `ssoSilent` puede no aceptar el certificado autofirmado | Si se ve el botón o un bucle |
+| L6 | SSMS (como `sa`), sin mostrar valores: ver abajo | 2 filas (Admin y Gestor) con `ConOid = 1`, `ConUpn = 1` y `Activo = 1`; `CorreoDistinto = 1` si el UPN difiere del correo | El resultado de la consulta |
+
+```sql
+SELECT Id,
+       CASE WHEN EntraObjectId IS NULL THEN 0 ELSE 1 END AS ConOid,
+       CASE WHEN Upn IS NULL THEN 0 ELSE 1 END AS ConUpn,
+       CASE WHEN Email <> Upn THEN 1 ELSE 0 END AS CorreoDistinto,
+       Activo
+FROM PROFESIOGRAMA_QA.dbo.Usuario WHERE EsSistema = 0 ORDER BY Id;
+```
+- **Departamentos del Gestor (opcional):** el Admin entra en `/admin/usuarios` → el Gestor → Departamentos → Guardar.
+  Filtra el buscador y fija el departamento de sus proyectos nuevos.
+- **Cambio de rol en Entra:** rige con el siguiente token (cerrar e iniciar sesión).
+
+## 13. Pruebas funcionales (F1–F4; escriben en QA)
+Todo lo que creen se borra al **restaurar el punto cero v2** antes de la Fase 3. Si algo falla, anote la **hora exacta**
+(hh:mm:ss) para buscarla en el Visor de eventos del servidor (Aplicación, orígenes «.NET Runtime» e «IIS AspNetCore Module V2»).
+
+| # | Caso (como Gestor) | Esperado | Qué prueba |
+|---|---|---|---|
+| F1 | Crear un proyecto de prueba (nombre «PRUEBA QA 7d-3») con **2 empleados reales** elegidos en el buscador | «Proyecto registrado», con el código `PRY-…` | El ERP real desde el servidor (puertos 7048 y 7055) y la escritura en QA |
+| F2 | Abrir el cronograma del proyecto | Los 2 empleados con sus días | Las consultas del cronograma |
+| F3 | Descargar el reporte Excel | Archivo `Reporte_{código}_{yyyyMMdd}_{yyyyMMdd}.xlsx` y el aviso «Reporte generado» **con la cantidad de filas** | ClosedXML en el servidor y `Content-Disposition` / `X-Reporte-Filas` (mismo origen) |
+| F4 | Crear una novedad (p. ej. una VACACIÓN de un empleado del proyecto) y abrirla | «Novedad NOV-… registrada» y su detalle | Novedades en QA |
+
+No anote nombres ni cédulas: solo los códigos `PRY-…` y `NOV-…`, la hora y el mensaje.

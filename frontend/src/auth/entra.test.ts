@@ -5,6 +5,8 @@ import {
   TITULO_SIN_ACCESO,
   clasificarErrorMsal,
   decidirArranque,
+  destinoPublico,
+  origenPublico,
   decidirInicio,
   encabezadosEntra,
   leerConfigEntra,
@@ -128,5 +130,50 @@ describe('decidirArranque', () => {
 
   it('http://localhost es contexto seguro (DEV en modo Entra no cambia)', () => {
     expect(decidirArranque({ devAuth: false, contextoSeguro: contextoSeguro('http://localhost:5173/'), faltan: [] })).toBe('app')
+  })
+})
+
+// TAREA-7d-3 (E1, K2): URL pública canónica. Se compara el ORIGEN (new URL(...).origin), nunca el texto.
+describe('decidirArranque con VITE_URL_PUBLICA', () => {
+  const PUBLICA = 'https://sdmapptest2.sedemi.local:7083'
+  const base = { devAuth: false, contextoSeguro: true, faltan: [] as string[], urlPublica: PUBLICA }
+
+  it('http 7082 (IP o nombre) → otroOrigen, antes que requiereHttps', () => {
+    expect(decidirArranque({ ...base, contextoSeguro: false, origen: 'http://192.168.1.77:7082' })).toBe('otroOrigen')
+    expect(decidirArranque({ ...base, contextoSeguro: false, origen: 'http://sdmapptest2.sedemi.local:7082' })).toBe('otroOrigen')
+  })
+
+  it('https con IP → otroOrigen', () => {
+    expect(decidirArranque({ ...base, origen: 'https://192.168.1.77:7083' })).toBe('otroOrigen')
+  })
+
+  it('mismo origen → sigue el flujo (también al volver de Entra con fragmento en la URL)', () => {
+    const vuelta = new URL('https://sdmapptest2.sedemi.local:7083/#code=falso&state=falso')
+    expect(decidirArranque({ ...base, origen: vuelta.origin })).toBe('app')
+    expect(decidirArranque({ ...base, origen: PUBLICA, faltan: ['VITE_ENTRA_CLIENT_ID'] })).toBe('configIncompleta')
+  })
+
+  it('URL pública con barra final: mismo origen, sin bucle', () => {
+    expect(decidirArranque({ ...base, urlPublica: `${PUBLICA}/`, origen: PUBLICA })).toBe('app')
+  })
+
+  it('URL pública inválida o no https → configIncompleta (nunca redirige)', () => {
+    for (const mala of ['sdmapptest2.sedemi.local:7083', 'http://sdmapptest2.sedemi.local:7082', 'no es url']) {
+      expect(decidirArranque({ ...base, urlPublica: mala, origen: 'http://192.168.1.77:7082' })).toBe('configIncompleta')
+      expect(origenPublico(mala)).toBeNull()
+    }
+  })
+
+  it('sin URL pública (DEV) → sin cambios', () => {
+    expect(decidirArranque({ ...base, urlPublica: undefined, origen: 'http://localhost:5173' })).toBe('app')
+    expect(decidirArranque({ ...base, urlPublica: '', contextoSeguro: false, origen: 'http://192.168.1.77:7082' })).toBe('requiereHttps')
+  })
+
+  it('DevAuth gana a todo', () => {
+    expect(decidirArranque({ ...base, devAuth: true, urlPublica: 'no es url', origen: 'http://localhost:5173' })).toBe('devAuth')
+  })
+
+  it('destino: origen público + ruta + consulta, sin el fragmento', () => {
+    expect(destinoPublico(`${PUBLICA}/`, { pathname: '/proyectos/14', search: '?pagina=2' })).toBe(`${PUBLICA}/proyectos/14?pagina=2`)
   })
 })

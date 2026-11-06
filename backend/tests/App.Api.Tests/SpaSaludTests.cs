@@ -5,6 +5,7 @@ using App.Application.Diagnostics;
 using App.Application.Seguridad;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -90,11 +91,62 @@ public sealed class SpaSaludTests : IDisposable
         Assert.Equal((estado, cuerpo, 1), (r.Estado, r.Cuerpo, r.Diagnostico.Llamadas));
     }
 
+    // ------------------------------------------------------------------ TAREA-7d-3: encabezados de seguridad (K1) y /assets/
+
+    [Theory]
+    [InlineData("/", StatusCodes.Status200OK)]
+    [InlineData(Asset, StatusCodes.Status200OK)]
+    [InlineData("/api/salud/vivo", StatusCodes.Status200OK)]
+    [InlineData("/api/usuarios/me", StatusCodes.Status401Unauthorized)]
+    [InlineData("/api/no-existe", StatusCodes.Status404NotFound)]
+    [InlineData("/api/prueba/error", StatusCodes.Status500InternalServerError)]
+    public async Task EncabezadosDeSeguridad_EnTodasLasRespuestas_SinHstsPorDefecto(string ruta, int estado)
+    {
+        var r = await EnviarAsync(ruta, esquema: "https");
+
+        Assert.Equal(estado, r.Estado);
+        foreach (var (nombre, valor) in EncabezadosSeguridadExtensions.Encabezados)
+        {
+            Assert.Equal(valor, r.Cabeceras[nombre].ToString());
+        }
+        Assert.Equal("SAMEORIGIN", r.Cabeceras.XFrameOptions.ToString()); // nunca DENY: ssoSilent usa un iframe del mismo origen
+        Assert.False(r.Cabeceras.ContainsKey("Strict-Transport-Security"));
+    }
+
+    [Fact]
+    public async Task Hsts_SoloConSeguridadHstsTrue_EnHttps()
+    {
+        var https = await EnviarAsync("/api/salud/vivo", hsts: true, esquema: "https");
+        var http = await EnviarAsync("/api/salud/vivo", hsts: true, esquema: "http");
+
+        Assert.StartsWith("max-age=", https.Cabeceras.StrictTransportSecurity.ToString());
+        Assert.False(http.Cabeceras.ContainsKey("Strict-Transport-Security"));
+    }
+
+    [Fact]
+    public async Task AssetsSinArchivo_IndexHtml_NoUnListado()
+    {
+        var r = await EnviarAsync("/assets/");
+
+        Assert.Equal((StatusCodes.Status200OK, IndexHtml), (r.Estado, r.Cuerpo));
+    }
+
+    [Fact]
+    public async Task AssetInexistente_404()
+    {
+        var r = await EnviarAsync("/assets/no-existe.js");
+
+        Assert.Equal(StatusCodes.Status404NotFound, r.Estado);
+        Assert.DoesNotContain("<html", r.Cuerpo, StringComparison.OrdinalIgnoreCase);
+    }
+
     // ------------------------------------------------------------------ pipeline (orden de Program.cs)
 
-    private sealed record Respuesta(int Estado, string Cuerpo, string TipoContenido, string Cache, DiagnosticoFalso Diagnostico);
+    private sealed record Respuesta(int Estado, string Cuerpo, string TipoContenido, string Cache, DiagnosticoFalso Diagnostico,
+        IHeaderDictionary Cabeceras);
 
-    private async Task<Respuesta> EnviarAsync(string ruta, string? devUser = null, bool baseDisponible = true)
+    private async Task<Respuesta> EnviarAsync(string ruta, string? devUser = null, bool baseDisponible = true, bool hsts = false,
+        string esquema = "http", string host = "sdmapptest2.sedemi.local:7083")
     {
         var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions
         {
@@ -109,33 +161,60 @@ public sealed class SpaSaludTests : IDisposable
             ["AzureAd:TenantId"] = "aaaaaaaa-0000-0000-0000-000000000001",
             ["AzureAd:ClientId"] = "bbbbbbbb-0000-0000-0000-000000000002",
             ["AzureAd:Audience"] = "",
+            [EncabezadosSeguridadExtensions.ClaveHsts] = hsts ? "true" : null, // QA no lo define (E3)
         });
+        builder.Services.AddErroresApi();
         builder.AddSeguridadProfesiograma();
         var diagnostico = new DiagnosticoFalso(baseDisponible);
         builder.Services.AddSingleton<IDatabaseDiagnostics>(diagnostico);
         builder.Services.AddSingleton<IUsuarioProvisionamiento, ProvisionamientoNoUsado>();
 
         await using var app = builder.Build();
-        app.UseRouting();
+        app.UseEncabezadosSeguridad(); // K1: primero, como en Program.cs
+        app.UseExceptionHandler();
         app.UseSpaEstaticos();
+        app.UseRouting(); // después de los archivos, como en Program.cs (TAREA-7d-3)
         app.UseSeguridadProfesiograma();
         app.MapSaludEndpoints();
         app.MapUsuarioEndpoints();
+        // Solo en el host de pruebas: un endpoint anónimo que lanza, para comprobar los encabezados del 500 (K1).
+        app.MapGet("/api/prueba/error", IResult () => throw new InvalidOperationException("falla de prueba")).AllowAnonymous();
         app.MapSpa();
         app.UseEndpoints(_ => { });
         var pipeline = ((IApplicationBuilder)app).Build();
 
         var contexto = new DefaultHttpContext { RequestServices = app.Services.CreateScope().ServiceProvider };
         contexto.Request.Method = "GET";
+        contexto.Request.Scheme = esquema;
+        contexto.Request.Host = new HostString(host);
         contexto.Request.Path = ruta;
         if (devUser is not null) contexto.Request.Headers["X-Dev-User"] = devUser;
+        var respuesta = new RespuestaConInicio();
+        contexto.Features.Set<IHttpResponseFeature>(respuesta);
         var salida = new MemoryStream();
         contexto.Response.Body = salida;
 
         await pipeline(contexto);
+        await respuesta.IniciarAsync(); // sin servidor nadie dispara OnStarting: se simula el inicio de la respuesta
 
         return new Respuesta(contexto.Response.StatusCode, System.Text.Encoding.UTF8.GetString(salida.ToArray()),
-            contexto.Response.ContentType ?? "", contexto.Response.Headers.CacheControl.ToString(), diagnostico);
+            contexto.Response.ContentType ?? "", contexto.Response.Headers.CacheControl.ToString(), diagnostico, contexto.Response.Headers);
+    }
+
+    /// <summary>Guarda los OnStarting y los ejecuta como el servidor (en orden inverso al registro).</summary>
+    private sealed class RespuestaConInicio : HttpResponseFeature
+    {
+        private readonly List<(Func<object, Task> Accion, object Estado)> _alIniciar = [];
+
+        public override void OnStarting(Func<object, Task> callback, object state) => _alIniciar.Add((callback, state));
+
+        public async Task IniciarAsync()
+        {
+            for (var i = _alIniciar.Count - 1; i >= 0; i--)
+            {
+                await _alIniciar[i].Accion(_alIniciar[i].Estado);
+            }
+        }
     }
 
     private sealed class DiagnosticoFalso(bool disponible) : IDatabaseDiagnostics

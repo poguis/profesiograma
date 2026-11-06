@@ -1,5 +1,5 @@
 # ==========================================================================
-# TAREA-7d-1 - Publicacion de QA (J5). Lo ejecuta el USUARIO en su PC. NO llama a la API, NO se conecta a ningun
+# TAREA-7d-1 - Publicacion de QA (J5); en deploy/qa desde la TAREA-7d-3 (E5). Lo ejecuta el USUARIO en su PC. NO llama a la API, NO se conecta a ningun
 # servidor ni a la base y NO compila en la copia de trabajo:
 #   1. exige "git status --porcelain" vacio y anota el hash de HEAD;
 #   2. git archive HEAD -> carpeta temporal FUERA del repo;
@@ -19,7 +19,7 @@ $ArchivoEstado = Join-Path $PSScriptRoot 'resultado-estado-publicar-qa.txt'
 $ArchivoSalida = Join-Path $PSScriptRoot 'resultado-publicar-qa.txt'
 if (-not (Tomar-Candado $ArchivoCandado 'publicar-qa.cmd')) { exit 2 }
 
-$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $DestinoBase = if ($env:DESTINO_QA) { $env:DESTINO_QA } else { 'D:\PROFESIOGRAMA_DEPLOY\QA' }
 $Temporal = Join-Path ([IO.Path]::GetTempPath()) ("profesiograma-7d1-" + [Guid]::NewGuid().ToString('N'))
 $Estado = @{ etapa = 'inicio'; inicio = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') }
@@ -132,6 +132,17 @@ try {
     Control 'C10-sql-EXEC' $exec "EXEC(N' presente" $(if ($exec) { 'presente' } else { 'ausente' })
     $drop = $textoSql.IndexOf('DROP TABLE', [StringComparison]::OrdinalIgnoreCase) -ge 0
     Control 'C11-sql-sin-DROP-TABLE' (-not $drop) 'sin DROP TABLE' $(if ($drop) { 'contiene DROP TABLE' } else { 'sin DROP TABLE' })
+
+    # TAREA-7d-3 (K4): el build de QA lleva el SPA-QA y la URL publica; .env.qa sin VITE_ENTRA_* vacias.
+    $js = (Get-ChildItem -Path (Join-Path $app 'wwwroot\assets') -Filter '*.js' | ForEach-Object { [IO.File]::ReadAllText($_.FullName) }) -join "`n"
+    $conCliente = $js.Contains('4312b905-f25b-4b58-8e0a-ef896a717761')
+    $conUrl = $js.Contains('https://sdmapptest2.sedemi.local:7083')
+    Control 'C13-dist-SPA-QA-y-URL' ($conCliente -and $conUrl) 'ClientId del SPA-QA y https://sdmapptest2.sedemi.local:7083' ("ClientId: {0}; URL: {1}" -f $conCliente, $conUrl)
+    $vacias = @([IO.File]::ReadAllLines((Join-Path $front '.env.qa')) | Where-Object { $_ -match '^\s*VITE_ENTRA_[A-Z_]+\s*=\s*$' })
+    Control 'C14-env.qa-sin-VITE_ENTRA-vacias' ($vacias.Count -eq 0) '0 variables vacias' ("{0} vacias" -f $vacias.Count)
+    $migraciones = @(Get-ChildItem -Path (Join-Path $back 'src\App.Infrastructure\Persistencia\Migraciones') -Filter '2*.cs' |
+        Where-Object { $_.Name -notlike '*.Designer.cs' } | Sort-Object Name)
+    Escribir ("CONTROL INFO migraciones del commit: {0}; ultima: {1} (QA tiene 7 desde la TAREA-7d-1: si coincide, se saltan los pasos de la base)" -f $migraciones.Count, $migraciones[-1].BaseName)
 
     Escribir ''
     Escribir "Carpeta de la publicacion: $Destino"

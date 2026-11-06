@@ -32,6 +32,7 @@
 | H26 | Cierre de la 7b y la 7b-2 (05/11/2026): cabecera, fila TAREA-27, siguiente tarea, fila 2 de la hoja de ruta, pendiente 7; títulos de FASE_7 §7.1 y §7.3 |
 | H27 | TAREA-7d-1 (05/11/2026): cabecera, siguiente tarea, filas Proyectos y Pruebas de §4, filas 1 y 4 de la hoja de ruta, pendientes 2, 13 y la última línea del 75 |
 | H28 | Cierre de la TAREA-7d-1 (06/11/2026): cabecera, siguiente tarea, accesos de §4, fila 4 de la hoja de ruta, pendientes 4, 15, 46, 53, 54, 58, 59, 60 y 61 (acortados); textos de FASE_7 §1, §4, §5, §6 y §9 |
+| H29 | TAREA-7d-3 (06/11/2026): cabecera, siguiente tarea, fila QA de §4, fila 4 de la hoja de ruta, pendientes 7, 50, 75 y 82; pendientes 78–81 cerrados; textos de FASE_7 §5, §6, §7.4 y §9 |
 
 ## H1. Cabecera anterior
 
@@ -557,3 +558,54 @@ Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
 el **7082 está libre** (comprobado el 05/11/2026)
 
 ## 9. Despliegue en QA (TAREA-7d-1, 05/11/2026)
+
+## H29. Movido del estado vigente el 06/11/2026 (TAREA-7d-3)
+
+Pendientes cerrados por la TAREA-7d-3: 78 (endurecimiento: encabezados en código), 79 (pruebas de `/assets/`), 80 (`deploy/qa/`) y 81 (`vite` 8.3.5). Texto anterior de `00_ESTADO_ACTUAL.md` (textual):
+
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1).
+
+| **Siguiente tarea** | [PENDIENTE DE DECISIÓN DEL USUARIO] 7d-2 (sin TI) o seguimiento del pedido a TI (75) |
+
+| QA | Sitio IIS `SIG_Profesiograma` (id 42) en SDMAPPTEST2, `http://192.168.1.77:7082` (provisional), grupo `SIG_Profesiograma`, entorno `QA`; cadena en la variable `ConnectionStrings__Profesiograma` del grupo (FASE_7 §6 y §9) |
+
+| 4. Fase 7d | 7d-1 ✅ (06/11/2026); **7d-2: endurecimiento y despliegue** (pendiente 78); **HTTPS/DNS: según el pendiente 75** |
+
+7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2, verificadas el 05/11/2026; `FASE_7_Entornos_Despliegue.md` §7). Falta QA y PRO: registros con URI HTTPS, que dependen del certificado y el DNS (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
+
+75. [Fase 7, TI] Pedido a TI enviado el ____. Respuesta pendiente. Temas:
+    - certificado y DNS para QA (y luego para PRO);
+    - identificar el servidor IIS y el SQL de producción;
+    - nombre de la base de PRO (propuesto `SIG_PROFESIOGRAMA`): ¿existe una base PROFESIOGRAMA de la app antigua?;
+    - cuenta de administración del servidor IIS de PRO (en QA se usa administrador.SEDEMI en SDMAPPTEST2: decisión del usuario del 05/11/2026);
+    - consentimientos de Graph (pendientes 63 y 71);
+    - actualizar el Hosting Bundle de SDMAPPTEST2 (runtime 10.0.10; la aplicación usa paquetes 10.0.12; TAREA-7d-1).
+    - datos para el certificado y el DNS de QA: servidor `SDMAPPTEST2` (192.168.1.77), sitio IIS id 42 (`SIG_Profesiograma`); nombre DNS de QA propuesto: [PENDIENTE DE CONFIRMAR con TI].
+
+78. [7d-2, sin TI] Endurecimiento del sitio de QA: cabeceras (consultar a TI por `X-Powered-By: Sedemi`, configurada a nivel de servidor) y `web.config` propio.
+
+79. [Menor] Prueba automática de `/assets/` sin extensión (hoy da `index.html`) y de un asset inexistente (404).
+
+80. Mover `publicar-qa` a una carpeta de despliegue versionada (p. ej. `deploy/qa/`); revisar si el `.gitignore` de `backend/tests/manual/` debe ignorar solo `resultado-*` y los archivos de estado.
+
+81. npm audit (06/11/2026): `vite` 8.3.1, severidad alta, solo de desarrollo (`--omit=dev`: 0). Corregida en ≥ 8.3.3. Recomendación: actualizarla en una tarea propia, con build, lint, pruebas y el Grep de `dist` (`TAREA-7d-1-reporte.md` §7).
+
+50. [TAREA-20–24, cronograma, reporte y novedades/asistencia] En los turnos nocturnos (salida < entrada), las horas después de las 00:00 pertenecen al **día de entrada**. Ningún cálculo actual usa `HoraEntrada`/`HoraSalida` por fecha (el motor del cronograma solo usa días), pero el cronograma, el reporte y la asistencia deben respetarlo.
+
+82. [Optimización] Bloque `clienteHttp` de unos 505 kB (posible MSAL dentro): dividirlo.
+
+Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
+
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1: §1, §4, §5, §6 y §9).
+
+- **Certificados:** están vencidos; no hay ninguno utilizable (pendiente 75).
+
+- **Enlaces:**
+  - https en el puerto 443 con SNI, cuando haya certificado;
+  - un enlace http **provisional**, solo para la prueba de humo: `http 192.168.1.77:7082`, según la convención de puertos 70xx del servidor.
+
+**API-QA creada** (05/11/2026, SIG-Profesiograma-API-QA): IDs en §9, D5. **Falta para QA (y luego PRO):** el SPA-QA y los demás registros de QA, con sus URI de redirección HTTPS, cuando TI entregue el certificado y el DNS (pendiente 75). La prueba de humo de la Fase 7d-1 (`http 192.168.1.77:7082`) no usa inicio de sesión.
+
+La ejecuta el usuario con `backend/tests/manual/tarea7d1/LEEME.md`.
+
+Corrección (06/11/2026): E7 revertida por el usuario; el pendiente 81 sigue abierto.

@@ -15,8 +15,10 @@ builder.AddSeguridadProfesiograma();             // DevAuth / Entra ID + políti
 var app = builder.Build();
 app.Logger.LogInformation("ERP: modo {Modo}", ErpServiceCollectionExtensions.ModoEfectivo(builder.Configuration)); // TAREA-26a
 
+app.UseEncabezadosSeguridad();                   // TAREA-7d-3: PRIMER middleware (nosniff, Referrer, X-Frame, frame-ancestors; HSTS por config)
 app.UseExceptionHandler();
-app.UseSpaEstaticos();                           // TAREA-7d-1: wwwroot ANTES de la seguridad (los archivos son anónimos)
+app.UseSpaEstaticos();                          // TAREA-7d-1: wwwroot ANTES de la seguridad (los archivos son anónimos)
+app.UseRouting();                                // TAREA-7d-3: explícito, DESPUÉS de los archivos (ver SpaExtensions.MapSpa)
 app.UseSeguridadProfesiograma();                 // UseAuthentication → UsuarioActualMiddleware → UseAuthorization
 
 app.MapHealthEndpoints();                        // se mantiene /api/health/db (solo Development)

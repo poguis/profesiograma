@@ -1,6 +1,6 @@
 # FASE 7 — Entornos y despliegue
 
-**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1: §1, §4, §5, §6 y §9). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
+**Última actualización:** 2026-11-06 (TAREA-7d-3: §5, §6, §7.4 y §10). Pendientes relacionados en `docs/00_ESTADO_ACTUAL.md`: 7, 59, 63, 65 y 75.
 
 Todo lo de este documento lo **ejecutó el usuario** (SSMS, RDP). Claude Code no se conecta a ninguna base ni a ningún servidor.
 
@@ -80,7 +80,14 @@ Procedimiento para QA y PRO (pendiente 65):
 - **Cabeceras de todo el servidor:** `X-Powered-By: Sedemi` (configurada por TI a nivel de servidor); `Server` ausente.
 - **Globalización:** Windows Server 2019 (17763) no trae ICU; la solución usa NLS en todos los entornos (§9, D7).
 - **Sitios:** unos 40, todos en http y ninguno en https.
-- **Certificados:** están vencidos; no hay ninguno utilizable (pendiente 75).
+- **Certificados:** los del servidor están vencidos. Para QA hay uno **autofirmado** (TAREA-7d-3, creado por el usuario el 06/11/2026):
+  - creado con `New-SelfSignedCertificate`: `CN=sdmapptest2.sedemi.local`, con el SAN `sdmapptest2.sedemi.local`, RSA 2048 / SHA256, clave no exportable;
+  - huella `DD51425E584DF82B312B747DB5BC29FF65F3C6D5`, **vence el 06/11/2027**;
+  - `.cer` público en `C:\DEPLOY\SIG_Profesiograma\sig_profesiograma_qa_7083.cer`; en el PC del usuario, `D:\PROFESIOGRAMA_DEPLOY\QA\certificados\` (fuera del repo).
+  - Para PRO, o para un nombre `.sedemi.com` de QA, se pide a TI un certificado de confianza (pendiente 75).
+- **DNS:** `sdmapptest2.sedemi.local` resuelve a `192.168.1.77`.
+- **Experimento en Edge (06/11/2026):** tras aceptar la advertencia del certificado, `window.isSecureContext = true` y MSAL funciona. Los probadores no instalan el `.cer`. Con `curl`, sin `-k` → 000 (no confiable); con `-k` → 200.
+- **TLS:** «Deshabilitar las versiones TLS heredadas: Not Set», configuración de todo el servidor; le corresponde a TI (pendiente 75).
 - **Convenciones:** los sitios van en `C:\inetpub\wwwroot\<Sistema>\`; la unidad `E:` es RESPALDOS.
 - **Conectividad comprobada:**
   - `NIQUEL:1433`;
@@ -101,9 +108,9 @@ Procedimiento para QA y PRO (pendiente 65):
 - **La SPA la sirve ASP.NET Core** desde `wwwroot` (D2), sin URL Rewrite ni aplicación `/api` aparte.
 - **Carpeta:** `C:\inetpub\wwwroot\SIG_Profesiograma\`.
 - **Un solo sitio para la API y el SPA**, con un mismo origen: no hace falta CORS (pendiente 59).
-- **Enlaces:**
-  - https en el puerto 443 con SNI, cuando haya certificado;
-  - un enlace http **provisional**, solo para la prueba de humo: `http 192.168.1.77:7082`, según la convención de puertos 70xx del servidor.
+- **Enlaces reales** (convención de puertos 70xx del servidor):
+  - `https/192.168.1.77:7083:`, **sin SNI**, con el certificado autofirmado: la **URL pública** es `https://sdmapptest2.sedemi.local:7083` (TAREA-7d-3);
+  - `http/192.168.1.77:7082:`: el navegador redirige a la URL pública (E1); `humo-qa` lo usa en H13.
 
 ## 7. Entra ID
 
@@ -314,7 +321,11 @@ El `cd` va antes del `ren`, porque `ren` no acepta una ruta en el nombre nuevo. 
 
 **Lección:** nunca pegar tokens en chats ni en tickets. Para inspeccionarlos se usa `jwt.ms`.
 
-**API-QA creada** (05/11/2026, SIG-Profesiograma-API-QA): IDs en §9, D5. **Falta para QA (y luego PRO):** el SPA-QA y los demás registros de QA, con sus URI de redirección HTTPS, cuando TI entregue el certificado y el DNS (pendiente 75). La prueba de humo de la Fase 7d-1 (`http 192.168.1.77:7082`) no usa inicio de sesión.
+**Registros de QA (06/11/2026):**
+- **API-QA** (SIG-Profesiograma-API-QA): ClientId `a0b57ea8-e21b-4bd1-a9c4-f39fc7a0b2eb`, confirmado en el portal; IDs en §9, D5. Tiene los roles Admin y Gestor, el claim `email`, tokens v2, asignación requerida (el usuario como Admin y el pasante como Gestor) y autoriza al SPA-QA.
+- **SPA-QA** (SIG-Profesiograma-SPA-QA): ClientId `4312b905-f25b-4b58-8e0a-ef896a717761`. Plataforma SPA con la URI `https://sdmapptest2.sedemi.local:7083` (sin barra final), sin flujos implícitos ni de cliente público. Permiso delegado `access_as_user` de la API-QA; sin `User.Read` ni secretos.
+- Inicio de sesión en QA: TAREA-7d-3 (§10).
+- **Falta para PRO:** sus registros, con la URI de PRO (pendiente 75).
 
 ## 8. Pendientes con TI
 
@@ -327,7 +338,7 @@ Ver el pendiente 75 de `docs/00_ESTADO_ACTUAL.md`, que reúne:
 
 ## 9. Despliegue en QA (TAREA-7d-1, preparada el 05/11/2026 y ejecutada el 06/11/2026)
 
-Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueba de humo **sin inicio de sesión**: Entra ID no admite una URI de redirección http fuera de localhost, y el SPA-QA espera el certificado y el DNS (pendiente 75). La ejecuta el usuario con `backend/tests/manual/tarea7d1/LEEME.md`.
+Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueba de humo **sin inicio de sesión**: Entra ID no admite una URI de redirección http fuera de localhost, y el SPA-QA espera el certificado y el DNS (pendiente 75). La ejecuta el usuario con `deploy/qa/LEEME.md` (hasta la TAREA-7d-3, `backend/tests/manual/tarea7d1/LEEME.md`).
 
 **Procedimiento** (el resultado esperado de cada paso está en el LEEME):
 1. `publicar-qa.cmd` en el PC del usuario.
@@ -401,3 +412,41 @@ Publicación de prueba en `SDMAPPTEST2`, `http 192.168.1.77:7082`, con una prueb
 | Una regla de firewall se creó en el PC del usuario | Se eliminó | Paso 6: primero `curl.exe` desde el PC; la regla solo en el servidor (`10.0.17763` en el encabezado de la consola) |
 | Los `.cmd` quedaron con LF | `git checkout` | `.gitattributes` con `*.cmd`/`*.bat eol=crlf` |
 | La cadena de conexión con appcmd (historial, auditoría de la línea de comandos, comillas) | Se usó el Editor de configuración | Paso 5: el Editor de configuración es el método principal; `Server=NIQUEL,1433`, `Application Name`; probar antes el login en SSMS |
+
+## 10. Inicio de sesión real en QA por HTTPS (TAREA-7d-3, 06/11/2026; incluye la 7d-2)
+
+**Objetivo:** iniciar sesión con Admin y Gestor en `https://sdmapptest2.sedemi.local:7083`, con una segunda publicación (la primera actualización real). Procedimiento: `deploy/qa/LEEME.md` §10–§13. No hay migraciones nuevas (QA sigue en 7).
+
+**Decisiones del usuario (06/11/2026):**
+
+| # | Decisión |
+|---|---|
+| E1 | `VITE_URL_PUBLICA` (en `.env.qa`; DEV no la define) y el estado `otroOrigen` en `decidirArranque`, antes de `requiereHttps`. Redirige con `location.replace(origen público + ruta + consulta)`, **sin el fragmento**; si el navegador no redirige, muestra un enlace |
+| E2 | `X-Frame-Options: SAMEORIGIN` y `Content-Security-Policy: frame-ancestors 'self'` (solo esa directiva). Nunca `DENY` ni `'none'`: `ssoSilent` carga la propia página en un iframe oculto del mismo origen |
+| E3 | HSTS solo con `Seguridad:Hsts = true` (`appsettings.json`: `false`; QA no lo define). Con el autofirmado impediría aceptar la advertencia; se activa en PRO |
+| E4 | La CSP completa queda para después (Griffel usa estilos en línea; MSAL, `login.microsoftonline.com`): probarla con `Report-Only` en DEV (pendiente) |
+| E5 | `deploy/qa/` versionado (con su `.gitignore`: `resultado-*`, `*.lock`), con `publicar-qa`, `humo-qa`, `comun7d1.ps1`, `simulacion\` y el LEEME. `backend/tests/manual/` sigue ignorada |
+| E6 | `humo-qa` por https: `QA_CA` (PEM) → `--cacert` + `--ssl-no-revoke`; `-k` solo con `QA_INSEGURO=1` y un aviso; sin ninguno de los dos, los casos HTTPS quedan OMITIDO |
+| E7 | Pospuesta por decisión del usuario (dependencias transitivas con < 14 días); reintentar desde el 13/11/2026 (pendiente 81). `vite` sigue en 8.3.1 |
+| E8 | Las 7 carpetas de `backend/tests/manual/` sin versionar no se tocan (K6) |
+
+**Ajustes:**
+
+| # | Ajuste |
+|---|---|
+| K1 | `UseEncabezadosSeguridad()` es el **primer** middleware: pone los 4 encabezados con `Response.OnStarting`, y así llegan también al 500 que escribe `UseExceptionHandler` después de limpiar la respuesta. Probado en `/`, en un asset, en vivo, en un 401, en un 404 y en un 500 |
+| K2 | Se compara `new URL(urlPublica).origin` con `location.origin`. Una URL no `https:` o inválida → `configIncompleta` (nunca redirige). Una barra final no causa un bucle |
+| K3 | El `.cer` y el `.pem` viven fuera del repo (`D:\PROFESIOGRAMA_DEPLOY\QA\certificados\`); conversión con `certutil -encode` |
+| K4 | `publicar-qa`: C13 (el `dist` lleva el ClientId del SPA-QA y la URL pública), C14 (`.env.qa` sin `VITE_ENTRA_*` vacías) e INFO de migraciones |
+| K5 | Pruebas funcionales F1–F4 en el LEEME (escriben en QA; se borran al restaurar el punto cero v2) |
+| K6 | Pendiente: decidir qué hacer con las carpetas tarea22c, 23-1, 23-2, 23-3, 25, 25-3 y 62 de `backend/tests/manual/`, que no tienen ningún archivo versionado |
+
+**Cambio de rutas (desviación de la Fase A):**
+- Un asset inexistente (`/assets/no-existe.js`) respondía **401**: sin endpoint, la política Fallback exigía autenticación.
+- Se agregó `MapFallback("{**ruta:file}") → 404` anónimo y `app.UseRouting()` explícito **después** de `UseSpaEstaticos`. Si no, ese endpoint taparía los archivos reales.
+- `/assets/` (sin extensión) sigue devolviendo `index.html`.
+
+**Primer ingreso en QA:**
+- Admin y Gestor se crean al primer ingreso, con oid, UPN y correo (búsqueda oid → UPN → correo de la 7b-2); la semilla SISTEMA nunca coincide.
+- El Gestor sin departamentos ve a todos los empleados y crea proyectos sin departamento; asignarle departamentos es opcional (`FASE_5_Usuarios_Departamentos.md` §5).
+- No hace falta ningún dato previo.

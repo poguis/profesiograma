@@ -35,17 +35,48 @@ export function leerConfigEntra(env: EnvEntra): { config: ConfigEntra } | { falt
 export const TITULO_REQUIERE_HTTPS = 'Esta aplicación requiere HTTPS para iniciar sesión.'
 export const TITULO_FALLO_MSAL = 'No se pudo iniciar la sesión con Entra ID.'
 
+/** TAREA-7d-3 (K2): VITE_URL_PUBLICA no es una URL https válida (nunca se redirige a ella). */
+export const FALTA_URL_PUBLICA = 'VITE_URL_PUBLICA (URL https válida)'
+
+/** Origen de la URL pública (sin ruta ni barra final), o null si no es una URL https válida. */
+export function origenPublico(urlPublica: string): string | null {
+  try {
+    const url = new URL(urlPublica)
+    return url.protocol === 'https:' ? url.origin : null
+  } catch {
+    return null
+  }
+}
+
+/** A dónde redirigir: el origen público con la ruta y la consulta actuales, SIN el fragmento (podría traer un token). */
+export function destinoPublico(urlPublica: string, actual: { pathname: string; search: string }): string {
+  return `${origenPublico(urlPublica) ?? ''}${actual.pathname}${actual.search}`
+}
+
 /**
- * TAREA-7d-1 (J4): qué se muestra al cargar. Orden: DevAuth → contexto no seguro (MSAL necesita crypto.subtle, que no
- * existe en http con IP; http://localhost sí es seguro) → configuración incompleta → la aplicación.
+ * Qué se muestra al cargar. Orden: DevAuth → otro origen (TAREA-7d-3, E1: solo si hay VITE_URL_PUBLICA; DEV no la
+ * define) → contexto no seguro (TAREA-7d-1, J4: MSAL necesita crypto.subtle, que no existe en http con IP; http://localhost
+ * sí es seguro) → configuración incompleta (incluye una VITE_URL_PUBLICA inválida) → la aplicación.
  */
 export function decidirArranque(estado: {
   devAuth: boolean
   contextoSeguro: boolean
   faltan: string[]
-}): 'devAuth' | 'requiereHttps' | 'configIncompleta' | 'app' {
+  origen?: string
+  urlPublica?: string
+}): 'devAuth' | 'otroOrigen' | 'requiereHttps' | 'configIncompleta' | 'app' {
   if (estado.devAuth) {
     return 'devAuth'
+  }
+  const urlPublica = estado.urlPublica?.trim()
+  if (urlPublica) {
+    const publico = origenPublico(urlPublica)
+    if (publico === null) {
+      return 'configIncompleta'
+    }
+    if (publico !== estado.origen) {
+      return 'otroOrigen'
+    }
   }
   if (!estado.contextoSeguro) {
     return 'requiereHttps'

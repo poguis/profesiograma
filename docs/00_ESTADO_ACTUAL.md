@@ -1,6 +1,6 @@
 # ESTADO ACTUAL DEL PROYECTO — PROFESIOGRAMA (leer primero)
 
-**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-1). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
+**Última actualización:** 2026-11-06 (TAREA-7d-3). Solo el estado **vigente** (TAREA-X1-B); lo cerrado está en [`docs/HISTORIAL.md`](HISTORIAL.md): **no leerlo salvo que la tarea lo pida**.
 
 | Área | Estado al 06/11/2026 |
 |---|---|
@@ -12,8 +12,9 @@
 | Usuarios y departamentos (TAREA-25) | ✅ **Completa** (25-1, 25-2, 25-3-1 y 25-3-2), verificada el 29/10/2026. Filas conservadas: Id 4 y 7 de prueba (inactivos), Id 5 gestor2; `CargoInfor` con 499 filas |
 | Entra ID en DEV (Fase 7b y 7b-2) | ✅ Verificadas el 05/11/2026 (M1–M7; backend 1196/1196, frontend 412/412) |
 | Publicación en QA (7d-1) | ✅ Verificada el 06/11/2026: `http://192.168.1.77:7082`, sin inicio de sesión (H1–H8, V1; 1211/1211, 417/417) |
+| Inicio de sesión en QA (7d-3, incluye la 7d-2) | Implementada (1220/1220, 425/425); falta la ejecución del usuario |
 | Aprendizaje del usuario | Objetivo aparte del proyecto: Entra ID, entornos y bases de datos, con explicaciones paso a paso |
-| **Siguiente tarea** | [PENDIENTE DE DECISIÓN DEL USUARIO] 7d-2 (sin TI) o seguimiento del pedido a TI (75) |
+| **Siguiente tarea** | **7d-3: ejecución por el usuario** (`deploy/qa/LEEME.md` §10–§13): actualización, humo H1–H13, L1–L6 y F1–F4 |
 
 ## 1. Índice de documentos
 
@@ -90,7 +91,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | ERP | `ServiciosExternos:Modo`: `Http` (`https://backstack.sedemi.com:7048` / `:7055`, TLS válido, sin autenticación). Development usa el ERP real (`Http` por user-secrets, TAREA-26a; `appsettings.Development.json` dice `Simulado`). Ver `backend/tests/manual/tarea26a/LEEME.md` |
 | Pruebas | `dotnet test --solution Profesiograma.slnx -c Release` (xUnit v3 sobre Microsoft Testing Platform): App.Domain.Tests, App.Application.Tests, App.Infrastructure.Tests, App.Api.Tests |
 | URL local | `https://localhost:7180` / `http://localhost:5180` |
-| QA | Sitio IIS `SIG_Profesiograma` (id 42) en SDMAPPTEST2, `http://192.168.1.77:7082` (provisional), grupo `SIG_Profesiograma`, entorno `QA`; cadena en la variable `ConnectionStrings__Profesiograma` del grupo (FASE_7 §6 y §9) |
+| QA | Sitio IIS `SIG_Profesiograma` (id 42) en SDMAPPTEST2: **`https://sdmapptest2.sedemi.local:7083`** (certificado autofirmado, vence el **06/11/2027**) y `http://192.168.1.77:7082` (redirige); grupo `SIG_Profesiograma`, entorno `QA`; cadena en la variable `ConnectionStrings__Profesiograma` del grupo; despliegue en `deploy/qa/` (FASE_7 §6, §9 y §10) |
 | Frontend | `frontend/` (React 19.3 + TypeScript 6.0 strict + Vite 8.3, Fluent UI 9, TanStack Query 5, React Router 8, oxlint). `npm run dev` → `http://localhost:5173`, proxy `/api` → `https://localhost:7180`. Node 24.16.0 / npm 11.13.0 |
 
 ## 5. Hoja de ruta (lo que falta) y siguiente tarea
@@ -100,7 +101,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 | 1. **Fase 7a** ✅ | Entornos DEV/QA/PRO, base QA, login y respaldos (pendiente 65); el sitio IIS sigue en la 7d |
 | 2. **Fase 7b** ✅ | Entra ID y MSAL + 7b-2 (UPN), verificadas en DEV el 05/11/2026; QA y PRO tras el pendiente 75 |
 | 3. Fase 7c | Graph: 23-4 y correo 71 (pendientes 63 y 66) |
-| 4. Fase 7d | 7d-1 ✅ (06/11/2026); **7d-2: endurecimiento y despliegue** (pendiente 78); **HTTPS/DNS: según el pendiente 75** |
+| 4. Fase 7d | 7d-1 ✅; 7d-3 (HTTPS provisional, inicio de sesión y la 7d-2) implementada; certificado de confianza y PRO: pendiente 75 |
 | 5. Fase 3 | Carga desde SharePoint, con ensayos en QA |
 | 6. Pruebas con usuarios | — |
 | 7. Corte | Paso a producción |
@@ -115,7 +116,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 2. [Opcional] Excel de cargos → código Infor (la importación desde la API y la edición ya existen, TAREA-25-3-1). Texto anterior en `HISTORIAL.md`.
 4. Office Script del reporte de cronograma: sin su código, EMPRESA, EKON y PROYECTO siguen como [SUPUESTO] Z7 (`FASE_5_Cronograma.md` §6 y §8). Texto anterior en `HISTORIAL.md`.
 5. Zona horaria del sitio SharePoint (evidencia: Pacífico).
-7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2, verificadas el 05/11/2026; `FASE_7_Entornos_Despliegue.md` §7). Falta QA y PRO: registros con URI HTTPS, que dependen del certificado y el DNS (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
+7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2); en QA, API-QA y SPA-QA registradas e inicio de sesión implementado (7d-3; `FASE_7_Entornos_Despliegue.md` §7.4 y §10). Falta PRO (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
 8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
 9. Decidir si `docs/origen/powerapps`, FASE_0 y el script SQL (contienen correos @sedemi.com) pueden subirse al remoto. Hasta decidirlo: commits locales, sin push. Pregunta abierta: ¿el remoto `origin` es privado?
 10. Pendiente para TI: evaluar una política App Control for Business para equipos de desarrollo (Smart App Control se desactivó en la TAREA-03; texto anterior en `HISTORIAL.md`). [PENDIENTE DE DECISIÓN DEL USUARIO/TI]
@@ -139,7 +140,7 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 49. [TAREA-26c, PENDIENTE RR. HH.] Confirmar con RR. HH.:
     - la duración del almuerzo y los márgenes respecto de la entrada y la salida (hoy no hay regla: solo dentro del turno, o los rangos RN09 en el diurno);
     - la lista de horarios no laborales (`HORARIOS_NO_LABORALES`).
-50. [TAREA-20–24, cronograma, reporte y novedades/asistencia] En los turnos nocturnos (salida < entrada), las horas después de las 00:00 pertenecen al **día de entrada**. Ningún cálculo actual usa `HoraEntrada`/`HoraSalida` por fecha (el motor del cronograma solo usa días), pero el cronograma, el reporte y la asistencia deben respetarlo.
+50. [Turnos nocturnos] Las horas después de las 00:00 pertenecen al **día de entrada**; el cronograma, el reporte y la asistencia deben respetarlo (hoy el motor solo usa días). Texto anterior en `HISTORIAL.md`.
 53. [TAREA-22-2, implementado] PROYECTO vacío para PLANTA/OFICINAS [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme].
 54. [TAREA-22-2, implementado] SALIDA DE JORNADA nocturna (p. ej. 17:00–04:00) tal cual [SUPUESTO aprobado el 20/10/2026, hasta que Infor confirme].
 58. [Mantenimiento, TAREA-22-2b] Retirar el pin de `System.Security.Cryptography.Pkcs` 10.0.13 (`App.Infrastructure.csproj`) cuando Microsoft.Data.SqlClient y Microsoft.Identity.Web dependan de una versión corregida. La publicación incluye la DLL 10.0.13 (C7 de la TAREA-7d-1). Texto anterior en `HISTORIAL.md`.
@@ -154,21 +155,20 @@ Fuera de alcance por ahora: Perfiles, EPP, Asistencia FOR SEI 11/12, AsignarPers
 71. [Fase 7] Correo de aviso de acceso (`Notificado = 0`) con Graph, al asignar un usuario a un departamento.
 73. [Futuro] El join del reporte con `CargoInfor` distingue tildes y espacios internos: un cambio de grafía en el ERP deja el código Infor vacío sin aviso. Solución posible: columna normalizada con migración. Hoy lo mitigan los conteos de variantes y `personasGuardadas` (TAREA-25-3-1).
 74. [Después de producción] [Menor, frontend] Extraer otros componentes repetidos de administración cuando aparezca una cuarta pantalla. Repetidos hoy (TAREA-25-3-2): el hook de filtros de la URL y el cuerpo del listado (esqueleto, error, vacío, `DataGrid`, `Paginacion`) de `PaginaUsuarios` y `PaginaCargosInfor`; `MOVIL` y los estilos de los diálogos en cinco archivos (`FASE_5_Usuarios_Departamentos.md` §10.6).
-75. [Fase 7, TI] Pedido a TI enviado el ____. Respuesta pendiente. Temas:
-    - certificado y DNS para QA (y luego para PRO);
-    - identificar el servidor IIS y el SQL de producción;
-    - nombre de la base de PRO (propuesto `SIG_PROFESIOGRAMA`): ¿existe una base PROFESIOGRAMA de la app antigua?;
-    - cuenta de administración del servidor IIS de PRO (en QA se usa administrador.SEDEMI en SDMAPPTEST2: decisión del usuario del 05/11/2026);
-    - consentimientos de Graph (pendientes 63 y 71);
-    - actualizar el Hosting Bundle de SDMAPPTEST2 (runtime 10.0.10; la aplicación usa paquetes 10.0.12; TAREA-7d-1).
-    - datos para el certificado y el DNS de QA: servidor `SDMAPPTEST2` (192.168.1.77), sitio IIS id 42 (`SIG_Profesiograma`); nombre DNS de QA propuesto: [PENDIENTE DE CONFIRMAR con TI].
+75. [Fase 7, TI] Pedido a TI enviado el ____. Respuesta pendiente. QA ya tiene HTTPS provisional (autofirmado, TAREA-7d-3). Temas:
+    - un certificado de **Let's Encrypt** (como el de `backstack.sedemi.com`) para un nombre `.sedemi.com` de QA (`SDMAPPTEST2`, sitio id 42; nombre [PENDIENTE DE CONFIRMAR]) y para PRO;
+    - el servidor IIS y el SQL de PRO; la base (propuesta `SIG_PROFESIOGRAMA`: ¿existe la PROFESIOGRAMA antigua?); la cuenta de administración de PRO;
+    - los consentimientos de Graph (pendientes 63 y 71);
+    - desactivar TLS 1.0 y 1.1 en SDMAPPTEST2 («Deshabilitar las versiones TLS heredadas: Not Set»);
+    - la consulta sobre `X-Powered-By: Sedemi` (configurada a nivel de servidor);
+    - actualizar el Hosting Bundle de SDMAPPTEST2 (runtime 10.0.10; la aplicación usa paquetes 10.0.12).
 76. [Después de producción] El alta de usuarios reconoce el duplicado por usuarioId o por el texto (usuariosAdmin.ts, MENSAJE_DUPLICADO); aplicar tipoConflicto con el helper ProblemasConflicto.
 77. [Fase 7, antes de PRO] D4 de la TAREA-7d-1: evaluar la configuración del frontend en tiempo de ejecución (servida por la API) para promover un solo build de QA a PRO; hoy `vite build --mode qa` con `frontend/.env.qa`.
-78. [7d-2, sin TI] Endurecimiento del sitio de QA: cabeceras (consultar a TI por `X-Powered-By: Sedemi`, configurada a nivel de servidor) y `web.config` propio.
-79. [Menor] Prueba automática de `/assets/` sin extensión (hoy da `index.html`) y de un asset inexistente (404).
-80. Mover `publicar-qa` a una carpeta de despliegue versionada (p. ej. `deploy/qa/`); revisar si el `.gitignore` de `backend/tests/manual/` debe ignorar solo `resultado-*` y los archivos de estado.
-81. npm audit (06/11/2026): `vite` 8.3.1, severidad alta, solo de desarrollo (`--omit=dev`: 0). Corregida en ≥ 8.3.3. Recomendación: actualizarla en una tarea propia, con build, lint, pruebas y el Grep de `dist` (`TAREA-7d-1-reporte.md` §7).
-82. [Optimización] Bloque `clienteHttp` de unos 505 kB (posible MSAL dentro): dividirlo.
+81. [Reabierto] `vite` 8.3.1 (alta, solo desarrollo; E7 pospuesta). Desde el 13/11/2026: comparar el lockfile y ver con `npm view <paquete> time` vite y cada dependencia nueva; si tiene < 14 días, esperar.
+82. [Optimización] Dividir el bloque `clienteHttp` (~505 kB, posible MSAL dentro).
+83. [Antes de PRO] CSP completa (E4 de la 7d-3; hoy solo `frame-ancestors`): probarla con `Content-Security-Policy-Report-Only` en DEV (Griffel, MSAL).
+84. [K6] tarea22c, 23-1, 23-2, 23-3, 25, 25-3 y 62 de `backend/tests/manual/`: sin archivos versionados. [PENDIENTE DE DECISIÓN DEL USUARIO]
+85. Renovar el certificado de QA antes del **06/11/2027** (o reemplazarlo: pendiente 75).
 
 ## 7.1 Reglas técnicas obligatorias
 

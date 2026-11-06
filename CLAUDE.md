@@ -63,3 +63,5 @@ tarea. `docs/fases/FASE_2_modelo_profesiograma.sql` solo si la tarea toca el mod
   ejecuta el usuario.
 - X-Dev-User solo se envía si `import.meta.env.DEV` y `VITE_AUTH_MODE=dev`; nunca en producción. La identidad se obtiene solo
   en `src/auth/`. Las llamadas usan "/api" (proxy de Vite → https://localhost:7180); no configurar CORS en la API.
+- Dependencias: una versión nueva (directa o transitiva) se acepta solo con ≥ 14 días publicada; comparar el lockfile antes y
+  después y verificar con `npm view <paquete> time`.
