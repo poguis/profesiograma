@@ -1,0 +1,1 @@
+{"title":"Los datos de la novedad no son válidos.","status":400,"errors":{"fechaFin":["La novedad no puede superar 366 días."]}}

@@ -41,7 +41,7 @@ public sealed class DatosPruebaSembrador(
             return;
         }
 
-        if (await db.Proyectos.AnyAsync(p => p.Codigo.StartsWith(PrefijoProyecto), ct))
+        if (await ConsultaProyectosPrueba(db).AnyAsync(ct))
         {
             logger.LogInformation("Datos de prueba ya existentes (proyectos {Prefijo}*). No se vuelven a crear.", PrefijoProyecto);
             return;
@@ -58,7 +58,7 @@ public sealed class DatosPruebaSembrador(
         var gestorId = usuarios.TryGetValue("gestor", out var gestor) ? gestor.Id : Usuario.IdSistema;
 
         // 2. Compañía y empleados ficticios
-        var compania = await db.Companias.FirstOrDefaultAsync(c => c.Id == IdCompaniaPrueba, ct);
+        var compania = await ConsultaCompaniaPrueba(db).FirstOrDefaultAsync(ct);
         if (compania is null)
         {
             compania = new Compania { Id = IdCompaniaPrueba, Nombre = "COMPAÑÍA DE PRUEBA S.A.", NombreComercial = "PRUEBA", Ruc = "0999999999001" };
@@ -68,11 +68,11 @@ public sealed class DatosPruebaSembrador(
         var empleados = await AsegurarEmpleadosAsync(ct);
 
         // 3. Permisos por departamento
-        var departamento = await db.Departamentos.FirstAsync(d => d.Nombre == DepartamentoPrueba, ct);
+        var departamento = await ConsultaDepartamentoPrueba(db).FirstAsync(ct);
         // TAREA-25-1: solo admin y gestor; gestor2 (y otros de DevAuth) quedan sin departamentos.
         foreach (var usuario in usuarios.Where(u => u.Key is "admin" or "gestor").Select(u => u.Value))
         {
-            var existe = await db.UsuarioDepartamentos.AnyAsync(x => x.UsuarioId == usuario.Id && x.DepartamentoId == departamento.Id, ct);
+            var existe = await ConsultaUsuarioDepartamento(db, usuario.Id, departamento.Id).AnyAsync(ct);
             if (!existe)
             {
                 db.UsuarioDepartamentos.Add(new UsuarioDepartamento { UsuarioId = usuario.Id, DepartamentoId = departamento.Id, Notificado = true });
@@ -168,6 +168,26 @@ public sealed class DatosPruebaSembrador(
         logger.LogInformation("Datos de prueba creados: 3 proyectos, {Empleados} empleados, 4 novedades.", empleados.Count);
     }
 
+    // ------------------------------------------------------------------ consultas (TAREA-8, pendiente 15: con prueba ToQueryString)
+
+    internal static IQueryable<Proyecto> ConsultaProyectosPrueba(ProfesiogramaDbContext db) =>
+        db.Proyectos.Where(p => p.Codigo.StartsWith(PrefijoProyecto));
+
+    internal static IQueryable<Compania> ConsultaCompaniaPrueba(ProfesiogramaDbContext db) =>
+        db.Companias.Where(c => c.Id == IdCompaniaPrueba);
+
+    internal static IQueryable<Departamento> ConsultaDepartamentoPrueba(ProfesiogramaDbContext db) =>
+        db.Departamentos.Where(d => d.Nombre == DepartamentoPrueba);
+
+    internal static IQueryable<UsuarioDepartamento> ConsultaUsuarioDepartamento(ProfesiogramaDbContext db, int usuarioId, int departamentoId) =>
+        db.UsuarioDepartamentos.Where(x => x.UsuarioId == usuarioId && x.DepartamentoId == departamentoId);
+
+    internal static IQueryable<Usuario> ConsultaUsuarioPorEmail(ProfesiogramaDbContext db, string email) =>
+        db.Usuarios.Where(u => u.Email == email);
+
+    internal static IQueryable<Empleado> ConsultaEmpleadoPorCodigo(ProfesiogramaDbContext db, string codigo) =>
+        db.Empleados.Where(e => e.CodigoEkon == codigo);
+
     // ------------------------------------------------------------------ helpers
 
     private async Task<Dictionary<string, Usuario>> AsegurarUsuariosAsync(IEnumerable<UsuarioPrueba> usuariosPrueba, CancellationToken ct)
@@ -176,7 +196,7 @@ public sealed class DatosPruebaSembrador(
         foreach (var up in usuariosPrueba)
         {
             var email = up.Email.Trim().ToLowerInvariant();
-            var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
+            var usuario = await ConsultaUsuarioPorEmail(db, email).FirstOrDefaultAsync(ct);
             if (usuario is null)
             {
                 usuario = new Usuario { EntraObjectId = up.ObjectId, Email = email, NombreMostrar = up.Nombre };
@@ -195,7 +215,7 @@ public sealed class DatosPruebaSembrador(
         for (var i = 1; i <= EmpleadosPrueba.CantidadDev; i++)
         {
             var codigo = $"DEV{i:000}";
-            var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.CodigoEkon == codigo, ct);
+            var empleado = await ConsultaEmpleadoPorCodigo(db, codigo).FirstOrDefaultAsync(ct);
             if (empleado is null)
             {
                 empleado = EmpleadosPrueba.CrearDev(i, reloj.GetUtcNow().UtcDateTime);

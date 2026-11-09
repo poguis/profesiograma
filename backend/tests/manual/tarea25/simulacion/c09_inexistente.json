@@ -1,0 +1,1 @@
+{"title":"Los departamentos no son v\u00e1lidos.","status":400,"errors":{"departamentoIds":["El departamento 999999 no existe o est\u00e1 inactivo."]}}

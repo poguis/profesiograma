@@ -1,0 +1,1 @@
+{"title":"El criterio de personal no es válido.","status":400,"errors":{"familias":["La familia ADMINISTRATIVO,OPERATIVO no puede contener comas.","La familia ZZ INEXISTENTE no existe."]}}

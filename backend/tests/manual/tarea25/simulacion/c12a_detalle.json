@@ -1,0 +1,1 @@
+{"id":900,"email":"prueba.tarea25@profesiograma.local","nombreMostrar":"PRUEBA TAREA25","activo":false,"conIdentidad":false,"departamentos":[],"departamentosDisponibles":[{"id":1,"nombre":"DEPARTAMENTO A","nombreCorto":"A","activo":true,"asignado":false},{"id":2,"nombre":"DEPARTAMENTO B","nombreCorto":"B","activo":true,"asignado":false}],"esUsuarioActual":false}

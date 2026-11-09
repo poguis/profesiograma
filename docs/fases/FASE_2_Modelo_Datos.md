@@ -351,7 +351,7 @@ erDiagram
 | Base consultada | `Acceso` (base por defecto del login; nivel de compatibilidad **100**) |
 | Permisos | CREATE TABLE = 1, CREATE SCHEMA = 1, db_owner = 1 (login `sa`) |
  
-Decisión: se crea una base dedicada `PROFESIOGRAMA_DEV` con compatibilidad 150 y un login propio `profesiograma_app` (no se usa `sa` ni la base `Acceso`). El modelo de la Fase 2 es compatible con SQL Server 2019 sin cambios.
+Decisión: se crea una base dedicada `PROFESIOGRAMA_DEV` con compatibilidad 150 y un login propio `profesiograma_dev` (no se usa `sa` ni la base `Acceso`). El modelo de la Fase 2 es compatible con SQL Server 2019 sin cambios.
  
 ## 9. Entorno de desarrollo verificado (2026-09-29)
  

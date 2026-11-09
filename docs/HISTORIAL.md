@@ -36,6 +36,7 @@
 | H30 | Cierre de la TAREA-7d-3 (06/11/2026): cabecera, filas de QA del estado, siguiente tarea, fila 4 de la hoja de ruta, pendiente 7; pendientes 19 y 45 (acortados) |
 | H31 | TAREA-7d-4 (06/11/2026): cabecera, siguiente tarea, fila 4 de la hoja de ruta, pendiente 86; pendiente 87 cerrado; textos de FASE_7 (cabecera, §7.1 Ajuste 2 y §7.4) |
 | H32 | Cierre de la TAREA-7d-4 (06/11/2026): cabecera, fila de QA, siguiente tarea, fila 4 de la hoja de ruta, pendiente 82 (superado); pendiente 86 cerrado; texto de FASE_7 (cabecera y §7.4) |
+| H33 | TAREA-8 (09/11/2026): pendientes 7, 8, 12, 15, 16, 19, 21, 24, 65 y 82 cerrados; 50 movido a §7.1; textos anteriores de la siguiente tarea, del 84 y de la cabecera |
 
 ## H1. Cabecera anterior
 
@@ -675,3 +676,50 @@ Texto anterior de `docs/fases/FASE_7_Entornos_Despliegue.md` (textual):
 **Última actualización:** 2026-11-06 (TAREA-7d-4: §7.1, §7.4 y §11).
 
 **Decisión del usuario (05/11/2026):** DEV queda por defecto en **DevAuth**, porque los scripts `.cmd` de `backend/tests/manual/` necesitan `X-Dev-User`. QA y PRO usan **siempre Entra ID**: DevAuth solo existe en Development (guarda E13).
+
+## H33. Movido del estado vigente el 09/11/2026 (TAREA-8)
+
+Pendientes cerrados o movidos (texto completo y motivo):
+
+8. Inconsistencia menor de documentación: FASE_2 secc. 8 menciona el login `profesiograma_app`; el vigente es `profesiograma_dev`.
+   → Cerrado: corregido en la TAREA-8 (FASE_2 §8).
+
+15. Sin prueba de traducción SQL: consultas de `DatosPruebaSembrador` (las de `UsuarioProvisionamiento` la tienen desde la TAREA-7b-2).
+   → Cerrado: implementado en la TAREA-8 (6 consultas expuestas y `DatosPruebaSqlTests`).
+
+7. [Fase 7] Entra ID: **resuelto en DEV** (7b y 7b-2); en QA, inicio de sesión verificado el 06/11/2026 (7d-3; `FASE_7_Entornos_Despliegue.md` §7.4 y §10). Falta PRO (pendiente 75). **Bloquea la TAREA-23-4** si se elige la opción A o B del pendiente 63. Texto anterior en `HISTORIAL.md`.
+   → Cerrado: lo que queda (PRO) está en el 75; el bloqueo de la TAREA-23-4 pasó al 63.
+
+12. [Menor] El sembrador guardó `ProyectoErpEstado = "ABIERTO"` en PRY-DEV-0001; el ERP usa `status = "Activo"` (confirmado en TAREA-11). No se cambia por ahora.
+   → Cerrado: decidido (no se cambia), solo afecta a DEV.
+
+16. Un JSON mal formado en `POST /api/proyectos` (p. ej. fecha ilegible) lo rechaza ASP.NET con un 400 genérico en inglés antes del validador.
+   → Cerrado: resuelto en la TAREA-26d-1 (`SolicitudIlegibleExceptionHandler`; pruebas `SolicitudIlegibleTests.cs:65` y `:77`).
+
+19. [TAREA-13] «Usuario con varios departamentos» (selector de P5) sin verificación visual; cubierto por pruebas. Texto anterior en `HISTORIAL.md`.
+   → Cerrado: informativo, cubierto por pruebas.
+
+21. [TAREA-13] Desde la pantalla, el 409 solo ocurre por carrera (la vista previa ya muestra los cruces y deshabilita "Registrar"). Prueba V13b del reporte con dos pestañas.
+   → Cerrado: informativo, cubierto por pruebas.
+
+24. [TAREA-14] La advertencia E6 ("Se eliminarán días ya transcurridos.") solo está cubierta por pruebas: los proyectos de prueba Id 7 y 8 son de 2027.
+   → Cerrado: informativo, cubierto por pruebas.
+
+50. [Turnos nocturnos] Las horas después de las 00:00 pertenecen al **día de entrada**; el cronograma, el reporte y la asistencia deben respetarlo (hoy el motor solo usa días). Texto anterior en `HISTORIAL.md`.
+   → Movido a §7.1 como regla 5 (TAREA-8).
+
+65. [Fase 7] **Entornos y despliegue con buenas prácticas:** **en curso, ver `FASE_7_Entornos_Despliegue.md`** (bases y logins §2, migraciones §3, respaldos §4). Texto anterior en `HISTORIAL.md`.
+   → Cerrado: 7a y 7d cerradas; PRO está en el 75.
+
+82. [Superado, 7d-4] Con las dos entradas de Vite, `clienteHttp` bajó a unos 449 kB y el aviso de más de 500 kB desapareció.
+   → Cerrado: superado en la TAREA-7d-4.
+
+Texto anterior del pendiente 84 y de la siguiente tarea:
+
+84. [K6] tarea22c, 23-1, 23-2, 23-3, 25, 25-3 y 62 de `backend/tests/manual/`: sin archivos versionados. [PENDIENTE DE DECISIÓN DEL USUARIO]
+
+| **Siguiente tarea** | [PENDIENTE DE DECISIÓN DEL USUARIO] envío del pedido a TI (75) y luego Fase 3 (carga desde SharePoint con ensayos en QA), que no depende de TI |
+
+**Última actualización:** 2026-11-06 (cierre de la TAREA-7d-4).
+
+FASE_2 §8, texto anterior: «y un login propio `profesiograma_app` (no se usa…» (pendiente 8).
